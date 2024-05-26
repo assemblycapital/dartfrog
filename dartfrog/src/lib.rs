@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
+use std::char;
 use std::io::Read;
 use std::{str::FromStr};
 use std::collections::{HashMap, HashSet};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 mod constants;
 use kinode_process_lib::{http, await_message, call_init, println, Address, ProcessId, Request, Response,
@@ -20,16 +22,25 @@ wit_bindgen::generate!({
 
 #[derive(Debug, Serialize, Deserialize)]
 struct WsDartUpdate{
+    time: u64,
     from: String,
     msg: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+struct ChatMessage {
+    time: u64,
+    from: String,
+    msg: String,
+}
+#[derive(Debug, Serialize, Deserialize)]
 struct DartState {
     pub server: Option<Address>,        // dart broadcast server we are subscribed to
     pub subscribers: HashSet<Address>,  // subscribers to dart broadcasts
     pub ws_clients: HashSet<u32>,       // websocket client ids
+    pub chat_history: Vec<(String, String)>,
 }
+
 
 #[derive(Debug, Serialize, Deserialize)]
 enum ServerRequest {
@@ -39,7 +50,7 @@ enum ServerRequest {
 }
 #[derive(Debug, Serialize, Deserialize)]
 enum ClientRequest {
-    ChatMessage(String, String),
+    ChatMessageFromServer(ChatMessage),
     SendToServer(ServerRequest),
     SetServer(Option<Address>),
 }
@@ -51,11 +62,21 @@ enum DartMessage {
 }
 
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
-    // println!("server request: {:?}", req);
+    println!("server request: {:?}", req);
     match req {
-        ServerRequest::ChatMessage(msg)=> {
+        ServerRequest::ChatMessage(msg) => {
             for sub in state.subscribers.iter() {
-                let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::ClientRequest(ClientRequest::ChatMessage(source.node.clone(), msg.clone()))).unwrap();
+                let now = {
+                    let start = SystemTime::now();
+                    start.duration_since(UNIX_EPOCH).unwrap().as_secs() 
+                };
+
+                let chatmsg = ChatMessage {
+                    time: now,
+                    from: source.node.clone(),
+                    msg: msg.clone(),
+                };
+                let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::ClientRequest(ClientRequest::ChatMessageFromServer(chatmsg))).unwrap();
                 Request::new()
                     .target(sub)
                     .body(send_body)
@@ -74,12 +95,12 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
 }
 
 fn handle_client_request(our: &Address, state: &mut DartState, source: Address, req: ClientRequest) -> anyhow::Result<()> {
-    // println!("client request: {:?}", req);
+    println!("client request: {:?}", req);
     match req {
-        ClientRequest::ChatMessage(from, msg) => {
+        ClientRequest::ChatMessageFromServer(chat)=> {
             if let Some(server) = &state.server {
                 if source == *server {
-                    send_ws_update(our, from, msg, &state.ws_clients).unwrap();
+                    send_ws_update(our, chat.time, chat.from, chat.msg, &state.ws_clients).unwrap();
                 }
             }
         }
@@ -150,34 +171,30 @@ fn handle_http_server_request(
             let Ok(s) = String::from_utf8(blob.bytes) else {
                 return Ok(());
             };
-            println!("Parsed string: {}", s);
-                match serde_json::from_str(&s)? {
-                    DartMessage::ClientRequest(c_req) => {
-                        println!("client request: {:?}", c_req);
-                    }
-                    _ => {
-                    }
+            match serde_json::from_str(&s)? {
+                DartMessage::ClientRequest(c_req) => {
+                    println!("http client request: {:?}", c_req);
+
+                    let mut headers = HashMap::new();
+                    headers.insert("Content-Type".to_string(), "application/json".to_string());
+                    send_response(
+                        StatusCode::OK,
+                        Some(headers),
+                        serde_json::to_vec(b"")
+                        .unwrap(),
+                    );
+
+                    let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::ClientRequest(c_req)).unwrap();
+                    Request::new()
+                        .target(our)
+                        .body(send_body)
+                        .send()
+                        .unwrap();
                 }
+                // couldn't parse PUT json
+                _ => { }
+            }
 
-            // let mut headers = HashMap::new();
-            // headers.insert("Content-Type".to_string(), "application/json".to_string());
-            // println!("http request {:?}", blob);
-
-            // send_response(
-            //     StatusCode::OK,
-            //     Some(headers),
-            //     serde_json::to_vec(b"")
-            //     .unwrap(),
-            // );
-            // if let Some(server) = state.server.clone() {
-            //     let msg = "test".to_string();
-            //     let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::ServerRequest(ServerRequest::ChatMessage(msg))).unwrap();
-            //     Request::new()
-            //         .target(server)
-            //         .body(send_body)
-            //         .send()
-            //         .unwrap();
-            // }
         }
     };
 
@@ -215,6 +232,7 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
 }
 fn send_ws_update(
     our: &Address,
+    time: u64,
     from: String,
     msg: String,
     open_channels: &HashSet<u32>,
@@ -226,6 +244,7 @@ fn send_ws_update(
             mime: Some("application/json".to_string()),
             bytes: serde_json::json!({
                 "WsDartUpdate": WsDartUpdate {
+                    time: time.clone(),
                     from: from.clone(),
                     msg: msg.clone(),
                 }
@@ -281,6 +300,7 @@ fn init(our: Address) {
         server: Some(server.clone()),
         subscribers: HashSet::new(),
         ws_clients: HashSet::new(),
+        chat_history: Vec::new(),
     };
 
     println!("hello dartfrog");

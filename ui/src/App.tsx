@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import KinodeClientApi from "@kinode/client-api";
+import {frog_ascii} from "./frog";
 import "./App.css";
 
 const BASE_URL = import.meta.env.BASE_URL;
@@ -16,6 +17,10 @@ function App() {
   const [nodeConnected, setNodeConnected] = useState(true);
   const [api, setApi] = useState<KinodeClientApi | undefined>();
   const [chatMessageInputText, setChatMessageInputText] = useState("");
+  const [chatMessageHistory, setChatMessageHistory] = useState<Array<String>>([]);
+  const addMessage = (newMessage: string) => {
+    setChatMessageHistory(prevMessages => [...prevMessages, newMessage]);
+  };
   const handleInputChange = (event) => {
     setChatMessageInputText(event.target.value);
   };
@@ -43,6 +48,9 @@ function App() {
 
             if (messageType === "WsDartUpdate") {
               console.log(data.WsDartUpdate)
+              let msg = data.WsDartUpdate;
+              
+              addMessage(msg['time'] + " " + msg['from'] + " " + msg['msg']);
             }
           } catch (error) {
             console.error("Error parsing WebSocket message", error);
@@ -96,16 +104,24 @@ function App() {
   return (
     <div style={{ width: "100%" }}>
         <h1>dartfrog</h1>
-        <p></p>
-        <div>
-        <input
-          type="text"
-          value={chatMessageInputText}
-          onChange={handleInputChange}
-        />
-        <button onClick={sendDart}>Send</button>
+        <div
+          style={{display: "flex", flexDirection: "row", justifyContent: "center"}}
+        >
+          <input
+            type="text"
+            value={chatMessageInputText}
+            onChange={handleInputChange}
+          />
+          <button onClick={sendDart}>Send</button>
         </div>
+        <div
+          style={{display: "flex", flexDirection: "column", justifyContent: "center"}}
+        >
+        {chatMessageHistory.map((message, index) => (
+          <p key={index}>{message}</p>
+        ))}
 
+        </div>
     </div>
   );
 }
