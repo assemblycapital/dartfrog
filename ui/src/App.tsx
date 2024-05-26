@@ -133,14 +133,30 @@ function App() {
     [api, chatMessageInputText]
   );
 
+  
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   return (
     <div style={{ width: "100%" }}>
-      <h1>dartfrog</h1>
+      <p style={{fontFamily:"monospace"}}>
+        {/* {window.our.node}@{window.our.process} */}
+        {time.toLocaleString()}
+      </p>
       <div
         style={{
           height: "400px",
           maxHeight: "400px",
           overflow: "scroll",
+          backgroundColor: "#202020",
+          marginBottom: "4px",
         }}
       >
         <div
@@ -148,23 +164,26 @@ function App() {
           display: "flex",
           flexDirection: "column",
           gap: "5px",
+          backgroundColor: "#242424",
         }}
         >
           {chatMessageHistory.map((message, index) => (
             <div key={index} style={{
-              display: "flex",
-              flexDirection: "row",
-              gap: "5px",
+              // display: "flex",
+              // flexDirection: "row",
+              // gap: "5px",
+              // overflowX: "scroll",
+              wordWrap: "break-word",
             }}>
-              <div style={{color:"#ffffffaa"}} >
+              <div style={{color:"#ffffffaa", display: "inline-block", marginRight:"5px"}} >
                 <span>{formatTimestamp(message.time)}</span>
               </div>
-              <div style={{color: getColorForName(message.from)}}>
+              <div style={{color: getColorForName(message.from), display: "inline-block", marginRight:"5px"}}>
                 <span>{message.from}:</span>
               </div>
-              <div>
+              {/* <div> */}
                 <span>{message.msg}</span>
-              </div>
+              {/* </div> */}
             </ div>
             ))}
           <div ref={messagesEndRef} 
@@ -172,15 +191,22 @@ function App() {
           />
         </div>
       </div>
+      <hr style={{
+        border: "1px solid #ffffff44",
+
+      }} />
       <div
         style={{display: "flex", flexDirection: "row"}}
       >
-        <input
-          type="text"
+        <textarea
+          style={{
+            flexGrow: 1,
+          }}
           value={chatMessageInputText}
           onChange={handleInputChange}
           onKeyDown={(event) => {
-            if (event.key === "Enter") {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();  // Prevents the default behavior of creating a new line
               sendDart(event);
             }
           }}
