@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, Fragment} from "react";
 import KinodeClientApi from "@kinode/client-api";
-import {frog_ascii} from "./frog";
+import {acap_ascii} from "./asciiArt";
 import "./App.css";
 import { Hash } from "crypto";
 
@@ -21,7 +21,7 @@ type ChatMessage = {
 }
 
 function App() {
-  const [nodeConnected, setNodeConnected] = useState(true);
+  const [nodeConnected, setNodeConnected] = useState(false);
   const [api, setApi] = useState<KinodeClientApi | undefined>();
 
   const [chatMessageHistory, setChatMessageHistory] = useState<Array<ChatMessage>>([]);
@@ -37,6 +37,24 @@ function App() {
   const messagesEndRef = useRef(null);
 
 
+  const [nameColors, setNameColors] = useState({});
+
+
+  const getNameColor = useCallback((name) => {
+    if (nameColors[name]) {
+      // Return the cached color if it exists
+      return nameColors[name];
+    } else {
+      // Calculate the color and update the state
+      const newColor = computeColorForName(name);
+      setNameColors((prevColors) => ({
+        ...prevColors,
+        [name]: newColor,
+      }));
+      return newColor;
+    }
+  }, [nameColors]);
+
 
   useEffect(() => {
     // Connect to the Kinode via websocket
@@ -47,8 +65,13 @@ function App() {
         uri: WEBSOCKET_URL,
         nodeId: window.our.node,
         processId: window.our.process,
+        onClose: (_event) => {
+          console.log("Disconnected from Kinode");
+          setNodeConnected(false);
+        },
         onOpen: (_event, _api) => {
           console.log("Connected to Kinode");
+          setNodeConnected(true);
           // api.send({ data: "Hello World" });
         },
         onMessage: (json, _api) => {
@@ -146,17 +169,31 @@ function App() {
 
   return (
     <div style={{ width: "100%" }}>
-      <p style={{fontFamily:"monospace"}}>
-        {/* {window.our.node}@{window.our.process} */}
-        {time.toLocaleString()}
-      </p>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          color: "#ffffff88",
+        }}
+      >
+        <span style={{fontFamily:"monospace", flexGrow: 1}}>
+          {/* {window.our.node}@{window.our.process} */}
+          {time.toLocaleString()}
+        </span>
+        <div>
+          {nodeConnected ? 'connected': 'connecting...'}
+        </div>
+      </div>
       <div
         style={{
           height: "400px",
           maxHeight: "400px",
           overflow: "scroll",
           backgroundColor: "#202020",
-          marginBottom: "4px",
+          margin: "10px 0px",
+          alignContent: "flex-end",
         }}
       >
         <div
@@ -169,21 +206,15 @@ function App() {
         >
           {chatMessageHistory.map((message, index) => (
             <div key={index} style={{
-              // display: "flex",
-              // flexDirection: "row",
-              // gap: "5px",
-              // overflowX: "scroll",
               wordWrap: "break-word",
             }}>
-              <div style={{color:"#ffffffaa", display: "inline-block", marginRight:"5px"}} >
+              <div style={{color:"#ffffff77", fontSize: "0.8rem", display: "inline-block", marginRight:"5px", cursor: "default"}}>
                 <span>{formatTimestamp(message.time)}</span>
               </div>
-              <div style={{color: getColorForName(message.from), display: "inline-block", marginRight:"5px"}}>
+              <div style={{color: getNameColor(message.msg), display: "inline-block", marginRight:"5px"}}>
                 <span>{message.from}:</span>
               </div>
-              {/* <div> */}
                 <span>{message.msg}</span>
-              {/* </div> */}
             </ div>
             ))}
           <div ref={messagesEndRef} 
@@ -191,10 +222,6 @@ function App() {
           />
         </div>
       </div>
-      <hr style={{
-        border: "1px solid #ffffff44",
-
-      }} />
       <div
         style={{display: "flex", flexDirection: "row"}}
       >
@@ -211,7 +238,18 @@ function App() {
             }
           }}
         />
-        <button onClick={sendDart}>Send</button>
+        <button style={{cursor:"pointer"}} onClick={sendDart}>Send</button>
+      </div>
+      <div style={{marginTop:"12px", color: "#ffffff77"}}>
+      <div>
+          <span>7 online: </span>
+      </div>
+      <div>
+          <span>6 recently online: </span>
+      </div>
+      <div>
+          <span>30 others: </span>
+      </div>
       </div>
     </div>
   );
@@ -224,16 +262,37 @@ function formatTimestamp(timestamp: number): string {
   return `${day} ${time}`;
 }
 
-function getColorForName(name: string): string {
-  let hash: number = simpleHash(name);
+
+
+function computeColorForName(name: string): string {
+  let hash: number = Math.abs(simpleHash(name));
   let color: string;
 
-  if (hash % 3 === 0) {
-    color = '#ff8080';
-  } else if (hash % 3 === 1) {
-    color = '#66ffb3';
-  } else if (hash % 3 === 2) {
-    color = '#4682B4';
+  let numColors = 5;
+  switch (hash % numColors) {
+    case 0:
+      // red
+      color = '#cc4444';
+      break;
+    case 1:
+      // blue
+      color = '#339933';
+      break;
+    case 2:
+      // green
+      color = '#4682B4';
+      break;
+    case 3:
+      // orange
+      color = '#cc7a00';
+      break;
+    case 4:
+      // purple
+      color = '#a36bdb';
+      break;
+    default:
+      color= '#ffffff';
+      break;
   }
 
   return color;
