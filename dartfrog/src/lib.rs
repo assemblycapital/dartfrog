@@ -21,10 +21,8 @@ wit_bindgen::generate!({
 });
 
 #[derive(Debug, Serialize, Deserialize)]
-struct WsDartUpdate{
-    time: u64,
-    from: String,
-    msg: String,
+enum WsDartUpdate{
+    NewChat(ChatMessage),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -100,7 +98,7 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
         ClientRequest::ChatMessageFromServer(chat)=> {
             if let Some(server) = &state.server {
                 if source == *server {
-                    send_ws_update(our, chat.time, chat.from, chat.msg, &state.ws_clients).unwrap();
+                    send_ws_update(our, WsDartUpdate::NewChat(chat), &state.ws_clients).unwrap();
                 }
             }
         }
@@ -232,9 +230,7 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
 }
 fn send_ws_update(
     our: &Address,
-    time: u64,
-    from: String,
-    msg: String,
+    update: WsDartUpdate,
     open_channels: &HashSet<u32>,
 ) -> anyhow::Result<()> {
 
@@ -243,11 +239,7 @@ fn send_ws_update(
           let blob = LazyLoadBlob {
             mime: Some("application/json".to_string()),
             bytes: serde_json::json!({
-                "WsDartUpdate": WsDartUpdate {
-                    time: time.clone(),
-                    from: from.clone(),
-                    msg: msg.clone(),
-                }
+                "WsDartUpdate": update
             })
             .to_string()
             .as_bytes()
