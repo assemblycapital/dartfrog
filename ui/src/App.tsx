@@ -58,9 +58,12 @@ function App() {
             const [messageType] = Object.keys(data);
             if (!messageType) return;
 
-            if (messageType === "WsDartUpdate") {
-              console.log(data.WsDartUpdate)
-              let msg = data.WsDartUpdate;
+            if (messageType !== "WsDartUpdate") {
+              return
+            }
+            let upd = data.WsDartUpdate;
+            if (upd["NewChat"]) {
+              let msg = upd["NewChat"];
               let chat : ChatMessage = {
                 time: msg['time'],
                 from: msg['from'],
@@ -153,7 +156,7 @@ function App() {
               flexDirection: "row",
               gap: "5px",
             }}>
-              <div>
+              <div style={{color:"#ffffffaa"}} >
                 <span>{formatTimestamp(message.time)}</span>
               </div>
               <div style={{color: getColorForName(message.from)}}>
@@ -200,11 +203,11 @@ function getColorForName(name: string): string {
   let color: string;
 
   if (hash % 3 === 0) {
-    color = '#8B0000'; // Dark Red
+    color = '#ff8080';
   } else if (hash % 3 === 1) {
-    color = '#556B2F'; // Dark Olive Green
+    color = '#66ffb3';
   } else if (hash % 3 === 2) {
-    color = '#4682B4'; // Steel Blue
+    color = '#4682B4';
   }
 
   return color;
