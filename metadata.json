@@ -1,0 +1,16 @@
+{
+    "name": "dartfrog",
+    "description": "mvp kinode social",
+    "image": "https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/dartfrog.jpeg",
+    "properties": {
+        "package_name": "dartfrog",
+        "current_version": "0.1.0",
+        "publisher": "template.os",
+        "mirrors": [],
+        "code_hashes": {
+            "0.1.0": ""
+        }
+    },
+    "external_url": "",
+    "animation_url": ""
+}

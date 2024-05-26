@@ -1,0 +1,18 @@
+*/target/
+/target
+pkg/*.wasm
+pkg/ui
+*.swp
+*.swo
+*/wasi_snapshot_preview1.wasm
+*/wit/
+*/process_env
+
+# Junk
+.DS_Store
+*.swp
+**/*.swp
+.DS_Store
+._.DS_Store
+**/.DS_store
+**/._.DS_store
