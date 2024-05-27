@@ -3,6 +3,7 @@ import KinodeClientApi from "@kinode/client-api";
 import {acap_ascii} from "./asciiArt";
 import "./App.css";
 import { Hash } from "crypto";
+import { send } from "process";
 
 const BASE_URL = import.meta.env.BASE_URL;
 if (window.our) window.our.process = BASE_URL?.replace("/", "");
@@ -15,6 +16,7 @@ const WEBSOCKET_URL = import.meta.env.DEV
   : undefined;
 
 type ChatMessage = {
+  id: number;
   time: number;
   from: string;
   msg: string;
@@ -24,10 +26,26 @@ function App() {
   const [nodeConnected, setNodeConnected] = useState(false);
   const [api, setApi] = useState<KinodeClientApi | undefined>();
 
-  const [chatMessageHistory, setChatMessageHistory] = useState<Array<ChatMessage>>([]);
+
+  const [chatMessageHistory, setChatMessageHistory] = useState<Map<number, ChatMessage>>(new Map());
   const addMessage = (newMessage: ChatMessage) => {
-    setChatMessageHistory(prevMessages => [...prevMessages, newMessage]);
+      setChatMessageHistory(prevMessages => {
+        const updatedMessages = new Map(prevMessages);
+        updatedMessages.set(newMessage.id, newMessage);
+        return updatedMessages;
+      });
   };
+  const [chatMessageList, setChatMessageList] = useState<Array<ChatMessage>>([]);
+  const addMessageToList = (newMessage: ChatMessage) => {
+    setChatMessageList(prevMessages => {
+      return [...prevMessages, newMessage];
+    });
+  }
+
+  useEffect(() => {
+    const sortedMessages = Array.from(chatMessageHistory.values()).sort((a, b) => a.id - b.id);
+    setChatMessageList(sortedMessages);
+  }, [chatMessageHistory]);
 
   const [chatMessageInputText, setChatMessageInputText] = useState("");
   const handleInputChange = (event) => {
@@ -72,6 +90,7 @@ function App() {
         onOpen: (_event, _api) => {
           console.log("Connected to Kinode");
           setNodeConnected(true);
+          pokeSubscribe();
           // api.send({ data: "Hello World" });
         },
         onMessage: (json, _api) => {
@@ -81,19 +100,23 @@ function App() {
             const [messageType] = Object.keys(data);
             if (!messageType) return;
 
-            if (messageType !== "WsDartUpdate") {
+            if (messageType !== "WsUpdate") {
               return
             }
-            let upd = data.WsDartUpdate;
+            let upd = data.WsUpdate;
             if (upd["NewChat"]) {
               let msg = upd["NewChat"];
               let chat : ChatMessage = {
+                id: msg['id'],
                 time: msg['time'],
                 from: msg['from'],
                 msg: msg['msg']
               }
               
               addMessage(chat);
+            } else if (upd["NewChatState"]){
+              let cs = upd["NewChatState"];
+              cs['chat_history'].forEach(addMessage);
             }
           } catch (error) {
             console.error("Error parsing WebSocket message", error);
@@ -120,25 +143,8 @@ function App() {
     }
   }, [messagesEndRef]);
 
-  const sendDart = useCallback(
-    async (event) => {
-      event.preventDefault();
-
-      if (!api) return;
-      if (!chatMessageInputText) return;
-
-      // Create a message object
-      const data = {"ClientRequest": {"SendToServer": {"ChatMessage": chatMessageInputText}}};
-      const body = JSON.stringify(data);
-      console.log("sending post body", body)
-
-      // Send a message to the node via websocket
-      // UNCOMMENT THE FOLLOWING 2 LINES to send message via websocket
-      // api.send({ data });
-      // setMessage("");
-
-      // Send a message to the node via HTTP request
-      // IF YOU UNCOMMENTED THE LINES ABOVE, COMMENT OUT THIS try/catch BLOCK
+  const sendPoke = useCallback(
+    async (data) => {
       try {
         const result = await fetch(`${BASE_URL}/api`, {
           method: "POST",
@@ -152,8 +158,36 @@ function App() {
       } catch (error) {
         console.error(error);
       }
+      
+    }
+    , []
+  )
+  const pokeSubscribe = useCallback(
+    () => {
+      const data = {"ClientRequest": {"SetServer": "fake.dev@dartfrog:dartfrog:template.os"}};
+      sendPoke(data);
+    }
+    , []
+  )
+
+  const pokeHeartbeat = useCallback(
+    () => {
+      const data = {"ClientRequest": {"SendToServer": "PresenceHearbeat"}};
+      sendPoke(data);
+    }
+    , []
+  )
+
+  const sendChat = useCallback(
+    async (event) => {
+      event.preventDefault();
+      if (!chatMessageInputText) return;
+
+      // Create a message object
+      const data = {"ClientRequest": {"SendToServer": {"ChatMessage": chatMessageInputText}}};
+      sendPoke(data);
     },
-    [api, chatMessageInputText]
+    [chatMessageInputText]
   );
 
   
@@ -204,7 +238,7 @@ function App() {
           backgroundColor: "#242424",
         }}
         >
-          {chatMessageHistory.map((message, index) => (
+          {chatMessageList.map((message, index) => (
             <div key={index} style={{
               wordWrap: "break-word",
             }}>
@@ -234,11 +268,11 @@ function App() {
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();  // Prevents the default behavior of creating a new line
-              sendDart(event);
+              sendChat(event);
             }
           }}
         />
-        <button style={{cursor:"pointer"}} onClick={sendDart}>Send</button>
+        <button style={{cursor:"pointer"}} onClick={sendChat}>Send</button>
       </div>
       <div style={{marginTop:"12px", color: "#ffffff77"}}>
       <div>
