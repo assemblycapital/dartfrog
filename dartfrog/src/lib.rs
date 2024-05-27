@@ -1,17 +1,15 @@
 use serde::{Deserialize, Serialize};
-use std::char;
-use std::io::Read;
-use std::{str::FromStr};
 use std::collections::{HashMap, HashSet};
+use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 mod constants;
-use kinode_process_lib::{http, await_message, call_init, println, Address, ProcessId, Request, Response,
+use kinode_process_lib::{http, await_message, call_init, println, Address, Request,
     get_blob,
     LazyLoadBlob,
     http::{
-        bind_http_path, bind_ws_path, send_response, send_ws_push, serve_ui, HttpServerRequest,
-        StatusCode, WsMessageType, IncomingHttpRequest,
+        send_response, send_ws_push, HttpServerRequest,
+        StatusCode, WsMessageType,
     },
 };
 
@@ -22,33 +20,69 @@ wit_bindgen::generate!({
 
 #[derive(Debug, Serialize, Deserialize)]
 enum WsDartUpdate{
+    // TODO maybe we can just use the UpdateFromServer struct
     NewChat(ChatMessage),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct ChatMessage {
     time: u64,
     from: String,
     msg: String,
 }
-#[derive(Debug, Serialize, Deserialize)]
-struct DartState {
-    pub server: Option<Address>,        // dart broadcast server we are subscribed to
-    pub subscribers: HashSet<Address>,  // subscribers to dart broadcasts
-    pub ws_clients: HashSet<u32>,       // websocket client ids
-    pub chat_history: Vec<(String, String)>,
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+enum ConnectionStatus {
+    Connecting(u64), // time when we started connecting
+    Connected(u64), // last time heard
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct DartState {
+    pub client: ClientState,
+    pub server: ServerState,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct ChatState {
+    pub chat_history: Vec<ChatMessage>,
+    pub user_presence: HashMap<String, u64>, // user presence, map from name to last time seen
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct ServerState {
+    pub chat_state: ChatState,
+    pub subscribers: HashSet<Address>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct SyncServerState {
+    pub address: Address,
+    pub connection: ConnectionStatus,
+    pub chat_state: ChatState,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct ClientState {
+    pub server: Option<SyncServerState>,
+    pub ws_channels: HashSet<u32>,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 enum ServerRequest {
     ChatMessage(String),
     Subscribe,
     Unsubscribe,
+    PresenceHeartbeat,
+    RequestChatState,
+}
+#[derive(Debug, Serialize, Deserialize)]
+enum UpdateFromServer {
+    ChatMessage(ChatMessage),
+    ChatState(ChatState),
 }
 #[derive(Debug, Serialize, Deserialize)]
 enum ClientRequest {
-    ChatMessageFromServer(ChatMessage),
     SendToServer(ServerRequest),
     SetServer(Option<Address>),
 }
@@ -56,37 +90,72 @@ enum ClientRequest {
 #[derive(Debug, Serialize, Deserialize)]
 enum DartMessage {
     ServerRequest(ServerRequest),
-    ClientRequest(ClientRequest)
+    ClientRequest(ClientRequest),
+    UpdateFromServer(UpdateFromServer),
 }
 
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
     println!("server request: {:?}", req);
+    let now = {
+        let start = SystemTime::now();
+        start.duration_since(UNIX_EPOCH).unwrap().as_secs() 
+    };
     match req {
+        ServerRequest::PresenceHeartbeat => {
+            state.server.chat_state.user_presence.insert(source.node.clone(), now);
+        }
         ServerRequest::ChatMessage(msg) => {
-            for sub in state.subscribers.iter() {
-                let now = {
-                    let start = SystemTime::now();
-                    start.duration_since(UNIX_EPOCH).unwrap().as_secs() 
-                };
+            let chat_msg = ChatMessage {
+                time: now,
+                from: source.node.clone(),
+                msg: msg.clone(),
+            };
+            state.server.chat_state.chat_history.push(chat_msg.clone());
+            for sub in state.server.subscribers.iter() {
 
-                let chatmsg = ChatMessage {
-                    time: now,
-                    from: source.node.clone(),
-                    msg: msg.clone(),
-                };
-                let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::ClientRequest(ClientRequest::ChatMessageFromServer(chatmsg))).unwrap();
+                let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::UpdateFromServer(UpdateFromServer::ChatMessage(chat_msg.clone()))).unwrap();
                 Request::new()
                     .target(sub)
                     .body(send_body)
                     .send()
                     .unwrap();
             }
+            state.server.chat_state.user_presence.insert(source.node.clone(), now);
+        }
+        ServerRequest::RequestChatState => {
+            let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::UpdateFromServer(UpdateFromServer::ChatState(state.server.chat_state.clone()))).unwrap();
+            Request::new()
+                .target(source)
+                .body(send_body)
+                .send()
+                .unwrap();
+
         }
         ServerRequest::Subscribe => {
-            state.subscribers.insert(source.clone());
+            state.server.subscribers.insert(source.clone());
+            state.server.chat_state.user_presence.insert(source.node.clone(), now);
         }
         ServerRequest::Unsubscribe => {
-            state.subscribers.remove(&source);
+            state.server.subscribers.remove(&source);
+            state.server.chat_state.user_presence.insert(source.node.clone(), now);
+        }
+    }
+    Ok(())
+}
+
+fn handle_server_update(our: &Address, state: &mut DartState, source: Address, req: UpdateFromServer) -> anyhow::Result<()> {
+    println!("client request: {:?}", req);
+    match req {
+        UpdateFromServer::ChatMessage(chat)=> {
+            if let Some(server) = &state.client.server {
+                if source == server.address {
+                    send_ws_update(our, WsDartUpdate::NewChat(chat), &state.client.ws_channels).unwrap();
+                }
+            }
+        }
+        UpdateFromServer::ChatState(chat_state)=> {
+            // TODO
+            println!("got chat state update");
         }
     }
     Ok(())
@@ -95,21 +164,14 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
 fn handle_client_request(our: &Address, state: &mut DartState, source: Address, req: ClientRequest) -> anyhow::Result<()> {
     println!("client request: {:?}", req);
     match req {
-        ClientRequest::ChatMessageFromServer(chat)=> {
-            if let Some(server) = &state.server {
-                if source == *server {
-                    send_ws_update(our, WsDartUpdate::NewChat(chat), &state.ws_clients).unwrap();
-                }
-            }
-        }
         ClientRequest::SendToServer(freq) => {
             if source.node != *our.node {
                 return Err(anyhow::anyhow!("invalid source: {:?}", source));
             }
-            if let Some(server) = &state.server {
+            if let Some(server) = &state.client.server {
                 let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::ServerRequest(freq)).unwrap();
                 Request::new()
-                    .target(server)
+                    .target(server.address.clone())
                     .body(send_body)
                     .send()
                     .unwrap();
@@ -118,9 +180,10 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
         }
         ClientRequest::SetServer(mad) => {
             if let Some(add) = mad {
-            } else {
                 // disconnecting
                 // send unsubscribe
+            } else {
+
             }
         }
     }
@@ -143,7 +206,7 @@ fn handle_http_server_request(
     match server_request {
         HttpServerRequest::WebSocketOpen { channel_id, .. } => {
             // println!("channel opened: {:?}", channel_id);
-            state.ws_clients.insert(channel_id);
+            state.client.ws_channels.insert(channel_id);
         }
         HttpServerRequest::WebSocketPush { .. } => {
             let Some(blob) = get_blob() else {
@@ -151,7 +214,7 @@ fn handle_http_server_request(
             };
         }
         HttpServerRequest::WebSocketClose(channel_id) => {
-            state.ws_clients.remove(&channel_id);
+            state.client.ws_channels.remove(&channel_id);
         }
         HttpServerRequest::Http(request) => {
             //
@@ -219,6 +282,9 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
             DartMessage::ClientRequest(c_req) => {
                 handle_client_request(our, state, source.clone(), c_req)?;
             }
+            DartMessage::UpdateFromServer(s_upd) => {
+                handle_server_update(our, state, source.clone(), s_upd)?;
+            }
             _ => {
                 return Err(anyhow::anyhow!("unexpected Request: {:?}", message));
             }
@@ -256,7 +322,11 @@ fn send_ws_update(
     Ok(())
 }
 
-const SERVER : &str = "fake.dev@dartfrog:dartfrog:template.os";
+const SERVER : &str = "fake.dev";
+const PROCESS_ID : &str = "dartfrog:dartfrog:template.os";
+fn get_server_address(node_id: &str) -> String {
+    format!("{}@{}", node_id, PROCESS_ID)
+}
 call_init!(init);
 fn init(our: Address) {
     
@@ -287,23 +357,24 @@ fn init(our: Address) {
 
 
 
-    let server = Address::from_str(SERVER).unwrap();
+    let server = Address::from_str(&get_server_address(SERVER)).unwrap();
     let mut state = DartState {
-        server: Some(server.clone()),
-        subscribers: HashSet::new(),
-        ws_clients: HashSet::new(),
-        chat_history: Vec::new(),
+        client: ClientState {
+            server: None,
+            ws_channels: HashSet::new(),
+        },
+        server: ServerState {
+            chat_state: ChatState {
+                chat_history: Vec::new(),
+                user_presence: HashMap::new(),
+            },
+            subscribers: HashSet::new(),
+        },
     };
 
     println!("hello dartfrog");
     // subscribe to SERVER
-    // TODO await response and retry?
-    let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::ServerRequest(ServerRequest::Subscribe)).unwrap();
-    Request::new()
-        .target(server)
-        .body(send_body)
-        .send()
-        .unwrap();
+    let _ = subscribe_to_server(&mut state, &server);
 
     loop {
         match handle_message(&our, &mut state) {
@@ -313,4 +384,25 @@ fn init(our: Address) {
             }
         };
     }
+}
+
+fn subscribe_to_server(state: &mut DartState, server: &Address) -> anyhow::Result<()> {
+    state.client.server = Some(SyncServerState {
+                address: server.clone(),
+                connection: ConnectionStatus::Connecting(0),
+                chat_state: ChatState {
+                    chat_history: Vec::new(),
+                    user_presence: HashMap::new(),
+                },
+            });
+    let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::ServerRequest(ServerRequest::Subscribe)).unwrap();
+
+    // TODO await response and retry?
+    Request::new()
+        .target(server)
+        .body(send_body)
+        .send()
+        .unwrap();
+    
+    Ok(())
 }
