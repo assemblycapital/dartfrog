@@ -22,12 +22,41 @@ type ChatMessage = {
   msg: string;
 }
 
+type UserActivity = {
+  name: string;
+  time: number;
+}
+
 function App() {
   const [nodeConnected, setNodeConnected] = useState(false);
   const [api, setApi] = useState<KinodeClientApi | undefined>();
 
 
+  const [userActivity, setUserActivity] = useState<Array<UserActivity>>([]);
+  const [groupedUsers, setGroupedUsers] = useState({ online: [], recentlyOnline: [], ever: [] });
+
+  const activityStatus = (lastActivityTime, currentTime) => {
+      const tenMinutes = 10 * 60 * 1000; // 10 minutes in milliseconds
+      const oneDay = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+
+      if (currentTime - lastActivityTime <= tenMinutes) {
+          return 'online';
+      } else if (currentTime - lastActivityTime <= oneDay) {
+          return 'recentlyOnline';
+      } else {
+          return 'ever';
+      }
+  };
+
+
   const [chatMessageHistory, setChatMessageHistory] = useState<Map<number, ChatMessage>>(new Map());
+  const setMessageHistoryFromList = (newMessages: Array<ChatMessage>) => {
+        const updatedMessages = new Map();
+        newMessages.forEach((message) => {
+          updatedMessages.set(message.id, message);
+        });
+        setChatMessageHistory(updatedMessages);
+  }
   const addMessage = (newMessage: ChatMessage) => {
       setChatMessageHistory(prevMessages => {
         const updatedMessages = new Map(prevMessages);
@@ -116,7 +145,10 @@ function App() {
               addMessage(chat);
             } else if (upd["NewChatState"]){
               let cs = upd["NewChatState"];
-              cs['chat_history'].forEach(addMessage);
+              setMessageHistoryFromList(cs['chat_history']);
+              let activity: UserActivity[] =
+                Object.entries(cs['user_presence']).map(([key, value]) => ({ name: key, time: value as number}));
+              setUserActivity(activity);
             }
           } catch (error) {
             console.error("Error parsing WebSocket message", error);
@@ -134,7 +166,7 @@ function App() {
   }, []);
   useEffect(() => {
     scrollDownChat();
-  }, [chatMessageHistory]);
+  }, [chatMessageList]);
 
   const scrollDownChat = useCallback(
     async () => {
@@ -200,6 +232,18 @@ function App() {
 
     return () => clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    const newGroupedUsers = userActivity.reduce(
+        (groups, activity) => {
+            const status = activityStatus(activity.time*1000, time);
+            groups[status].push(activity.name);
+            return groups;
+        },
+        { online: [], recentlyOnline: [], ever: [] }
+    );
+    setGroupedUsers(newGroupedUsers);
+}, [userActivity, time]);
 
   return (
     <div style={{ width: "100%" }}>
@@ -275,15 +319,37 @@ function App() {
         <button style={{cursor:"pointer"}} onClick={sendChat}>Send</button>
       </div>
       <div style={{marginTop:"12px", color: "#ffffff77"}}>
-      <div>
-          <span>7 online: </span>
-      </div>
-      <div>
-          <span>6 recently online: </span>
-      </div>
-      <div>
-          <span>30 others: </span>
-      </div>
+        <div>
+          <span>{groupedUsers.online.length} online: </span>
+          <span
+          >
+            {groupedUsers.online.map((userId, index) => (
+                <span key={index}
+                  style={{color: getNameColor(userId)}}
+                >
+                  {userId}{index < groupedUsers.online.length - 1 ? ', ' : ''}
+                </span>
+            ))}
+          </span>
+        </div>
+        <div>
+          <span>{groupedUsers.recentlyOnline.length} recently online: </span>
+          <span>
+            {groupedUsers.recentlyOnline.map((userId, index) => (
+              <span key={index}>
+                {userId}{index < groupedUsers.recentlyOnline.length - 1 ? ', ' : ''}
+              </span>
+            ))}
+          </span>
+        </div>
+        <div>
+          <span>{groupedUsers.ever.length} others: </span>
+          <span>
+            {groupedUsers.ever.map((userId, index) => (
+              <span key={index}>User {userId}{index < groupedUsers.ever.length - 1 ? ', ' : ''}</span>
+            ))}
+          </span>
+        </div>
       </div>
     </div>
   );
