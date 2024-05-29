@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import useChatStore from '../store/chat';
-import { computeColorForName } from '../utils';
+import { computeColorForName, pokeHeartbeat } from '../utils';
 
 const DisplayUserActivity = () => {
 
@@ -8,7 +8,7 @@ const DisplayUserActivity = () => {
   const [groupedUsers, setGroupedUsers] = useState({ online: [], recentlyOnline: [], ever: [] });
 
   const activityStatus = (lastActivityTime, currentTime) => {
-    const tenMinutes = 10 * 60 * 1000; // 10 minutes in milliseconds
+    const tenMinutes = 3 * 60 * 1000; // 3 minutes in milliseconds
     const oneDay = 24 * 60 * 60 * 1000; // 1 day in milliseconds
 
     if (currentTime - lastActivityTime <= tenMinutes) {
@@ -19,6 +19,19 @@ const DisplayUserActivity = () => {
         return 'ever';
     }
   };
+
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    // occasional rerender to update the groups
+    const interval = setInterval(() => {
+      setCount(prevCount => prevCount + 1);
+      // also use this for the heartbeat timer
+      pokeHeartbeat();
+    }, 60*1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const time = Date.now();
@@ -31,7 +44,7 @@ const DisplayUserActivity = () => {
         { online: [], recentlyOnline: [], ever: [] }
     );
     setGroupedUsers(newGroupedUsers);
-  }, [userActivity]);
+  }, [userActivity, count]);
 
   const getNameColor = useCallback(
     (name: string) => {
@@ -68,6 +81,7 @@ const DisplayUserActivity = () => {
           <span key={index}>{userId}{index < groupedUsers.ever.length - 1 ? ', ' : ''}</span>
         ))}
       </div>
+    <span style={{ display: 'none'}}>{count}</span>
     </div>
   );
 };

@@ -58,6 +58,7 @@ struct ChatState {
 struct ServerState {
     pub chat_state: ChatState,
     pub subscribers: HashSet<Address>,
+    pub last_sent_presence: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -123,7 +124,11 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
     match req {
         ServerRequest::PresenceHeartbeat => {
             state.server.chat_state.user_presence.insert(source.node.clone(), now);
-            // TODO maybe send presence state to all subscribers
+            // if last sent presence is more than 2 minutes ago, send new presence state
+            if (now - state.server.last_sent_presence) > 120 {
+                send_server_updates(state, UpdateFromServer::NewPresenceState(state.server.chat_state.user_presence.clone()));
+                state.server.last_sent_presence = now;
+            }
         }
         ServerRequest::ChatMessage(msg) => {
             
@@ -150,13 +155,22 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
         }
         ServerRequest::Subscribe => {
             state.server.subscribers.insert(source.clone());
+            state.server.chat_state.user_presence.insert(source.node.clone(), now);
             let send_body : Vec<u8> = 
                 serde_json::to_vec(&DartMessage::UpdateFromServer(UpdateFromServer::ChatState(state.server.chat_state.clone()))).unwrap();
             Request::new()
-                .target(source)
+                .target(source.clone()) // Clone the source variable
                 .body(send_body)
                 .send()
                 .unwrap();
+            let send_body : Vec<u8> = 
+                serde_json::to_vec(&DartMessage::UpdateFromServer(UpdateFromServer::SubscribeAck)).unwrap();
+            Request::new()
+                .target(source.clone()) // Clone the source variable
+                .body(send_body)
+                .send()
+                .unwrap();
+            send_server_updates(state, UpdateFromServer::NewPresenceState(state.server.chat_state.user_presence.clone()));
         }
         ServerRequest::Unsubscribe => {
             state.server.subscribers.remove(&source);
@@ -401,6 +415,7 @@ fn init(our: Address) {
                 user_presence: HashMap::new(),
             },
             subscribers: HashSet::new(),
+            last_sent_presence: 0,
         },
     };
 

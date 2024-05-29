@@ -32,7 +32,7 @@ export const pokeSubscribe = () => {
   }
 
 export const pokeHeartbeat = () => {
-    const data = {"ClientRequest": {"SendToServer": "PresenceHearbeat"}};
+    const data = {"ClientRequest": {"SendToServer": "PresenceHeartbeat"}};
     sendPoke(data);
   }
 
