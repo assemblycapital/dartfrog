@@ -24,6 +24,7 @@ enum WsUpdate{
     // TODO maybe we can just use the UpdateFromServer struct
     NewChat(ChatMessage),
     NewChatState(ChatState),
+    NewPresenceState(HashMap<String, u64>),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -85,6 +86,7 @@ enum UpdateFromServer {
     ChatMessage(ChatMessage),
     ChatState(ChatState),
     SubscribeAck,
+    NewPresenceState(HashMap<String, u64>),
 }
 #[derive(Debug, Serialize, Deserialize)]
 enum ClientRequest {
@@ -99,6 +101,19 @@ enum DartMessage {
     UpdateFromServer(UpdateFromServer),
 }
 
+fn send_server_updates(state: &DartState, update: UpdateFromServer) {
+    let mut value = DartMessage::UpdateFromServer(update);
+    for sub in state.server.subscribers.iter() {
+        let send_body : Vec<u8> =
+            serde_json::to_vec(&value).unwrap();
+        Request::new()
+            .target(sub)
+            .body(send_body)
+            .send()
+            .unwrap();
+    }
+}
+
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
     println!("server request: {:?}", req);
     let now = {
@@ -108,6 +123,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
     match req {
         ServerRequest::PresenceHeartbeat => {
             state.server.chat_state.user_presence.insert(source.node.clone(), now);
+            // TODO maybe send presence state to all subscribers
         }
         ServerRequest::ChatMessage(msg) => {
             
@@ -119,16 +135,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                 msg: msg.clone(),
             };
             state.server.chat_state.chat_history.push(chat_msg.clone());
-            for sub in state.server.subscribers.iter() {
-
-                let send_body : Vec<u8> =
-                    serde_json::to_vec(&DartMessage::UpdateFromServer(UpdateFromServer::ChatMessage(chat_msg.clone()))).unwrap();
-                Request::new()
-                    .target(sub)
-                    .body(send_body)
-                    .send()
-                    .unwrap();
-            }
+            send_server_updates(state, UpdateFromServer::ChatMessage(chat_msg.clone()));
             state.server.chat_state.user_presence.insert(source.node.clone(), now);
         }
         ServerRequest::RequestChatState => {
@@ -143,7 +150,6 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
         }
         ServerRequest::Subscribe => {
             state.server.subscribers.insert(source.clone());
-            state.server.chat_state.user_presence.insert(source.node.clone(), now);
             let send_body : Vec<u8> = 
                 serde_json::to_vec(&DartMessage::UpdateFromServer(UpdateFromServer::ChatState(state.server.chat_state.clone()))).unwrap();
             Request::new()
@@ -183,6 +189,10 @@ fn handle_server_update(our: &Address, state: &mut DartState, source: Address, r
                 // TODO
                 println!("got chat state update, {:?}", chat_state);
                 send_ws_update(our, WsUpdate::NewChatState(chat_state), &state.client.ws_channels).unwrap();
+            }
+            UpdateFromServer::NewPresenceState(presence)=> {
+                // TODO
+                send_ws_update(our, WsUpdate::NewPresenceState(presence), &state.client.ws_channels).unwrap();
             }
         }
         Ok(())
