@@ -10,7 +10,7 @@ import {WEBSOCKET_URL, pokeSubscribe} from "./utils";
 
 function App() {
   const [nodeConnected, setNodeConnected] = useState(false);
-  const { chats, setApi, handleWsMessage } = useChatStore();
+  const { chats, setApi, handleWsMessage, bannedUsers } = useChatStore();
 
   useEffect(() => {
     // Connect to the Kinode via websocket
@@ -51,6 +51,14 @@ function App() {
 
     return () => clearInterval(intervalId);
   }, []);
+
+  const [isBanned, setIsBanned] = useState(false);
+
+  useEffect(() => {
+    setIsBanned(bannedUsers.includes(window.our?.node));
+  }, [bannedUsers]);
+
+
   return (
     <div style={{ width: "100%" }}>
       <div
@@ -65,6 +73,13 @@ function App() {
         <span style={{fontFamily:"monospace", flexGrow: 1}}>
           {time.toLocaleString()}
         </span>
+
+        {isBanned && 
+          <div style={{color:"red", marginRight:"5px"}}>
+            you are banned from chatting.
+          </div>
+        }
+
         <div>
           {nodeConnected ? 'connected': 'connecting...'}
         </div>

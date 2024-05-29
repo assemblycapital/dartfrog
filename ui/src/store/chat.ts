@@ -11,6 +11,8 @@ export interface ChatStore {
   setUserActivity: (act: Array<UserActivity>) => void
   nameColors: Map<string, string>, 
   addNameColor: (name:string, color:string) => void
+  bannedUsers: Array<String>, 
+  setBannedUsers: (banned: Array<String>) => void
   api: KinodeClientApi | null,
   setApi: (api: KinodeClientApi) => void
   handleWsMessage: (json: string | Blob) => void
@@ -39,12 +41,14 @@ const useChatStore = create<ChatStore>()(
         nameColors[name] = color;
         set({ nameColors: nameColors })
       },
+      bannedUsers: [],
+      setBannedUsers: (banned: Array<String>) => set({ bannedUsers: banned }),
       api: null,
       setApi: (api) => set({ api }),
       handleWsMessage: (json: string | Blob) => {
         // This function will be called when the websocket receives a message.
         // Right now you only care about progress messages, but you could add more types of messages here.
-        const { setChats, addMessage, setUserActivity} = get()
+        const { setChats, addMessage, setUserActivity, setBannedUsers} = get()
         if (typeof json === 'string') {
           try {
             const data = JSON.parse(json);
@@ -69,6 +73,7 @@ const useChatStore = create<ChatStore>()(
               let activity: UserActivity[] =
                 Object.entries(cs['user_presence']).map(([key, value]) => ({ name: key, time: value as number}));
               setUserActivity(activity);
+              setBannedUsers(cs['banned_users']);
             } else if (upd["NewPresenceState"]) {
               let up = upd["NewPresenceState"];
               let activity: UserActivity[] =
