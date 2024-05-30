@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback, useRef, Fragment} from "react";
 import KinodeClientApi from "@kinode/client-api";
 import "./App.css";
-import ChatMessageList from "./components/ChatMessageList";
-import ChatInput from "./components/ChatInput";
 import DisplayUserActivity from "./components/DisplayUserActivity";
 import useChatStore from "./store/chat";
 
 import {WEBSOCKET_URL, pokeSubscribe} from "./utils";
+import ChatBox from "./components/ChatBox";
 
 function App() {
   const [nodeConnected, setNodeConnected] = useState(false);
@@ -122,8 +121,7 @@ function App() {
           {nodeConnected ? 'connected': 'connecting...'}
         </div>
       </div>
-      <ChatMessageList chats={chats} />
-      <ChatInput />
+      <ChatBox chats={chats} />
       <DisplayUserActivity />
       <div 
         style={{
@@ -137,7 +135,11 @@ function App() {
             } else {
               setMuteSoundEffects(true);
             }
-          }}>
+          }}
+          style={{
+            opacity: "0.5",
+          }}
+          >
           {muteSoundEffects ? 'Unmute' : 'Mute'}
         </button>
       </div>
@@ -145,7 +147,7 @@ function App() {
         style={{
           fontSize: "0.8rem",
           color: "#ffffff44",
-          marginTop: "3rem",
+          marginTop: "1rem",
           cursor: "default",
           display: "flex",
           flexDirection: "row",

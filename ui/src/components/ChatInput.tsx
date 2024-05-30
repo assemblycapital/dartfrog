@@ -26,7 +26,10 @@ const ChatInput = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'row' }}>
       <textarea
-        style={{ flexGrow: 1 }}
+        style={{
+          flexGrow: 1,
+          fontFamily: 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
+        }}
         value={chatMessageInputText}
         onChange={handleInputChange}
         onKeyDown={(event) => {
