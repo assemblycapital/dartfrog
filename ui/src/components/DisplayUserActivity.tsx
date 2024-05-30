@@ -59,7 +59,7 @@ const DisplayUserActivity = () => {
   , [nameColors])
 
   return (
-    <div style={{ marginTop: '12px', color: '#ffffff77', fontSize: '0.8rem'}}>
+    <div style={{ marginTop: '12px', color: '#ffffff77', fontSize: '0.8rem', cursor: 'default'}}>
       <div>
         <span style={{fontSize: '0.8rem'}}>{groupedUsers.online.length} online: </span>
         {groupedUsers.online.map((userId, index) => (

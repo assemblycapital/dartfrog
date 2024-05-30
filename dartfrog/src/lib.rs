@@ -148,7 +148,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             };
             // state.server.chat_state.chat_history.push(chat_msg.clone());
             let chat_history = &mut state.server.chat_state.chat_history;
-            const MAX_CHAT_HISTORY: usize = 6;
+            const MAX_CHAT_HISTORY: usize = 32;
             if chat_history.len() >= MAX_CHAT_HISTORY {
                 chat_history.remove(0);
             }

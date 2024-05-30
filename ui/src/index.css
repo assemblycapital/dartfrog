@@ -14,7 +14,6 @@
 }
 
 a {
-  font-weight: 500;
   color: #646cff;
   text-decoration: inherit;
 }
@@ -60,6 +59,16 @@ button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 } */
+
+.chat-message:hover {
+  background:#00000011;
+}
+.chat-message {
+  word-wrap: "break-word";
+  vertical-align: "text-top";
+  align-items:"flex-start";
+  cursor:"default";
+}
 
 @media (prefers-color-scheme: light) {
   :root {

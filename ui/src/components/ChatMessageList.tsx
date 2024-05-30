@@ -52,6 +52,42 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ chats }) => {
     scrollDownChat();
   }, [chats, scrollDownChat]);
 
+const getMessageInnerText = useCallback(
+  (message: string) => {
+    if (isImageUrl(message)) {
+      return (
+        <img src={message} alt="chat image"
+                    style={{
+                        height: "100%",
+                        maxHeight: "12vh",
+                        objectFit: "cover",
+                        maxWidth: "100%",
+                    }}
+                    onLoad={() => scrollDownChat()}
+                    />
+      )
+    } else if (linkRegex.test(message)) {
+      return (
+      <span>
+        <a href={message}
+          style={{
+            textDecoration: "underline",
+            cursor: "pointer",
+            fontSize: "1rem",
+            // fontWeight: 
+          }}
+        >
+          {message}
+          </a>
+        </span>
+      );
+    } else {
+      return <span>{message}</span>
+    }
+  },
+  [scrollDownChat]
+)
+
   return (
       <div
         style={{
@@ -75,33 +111,19 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ chats }) => {
         >
           {chatMessageList.map((message, index) => (
             <div key={index} style={{
-              wordWrap: "break-word",
-              verticalAlign: "text-top",
-              alignItems:"flex-start"
-            }}>
+              
+            }}
+              className='chat-message'
+            >
               <div style={{display:"inline-block", verticalAlign: "top"}}>
                 <div style={{color:"#ffffff77", fontSize: "0.8rem", display: "inline-block", marginRight:"5px", cursor: "default"}}>
                   <span>{formatTimestamp(message.time)}</span>
                 </div>
-                <div style={{color: getNameColor(message.from), display: "inline-block", marginRight:"5px"}}>
+                <div style={{color: getNameColor(message.from), display: "inline-block", marginRight:"5px", cursor:"default"}}>
                   <span>{message.from}:</span>
                 </div>
               </div>
-              {/* <span>{message.msg}</span> */}
-              {isImageUrl(message.msg) ? (
-                  <img src={message.msg} alt="chat image"
-                  style={{
-                      height: "100%",
-                      maxHeight: "12vh",
-                      objectFit: "cover",
-                      maxWidth: "100%",
-                  }}
-                  onLoad={() => scrollDownChat()}
-                  />
-
-                ) : (
-                  <span>{message.msg}</span>
-                )}
+              {getMessageInnerText(message.msg)}
             </div>
             ))}
           <div id="messages-end-ref" ref={messagesEndRef} 

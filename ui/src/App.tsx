@@ -10,7 +10,7 @@ import {WEBSOCKET_URL, pokeSubscribe} from "./utils";
 
 function App() {
   const [nodeConnected, setNodeConnected] = useState(false);
-  const { chats, setApi, handleWsMessage, bannedUsers } = useChatStore();
+  const { muteSoundEffects, setMuteSoundEffects, chats, setApi, handleWsMessage, bannedUsers } = useChatStore();
 
   const reconnectIntervalRef = useRef(null);
 
@@ -90,10 +90,16 @@ function App() {
           flexDirection: "row",
           justifyContent: "space-between",
           alignItems: "center",
-          color: "#ffffff88",
+          color: "#ffffff55",
+          fontSize: "0.8rem",
         }}
       >
-        <span style={{fontFamily:"monospace", flexGrow: 1}}>
+        <span style={{
+          // fontFamily:"monospace",
+          flexGrow: 1,
+          fontSize: "0.7rem"
+          }}
+        >
           {time.toLocaleString('en-US', {
               year: 'numeric',
               month: '2-digit',
@@ -119,20 +125,64 @@ function App() {
       <ChatMessageList chats={chats} />
       <ChatInput />
       <DisplayUserActivity />
+      <div 
+        style={{
+          fontSize: "0.8rem",
+          marginTop: "1rem",
+        }}
+      >
+        <button onClick={() => {
+            if(muteSoundEffects) {
+              setMuteSoundEffects(false);
+            } else {
+              setMuteSoundEffects(true);
+            }
+          }}>
+          {muteSoundEffects ? 'Unmute' : 'Mute'}
+        </button>
+      </div>
       <div
         style={{
           fontSize: "0.8rem",
           color: "#ffffff44",
           marginTop: "3rem",
+          cursor: "default",
+          display: "flex",
+          flexDirection: "row",
+          gap: "1rem",
         }}
       >
-        <p>
-          help: contact a.cow on Discord.
-          if you're having trouble, you may need to update your app version.
-        </p>
+      <div
+        style={{
+          display: "inline-block",
+          alignContent: "flex-end",
+        }}
+      >
+        <svg style={{
+            width: "32",
+            height: "32",
+            fill: "none",
+            opacity: "0.2",
+          }}
+          viewBox="0 0 388 194"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M194 0H97V97H0V194H97V97H194H291V194H388V97H291V0H194Z" fill="white" />
+        </svg>
+      </div>
+
+        <span
+          style={{
+            alignContent: "center",
+          }}
+        >
+          For help, contact a.cow on Discord.
+          If you're having trouble, you may need to update your app version.
+        </span>
       </div>
     </div>
   );
 }
+
 
 export default App;

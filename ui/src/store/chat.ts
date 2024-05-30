@@ -104,7 +104,6 @@ const useChatStore = create<ChatStore>()(
   )
 )
 
-
 const soundEffectCommands = {
   '/fart': 'assets/wet.mp3',
 }
