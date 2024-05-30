@@ -13,6 +13,8 @@ export interface ChatStore {
   addNameColor: (name:string, color:string) => void
   bannedUsers: Array<String>, 
   setBannedUsers: (banned: Array<String>) => void
+  muteSoundEffects: boolean
+  setMuteSoundEffects: (mute: boolean) => void
   api: KinodeClientApi | null,
   setApi: (api: KinodeClientApi) => void
   handleWsMessage: (json: string | Blob) => void
@@ -43,12 +45,14 @@ const useChatStore = create<ChatStore>()(
       },
       bannedUsers: [],
       setBannedUsers: (banned: Array<String>) => set({ bannedUsers: banned }),
+      muteSoundEffects: false,
+      setMuteSoundEffects: (mute: boolean) => set({ muteSoundEffects: mute }),
       api: null,
       setApi: (api) => set({ api }),
       handleWsMessage: (json: string | Blob) => {
         // This function will be called when the websocket receives a message.
         // Right now you only care about progress messages, but you could add more types of messages here.
-        const { setChats, addMessage, setUserActivity, setBannedUsers} = get()
+        const { muteSoundEffects, setChats, addMessage, setUserActivity, setBannedUsers} = get()
         if (typeof json === 'string') {
           try {
             const data = JSON.parse(json);
@@ -66,6 +70,7 @@ const useChatStore = create<ChatStore>()(
                 from: msg['from'],
                 msg: msg['msg']
               }
+              maybePlaySoundEffect(chat.msg, muteSoundEffects);
               addMessage(chat);
             } else if (upd["NewChatState"]){
               let cs = upd["NewChatState"];
@@ -98,6 +103,21 @@ const useChatStore = create<ChatStore>()(
     }
   )
 )
+
+
+const soundEffectCommands = {
+  '/fart': 'assets/wet.mp3',
+}
+
+const maybePlaySoundEffect = (msg: string, muteSoundEffects: boolean) => {
+  if (muteSoundEffects) {
+    return;
+  }
+  if (msg in soundEffectCommands) {
+    const sound = new Audio(soundEffectCommands[msg]);
+    sound.play();
+  }
+}
 
 const messageHistoryFromList = (newMessages: Array<ChatMessage>) => {
   const updatedMessages = new Map();

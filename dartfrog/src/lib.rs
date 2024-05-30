@@ -1,5 +1,6 @@
 use kinode_process_lib::eth::U256;
 use serde::{Deserialize, Serialize};
+use std::char::MAX;
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -143,9 +144,16 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                 id: state.server.chat_state.latest_chat_msg_id,
                 time: now,
                 from: source.node.clone(),
-                msg: msg.clone(),
+                msg: safe_trim_to_boundary(msg, 2048)
             };
-            state.server.chat_state.chat_history.push(chat_msg.clone());
+            // state.server.chat_state.chat_history.push(chat_msg.clone());
+            let chat_history = &mut state.server.chat_state.chat_history;
+            const MAX_CHAT_HISTORY: usize = 6;
+            if chat_history.len() >= MAX_CHAT_HISTORY {
+                chat_history.remove(0);
+            }
+            chat_history.push(chat_msg.clone());
+
             send_server_updates(state, UpdateFromServer::ChatMessage(chat_msg.clone()));
             state.server.chat_state.user_presence.insert(source.node.clone(), now);
         }
@@ -188,6 +196,10 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
         }
         ServerRequest::Ban(user) => {
             if source.node != SERVER {
+                return Ok(());
+            }
+            if user == SERVER {
+                // don't ban yourself
                 return Ok(());
             }
             state.server.chat_state.banned_users.insert(user);
@@ -240,6 +252,19 @@ fn handle_server_update(our: &Address, state: &mut DartState, source: Address, r
     }
 }
 
+fn safe_trim_to_boundary(s: String, max_len: usize) -> String {
+    if s.len() <= max_len {
+        return s;
+    }
+
+    let mut end = max_len;
+    while !s.is_char_boundary(end) {
+        end -= 1;
+    }
+
+    s[..end].to_string()
+}
+
 fn handle_client_request(our: &Address, state: &mut DartState, source: Address, req: ClientRequest) -> anyhow::Result<()> {
     println!("client request: {:?}", req);
     if source.node != *our.node {
@@ -250,15 +275,17 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
         ClientRequest::SendToServer(freq) => {
             match freq.clone() {
                 ServerRequest::ChatMessage(msg) => {
-                    let command = parse_chat_command(&msg);
+                    let trimmed_msg = safe_trim_to_boundary(msg, 2048);
+                    let chat_req = ServerRequest::ChatMessage(trimmed_msg.clone());
+                    let command = parse_chat_command(&trimmed_msg);
                     match command {
-                        Some(chat_req) => {
+                        Some(command_req) => {
+                            poke_server(state, command_req)?;
                             poke_server(state, chat_req)?;
-                            poke_server(state, freq)?;
                         }
                         _ => {
-                            poke_server(state, freq)?;
-
+                            poke_server(state, chat_req)?;
+                            
                         }
                     }
                 }

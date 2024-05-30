@@ -52,8 +52,6 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ chats }) => {
     scrollDownChat();
   }, [chats, scrollDownChat]);
 
-
-
   return (
       <div
         style={{
@@ -78,15 +76,33 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ chats }) => {
           {chatMessageList.map((message, index) => (
             <div key={index} style={{
               wordWrap: "break-word",
+              verticalAlign: "text-top",
+              alignItems:"flex-start"
             }}>
-              <div style={{color:"#ffffff77", fontSize: "0.8rem", display: "inline-block", marginRight:"5px", cursor: "default"}}>
-                <span>{formatTimestamp(message.time)}</span>
+              <div style={{display:"inline-block", verticalAlign: "top"}}>
+                <div style={{color:"#ffffff77", fontSize: "0.8rem", display: "inline-block", marginRight:"5px", cursor: "default"}}>
+                  <span>{formatTimestamp(message.time)}</span>
+                </div>
+                <div style={{color: getNameColor(message.from), display: "inline-block", marginRight:"5px"}}>
+                  <span>{message.from}:</span>
+                </div>
               </div>
-              <div style={{color: getNameColor(message.from), display: "inline-block", marginRight:"5px"}}>
-                <span>{message.from}:</span>
-              </div>
-                <span>{message.msg}</span>
-            </ div>
+              {/* <span>{message.msg}</span> */}
+              {isImageUrl(message.msg) ? (
+                  <img src={message.msg} alt="chat image"
+                  style={{
+                      height: "100%",
+                      maxHeight: "12vh",
+                      objectFit: "cover",
+                      maxWidth: "100%",
+                  }}
+                  onLoad={() => scrollDownChat()}
+                  />
+
+                ) : (
+                  <span>{message.msg}</span>
+                )}
+            </div>
             ))}
           <div id="messages-end-ref" ref={messagesEndRef} 
             style={{display:"inline"}}
@@ -97,6 +113,13 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({ chats }) => {
 };
 
 export default React.memo(ChatMessageList);
+
+const linkRegex = /^https?:\/\/\S+$/i;
+const imageRegex = /^https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp)$/i;
+
+function isImageUrl(url: string) {
+  return imageRegex.test(url);
+}
 
 function formatTimestamp(timestamp: number): string {
   const date = new Date(timestamp * 1000); // convert from seconds to milliseconds

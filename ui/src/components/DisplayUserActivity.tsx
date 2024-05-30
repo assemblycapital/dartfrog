@@ -59,9 +59,9 @@ const DisplayUserActivity = () => {
   , [nameColors])
 
   return (
-    <div style={{ marginTop: '12px', color: '#ffffff77' }}>
+    <div style={{ marginTop: '12px', color: '#ffffff77', fontSize: '0.8rem'}}>
       <div>
-        <span>{groupedUsers.online.length} online: </span>
+        <span style={{fontSize: '0.8rem'}}>{groupedUsers.online.length} online: </span>
         {groupedUsers.online.map((userId, index) => (
           <span key={index} style={{ color: getNameColor(userId) }}>
             {userId}
@@ -70,13 +70,13 @@ const DisplayUserActivity = () => {
         ))}
       </div>
       <div>
-        <span>{groupedUsers.recentlyOnline.length} recently online: </span>
+        <span style={{fontSize: '0.8rem'}}>{groupedUsers.recentlyOnline.length} recently online: </span>
         {groupedUsers.recentlyOnline.map((userId, index) => (
           <span key={index}>{userId}{index < groupedUsers.recentlyOnline.length - 1 ? ', ' : ''}</span>
         ))}
       </div>
       <div>
-        <span>{groupedUsers.ever.length} others: </span>
+        <span style={{fontSize: '0.8rem'}}>{groupedUsers.ever.length} others: </span>
         {groupedUsers.ever.map((userId, index) => (
           <span key={index}>{userId}{index < groupedUsers.ever.length - 1 ? ', ' : ''}</span>
         ))}
