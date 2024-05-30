@@ -101,7 +101,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chats }) => {
 
   const resize = (e: MouseEvent) => {
     if (isResizing.current && containerRef.current) {
-      const newHeight = e.clientY - containerRef.current.getBoundingClientRect().top;
+      const newHeight = e.clientY - containerRef.current.getBoundingClientRect().top - 65;
       if (newHeight > 100) { // Minimum height
         setContainerHeight(newHeight);
       }
@@ -115,16 +115,22 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chats }) => {
   };
 
   return (
-    <div>
     <div
       ref={containerRef}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.8rem",
+      }}
+    >
+    <div
       style={{
         height: `${containerHeight}px`,
         // maxHeight: '50vh', // Maximum height to avoid too large
         overflowY: "scroll",
         overflowX: "hidden",
         backgroundColor: "#202020",
-        margin: "10px 0px",
+        // margin: "0.8rem 0px",
         boxSizing: "border-box",
         alignContent: "flex-end",
         position: 'relative'
@@ -166,7 +172,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chats }) => {
           cursor: 'row-resize',
           // position: 'absolute',
           // bottom: 0,
-          margin: '10px 0px',
+          // margin: '10px 0px',
           width: '100%',
         }}
         onMouseDown={startResizing}

@@ -82,7 +82,14 @@ function App() {
 
 
   return (
-    <div style={{ width: "100%" }}>
+    <div style={{
+      width: "100%",
+      display: "flex",
+      flexDirection: "column",
+      gap: "0.8rem",
+
+
+     }}>
       <div
         style={{
           display: "flex",
@@ -126,7 +133,6 @@ function App() {
       <div 
         style={{
           fontSize: "0.8rem",
-          marginTop: "1rem",
         }}
       >
         <button onClick={() => {
@@ -147,7 +153,6 @@ function App() {
         style={{
           fontSize: "0.8rem",
           color: "#ffffff44",
-          marginTop: "1rem",
           cursor: "default",
           display: "flex",
           flexDirection: "row",
