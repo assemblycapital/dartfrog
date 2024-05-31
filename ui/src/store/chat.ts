@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { ChatMessage, ConnectionStatusType, ServerStatus, UserActivity } from '../types/types'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import KinodeClientApi from "@kinode/client-api";
+import { parse } from 'path';
 
 export interface ChatStore {
   chats: Map<number, ChatMessage>
@@ -82,14 +83,13 @@ const useChatStore = create<ChatStore>()(
             } else if (upd["NewChatState"]){
               let cs = upd["NewChatState"];
               setChats(messageHistoryFromList(cs['chat_history']));
-              let activity: UserActivity[] =
-                Object.entries(cs['user_presence']).map(([key, value]) => ({ name: key, time: value as number}));
+              let activity = parsePresence(cs['user_presence']);
               setUserActivity(activity);
               setBannedUsers(cs['banned_users']);
             } else if (upd["NewPresenceState"]) {
               let up = upd["NewPresenceState"];
-              let activity: UserActivity[] =
-                Object.entries(up).map(([key, value]) => ({ name: key, time: value as number}));
+
+              let activity = parsePresence(up);
               setUserActivity(activity);
             } else if (upd["ServerStatus"]) {
               let raw = upd["ServerStatus"];
@@ -130,6 +130,14 @@ const useChatStore = create<ChatStore>()(
     }
   )
 )
+
+const parsePresence = (presence: any) => {
+  return Object.entries(presence).map(([key, value]) => ({
+      name: key,
+      time: value['time'] as number,
+      was_online_at_time: value['was_online_at_time'] as boolean
+    }));
+}
 
 const soundEffectCommands = {
   '/fart': 'assets/wet.mp3',

@@ -31,7 +31,7 @@ enum WsUpdate{
     // TODO maybe we can just use the UpdateFromServer struct
     NewChat(ChatMessage),
     NewChatState(ChatState),
-    NewPresenceState(HashMap<String, u64>),
+    NewPresenceState(HashMap<String, Presence>),
     ServerStatus(ServerStatus),
 }
 
@@ -55,12 +55,17 @@ struct DartState {
     pub client: ClientState,
     pub server: ServerState,
 }
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct Presence {
+    pub time: u64,
+    pub was_online_at_time: bool,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct ChatState {
     pub latest_chat_msg_id: u64,
     pub chat_history: Vec<ChatMessage>,
-    pub user_presence: HashMap<String, u64>, // user presence, map from name to last time seen
+    pub user_presence: HashMap<String, Presence>,
     pub banned_users: HashSet<String>,
 }
 
@@ -100,7 +105,7 @@ enum UpdateFromServer {
     ChatState(ChatState),
     SubscribeAck,
     KickSubscriber,
-    NewPresenceState(HashMap<String, u64>),
+    NewPresenceState(HashMap<String, Presence>),
 }
 #[derive(Debug, Serialize, Deserialize)]
 enum ClientRequest {
@@ -116,7 +121,7 @@ enum DartMessage {
 }
 
 fn send_server_updates(state: &DartState, update: UpdateFromServer) {
-    let mut value = DartMessage::UpdateFromServer(update);
+    let value = DartMessage::UpdateFromServer(update);
     for sub in state.server.subscribers.iter() {
         let send_body : Vec<u8> =
             serde_json::to_vec(&value).unwrap();
@@ -129,17 +134,32 @@ fn send_server_updates(state: &DartState, update: UpdateFromServer) {
 }
 
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
+    println!("server request: {:?}", req);
     let now = {
         let start = SystemTime::now();
         start.duration_since(UNIX_EPOCH).unwrap().as_secs() 
     };
     match req {
         ServerRequest::PresenceHeartbeat => {
-            state.server.chat_state.user_presence.insert(source.node.clone(), now);
+            state.server.chat_state.user_presence.insert(source.node.clone(), Presence{time:now, was_online_at_time: true});
             // if last sent presence is more than 2 minutes ago, send new presence state
             if (now - state.server.last_sent_presence) > 120 {
                 send_server_updates(state, UpdateFromServer::NewPresenceState(state.server.chat_state.user_presence.clone()));
                 state.server.last_sent_presence = now;
+            }
+            // if any user has been offline for more than 5 minutes, kick and remove from subscribers
+            let offline_duration = 60; // 5 minutes in seconds
+            let mut to_remove = Vec::new();
+            for (node, presence) in state.server.chat_state.user_presence.iter() {
+                if (now - presence.time) > offline_duration {
+                    to_remove.push(node.clone());
+                }
+            }
+
+            for node in to_remove {
+                state.server.chat_state.user_presence.remove(&node);
+                state.server.subscribers.retain(|address| address.node != node);
+                let _ = poke_node(node.clone(), UpdateFromServer::KickSubscriber);
             }
         }
         ServerRequest::ChatMessage(msg) => {
@@ -162,7 +182,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             chat_history.push(chat_msg.clone());
 
             send_server_updates(state, UpdateFromServer::ChatMessage(chat_msg.clone()));
-            state.server.chat_state.user_presence.insert(source.node.clone(), now);
+            state.server.chat_state.user_presence.insert(source.node.clone(), Presence{time:now, was_online_at_time: true});
         }
         ServerRequest::RequestChatState => {
             let send_body : Vec<u8> = 
@@ -176,7 +196,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
         }
         ServerRequest::Subscribe => {
             state.server.subscribers.insert(source.clone());
-            state.server.chat_state.user_presence.insert(source.node.clone(), now);
+            state.server.chat_state.user_presence.insert(source.node.clone(), Presence{time:now, was_online_at_time: true});
             let send_body : Vec<u8> = 
                 serde_json::to_vec(&DartMessage::UpdateFromServer(UpdateFromServer::ChatState(state.server.chat_state.clone()))).unwrap();
             Request::new()
@@ -199,7 +219,8 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
         }
         ServerRequest::Unsubscribe => {
             state.server.subscribers.remove(&source);
-            state.server.chat_state.user_presence.insert(source.node.clone(), now);
+            state.server.chat_state.user_presence.insert(source.node.clone(), Presence{time:now, was_online_at_time: false});
+            send_server_updates(state, UpdateFromServer::NewPresenceState(state.server.chat_state.user_presence.clone()));
         }
         ServerRequest::Ban(user) => {
             if source.node != SERVER {
@@ -224,7 +245,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
 }
 
 fn handle_server_update(our: &Address, state: &mut DartState, source: Address, req: UpdateFromServer) -> anyhow::Result<()> {
-    // println!("server update: {:?}", req);
+    println!("server update: {:?}", req);
     if let Some(server) = &mut state.client.server {
         if source != server.address {
             return Ok(());
@@ -245,17 +266,15 @@ fn handle_server_update(our: &Address, state: &mut DartState, source: Address, r
                 }), &state.client.ws_channels).unwrap();
             }
             UpdateFromServer::KickSubscriber => {
-                // TODO
                 state.client.server = None;
+                // update frontend?
+                // this currently only happens if the frontend is closed / offline until a timeout happens
             }
             UpdateFromServer::ChatState(chat_state)=> {
-                // TODO
-                // println!("got chat state update, {:?}", chat_state);
                 server.chat_state = chat_state.clone();
                 send_ws_update(WsUpdate::NewChatState(chat_state), &state.client.ws_channels).unwrap();
             }
             UpdateFromServer::NewPresenceState(presence)=> {
-                // TODO
                 send_ws_update(WsUpdate::NewPresenceState(presence), &state.client.ws_channels).unwrap();
             }
         }
@@ -280,7 +299,7 @@ fn safe_trim_to_boundary(s: String, max_len: usize) -> String {
 }
 
 fn handle_client_request(our: &Address, state: &mut DartState, source: Address, req: ClientRequest) -> anyhow::Result<()> {
-    // println!("client request: {:?}", req);
+    println!("client request: {:?}", req);
     if source.node != *our.node {
         return Err(anyhow::anyhow!("invalid source: {:?}", source));
     }
@@ -543,6 +562,16 @@ fn init(our: Address) {
             }
         };
     }
+}
+
+fn poke_node(node: String, req: UpdateFromServer) -> anyhow::Result<()> {
+    let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::UpdateFromServer(req)).unwrap();
+    Request::new()
+        .target(Address::from_str(&get_server_address(&node)).unwrap())
+        .body(send_body)
+        .send()
+        .unwrap();
+    Ok(())
 }
 
 fn poke_server(state: &DartState, req: ServerRequest) -> anyhow::Result<()> {

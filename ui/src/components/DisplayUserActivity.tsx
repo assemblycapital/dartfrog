@@ -7,11 +7,12 @@ const DisplayUserActivity = () => {
   const { userActivity, nameColors, addNameColor } = useChatStore();
   const [groupedUsers, setGroupedUsers] = useState({ online: [], recentlyOnline: [], ever: [] });
 
-  const activityStatus = (lastActivityTime, currentTime) => {
+  const activityStatus = (wasOnline, lastActivityTime, currentTime) => {
     const tenMinutes = 3 * 60 * 1000; // 3 minutes in milliseconds
     const oneDay = 24 * 60 * 60 * 1000; // 1 day in milliseconds
 
-    if (currentTime - lastActivityTime <= tenMinutes) {
+
+    if (wasOnline && currentTime - lastActivityTime <= tenMinutes) {
         return 'online';
     } else if (currentTime - lastActivityTime <= oneDay) {
         return 'recentlyOnline';
@@ -27,6 +28,7 @@ const DisplayUserActivity = () => {
     const interval = setInterval(() => {
       setCount(prevCount => prevCount + 1);
       // also use this for the heartbeat timer
+      console.log("Poking heartbeat")
       pokeHeartbeat();
     }, 60*1000);
 
@@ -37,7 +39,7 @@ const DisplayUserActivity = () => {
     const time = Date.now();
     const newGroupedUsers = userActivity.reduce(
         (groups, activity) => {
-            const status = activityStatus(activity.time*1000, time);
+            const status = activityStatus(activity.was_online_at_time, activity.time*1000, time);
             groups[status].push(activity.name);
             return groups;
         },

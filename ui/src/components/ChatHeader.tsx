@@ -5,7 +5,7 @@ import { pokeUnsubscribe } from '../utils';
 
 const ChatHeader = () => {
 
-  const { serverStatus, bannedUsers } = useChatStore();
+  const { serverStatus, setServerStatus, bannedUsers } = useChatStore();
 
   const [time, setTime] = useState(new Date());
   useEffect(() => {
@@ -16,8 +16,6 @@ const ChatHeader = () => {
     return () => clearInterval(intervalId);
   }, []);
   const [isBanned, setIsBanned] = useState(false);
-
-  
 
   useEffect(() => {
     setIsBanned(bannedUsers.includes(window.our?.node));
@@ -55,6 +53,7 @@ const ChatHeader = () => {
             padding: "0px 2px",
           }}
           onClick={(e) => {
+              setServerStatus(null);
               pokeUnsubscribe();
             }
           }

@@ -10,6 +10,7 @@ export type ChatMessageHistory = Map<number, ChatMessage>;
 export type UserActivity = {
   name: string;
   time: number;
+  was_online_at_time: boolean;
 }
 
 export type ServerStatus = {
