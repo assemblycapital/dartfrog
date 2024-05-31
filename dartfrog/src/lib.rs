@@ -155,7 +155,6 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             }
 
             for node in to_remove {
-                state.server.chat_state.user_presence.remove(&node);
                 state.server.subscribers.retain(|address| address.node != node);
                 let _ = poke_node(node.clone(), UpdateFromServer::KickSubscriber);
             }
