@@ -12,7 +12,7 @@ const ChatInput = () => {
     async (event) => {
       event.preventDefault();
       if (!chatMessageInputText) return;
-  
+
       // Create a message object
       let text = maybeReplaceWithImage(chatMessageInputText);
       const data = {"ClientRequest": {"SendToServer": {"ChatMessage": text}}};
@@ -30,6 +30,7 @@ const ChatInput = () => {
           flexGrow: 1,
           fontFamily: 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
         }}
+        id="chat-input"
         value={chatMessageInputText}
         onChange={handleInputChange}
         onKeyDown={(event) => {
