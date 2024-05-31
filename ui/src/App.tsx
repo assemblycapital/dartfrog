@@ -12,7 +12,7 @@ import KinodeClientApi from "@kinode/client-api";
 function App() {
   const { serverStatus, setApi, handleWsMessage } = useChatStore();
 
-  const [ nodeConnected, setNodeConnected ] = useState(false);
+  const [nodeConnected, setNodeConnected] = useState(false);
   const reconnectIntervalRef = useRef(null);
 
   useEffect(() => {
@@ -55,7 +55,7 @@ function App() {
     } else {
       connectToKinode(); // Attempt to connect immediately on load
       if (!reconnectIntervalRef.current) {
-        reconnectIntervalRef.current = setInterval(connectToKinode, 5*1000);
+        reconnectIntervalRef.current = setInterval(connectToKinode, 5 * 1000);
       }
     }
 
@@ -90,6 +90,23 @@ function App() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
+  useEffect(() => {
+    // when the user presses a key a-z, focus #chat-input
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key.match(/[a-z]/i)) {
+        const chatInput = document.getElementById('chat-input');
+        if (chatInput) {
+          chatInput.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   return (
     <div style={{
@@ -97,7 +114,7 @@ function App() {
       display: "flex",
       flexDirection: "column",
       gap: "0.8rem",
-     }}>
+    }}>
 
       <ControlHeader nodeConnected={nodeConnected} />
 
@@ -111,12 +128,12 @@ function App() {
           }}
         >
           <button
-            onClick={() => {pokeSubscribe()}}
+            onClick={() => { pokeSubscribe() }}
           >
             connect to server
           </button>
         </div>
-      ) : ( 
+      ) : (
         <ServerBox />
       )}
 
