@@ -51,6 +51,7 @@ const ChatHeader = () => {
             opacity: "0.5",
             fontSize: "0.8rem",
             padding: "0px 2px",
+            cursor: "pointer",
           }}
           onClick={(e) => {
               setServerStatus(null);
@@ -63,7 +64,9 @@ const ChatHeader = () => {
         <span style={{
           // fontFamily:"monospace",
           flexGrow: 1,
-          fontSize: "0.7rem"
+          fontSize: "0.7rem",
+          cursor: "default",
+
           }}
         >
           {time.toLocaleString('en-US', {
@@ -84,7 +87,11 @@ const ChatHeader = () => {
           </div>
         }
 
-        <div>
+        <div
+          style={{
+            cursor: "default",
+          }}
+        >
           {'server'} {isConnected ? 'connected' : 'connecting...'}
         </div>
 

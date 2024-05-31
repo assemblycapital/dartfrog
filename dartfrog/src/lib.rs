@@ -95,6 +95,7 @@ enum ServerRequest {
     RequestChatState,
     Ban(String),
     UnBan(String),
+    WipeChatHistory,
 }
 #[derive(Debug, Serialize, Deserialize)]
 enum UpdateFromServer {
@@ -237,6 +238,13 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             state.server.chat_state.banned_users.remove(&user);
             send_server_updates(state, UpdateFromServer::ChatState(state.server.chat_state.clone()));
         }
+        ServerRequest::WipeChatHistory => {
+            if source.node != SERVER {
+                return Ok(());
+            }
+            state.server.chat_state.chat_history.clear();
+            send_server_updates(state, UpdateFromServer::ChatState(state.server.chat_state.clone()));
+        }
     }
     Ok(())
 }
@@ -354,7 +362,8 @@ fn parse_chat_command(input: &str) -> Option<ServerRequest> {
     } else if parts[0] == "/unban" {
         let who = parts[1].to_string();
         Some(ServerRequest::UnBan(who.clone()))
-
+    } else if parts[0] == "/wipe" {
+        Some(ServerRequest::WipeChatHistory)
     } else {
         None
     }

@@ -34,6 +34,7 @@ const ControlHeader = (nodeConnected) => {
               opacity: "0.5",
               fontSize: "0.8rem",
               padding: "0px 2px",
+              cursor: "pointer",
             }}
             >
             {muteSoundEffects ? 'unmute' : 'mute'}
@@ -42,7 +43,11 @@ const ControlHeader = (nodeConnected) => {
         </div>
 
         <div>
-          <span>
+          <span
+          style={{
+            cursor: "default",
+          }}
+          >
           {window.our.node} {' '} {nodeConnected ? 'connected': 'connecting...'}
           </span>
         </div>
