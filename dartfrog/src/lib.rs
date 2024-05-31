@@ -91,6 +91,7 @@ enum UpdateFromServer {
     ChatMessage(ChatMessage),
     ChatState(ChatState),
     SubscribeAck,
+    KickSubscriber,
     NewPresenceState(HashMap<String, u64>),
 }
 #[derive(Debug, Serialize, Deserialize)]
@@ -120,7 +121,6 @@ fn send_server_updates(state: &DartState, update: UpdateFromServer) {
 }
 
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
-    println!("server request: {:?}", req);
     let now = {
         let start = SystemTime::now();
         start.duration_since(UNIX_EPOCH).unwrap().as_secs() 
@@ -227,17 +227,20 @@ fn handle_server_update(our: &Address, state: &mut DartState, source: Address, r
                 send_ws_update(our, WsUpdate::NewChat(chat), &state.client.ws_channels).unwrap();
             }
             UpdateFromServer::SubscribeAck => {
-                // TODO
-                println!("got subscribe ack");
                 let now = {
                     let start = SystemTime::now();
                     start.duration_since(UNIX_EPOCH).unwrap().as_secs() 
                 };
                 server.connection = ConnectionStatus::Connected(now);
             }
+            UpdateFromServer::KickSubscriber => {
+                // TODO
+                state.client.server = None;
+            }
             UpdateFromServer::ChatState(chat_state)=> {
                 // TODO
-                println!("got chat state update, {:?}", chat_state);
+                // println!("got chat state update, {:?}", chat_state);
+                server.chat_state = chat_state.clone();
                 send_ws_update(our, WsUpdate::NewChatState(chat_state), &state.client.ws_channels).unwrap();
             }
             UpdateFromServer::NewPresenceState(presence)=> {
@@ -266,7 +269,7 @@ fn safe_trim_to_boundary(s: String, max_len: usize) -> String {
 }
 
 fn handle_client_request(our: &Address, state: &mut DartState, source: Address, req: ClientRequest) -> anyhow::Result<()> {
-    println!("client request: {:?}", req);
+    // println!("client request: {:?}", req);
     if source.node != *our.node {
         return Err(anyhow::anyhow!("invalid source: {:?}", source));
     }
@@ -335,39 +338,40 @@ fn handle_http_server_request(
         // Fail silently if we can't parse the request
         return Ok(());
     };
-    // println!("http server request {:?}", server_request);
 
     match server_request {
         HttpServerRequest::WebSocketOpen { channel_id, .. } => {
-            // println!("channel opened: {:?}", channel_id);
             state.client.ws_channels.insert(channel_id);
+            // send last chat state...
+            // if let Some(server) = &state.client.server {
+            //     let chat_state = server.chat_state.clone();
+            //     send_ws_update(our, WsUpdate::NewChatState(chat_state), &state.client.ws_channels).unwrap();
+            // }
         }
         HttpServerRequest::WebSocketPush { .. } => {
-            let Some(blob) = get_blob() else {
-                return Ok(());
-            };
+            // let Some(blob) = get_blob() else {
+            //     return Ok(());
+            // };
+            // take messages on POST request instead
         }
         HttpServerRequest::WebSocketClose(channel_id) => {
             state.client.ws_channels.remove(&channel_id);
         }
         HttpServerRequest::Http(request) => {
-            // TODO check url /api
             let request_type = request.method()?;
             let request_type_str = request_type.as_str();
             if request_type_str != "POST" {
                 return Ok(());
             }
-            // Get all messages
+
             let Some(blob) = get_blob() else {
                 return Ok(());
             };
-            // let Ok(client_request) = serde_json::from_slice::<ClientRequest>(body) else {
             let Ok(s) = String::from_utf8(blob.bytes) else {
                 return Ok(());
             };
             match serde_json::from_str(&s)? {
                 DartMessage::ClientRequest(c_req) => {
-                    println!("http client request: {:?}", c_req);
 
                     let mut headers = HashMap::new();
                     headers.insert("Content-Type".to_string(), "application/json".to_string());
@@ -385,10 +389,9 @@ fn handle_http_server_request(
                         .send()
                         .unwrap();
                 }
-                // couldn't parse PUT json
+                // couldn't parse json
                 _ => { }
             }
-
         }
     };
 
@@ -434,8 +437,8 @@ fn send_ws_update(
 ) -> anyhow::Result<()> {
 
     for channel in open_channels {
-          // Generate a blob for the new message
-          let blob = LazyLoadBlob {
+        // Generate a blob for the new message
+        let blob = LazyLoadBlob {
             mime: Some("application/json".to_string()),
             bytes: serde_json::json!({
                 "WsUpdate": update
@@ -551,7 +554,7 @@ fn set_new_server(state: &mut DartState, server: &Address) -> anyhow::Result<()>
 fn subscribe_to_server(state: &mut DartState, server: &Address) -> anyhow::Result<()> {
     if let Some(state_server) = &mut state.client.server {
         if state_server.address != *server {
-            // TODO unsubscribe from old
+            poke_server(state, ServerRequest::Unsubscribe)?;
             set_new_server(state, server)?;
         }
     } else {

@@ -71,6 +71,9 @@ const useChatStore = create<ChatStore>()(
                 msg: msg['msg']
               }
               maybePlaySoundEffect(chat.msg, muteSoundEffects);
+
+              chat.msg = maybeReplaceWithImage(chat.msg);
+
               addMessage(chat);
             } else if (upd["NewChatState"]){
               let cs = upd["NewChatState"];
@@ -111,6 +114,24 @@ const soundEffectCommands = {
   '/why': 'assets/why.mp3',
 }
 
+const imageCommands = {
+  '/die': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/die.webp',
+  '/kino': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/kino.webp',
+  '/panda': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/panda.jpeg',
+  '/dev': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/dev.jpeg',
+  '/tiger': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/tiger.jpeg',
+  '/wow': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/wow.jpeg',
+  '/cry': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/cry.jpeg',
+  '/ok': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/ok.jpeg',
+  '/oops': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/oops.jpeg',
+}
+
+const maybeReplaceWithImage = (msg: string) => {
+  if (msg in imageCommands) {
+      return imageCommands[msg];
+  }
+  return msg
+}
 const maybePlaySoundEffect = (msg: string, muteSoundEffects: boolean) => {
   if (muteSoundEffects) {
     return;
