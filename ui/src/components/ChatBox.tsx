@@ -48,7 +48,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chats }) => {
   const scrollDownChat = useCallback(
     async () => {
       if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: 'nearest', inline: 'start' });
       }
     },
     [messagesEndRef, chatMessageList]

@@ -106,6 +106,9 @@ const useChatStore = create<ChatStore>()(
 
 const soundEffectCommands = {
   '/fart': 'assets/wet.mp3',
+  '/no': 'assets/hell-naw-dog.mp3',
+  '/yes': 'assets/oh-yes.mp3',
+  '/why': 'assets/why.mp3',
 }
 
 const maybePlaySoundEffect = (msg: string, muteSoundEffects: boolean) => {
