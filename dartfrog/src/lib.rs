@@ -21,11 +21,18 @@ wit_bindgen::generate!({
 });
 
 #[derive(Debug, Serialize, Deserialize)]
+struct ServerStatus {
+    pub server_node: String,
+    pub status: ConnectionStatus,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 enum WsUpdate{
     // TODO maybe we can just use the UpdateFromServer struct
     NewChat(ChatMessage),
     NewChatState(ChatState),
     NewPresenceState(HashMap<String, u64>),
+    ServerStatus(ServerStatus),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -40,6 +47,7 @@ struct ChatMessage {
 enum ConnectionStatus {
     Connecting(u64), // time when we started connecting
     Connected(u64), // last time heard
+    Disconnected,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -135,7 +143,6 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             }
         }
         ServerRequest::ChatMessage(msg) => {
-            
             if(state.server.chat_state.banned_users.contains(&source.node)) {
                 return Ok(());
             }
@@ -224,7 +231,7 @@ fn handle_server_update(our: &Address, state: &mut DartState, source: Address, r
         }
         match req {
             UpdateFromServer::ChatMessage(chat)=> {
-                send_ws_update(our, WsUpdate::NewChat(chat), &state.client.ws_channels).unwrap();
+                send_ws_update(WsUpdate::NewChat(chat), &state.client.ws_channels).unwrap();
             }
             UpdateFromServer::SubscribeAck => {
                 let now = {
@@ -232,6 +239,10 @@ fn handle_server_update(our: &Address, state: &mut DartState, source: Address, r
                     start.duration_since(UNIX_EPOCH).unwrap().as_secs() 
                 };
                 server.connection = ConnectionStatus::Connected(now);
+                send_ws_update(WsUpdate::ServerStatus(ServerStatus {
+                    server_node: server.address.node.to_string(),
+                    status: ConnectionStatus::Connected(now),
+                }), &state.client.ws_channels).unwrap();
             }
             UpdateFromServer::KickSubscriber => {
                 // TODO
@@ -241,11 +252,11 @@ fn handle_server_update(our: &Address, state: &mut DartState, source: Address, r
                 // TODO
                 // println!("got chat state update, {:?}", chat_state);
                 server.chat_state = chat_state.clone();
-                send_ws_update(our, WsUpdate::NewChatState(chat_state), &state.client.ws_channels).unwrap();
+                send_ws_update(WsUpdate::NewChatState(chat_state), &state.client.ws_channels).unwrap();
             }
             UpdateFromServer::NewPresenceState(presence)=> {
                 // TODO
-                send_ws_update(our, WsUpdate::NewPresenceState(presence), &state.client.ws_channels).unwrap();
+                send_ws_update(WsUpdate::NewPresenceState(presence), &state.client.ws_channels).unwrap();
             }
         }
         Ok(())
@@ -299,10 +310,18 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
         }
         ClientRequest::SetServer(mad) => {
             if let Some(add) = mad {
-                // TODO possibly disconnect
                 subscribe_to_server(state, &add)?;
             } else {
-                // TODO possibly disconnect
+                poke_server(state, ServerRequest::Unsubscribe)?;
+                let server = &mut state.client.server;
+                if let Some(server) = server {
+                    let update = WsUpdate::ServerStatus(ServerStatus {
+                        server_node: server.address.node.to_string(),
+                        status: ConnectionStatus::Disconnected,
+                    });
+                    let _ = send_ws_update(update, &state.client.ws_channels);
+                }
+                state.client.server = None;
             }
         }
     }
@@ -413,6 +432,10 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
 
         match serde_json::from_slice(body)? {
             DartMessage::ServerRequest(s_req) => {
+                if our.node != SERVER {
+                    // disable user processes acting as servers
+                    return Ok(());
+                }
                 handle_server_request(our, state, source.clone(), s_req)?;
             }
             DartMessage::ClientRequest(c_req) => {
@@ -431,7 +454,6 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
 
 }
 fn send_ws_update(
-    our: &Address,
     update: WsUpdate,
     open_channels: &HashSet<u32>,
 ) -> anyhow::Result<()> {
@@ -465,6 +487,7 @@ fn get_server_address(node_id: &str) -> String {
 }
 call_init!(init);
 fn init(our: Address) {
+    println!("initializing dartfrog");
     
     // Serve the index.html and other UI files found in pkg/ui at the root path.
     http::serve_ui(&our, "ui", true, false, vec!["/"]).unwrap();
@@ -509,7 +532,6 @@ fn init(our: Address) {
         },
     };
 
-    println!("hello dartfrog");
     // subscribe to SERVER
     let _ = subscribe_to_server(&mut state, &server);
 
@@ -538,9 +560,13 @@ fn poke_server(state: &DartState, req: ServerRequest) -> anyhow::Result<()> {
 }
 
 fn set_new_server(state: &mut DartState, server: &Address) -> anyhow::Result<()> {
+    let now = {
+        let start = SystemTime::now();
+        start.duration_since(UNIX_EPOCH).unwrap().as_secs() 
+    };
     state.client.server = Some(SyncServerState {
                 address: server.clone(),
-                connection: ConnectionStatus::Connecting(0),
+                connection: ConnectionStatus::Connecting(now),
                 chat_state: ChatState {
                     latest_chat_msg_id: 0,
                     chat_history: Vec::new(),
@@ -548,6 +574,11 @@ fn set_new_server(state: &mut DartState, server: &Address) -> anyhow::Result<()>
                     banned_users: HashSet::new(),
                 },
             });
+    println!("sending connecting status");
+    send_ws_update(WsUpdate::ServerStatus(ServerStatus {
+        server_node: server.node.to_string(),
+        status: ConnectionStatus::Connecting(now),
+    }), &state.client.ws_channels).unwrap();
     Ok(())
 }
 

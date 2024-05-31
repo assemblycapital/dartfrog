@@ -26,6 +26,11 @@ export const sendPoke =  async (data) => {
     
   }
 
+export const pokeUnsubscribe = () => {
+    const data = {"ClientRequest": {"SetServer": null}};
+    sendPoke(data);
+  }
+
 export const pokeSubscribe = () => {
     const data = {"ClientRequest": {"SetServer": "fake.dev@dartfrog:dartfrog:template.os"}};
     sendPoke(data);

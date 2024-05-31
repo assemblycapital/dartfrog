@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { ChatMessage, UserActivity } from '../types/types'
+import { ChatMessage, ConnectionStatusType, ServerStatus, UserActivity } from '../types/types'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import KinodeClientApi from "@kinode/client-api";
 
@@ -15,6 +15,8 @@ export interface ChatStore {
   setBannedUsers: (banned: Array<String>) => void
   muteSoundEffects: boolean
   setMuteSoundEffects: (mute: boolean) => void
+  serverStatus: ServerStatus | null,
+  setServerStatus: (status: ServerStatus) => void
   api: KinodeClientApi | null,
   setApi: (api: KinodeClientApi) => void
   handleWsMessage: (json: string | Blob) => void
@@ -47,12 +49,14 @@ const useChatStore = create<ChatStore>()(
       setBannedUsers: (banned: Array<String>) => set({ bannedUsers: banned }),
       muteSoundEffects: false,
       setMuteSoundEffects: (mute: boolean) => set({ muteSoundEffects: mute }),
+      serverStatus: null,
+      setServerStatus: (status: ServerStatus) => set({ serverStatus: status }),
       api: null,
       setApi: (api) => set({ api }),
       handleWsMessage: (json: string | Blob) => {
         // This function will be called when the websocket receives a message.
         // Right now you only care about progress messages, but you could add more types of messages here.
-        const { muteSoundEffects, setChats, addMessage, setUserActivity, setBannedUsers} = get()
+        const { muteSoundEffects, setChats, addMessage, setUserActivity, setBannedUsers, setServerStatus} = get()
         if (typeof json === 'string') {
           try {
             const data = JSON.parse(json);
@@ -87,6 +91,26 @@ const useChatStore = create<ChatStore>()(
               let activity: UserActivity[] =
                 Object.entries(up).map(([key, value]) => ({ name: key, time: value as number}));
               setUserActivity(activity);
+            } else if (upd["ServerStatus"]) {
+              let raw = upd["ServerStatus"];
+              let status = raw['status'];
+              let connection;
+              if (status['Connected']) {
+                connection = { type: ConnectionStatusType.Connected, timestamp: status['Connected']}
+              }
+              else if (status['Connecting']) {
+                connection = { type: ConnectionStatusType.Connecting, timestamp: status['Connecting']}
+              }
+              else if (status == 'Disconnected') {
+                connection = { type: ConnectionStatusType.Disconnected }
+              } 
+
+              let server_status: ServerStatus = {
+                name: raw['server_node'],
+                connection: connection
+              }
+              setServerStatus(server_status);
+              
             } else {
               console.log('Unknown message type', upd)
             }
