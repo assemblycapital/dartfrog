@@ -12,9 +12,9 @@ const ChatInput = () => {
     async (event) => {
       event.preventDefault();
       if (!chatMessageInputText) return;
-  
+
       // Create a message object
-      const data = {"ClientRequest": {"SendToServer": {"ChatMessage": chatMessageInputText}}};
+      const data = { "ClientRequest": { "SendToServer": { "ChatMessage": chatMessageInputText } } };
       sendPoke(data);
       setChatMessageInputText("");
     },
@@ -29,6 +29,7 @@ const ChatInput = () => {
           flexGrow: 1,
           fontFamily: 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
         }}
+        id="chat-input"
         value={chatMessageInputText}
         onChange={handleInputChange}
         onKeyDown={(event) => {
