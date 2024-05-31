@@ -1,14 +1,14 @@
 {
     "name": "dartfrog",
     "description": "realtime chat",
-    "image": "https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/dartfrog.jpeg",
+    "image": "https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/dartfrog256_nobg.png",
     "properties": {
         "package_name": "dartfrog",
         "current_version": "0.1.0",
-        "publisher": "template.os",
-        "mirrors": [],
+        "publisher": "herobrine.os",
+        "mirrors": ["waterhouse.os"],
         "code_hashes": {
-            "0.1.0": ""
+            "0.1.0": "f8c52f2fde40ca80c907bced194cc1749f67d872f67521f6cbed84962b7eb6c2"
         }
     },
     "external_url": "",

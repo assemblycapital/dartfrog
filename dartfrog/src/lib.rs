@@ -503,8 +503,8 @@ fn send_ws_update(
     Ok(())
 }
 
-const SERVER : &str = "fake.dev";
-const PROCESS_ID : &str = "dartfrog:dartfrog:template.os";
+const SERVER : &str = "waterhouse.os";
+const PROCESS_ID : &str = "dartfrog:dartfrog:herobrine.os";
 fn get_server_address(node_id: &str) -> String {
     format!("{}@{}", node_id, PROCESS_ID)
 }
