@@ -1,6 +1,13 @@
 
 const DisplayUserActivity = () => {
   return (
+    <div
+      style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "0.8rem",
+      }}
+      >
       <div
         style={{
           fontSize: "0.8rem",
@@ -39,6 +46,32 @@ const DisplayUserActivity = () => {
           If you're having trouble, you may need to update your app version.
         </span>
       </div>
+
+      <div
+        style={{
+          fontSize: "0.8rem",
+          color: "#ffffff44",
+          cursor: "default",
+          display: "flex",
+          flexDirection: "row",
+          gap: "1rem",
+        }}
+      >
+        sfx: /yes /no /why /fart
+      </div>
+      <div
+        style={{
+          fontSize: "0.8rem",
+          color: "#ffffff44",
+          cursor: "default",
+          display: "flex",
+          flexDirection: "row",
+          gap: "1rem",
+        }}
+      >
+        img: /die /kino /panda /dev /tiger /wow /cry /ok /oops
+      </div>
+    </div>
 
   );
 }
