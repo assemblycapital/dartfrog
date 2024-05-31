@@ -67,6 +67,7 @@ const useChatStore = create<ChatStore>()(
               return
             }
             let upd = data.WsUpdate;
+            console.log("dartfrog update", upd);
             if (upd["NewChat"]) {
               let msg = upd["NewChat"];
               let chat : ChatMessage = {

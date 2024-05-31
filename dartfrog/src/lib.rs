@@ -1,6 +1,4 @@
-use kinode_process_lib::eth::U256;
 use serde::{Deserialize, Serialize};
-use std::char::MAX;
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -28,7 +26,6 @@ struct ServerStatus {
 
 #[derive(Debug, Serialize, Deserialize)]
 enum WsUpdate{
-    // TODO maybe we can just use the UpdateFromServer struct
     NewChat(ChatMessage),
     NewChatState(ChatState),
     NewPresenceState(HashMap<String, Presence>),
@@ -134,7 +131,7 @@ fn send_server_updates(state: &DartState, update: UpdateFromServer) {
 }
 
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
-    println!("server request: {:?}", req);
+    // println!("server request: {:?}", req);
     let now = {
         let start = SystemTime::now();
         start.duration_since(UNIX_EPOCH).unwrap().as_secs() 
@@ -143,12 +140,12 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
         ServerRequest::PresenceHeartbeat => {
             state.server.chat_state.user_presence.insert(source.node.clone(), Presence{time:now, was_online_at_time: true});
             // if last sent presence is more than 2 minutes ago, send new presence state
-            if (now - state.server.last_sent_presence) > 120 {
+            if (now - state.server.last_sent_presence) > 2*60 {
                 send_server_updates(state, UpdateFromServer::NewPresenceState(state.server.chat_state.user_presence.clone()));
                 state.server.last_sent_presence = now;
             }
             // if any user has been offline for more than 5 minutes, kick and remove from subscribers
-            let offline_duration = 60; // 5 minutes in seconds
+            let offline_duration = 5*60; // 5 minutes in seconds
             let mut to_remove = Vec::new();
             for (node, presence) in state.server.chat_state.user_presence.iter() {
                 if (now - presence.time) > offline_duration {
@@ -245,7 +242,6 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
 }
 
 fn handle_server_update(our: &Address, state: &mut DartState, source: Address, req: UpdateFromServer) -> anyhow::Result<()> {
-    println!("server update: {:?}", req);
     if let Some(server) = &mut state.client.server {
         if source != server.address {
             return Ok(());
@@ -299,7 +295,7 @@ fn safe_trim_to_boundary(s: String, max_len: usize) -> String {
 }
 
 fn handle_client_request(our: &Address, state: &mut DartState, source: Address, req: ClientRequest) -> anyhow::Result<()> {
-    println!("client request: {:?}", req);
+    // println!("client request: {:?}", req);
     if source.node != *our.node {
         return Err(anyhow::anyhow!("invalid source: {:?}", source));
     }
@@ -356,7 +352,6 @@ fn parse_chat_command(input: &str) -> Option<ServerRequest> {
         let who = parts[1].to_string();
         Some(ServerRequest::Ban(who.clone()))
     } else if parts[0] == "/unban" {
-        println!("unban");
         let who = parts[1].to_string();
         Some(ServerRequest::UnBan(who.clone()))
 
@@ -380,7 +375,7 @@ fn handle_http_server_request(
     match server_request {
         HttpServerRequest::WebSocketOpen { channel_id, .. } => {
             state.client.ws_channels.insert(channel_id);
-            // send last chat state...
+            // send last chat state if available?
             // if let Some(server) = &state.client.server {
             //     let chat_state = server.chat_state.clone();
             //     send_ws_update(our, WsUpdate::NewChatState(chat_state), &state.client.ws_channels).unwrap();
@@ -603,7 +598,6 @@ fn set_new_server(state: &mut DartState, server: &Address) -> anyhow::Result<()>
                     banned_users: HashSet::new(),
                 },
             });
-    println!("sending connecting status");
     send_ws_update(WsUpdate::ServerStatus(ServerStatus {
         server_node: server.node.to_string(),
         status: ConnectionStatus::Connecting(now),
@@ -622,7 +616,7 @@ fn subscribe_to_server(state: &mut DartState, server: &Address) -> anyhow::Resul
     }
     
     let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::ServerRequest(ServerRequest::Subscribe)).unwrap();
-    // TODO await response and retry?
+    // await response and retry?
     Request::new()
         .target(server)
         .body(send_body)

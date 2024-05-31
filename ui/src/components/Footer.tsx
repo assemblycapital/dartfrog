@@ -1,6 +1,3 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import useChatStore from '../store/chat';
-import { computeColorForName, pokeHeartbeat } from '../utils';
 
 const DisplayUserActivity = () => {
   return (

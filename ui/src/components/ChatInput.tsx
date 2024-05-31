@@ -1,5 +1,4 @@
 import React, { useCallback, useState } from 'react';
-import useChatStore from '../store/chat';
 import { sendPoke } from '../utils';
 
 const ChatInput = () => {

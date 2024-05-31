@@ -40,9 +40,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chats }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       scrollDownChat();
-    }, 100); // Adjust the delay as needed
+    }, 100);
 
-    return () => clearTimeout(timer); // Clean up the timer on component unmount
+    return () => clearTimeout(timer);
   }, []);
 
   const scrollDownChat = useCallback(

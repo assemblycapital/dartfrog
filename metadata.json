@@ -1,6 +1,6 @@
 {
     "name": "dartfrog",
-    "description": "mvp kinode social",
+    "description": "realtime chat",
     "image": "https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/dartfrog.jpeg",
     "properties": {
         "package_name": "dartfrog",

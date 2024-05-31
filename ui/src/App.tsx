@@ -1,21 +1,16 @@
 import "./App.css";
-import DisplayUserActivity from "./components/DisplayUserActivity";
 import useChatStore from "./store/chat";
 
-import ChatBox from "./components/ChatBox";
 import Footer from "./components/Footer";
 import ControlHeader from "./components/ControlHeader";
-import ChatHeader from "./components/ChatHeader";
 import { useEffect, useRef, useState } from "react";
 import { ConnectionStatusType } from "./types/types";
 import ServerBox from "./components/ServerBox";
 import { WEBSOCKET_URL, pokeSubscribe, pokeUnsubscribe } from './utils';
 import KinodeClientApi from "@kinode/client-api";
-import Spinner from "./components/Spinner";
 
 function App() {
-  const { chats, serverStatus, setApi, handleWsMessage } = useChatStore();
-
+  const { serverStatus, setApi, handleWsMessage } = useChatStore();
 
   const [ nodeConnected, setNodeConnected ] = useState(false);
   const reconnectIntervalRef = useRef(null);
