@@ -13,6 +13,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+a.home-link {
+  color: #ffffff33;
+}
+a.home-link:hover {
+  color: #ffffff55;
+}
 a {
   color: #646cff;
   text-decoration: inherit;

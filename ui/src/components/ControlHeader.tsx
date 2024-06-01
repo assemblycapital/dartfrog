@@ -23,6 +23,20 @@ const ControlHeader = (nodeConnected) => {
             flexGrow: 1,
           }}
         >
+          <a href="/"
+            className='home-link'
+            style={{
+              cursor: "pointer",
+              textDecoration:"underline"
+            }}
+          >
+            <div>
+                <span
+                >
+                home
+                </span>
+            </div>
+          </a>
           <button onClick={() => {
               if(muteSoundEffects) {
                 setMuteSoundEffects(false);

@@ -78,18 +78,19 @@ function App() {
     }
 
   }, [serverStatus]);
+
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
       pokeUnsubscribe();
     };
-
+  
     window.addEventListener('beforeunload', handleBeforeUnload);
-
+  
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
+  
   useEffect(() => {
     // when the user presses a key a-z, focus #chat-input
     const handleKeyDown = (event: KeyboardEvent) => {

@@ -142,6 +142,7 @@ const soundEffectCommands = {
   '/no': 'assets/hell-naw-dog.mp3',
   '/yes': 'assets/oh-yes.mp3',
   '/why': 'assets/why.mp3',
+  '/people': 'assets/the-people.mp3',
 }
 
 
