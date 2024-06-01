@@ -384,10 +384,10 @@ fn handle_http_server_request(
         HttpServerRequest::WebSocketOpen { channel_id, .. } => {
             state.client.ws_channels.insert(channel_id);
             // send last chat state if available?
-            // if let Some(server) = &state.client.server {
-            //     let chat_state = server.chat_state.clone();
-            //     send_ws_update(our, WsUpdate::NewChatState(chat_state), &state.client.ws_channels).unwrap();
-            // }
+            if let Some(server) = &state.client.server {
+                let chat_state = server.chat_state.clone();
+                send_ws_update(WsUpdate::NewChatState(chat_state), &state.client.ws_channels).unwrap();
+            }
         }
         HttpServerRequest::WebSocketPush { .. } => {
             // let Some(blob) = get_blob() else {
@@ -527,6 +527,7 @@ fn init(our: Address) {
                     "label": "dartfrog",
                     "icon": constants::HOMEPAGE_IMAGE,
                     "path": "/",
+                    "widget": get_widget(),
                 }
             })
             .to_string()
@@ -632,4 +633,129 @@ fn subscribe_to_server(state: &mut DartState, server: &Address) -> anyhow::Resul
         .unwrap();
     
     Ok(())
+}
+
+fn get_widget() -> String {
+    return r#"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fart Dog</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body { 
+            margin: 0;
+            height: 100vh;
+            max-height: 100vh;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            font-size: x-small;
+        }
+        input {
+            border: none;
+            background-color: #FFFFFF11;
+            border-radius: 4px;
+            color: white;
+            align-self: stretch;
+            margin-top: 0.5rem;
+        }
+        #chat-container {
+            padding: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: brightness(1.25);
+            border-radius: 0.75rem;
+            gap: 0.25em;
+            align-items: stretch;
+            flex-grow: 1;
+            margin: 0;
+            overflow-y: auto;
+        }
+        .message {
+            margin: 0;
+            display: flex;
+            align-items: flex-end;
+        }
+        .message .from {
+            font-weight: bold;
+            max-width: 33%;
+        }
+        .message .message-content {
+            margin-left: 8px;
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container"></div>
+    <input 
+        type="text" 
+        id="chat-input" 
+        autocomplete="off"
+    />
+    <script>
+        const scrollToBottom = function() {
+            const chatContainer = document.getElementById('chat-container');
+            if (chatContainer) {
+                chatContainer.scrollTop = 99999;
+            }
+        }
+        const appendMessage = function(msg) {
+            const node = document.createElement("div");
+            node.classList += 'message'
+            node.innerHTML = `
+                <span class="from">${msg.from}:</span>
+                <span class="message-content">${msg.msg}</span>
+            `;
+            document.getElementById("chat-container").appendChild(node);
+            scrollToBottom();
+        }
+        const ws = new WebSocket(`ws://${parent.location.host}/dartfrog:dartfrog:herobrine.os`);
+        ws.onmessage = function(event) { 
+            const data = JSON.parse(event.data);
+            if (data.WsUpdate) {
+                if (data.WsUpdate.NewChat) { 
+                    const msg = data.WsUpdate.NewChat;
+                    appendMessage(msg);
+                } else if (data.WsUpdate.NewChatState) {
+                    if (Array.isArray(data.WsUpdate.NewChatState.chat_history)) {
+                        for (let msg of data.WsUpdate.NewChatState.chat_history) {
+                            appendMessage(msg)
+                        }
+                    }
+                } else {
+                    console.log({ dartfrogData: data });
+                }
+            }
+        }
+
+        document.getElementById('chat-input').addEventListener('keyup', async function(event) {
+            if (event.key === 'Enter') {
+                const data = { "ClientRequest": { "SendToServer": { "ChatMessage": this.value } } };
+                try {
+                    const result = await fetch(`${parent.location.href}dartfrog:dartfrog:herobrine.os/api`, {
+                        method: "POST",
+                        body: JSON.stringify(data),
+                    });
+
+                    if (!result.ok) throw new Error("HTTP request failed");
+                    else {
+                        this.value = ''; // Clear input after sending
+                        scrollToBottom();
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+         });
+    </script>
+</body>
+</html>
+"#.to_string();
 }
