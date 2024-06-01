@@ -4,11 +4,12 @@
     "image": "https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/dartfrog256_nobg.png",
     "properties": {
         "package_name": "dartfrog",
-        "current_version": "0.1.0",
+        "current_version": "0.1.1",
         "publisher": "herobrine.os",
         "mirrors": ["waterhouse.os"],
         "code_hashes": {
-            "0.1.0": "f8c52f2fde40ca80c907bced194cc1749f67d872f67521f6cbed84962b7eb6c2"
+            "0.1.0": "f8c52f2fde40ca80c907bced194cc1749f67d872f67521f6cbed84962b7eb6c2",
+            "0.1.1": "118ca1c59993a86f01f96953bb38a1afe24ce8c43157867d321d7ad09639d3a3"
         }
     },
     "external_url": "",
