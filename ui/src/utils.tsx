@@ -43,8 +43,6 @@ export const pokeHeartbeat = () => {
     sendPoke(data);
   }
 
-
-
 export function computeColorForName(name: string): string {
   let hash: number = Math.abs(simpleHash(name));
   let color: string;

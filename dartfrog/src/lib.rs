@@ -5,7 +5,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 mod constants;
 use kinode_process_lib::{http, await_message, call_init, println, Address, Request,
-    get_blob,
+    get_blob, get_typed_state, set_state,
     LazyLoadBlob,
     http::{
         send_response, send_ws_push, HttpServerRequest,
@@ -158,6 +158,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                 state.server.subscribers.retain(|address| address.node != node);
                 let _ = poke_node(node.clone(), UpdateFromServer::KickSubscriber);
             }
+            save_chat_state(&state.server.chat_state);
         }
         ServerRequest::ChatMessage(msg) => {
             if(state.server.chat_state.banned_users.contains(&source.node)) {
@@ -180,6 +181,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
 
             send_server_updates(state, UpdateFromServer::ChatMessage(chat_msg.clone()));
             state.server.chat_state.user_presence.insert(source.node.clone(), Presence{time:now, was_online_at_time: true});
+            save_chat_state(&state.server.chat_state);
         }
         ServerRequest::RequestChatState => {
             let send_body : Vec<u8> = 
@@ -229,6 +231,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             }
             state.server.chat_state.banned_users.insert(user);
             send_server_updates(state, UpdateFromServer::ChatState(state.server.chat_state.clone()));
+            save_chat_state(&state.server.chat_state);
         }
         ServerRequest::UnBan(user) => {
             if source.node != SERVER {
@@ -236,6 +239,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             }
             state.server.chat_state.banned_users.remove(&user);
             send_server_updates(state, UpdateFromServer::ChatState(state.server.chat_state.clone()));
+            save_chat_state(&state.server.chat_state);
         }
         ServerRequest::WipeChatHistory => {
             if source.node != SERVER {
@@ -243,6 +247,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             }
             state.server.chat_state.chat_history.clear();
             send_server_updates(state, UpdateFromServer::ChatState(state.server.chat_state.clone()));
+            save_chat_state(&state.server.chat_state);
         }
     }
     Ok(())
@@ -507,6 +512,48 @@ const PROCESS_ID : &str = "dartfrog:dartfrog:herobrine.os";
 fn get_server_address(node_id: &str) -> String {
     format!("{}@{}", node_id, PROCESS_ID)
 }
+
+fn save_chat_state(state: &ChatState) {
+    set_state(&bincode::serialize(&state).unwrap());
+}
+
+fn load_chat_state() -> ChatState {
+    match get_typed_state(|bytes| Ok(bincode::deserialize::<ChatState>(bytes)?)) {
+        Some(state) => state,
+        None => new_chat_state(),
+    }
+}
+
+fn new_client_state() -> ClientState {
+    ClientState {
+        server: None,
+        ws_channels: HashSet::new(),
+    }
+}
+
+fn new_chat_state() -> ChatState {
+    ChatState {
+        latest_chat_msg_id: 0,
+        chat_history: Vec::new(),
+        user_presence: HashMap::new(),
+        banned_users: HashSet::new(),
+    }
+}
+fn new_server_state() -> ServerState {
+    ServerState {
+        chat_state: new_chat_state(),
+        subscribers: HashSet::new(),
+        last_sent_presence: 0,
+    }
+}
+
+fn new_dart_state() -> DartState {
+    DartState {
+        client: new_client_state(),
+        server: new_server_state()
+    }
+}
+
 call_init!(init);
 fn init(our: Address) {
     println!("initializing dartfrog");
@@ -538,22 +585,8 @@ fn init(our: Address) {
         .unwrap();
 
     let server = Address::from_str(&get_server_address(SERVER)).unwrap();
-    let mut state = DartState {
-        client: ClientState {
-            server: None,
-            ws_channels: HashSet::new(),
-        },
-        server: ServerState {
-            chat_state: ChatState {
-                latest_chat_msg_id: 0,
-                chat_history: Vec::new(),
-                user_presence: HashMap::new(),
-                banned_users: HashSet::new(),
-            },
-            subscribers: HashSet::new(),
-            last_sent_presence: 0,
-        },
-    };
+    let mut state = new_dart_state();
+    state.server.chat_state = load_chat_state();
 
     // subscribe to SERVER
     let _ = subscribe_to_server(&mut state, &server);
