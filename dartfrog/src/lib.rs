@@ -222,10 +222,10 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             send_server_updates(state, UpdateFromServer::NewPresenceState(state.server.chat_state.user_presence.clone()));
         }
         ServerRequest::Ban(user) => {
-            if source.node != SERVER {
+            if source.node != SERVER_NODE {
                 return Ok(());
             }
-            if user == SERVER {
+            if user == SERVER_NODE {
                 // don't ban yourself
                 return Ok(());
             }
@@ -234,7 +234,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             save_chat_state(&state.server.chat_state);
         }
         ServerRequest::UnBan(user) => {
-            if source.node != SERVER {
+            if source.node != SERVER_NODE {
                 return Ok(());
             }
             state.server.chat_state.banned_users.remove(&user);
@@ -242,7 +242,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             save_chat_state(&state.server.chat_state);
         }
         ServerRequest::WipeChatHistory => {
-            if source.node != SERVER {
+            if source.node != SERVER_NODE {
                 return Ok(());
             }
             state.server.chat_state.chat_history.clear();
@@ -336,6 +336,7 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
             }
         }
         ClientRequest::SetServer(mad) => {
+            println!("got set server request {:?}", mad);
             if let Some(add) = mad {
                 subscribe_to_server(state, &add)?;
             } else {
@@ -459,7 +460,7 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
 
         match serde_json::from_slice(body)? {
             DartMessage::ServerRequest(s_req) => {
-                if our.node != SERVER {
+                if our.node != SERVER_NODE {
                     // disable user processes acting as servers
                     return Ok(());
                 }
@@ -507,10 +508,11 @@ fn send_ws_update(
     Ok(())
 }
 
-const SERVER : &str = "waterhouse.os";
-const PROCESS_ID : &str = "dartfrog:dartfrog:herobrine.os";
+const IS_FAKE: bool = !cfg!(feature = "prod");
+const SERVER_NODE: &str = if IS_FAKE { "fake.dev" } else { "waterhouse.os" };
+const PROCESS_NAME : &str = "dartfrog:dartfrog:herobrine.os";
 fn get_server_address(node_id: &str) -> String {
-    format!("{}@{}", node_id, PROCESS_ID)
+    format!("{}@{}", node_id, PROCESS_NAME)
 }
 
 fn save_chat_state(state: &ChatState) {
@@ -584,7 +586,7 @@ fn init(our: Address) {
         .send()
         .unwrap();
 
-    let server = Address::from_str(&get_server_address(SERVER)).unwrap();
+    let server = Address::from_str(&get_server_address(SERVER_NODE)).unwrap();
     let mut state = new_dart_state();
     state.server.chat_state = load_chat_state();
 
@@ -633,13 +635,8 @@ fn set_new_server(state: &mut DartState, server: &Address) -> anyhow::Result<()>
     state.client.server = Some(SyncServerState {
                 address: server.clone(),
                 connection: ConnectionStatus::Connecting(now),
-                chat_state: ChatState {
-                    latest_chat_msg_id: 0,
-                    chat_history: Vec::new(),
-                    user_presence: HashMap::new(),
-                    banned_users: HashSet::new(),
-                },
-            });
+                chat_state: new_chat_state(),
+                });
     send_ws_update(WsUpdate::ServerStatus(ServerStatus {
         server_node: server.node.to_string(),
         status: ConnectionStatus::Connecting(now),
@@ -669,7 +666,7 @@ fn subscribe_to_server(state: &mut DartState, server: &Address) -> anyhow::Resul
 }
 
 fn get_widget() -> String {
-    return r#"
+    return format!(r#"
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -677,10 +674,10 @@ fn get_widget() -> String {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fart Dog</title>
     <style>
-        * {
+        * {{
             box-sizing: border-box;
-        }
-        body { 
+        }}
+        body {{
             margin: 0;
             height: 100vh;
             max-height: 100vh;
@@ -689,16 +686,16 @@ fn get_widget() -> String {
             display: flex;
             flex-direction: column;
             font-size: x-small;
-        }
-        input {
+        }}
+        input {{
             border: none;
             background-color: #FFFFFF11;
             border-radius: 4px;
             color: white;
             align-self: stretch;
             margin-top: 0.5rem;
-        }
-        #chat-container {
+        }}
+        #chat-container {{
             padding: 0.5rem;
             display: flex;
             flex-direction: column;
@@ -709,20 +706,20 @@ fn get_widget() -> String {
             flex-grow: 1;
             margin: 0;
             overflow-y: auto;
-        }
-        .message {
+        }}
+        .message {{
             margin: 0;
             display: flex;
             align-items: flex-end;
-        }
-        .message .from {
+        }}
+        .message .from {{
             font-weight: bold;
             max-width: 33%;
-        }
-        .message .message-content {
+        }}
+        .message .message-content {{
             margin-left: 8px;
             flex-grow: 1;
-        }
+        }}
     </style>
 </head>
 <body>
@@ -733,62 +730,77 @@ fn get_widget() -> String {
         autocomplete="off"
     />
     <script>
-        const scrollToBottom = function() {
+        const scrollToBottom = function() {{
             const chatContainer = document.getElementById('chat-container');
-            if (chatContainer) {
+            if (chatContainer) {{
                 chatContainer.scrollTop = 99999;
-            }
-        }
-        const appendMessage = function(msg) {
+            }}
+        }}
+        const appendMessage = function(msg) {{
             const node = document.createElement("div");
             node.classList += 'message'
             node.innerHTML = `
-                <span class="from">${msg.from}:</span>
-                <span class="message-content">${msg.msg}</span>
+                <span class="from">${{msg.from}}:</span>
+                <span class="message-content">${{msg.msg}}</span>
             `;
             document.getElementById("chat-container").appendChild(node);
             scrollToBottom();
-        }
-        const ws = new WebSocket(`ws://${parent.location.host}/dartfrog:dartfrog:herobrine.os`);
-        ws.onmessage = function(event) { 
+        }}
+
+        const IS_FAKE = {IS_FAKE};
+        const SERVER_NODE = IS_FAKE ? "fake.dev" : "waterhouse.os";
+        const PROCESS_NAME = "dartfrog:dartfrog:herobrine.os";
+        const BASE_URL = `${{parent.location.href}}dartfrog:dartfrog:herobrine.os`;
+        const pokeSubscribe = () => {{
+            const data = {{"ClientRequest": {{"SetServer": SERVER_NODE+"@"+PROCESS_NAME}}}};
+            fetch(`${{BASE_URL}}/api`, {{
+                method: "POST",
+                body: JSON.stringify(data),
+              }});
+        }}
+
+        pokeSubscribe();
+
+        const ws = new WebSocket(`ws://${{parent.location.host}}/${{PROCESS_NAME}}`);
+        ws.onmessage = function(event) {{
             const data = JSON.parse(event.data);
-            if (data.WsUpdate) {
-                if (data.WsUpdate.NewChat) { 
+            if (data.WsUpdate) {{
+                if (data.WsUpdate.NewChat) {{
                     const msg = data.WsUpdate.NewChat;
                     appendMessage(msg);
-                } else if (data.WsUpdate.NewChatState) {
-                    if (Array.isArray(data.WsUpdate.NewChatState.chat_history)) {
-                        for (let msg of data.WsUpdate.NewChatState.chat_history) {
+                }} else if (data.WsUpdate.NewChatState) {{
+                    if (Array.isArray(data.WsUpdate.NewChatState.chat_history)) {{
+                        for (let msg of data.WsUpdate.NewChatState.chat_history) {{
                             appendMessage(msg)
-                        }
-                    }
-                } else {
-                    console.log({ dartfrogData: data });
-                }
-            }
-        }
+                        }}
+                    }}
+                }} else {{
+                    console.log({{ dartfrogData: data }});
+                }}
+            }}
+        }}
 
-        document.getElementById('chat-input').addEventListener('keyup', async function(event) {
-            if (event.key === 'Enter') {
-                const data = { "ClientRequest": { "SendToServer": { "ChatMessage": this.value } } };
-                try {
-                    const result = await fetch(`${parent.location.href}dartfrog:dartfrog:herobrine.os/api`, {
+        document.getElementById('chat-input').addEventListener('keyup', async function(event) {{
+            if (event.key === 'Enter') {{
+                const data = {{ "ClientRequest": {{ "SendToServer": {{ "ChatMessage": this.value }} }} }};
+                try {{
+                    const result = await fetch(`${{parent.location.href}}dartfrog:dartfrog:herobrine.os/api`, {{
                         method: "POST",
                         body: JSON.stringify(data),
-                    });
+                    }});
 
                     if (!result.ok) throw new Error("HTTP request failed");
-                    else {
+                    else {{
                         this.value = ''; // Clear input after sending
                         scrollToBottom();
-                    }
-                } catch (error) {
+                    }}
+                }} catch (error) {{
                     console.error(error);
-                }
-            }
-         });
+                }}
+            }}
+         }});
     </script>
 </body>
 </html>
-"#.to_string();
+"#).to_string();
 }

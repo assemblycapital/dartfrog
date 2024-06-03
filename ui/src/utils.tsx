@@ -31,7 +31,8 @@ export const pokeUnsubscribe = () => {
     sendPoke(data);
   }
 
-export const SERVER_NODE = "waterhouse.os";
+export const IS_FAKE = true;
+export const SERVER_NODE = IS_FAKE ? "fake.dev" : "waterhouse.os";
 export const PROCESS_NAME = "dartfrog:dartfrog:herobrine.os";
 export const pokeSubscribe = () => {
     const data = {"ClientRequest": {"SetServer": SERVER_NODE+"@"+PROCESS_NAME}};
