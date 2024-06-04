@@ -154,7 +154,6 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                 }
             }
 
-
             for node in to_remove {
                 let node_address = get_dartfrog_address(&node);
                 if !state.server.subscribers.contains(&node_address) {
