@@ -143,6 +143,8 @@ const soundEffectCommands = {
   '/yes': 'assets/oh-yes.mp3',
   '/why': 'assets/why.mp3',
   '/people': 'assets/the-people.mp3',
+  '/robust': 'assets/robust-josh.mp3',
+  '/robustness': 'assets/robust-basile.mp3',
 }
 
 

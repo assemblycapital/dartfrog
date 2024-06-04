@@ -40,12 +40,25 @@ const DisplayUserActivity = () => {
     const newGroupedUsers = userActivity.reduce(
         (groups, activity) => {
             const status = activityStatus(activity.was_online_at_time, activity.time*1000, time);
-            groups[status].push(activity.name);
+            groups[status].push(activity);
             return groups;
         },
         { online: [], recentlyOnline: [], ever: [] }
     );
-    setGroupedUsers(newGroupedUsers);
+
+    // Sort each group by last activity time, descending
+    const sortByLastActivityTimeDesc = (a, b) => b.time - a.time;
+
+    newGroupedUsers.online.sort(sortByLastActivityTimeDesc);
+    newGroupedUsers.recentlyOnline.sort(sortByLastActivityTimeDesc);
+    newGroupedUsers.ever.sort(sortByLastActivityTimeDesc);
+
+    // Map the groups to just user names
+    setGroupedUsers({
+      online: newGroupedUsers.online.map(user => user.name),
+      recentlyOnline: newGroupedUsers.recentlyOnline.map(user => user.name),
+      ever: newGroupedUsers.ever.map(user => user.name)
+    });
   }, [userActivity, count]);
 
   const getNameColor = useCallback(

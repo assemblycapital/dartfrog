@@ -18,7 +18,7 @@ const DisplayUserActivity = () => {
           gap: "1rem",
         }}
       >
-        sfx: /yes /no /why /fart /people
+        sfx: /yes /no /why /fart /people /robust /robustness
       </div>
       <div
         style={{

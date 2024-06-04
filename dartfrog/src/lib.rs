@@ -336,7 +336,7 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
             }
         }
         ClientRequest::SetServer(mad) => {
-            println!("got set server request {:?}", mad);
+            // println!("got set server request {:?}", mad);
             if let Some(add) = mad {
                 subscribe_to_server(state, &add)?;
             } else {
@@ -736,6 +736,14 @@ fn get_widget() -> String {
                 chatContainer.scrollTop = 99999;
             }}
         }}
+        const eraseMessages = function() {{
+            var chatContainer = document.getElementById("chat-container");
+
+            // Remove all its children
+            while (chatContainer.firstChild) {{
+                chatContainer.removeChild(chatContainer.firstChild);
+            }}
+        }}
         const appendMessage = function(msg) {{
             const node = document.createElement("div");
             node.classList += 'message'
@@ -753,6 +761,7 @@ fn get_widget() -> String {
         const BASE_URL = `${{parent.location.href}}dartfrog:dartfrog:herobrine.os`;
         const pokeSubscribe = () => {{
             const data = {{"ClientRequest": {{"SetServer": SERVER_NODE+"@"+PROCESS_NAME}}}};
+            // console.log("poking", data);
             fetch(`${{BASE_URL}}/api`, {{
                 method: "POST",
                 body: JSON.stringify(data),
@@ -770,12 +779,13 @@ fn get_widget() -> String {
                     appendMessage(msg);
                 }} else if (data.WsUpdate.NewChatState) {{
                     if (Array.isArray(data.WsUpdate.NewChatState.chat_history)) {{
+                        eraseMessages();
                         for (let msg of data.WsUpdate.NewChatState.chat_history) {{
-                            appendMessage(msg)
+                            appendMessage(msg);
                         }}
                     }}
                 }} else {{
-                    console.log({{ dartfrogData: data }});
+                    // console.log({{ dartfrogData: data }});
                 }}
             }}
         }}
