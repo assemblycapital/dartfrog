@@ -154,8 +154,13 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                 }
             }
 
+
             for node in to_remove {
-                state.server.subscribers.retain(|address| address.node != node);
+                let node_address = get_dartfrog_address(&node);
+                if !state.server.subscribers.contains(&node_address) {
+                    continue;
+                }
+                state.server.subscribers.remove(&node_address);
                 let _ = poke_node(node.clone(), UpdateFromServer::KickSubscriber);
             }
             save_chat_state(&state.server.chat_state);
@@ -511,8 +516,10 @@ fn send_ws_update(
 const IS_FAKE: bool = !cfg!(feature = "prod");
 const SERVER_NODE: &str = if IS_FAKE { "fake.dev" } else { "waterhouse.os" };
 const PROCESS_NAME : &str = "dartfrog:dartfrog:herobrine.os";
-fn get_server_address(node_id: &str) -> String {
-    format!("{}@{}", node_id, PROCESS_NAME)
+fn get_dartfrog_address(node_id: &str) -> Address {
+    let s =
+        format!("{}@{}", node_id, PROCESS_NAME);
+    Address::from_str(&s).unwrap()
 }
 
 fn save_chat_state(state: &ChatState) {
@@ -586,7 +593,7 @@ fn init(our: Address) {
         .send()
         .unwrap();
 
-    let server = Address::from_str(&get_server_address(SERVER_NODE)).unwrap();
+    let server = get_dartfrog_address(SERVER_NODE);
     let mut state = new_dart_state();
     state.server.chat_state = load_chat_state();
 
@@ -606,7 +613,7 @@ fn init(our: Address) {
 fn poke_node(node: String, req: UpdateFromServer) -> anyhow::Result<()> {
     let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::UpdateFromServer(req)).unwrap();
     Request::new()
-        .target(Address::from_str(&get_server_address(&node)).unwrap())
+        .target(get_dartfrog_address(&node))
         .body(send_body)
         .send()
         .unwrap();
