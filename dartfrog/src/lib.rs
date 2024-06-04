@@ -68,6 +68,11 @@ impl Hash for Service {
 struct ServerState {
     pub services: HashMap<String, Service>,
 }
+fn new_server_state() -> ServerState {
+    ServerState {
+        services: HashMap::new(),
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct SyncService {
@@ -80,7 +85,7 @@ struct SyncService {
 #[derive(Hash, Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
 struct ClientId {
     pub client_node: String,
-    pub client_name: String,
+    pub ws_channel_id: u32,
 }
 
 #[derive(Hash, Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
@@ -91,19 +96,24 @@ struct ServiceId {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct Client {
-    pub client_name: String,
+    pub ws_channel_id: u32,
     pub services: HashMap<ServiceId, SyncService>,
 }
 
 impl Hash for Client {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.client_name.hash(state);
+        self.ws_channel_id.hash(state);
     }
 }
 
 #[derive(Debug, Clone)]
 struct ClientState {
-    pub clients: HashMap<String, Client>,
+    pub clients: HashMap<u32, Client>,
+}
+fn new_client_state() -> ClientState {
+    ClientState {
+        clients: HashMap::new(),
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -114,9 +124,18 @@ struct ChannelId {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 enum ServerRequest {
-    Subscribe(ChannelId),
-    Unsubscribe(ChannelId),
-    PresenceHeartbeat(ChannelId),
+    InnerService(ServiceId, ServiceRequest),
+    CreateService(ServiceId),
+    DeleteService(ServiceId),
+    RequestServiceList(ClientId),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+enum ServiceRequest {
+    Subscribe(ClientId),
+    Unsubscribe(ClientId),
+    PresenceHeartbeat(ClientId),
+    PluginMessageTODO(String)
 }
 #[derive(Debug, Serialize, Deserialize)]
 enum UpdateFromServer {
@@ -125,10 +144,18 @@ enum UpdateFromServer {
     SubscribeKick(ChannelId),
 }
 #[derive(Debug, Serialize, Deserialize)]
-enum ClientRequest {
-    Subscribe(ChannelId),
-    Unsubscribe(ChannelId),
-    PresenceHeartbeat(ChannelId),
+enum ClientRequest{
+    InnerClient(u32, ClientRequestInner),
+    CreateClient(u32),
+    DeleteClient(u32),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+enum ClientRequestInner {
+    RequestServiceList(String),
+    JoinService(ServiceId),
+    ExitService(ServiceId),
+    SendOnChannel(ServerRequest),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -162,7 +189,55 @@ fn safe_trim_to_boundary(s: String, max_len: usize) -> String {
     s[..end].to_string()
 }
 
+fn new_sync_service(id: ServiceId) -> SyncService {
+    SyncService {
+        id: id,
+        subscribers: HashSet::new(),
+        user_presence: HashMap::new(),
+        connection: ConnectionStatus::Connecting(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        ),
+    }
+}
+
+fn get_client_id(our: &Address, client: &Client) -> ClientId {
+    ClientId {
+        client_node: our.node.clone(),
+        ws_channel_id: client.ws_channel_id,
+    }
+}
 fn handle_client_request(our: &Address, state: &mut DartState, source: Address, req: ClientRequest) -> anyhow::Result<()> {
+    println!("client request: {:?}", req);
+    match req {
+        ClientRequest::InnerClient(num, inner) => {
+            let Some(client) = state.client.clients.get_mut(&num) else {
+                println!("no client found");
+                return Ok(());
+            };
+            println!("inner client request: {:?} {:?}", num, inner);
+            match inner {
+                ClientRequestInner::JoinService(sid) => {
+                    if let Some(service) = client.services.get(&sid) {
+                        // already have it
+                    } else {
+                        client.services.insert(sid.clone(), new_sync_service(sid.clone()));
+
+                        let s_req = ServerRequest::InnerService(sid.clone(), ServiceRequest::Subscribe(get_client_id(our, client)));
+                        let address = get_server_address(sid.clone().node.as_str());
+                        poke_server(&address, s_req)?;
+                    }
+                }
+                _ => {
+                    println!("unexpected inner client request: {:?}", inner);
+                }
+            }
+        }
+        _ => {
+        }
+    }
     Ok(())
 }
 
@@ -180,45 +255,47 @@ fn handle_http_server_request(
 
     match server_request {
         HttpServerRequest::WebSocketOpen { channel_id, .. } => {
+            println!("WebSocketOpen: {:?}", channel_id);
+            state.client.clients.insert(
+                channel_id,
+                Client {
+                    ws_channel_id: channel_id,
+                    services: HashMap::new(),
+                },
+            );
         }
-        HttpServerRequest::WebSocketPush { .. } => {
-        }
-        HttpServerRequest::WebSocketClose(channel_id) => {
-        }
-        HttpServerRequest::Http(request) => {
-            let request_type = request.method()?;
-            let request_type_str = request_type.as_str();
-            if request_type_str != "POST" {
-                return Ok(());
-            }
-
+        HttpServerRequest::WebSocketPush { channel_id, message_type : _} => {
             let Some(blob) = get_blob() else {
                 return Ok(());
             };
-            let Ok(s) = String::from_utf8(blob.bytes) else {
+
+            let Ok(s) = String::from_utf8(blob.bytes.clone()) else {
+                println!("error parsing utf8 ws push");
                 return Ok(());
             };
-            match serde_json::from_str(&s)? {
-                DartMessage::ClientRequest(c_req) => {
-                    let mut headers = HashMap::new();
-                    headers.insert("Content-Type".to_string(), "application/json".to_string());
-                    send_response(
-                        StatusCode::OK,
-                        Some(headers),
-                        serde_json::to_vec(b"")
-                        .unwrap(),
-                    );
 
-                    let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::ClientRequest(c_req)).unwrap();
-                    Request::new()
-                        .target(our)
-                        .body(send_body)
-                        .send()
-                        .unwrap();
+            match serde_json::from_slice(&blob.bytes)? {
+                DartMessage::ClientRequest(c_req) => {
+                    match c_req {
+                        ClientRequest::InnerClient(_num, inner) => {
+                            // write down the current channel_id, num inaccurate from the api lib
+                            let req = ClientRequest::InnerClient(channel_id, inner);
+                            handle_client_request(our, state, source.clone(), req)?;
+                        }
+                        _ => {
+                            println!("unexpected client request: {:?}", c_req);
+                        }
+                    }
                 }
-                // couldn't parse json
-                _ => { }
+                _ => {
+                    return Err(anyhow::anyhow!("unexpected Request: {:?}", s));
+                }
             }
+        }
+        HttpServerRequest::WebSocketClose(channel_id) => {
+            state.client.clients.remove(&channel_id);
+        }
+        HttpServerRequest::Http(request) => {
         }
     };
 
@@ -261,13 +338,18 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
     }
 
 }
-fn send_ws_update(
+
+fn update_client (
+    state: &DartState,
+    client_id: u32,
     update: WsUpdate,
-    open_channels: &HashSet<u32>,
 ) -> anyhow::Result<()> {
 
-    for channel in open_channels {
+    for (id, client) in state.client.clients.clone() {
         // Generate a blob for the new message
+        if id != client_id {
+            continue;
+        }
         let blob = LazyLoadBlob {
             mime: Some("application/json".to_string()),
             bytes: serde_json::json!({
@@ -280,7 +362,7 @@ fn send_ws_update(
 
         // Send a WebSocket message to the http server in order to update the UI
         send_ws_push(
-            *channel,
+            id,
             WsMessageType::Text,
             blob,
         );
@@ -291,21 +373,12 @@ fn send_ws_update(
 const IS_FAKE: bool = !cfg!(feature = "prod");
 const SERVER_NODE: &str = if IS_FAKE { "fake.dev" } else { "waterhouse.os" };
 const PROCESS_NAME : &str = "dartfrog:dartfrog:herobrine.os";
-fn get_server_address(node_id: &str) -> String {
-    format!("{}@{}", node_id, PROCESS_NAME)
+fn get_server_address(node_id: &str) -> Address {
+    let s =
+        format!("{}@{}", node_id, PROCESS_NAME);
+    Address::from_str(&s).unwrap()
 }
 
-fn new_client_state() -> ClientState {
-    ClientState {
-        clients: todo!(),
-    }
-}
-
-fn new_server_state() -> ServerState {
-    ServerState {
-        services: todo!(),
-    }
-}
 
 fn new_dart_state() -> DartState {
     DartState {
@@ -344,7 +417,7 @@ fn init(our: Address) {
         .send()
         .unwrap();
 
-    let server = Address::from_str(&get_server_address(SERVER_NODE)).unwrap();
+    let server = get_server_address(SERVER_NODE);
     let mut state = new_dart_state();
     // state.server.chat_state = load_chat_state();
 
@@ -355,13 +428,16 @@ fn init(our: Address) {
         match handle_message(&our, &mut state) {
             Ok(()) => {}
             Err(e) => {
-                println!("error: {:?}", e);
+                println!("handle_message error: {:?}", e);
             }
         };
     }
 }
 
 
-fn poke_server(state: &DartState, req: ServerRequest) -> anyhow::Result<()> {
+fn poke_server(address:&Address, req: ServerRequest) -> anyhow::Result<()> {
+    Request::to(address)
+        .body(serde_json::to_vec(&DartMessage::ServerRequest(req))?)
+        .send()?;
     Ok(())
 }

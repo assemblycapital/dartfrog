@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { maybeReplaceWithImage, sendPoke } from '../utils';
+import { maybeReplaceWithImage, } from '../utils';
 
 const ChatInput = () => {
   const [chatMessageInputText, setChatMessageInputText] = useState('');
@@ -16,7 +16,7 @@ const ChatInput = () => {
       // Create a message object
       let text = maybeReplaceWithImage(chatMessageInputText);
       const data = {"ClientRequest": {"SendToServer": {"ChatMessage": text}}};
-      sendPoke(data);
+      // sendPoke(data);
       setChatMessageInputText("");
     },
     [chatMessageInputText]

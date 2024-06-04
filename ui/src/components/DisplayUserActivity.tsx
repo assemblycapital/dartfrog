@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import useChatStore from '../store/chat';
-import { computeColorForName, pokeHeartbeat } from '../utils';
+import { computeColorForName} from '../utils';
 
 const DisplayUserActivity = () => {
 
@@ -29,7 +29,7 @@ const DisplayUserActivity = () => {
       setCount(prevCount => prevCount + 1);
       // also use this for the heartbeat timer
       console.log("Poking heartbeat")
-      pokeHeartbeat();
+      // pokeHeartbeat();
     }, 60*1000);
 
     return () => clearInterval(interval);

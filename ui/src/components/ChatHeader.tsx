@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import useChatStore from '../store/chat';
 import { ConnectionStatusType, ServerStatus } from '../types/types';
-import { pokeUnsubscribe } from '../utils';
+// import { pokeUnsubscribe } from '../utils';
 
 const ChatHeader = () => {
 
@@ -55,7 +55,7 @@ const ChatHeader = () => {
           }}
           onClick={(e) => {
               setServerStatus(null);
-              pokeUnsubscribe();
+            // pokeUnsbscribe();
             }
           }
         >

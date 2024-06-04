@@ -6,11 +6,11 @@ import ControlHeader from "./components/ControlHeader";
 import { useEffect, useRef, useState } from "react";
 import { ConnectionStatusType } from "./types/types";
 import ServerBox from "./components/ServerBox";
-import { WEBSOCKET_URL, pokeSubscribe, pokeUnsubscribe } from './utils';
+import { WEBSOCKET_URL, } from './utils';
 import KinodeClientApi from "@kinode/client-api";
 
 function App() {
-  const { serverStatus, setApi, handleWsMessage } = useChatStore();
+  const { serverStatus, setApi, handleWsMessage, pokeSubscribe, pokeUnsubscribe } = useChatStore();
 
   const [nodeConnected, setNodeConnected] = useState(false);
   const reconnectIntervalRef = useRef(null);
@@ -28,7 +28,6 @@ function App() {
             setNodeConnected(false);
           },
           onOpen: (_event, _api) => {
-            console.log("Connected to Kinode");
             setNodeConnected(true);
             pokeSubscribe();
           },

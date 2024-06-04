@@ -3,6 +3,7 @@ import { ChatMessage, ConnectionStatusType, ServerStatus, UserActivity } from '.
 import { persist, createJSONStorage } from 'zustand/middleware'
 import KinodeClientApi from "@kinode/client-api";
 import { parse } from 'path';
+import { SERVER_NODE } from '../utils';
 
 export interface ChatStore {
   chats: Map<number, ChatMessage>
@@ -21,6 +22,10 @@ export interface ChatStore {
   api: KinodeClientApi | null,
   setApi: (api: KinodeClientApi) => void
   handleWsMessage: (json: string | Blob) => void
+  // 
+  sendPoke: (data) => void
+  pokeSubscribe: () => void
+  pokeUnsubscribe: () => void
   get: () => ChatStore
   set: (partial: ChatStore | Partial<ChatStore>) => void
 }
@@ -118,6 +123,25 @@ const useChatStore = create<ChatStore>()(
         } else {
             console.log('WS: GOT BLOB', json)
         }
+      },
+      sendPoke: (data) => {
+        const { api } = get();
+        if (!api) { return; }
+        api.send({ data: data });
+      },
+      pokeSubscribe: () => {
+        const { sendPoke, api } = get();
+        if (!api) { return; }
+        const data = 
+            {"ClientRequest": {"InnerClient": [0, {"JoinService":{"node": SERVER_NODE, "id":"TODO"}}]}}
+        sendPoke(data);
+      },
+      pokeUnsubscribe: () => {
+        const { sendPoke, api } = get();
+        if (!api) { return; }
+        const data = 
+            {"ClientRequest": {"InnerClient": [0, {"ExitService":{"node": SERVER_NODE, "id":"TODO"}}]}}
+        sendPoke(data);
       },
       get,
       set,
