@@ -29,19 +29,24 @@ export type ServiceConnectionStatus = {
   timestamp: number
 }
 
-export type ServiceId = {
+export type ParsedServiceId = {
   node: string,
   id: string
 }
+export type ServiceId = String;
 
 export type Service = {
-  serviceId: ServiceId,
+  serviceId: ParsedServiceId,
   connectionStatus: ServiceConnectionStatus,
 }
 
 export type Services = Map<ServiceId, Service>;
 
-function new_service(serviceId: ServiceId) {
+export const makeServiceId = (node: string, id: string) => {
+  return `${node}:${id}`;
+}
+
+function new_service(serviceId: ParsedServiceId) {
   return {
     serviceId: serviceId,
     connectionStatus: {status:ServiceConnectionStatusType.Connecting, timestamp:Date.now()}
@@ -125,15 +130,11 @@ private handleServerUpdate(message: any) {
         if (response.NoSuchService) {
             console.log('No such service:', response.NoSuchService);
             // Add your logic to handle the NoSuchService response here
-            let serviceId : ServiceId = {node:address, id:response.NoSuchService};
+            let serviceId : ServiceId = makeServiceId(address, response.NoSuchService);
             let service = this.services.get(serviceId);
-            console.log('serviceId:', serviceId)
-            console.log('service:', service)
-            console.log('services:', this.services)
             if (!service) { return; }
             service.connectionStatus = {status:ServiceConnectionStatusType.ServiceDoesNotExist, timestamp:Date.now()};
             this.services.set(serviceId, service);
-            console.log('calling onservicechange')
             this.onServicesChange(this.services);
 
         } else {
@@ -160,13 +161,13 @@ private handleServerUpdate(message: any) {
     this.api.send({ data:wrapper });
   }
 
-  joinService(serviceId: ServiceId) {
+  joinService(serviceId: ParsedServiceId) {
     const request =  { "JoinService": { "node": serviceId.node, "id": serviceId.id } }
-    this.services.set(serviceId, new_service(serviceId));
+    this.services.set(makeServiceId(serviceId.node, serviceId.id), new_service(serviceId));
     this.onServicesChange(this.services);
     this.sendRequest(request);
   }
-  exitService(serviceId: ServiceId) {
+  exitService(serviceId: ParsedServiceId) {
     const request =  { "ExitService": { "node": serviceId.node, "id": serviceId.id } }
     this.sendRequest(request);
   }
