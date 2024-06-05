@@ -53,7 +53,7 @@ struct Presence {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct Service {
     pub id: ServiceId,
-    pub subscribers: HashSet<ClientId>,
+    pub subscribers: HashSet<ConsumerId>,
     pub last_sent_presence: u64,
     pub user_presence: HashMap<String, Presence>,
 }
@@ -77,13 +77,13 @@ fn new_server_state() -> ServerState {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct SyncService {
     pub id: ServiceId,
-    pub subscribers: HashSet<ClientId>,
+    pub subscribers: HashSet<ConsumerId>,
     pub user_presence: HashMap<String, Presence>,
     pub connection: ConnectionStatus,
 }
 
 #[derive(Hash, Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
-struct ClientId {
+struct ConsumerId {
     pub client_node: String,
     pub ws_channel_id: u32,
 }
@@ -95,12 +95,12 @@ struct ServiceId {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct Client {
+struct Consumer {
     pub ws_channel_id: u32,
     pub services: HashMap<ServiceId, SyncService>,
 }
 
-impl Hash for Client {
+impl Hash for Consumer{
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.ws_channel_id.hash(state);
     }
@@ -108,18 +108,18 @@ impl Hash for Client {
 
 #[derive(Debug, Clone)]
 struct ClientState {
-    pub clients: HashMap<u32, Client>,
+    pub consumers: HashMap<u32, Consumer>,
 }
 fn new_client_state() -> ClientState {
     ClientState {
-        clients: HashMap::new(),
+        consumers: HashMap::new(),
     }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct ChannelId {
     pub service_id: ServiceId,
-    pub client_id: ClientId,
+    pub consumer_id: ConsumerId,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -127,14 +127,14 @@ enum ServerRequest {
     InnerService(ServiceId, ServiceRequest),
     CreateService(ServiceId),
     DeleteService(ServiceId),
-    RequestServiceList(ClientId),
+    RequestServiceList(ConsumerId),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 enum ServiceRequest {
-    Subscribe(ClientId),
-    Unsubscribe(ClientId),
-    PresenceHeartbeat(ClientId),
+    Subscribe(ConsumerId),
+    Unsubscribe(ConsumerId),
+    PresenceHeartbeat(ConsumerId),
     PluginMessageTODO(String)
 }
 #[derive(Debug, Serialize, Deserialize)]
@@ -146,13 +146,13 @@ enum UpdateFromServer {
 
 #[derive(Debug, Serialize, Deserialize)]
 enum ClientRequest{
-    InnerClient(u32, ClientRequestInner),
-    CreateClient(u32),
-    DeleteClient(u32),
+    ConsumerRequest(u32, ConsumerRequest),
+    CreateConsumer(u32),
+    DeleteConsumer(u32),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-enum ClientRequestInner {
+enum ConsumerRequest {
     RequestServiceList(String),
     JoinService(ServiceId),
     ExitService(ServiceId),
@@ -205,23 +205,23 @@ fn new_sync_service(id: ServiceId) -> SyncService {
     }
 }
 
-fn get_client_id(our: &Address, client: &Client) -> ClientId {
-    ClientId {
+fn get_client_id(our: &Address, consumer: &Consumer) -> ConsumerId {
+    ConsumerId {
         client_node: our.node.clone(),
-        ws_channel_id: client.ws_channel_id,
+        ws_channel_id: consumer.ws_channel_id,
     }
 }
 fn handle_client_request(our: &Address, state: &mut DartState, source: Address, req: ClientRequest) -> anyhow::Result<()> {
     println!("client request: {:?}", req);
     match req {
-        ClientRequest::InnerClient(num, inner) => {
-            let Some(client) = state.client.clients.get_mut(&num) else {
+        ClientRequest::ConsumerRequest(num, inner) => {
+            let Some(client) = state.client.consumers.get_mut(&num) else {
                 println!("no client found");
                 return Ok(());
             };
             println!("inner client request: {:?} {:?}", num, inner);
             match inner {
-                ClientRequestInner::JoinService(sid) => {
+                ConsumerRequest::JoinService(sid) => {
                     if let Some(service) = client.services.get(&sid) {
                         // already have it
                     } else {
@@ -260,9 +260,9 @@ fn handle_http_server_request(
     match server_request {
         HttpServerRequest::WebSocketOpen { channel_id, .. } => {
             println!("WebSocketOpen: {:?}", channel_id);
-            state.client.clients.insert(
+            state.client.consumers.insert(
                 channel_id,
-                Client {
+                Consumer {
                     ws_channel_id: channel_id,
                     services: HashMap::new(),
                 },
@@ -281,9 +281,9 @@ fn handle_http_server_request(
             match serde_json::from_slice(&blob.bytes)? {
                 DartMessage::ClientRequest(c_req) => {
                     match c_req {
-                        ClientRequest::InnerClient(_num, inner) => {
+                        ClientRequest::ConsumerRequest(_num, inner) => {
                             // write down the current channel_id, num inaccurate from the api lib
-                            let req = ClientRequest::InnerClient(channel_id, inner);
+                            let req = ClientRequest::ConsumerRequest(channel_id, inner);
                             handle_client_request(our, state, source.clone(), req)?;
                         }
                         _ => {
@@ -297,7 +297,7 @@ fn handle_http_server_request(
             }
         }
         HttpServerRequest::WebSocketClose(channel_id) => {
-            state.client.clients.remove(&channel_id);
+            state.client.consumers.remove(&channel_id);
         }
         HttpServerRequest::Http(request) => {
         }
@@ -349,7 +349,7 @@ fn update_client (
     update: WsUpdate,
 ) -> anyhow::Result<()> {
 
-    if !(state.client.clients.contains_key(&client_id)) {
+    if !(state.client.consumers.contains_key(&client_id)) {
         return Ok(());
     }
 

@@ -28,7 +28,7 @@ class DartApi {
     if (!this.api) { return; }
     const data = {
       "ClientRequest": {
-        "InnerClient": [0, { "JoinService": { "node": SERVER_NODE, "id": "TODO" } }]
+        "ConsumerRequest": [0, { "JoinService": { "node": SERVER_NODE, "id": "TODO" } }]
       }
     };
     this.sendPoke(data);
@@ -38,7 +38,7 @@ class DartApi {
     if (!this.api) { return; }
     const data = {
       "ClientRequest": {
-        "InnerClient": [0, { "ExitService": { "node": SERVER_NODE, "id": "TODO" } }]
+        "ConsumerRequest": [0, { "ExitService": { "node": SERVER_NODE, "id": "TODO" } }]
       }
     };
     this.sendPoke(data);
