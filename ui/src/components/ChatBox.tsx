@@ -3,6 +3,7 @@ import { ChatMessage, ChatMessageHistory } from '../types/types';
 import useChatStore from '../store/chat';
 import { computeColorForName } from '../utils';
 import ChatInput from './ChatInput';
+import useDartStore from '../store/dart';
 
 interface ChatBoxProps {
   chats: ChatMessageHistory
@@ -13,21 +14,21 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chats }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const isResizing = useRef(false);
 
-  const { nameColors, addNameColor } = useChatStore();
+  // const { nameColors, addNameColor } = useDartStore();
   const [ chatMessageList, setChatMessageList ] = useState<Array<ChatMessage>>([]);
   const [containerHeight, setContainerHeight] = useState(400);
 
-  const getNameColor = useCallback(
-    (name: string) => {
-      let color = nameColors[name];
-      if (color) {
-        return color
-      }
-      color = computeColorForName(name);
-      addNameColor(name, color);
-      return color;
-    }
-  , [nameColors])
+  // const getNameColor = useCallback(
+  //   (name: string) => {
+  //     let color = nameColors[name];
+  //     if (color) {
+  //       return color
+  //     }
+  //     color = computeColorForName(name);
+  //     addNameColor(name, color);
+  //     return color;
+  //   }
+  // , [nameColors])
 
   useEffect(() => {
     if (chats.size === 0) return;
@@ -152,9 +153,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chats }) => {
               <div style={{color:"#ffffff77", fontSize: "0.8rem", display: "inline-block", marginRight:"5px", cursor: "default"}}>
                 <span>{formatTimestamp(message.time)}</span>
               </div>
-              <div style={{color: getNameColor(message.from), display: "inline-block", marginRight:"5px", cursor:"default"}}>
+              {/* <div style={{color: getNameColor(message.from), display: "inline-block", marginRight:"5px", cursor:"default"}}>
                 <span>{message.from}:</span>
-              </div>
+              </div> */}
             </div>
             {getMessageInnerText(message.msg)}
           </div>

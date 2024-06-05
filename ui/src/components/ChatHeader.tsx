@@ -5,7 +5,7 @@ import { ConnectionStatusType, ServerStatus } from '../types/types';
 
 const ChatHeader = () => {
 
-  const { serverStatus, setServerStatus, bannedUsers } = useChatStore();
+  // const { serverStatus, setServerStatus, bannedUsers } = useChatStore();
 
   const [time, setTime] = useState(new Date());
   useEffect(() => {
@@ -17,21 +17,21 @@ const ChatHeader = () => {
   }, []);
   const [isBanned, setIsBanned] = useState(false);
 
-  useEffect(() => {
-    setIsBanned(bannedUsers.includes(window.our?.node));
-  }, [bannedUsers]);
+  // useEffect(() => {
+  //   setIsBanned(bannedUsers.includes(window.our?.node));
+  // }, [bannedUsers]);
 
   const [isConnected, setIsConnected] = useState(false);
-  useEffect(() => {
-    if (!serverStatus) return;
-    if (!serverStatus.connection) return;
-    if (serverStatus.connection.type === ConnectionStatusType.Connected) {
-      setIsConnected(true);
-    } else if (serverStatus.connection.type === ConnectionStatusType.Disconnected) {
-      setIsConnected(false);
-    }
+  // useEffect(() => {
+  //   if (!serverStatus) return;
+  //   if (!serverStatus.connection) return;
+  //   if (serverStatus.connection.type === ConnectionStatusType.Connected) {
+  //     setIsConnected(true);
+  //   } else if (serverStatus.connection.type === ConnectionStatusType.Disconnected) {
+  //     setIsConnected(false);
+  //   }
 
-  }, [serverStatus]);
+  // }, [serverStatus]);
 
 
   return (
@@ -54,7 +54,7 @@ const ChatHeader = () => {
             cursor: "pointer",
           }}
           onClick={(e) => {
-              setServerStatus(null);
+              // setServerStatus(null);
             // pokeUnsbscribe();
             }
           }

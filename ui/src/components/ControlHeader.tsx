@@ -2,7 +2,7 @@ import useChatStore from '../store/chat';
 
 const ControlHeader = (nodeConnected) => {
 
-  const { muteSoundEffects, setMuteSoundEffects } = useChatStore();
+  // const { muteSoundEffects, setMuteSoundEffects } = useChatStore();
 
   return (
       <div
@@ -38,11 +38,11 @@ const ControlHeader = (nodeConnected) => {
             </div>
           </a>
           <button onClick={() => {
-              if(muteSoundEffects) {
-                setMuteSoundEffects(false);
-              } else {
-                setMuteSoundEffects(true);
-              }
+              // if(muteSoundEffects) {
+              //   setMuteSoundEffects(false);
+              // } else {
+              //   setMuteSoundEffects(true);
+              // }
             }}
             style={{
               opacity: "0.5",
@@ -51,7 +51,8 @@ const ControlHeader = (nodeConnected) => {
               cursor: "pointer",
             }}
             >
-            {muteSoundEffects ? 'unmute' : 'mute'}
+            {/* {muteSoundEffects ? 'unmute' : 'mute'} */}
+            todo
           </button>
 
         </div>

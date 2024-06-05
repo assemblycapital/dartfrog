@@ -8,75 +8,29 @@ import { ConnectionStatusType } from "./types/types";
 import ServerBox from "./components/ServerBox";
 import { WEBSOCKET_URL, } from './utils';
 import KinodeClientApi from "@kinode/client-api";
+import useDartStore from "./store/dart";
 
 function App() {
-  const { serverStatus, setApi, handleWsMessage, pokeSubscribe, pokeUnsubscribe } = useChatStore();
+  const { setApi, handleWsMessage, pokeSubscribe, pokeUnsubscribe, initialize } = useDartStore();
 
   const [nodeConnected, setNodeConnected] = useState(false);
-  const reconnectIntervalRef = useRef(null);
 
   useEffect(() => {
-    const connectToKinode = () => {
-      console.log("Attempting to connect to Kinode...");
-      if (window.our?.node && window.our?.process) {
-        const newApi = new KinodeClientApi({
-          uri: WEBSOCKET_URL,
-          nodeId: window.our.node,
-          processId: window.our.process,
-          onClose: (_event) => {
-            console.log("Disconnected from Kinode");
-            setNodeConnected(false);
-          },
-          onOpen: (_event, _api) => {
-            setNodeConnected(true);
-            pokeSubscribe();
-          },
-          onMessage: (json, _api) => {
-            handleWsMessage(json);
-          },
-          onError: (ev) => {
-            console.log("Kinode connection error", ev);
-            setNodeConnected(false);
-          },
-        });
-
-        setApi(newApi);
-      } else {
-        setNodeConnected(false);
-      }
-    };
-
-    if (nodeConnected) {
-      if (reconnectIntervalRef.current) {
-        clearInterval(reconnectIntervalRef.current);
-        reconnectIntervalRef.current = null;
-      }
-    } else {
-      connectToKinode(); // Attempt to connect immediately on load
-      if (!reconnectIntervalRef.current) {
-        reconnectIntervalRef.current = setInterval(connectToKinode, 5 * 1000);
-      }
-    }
-
-    return () => {
-      if (reconnectIntervalRef.current) {
-        clearInterval(reconnectIntervalRef.current);
-      }
-    };
-  }, [nodeConnected]);
+    initialize()
+  }, []);
 
   const [isServerDisconnected, setIsServerDisconnected] = useState(true);
 
-  useEffect(() => {
-    if (!serverStatus) return;
-    if (!serverStatus.connection) return;
-    if (serverStatus.connection.type === ConnectionStatusType.Disconnected) {
-      setIsServerDisconnected(true);
-    } else {
-      setIsServerDisconnected(false);
-    }
+  // useEffect(() => {
+  //   if (!serverStatus) return;
+  //   if (!serverStatus.connection) return;
+  //   if (serverStatus.connection.type === ConnectionStatusType.Disconnected) {
+  //     setIsServerDisconnected(true);
+  //   } else {
+  //     setIsServerDisconnected(false);
+  //   }
 
-  }, [serverStatus]);
+  // }, [serverStatus]);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
