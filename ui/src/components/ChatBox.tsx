@@ -3,7 +3,7 @@ import { ChatMessage, ChatMessageHistory } from '../types/types';
 import useChatStore from '../store/chat';
 import { computeColorForName } from '../utils';
 import ChatInput from './ChatInput';
-import useDartStore from '../store/dart';
+import useDartStore from '../dartclientlib/';
 
 interface ChatBoxProps {
   chats: ChatMessageHistory

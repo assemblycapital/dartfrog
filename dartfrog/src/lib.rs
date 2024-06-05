@@ -143,6 +143,7 @@ enum UpdateFromServer {
     SubscribeNack(ChannelId),
     SubscribeKick(ChannelId),
 }
+
 #[derive(Debug, Serialize, Deserialize)]
 enum ClientRequest{
     InnerClient(u32, ClientRequestInner),
@@ -169,6 +170,7 @@ fn send_server_updates(state: &DartState, update: UpdateFromServer) {
 }
 
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
+    println!("server request: {:?}", req);
     Ok(())
 }
 
@@ -228,6 +230,8 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                         let s_req = ServerRequest::InnerService(sid.clone(), ServiceRequest::Subscribe(get_client_id(our, client)));
                         let address = get_server_address(sid.clone().node.as_str());
                         poke_server(&address, s_req)?;
+                        let update = WsUpdate::Todo("clientmodule created your service, poking server".to_string());
+                        update_client(state, num, update)?;
                     }
                 }
                 _ => {
@@ -345,28 +349,26 @@ fn update_client (
     update: WsUpdate,
 ) -> anyhow::Result<()> {
 
-    for (id, client) in state.client.clients.clone() {
-        // Generate a blob for the new message
-        if id != client_id {
-            continue;
-        }
-        let blob = LazyLoadBlob {
-            mime: Some("application/json".to_string()),
-            bytes: serde_json::json!({
-                "WsUpdate": update
-            })
-            .to_string()
-            .as_bytes()
-            .to_vec(),
-        };
-
-        // Send a WebSocket message to the http server in order to update the UI
-        send_ws_push(
-            id,
-            WsMessageType::Text,
-            blob,
-        );
+    if !(state.client.clients.contains_key(&client_id)) {
+        return Ok(());
     }
+
+    let blob = LazyLoadBlob {
+        mime: Some("application/json".to_string()),
+        bytes: serde_json::json!({
+            "WsUpdate": update
+        })
+        .to_string()
+        .as_bytes()
+        .to_vec(),
+    };
+
+    // Send a WebSocket message to the http server in order to update the UI
+    send_ws_push(
+        client_id,
+        WsMessageType::Text,
+        blob,
+    );
     Ok(())
 }
 

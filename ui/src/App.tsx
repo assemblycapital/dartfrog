@@ -8,15 +8,17 @@ import { ConnectionStatusType } from "./types/types";
 import ServerBox from "./components/ServerBox";
 import { WEBSOCKET_URL, } from './utils';
 import KinodeClientApi from "@kinode/client-api";
-import useDartStore from "./store/dart";
+import DartApi from "./dartclientlib/";
 
 function App() {
-  const { setApi, handleWsMessage, pokeSubscribe, pokeUnsubscribe, initialize } = useDartStore();
 
   const [nodeConnected, setNodeConnected] = useState(false);
 
+  const {setApi, handleUpdate} = useChatStore();
+
   useEffect(() => {
-    initialize()
+    let api = new DartApi(handleUpdate);
+    setApi(api);
   }, []);
 
   const [isServerDisconnected, setIsServerDisconnected] = useState(true);
@@ -34,7 +36,7 @@ function App() {
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      pokeUnsubscribe();
+      // pokeUnsubscribe();
     };
   
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -76,16 +78,9 @@ function App() {
         <div
           style={{
             height: '400px',
-            alignItems: 'center',
-            alignContent: 'center',
-            textAlign: 'center',
           }}
         >
-          <button
-            onClick={() => { pokeSubscribe() }}
-          >
-            connect to server
-          </button>
+          todo
         </div>
       ) : (
         <ServerBox />

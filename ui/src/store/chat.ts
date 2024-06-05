@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 import { ChatMessage, ConnectionStatusType, ServerStatus, UserActivity } from '../types/types'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import KinodeClientApi from "@kinode/client-api";
 import { parse } from 'path';
 import { SERVER_NODE } from '../utils';
+import DartApi from '../dartclientlib';
 
 export interface ChatStore {
   chats: Map<number, ChatMessage>
@@ -19,9 +19,10 @@ export interface ChatStore {
   setMuteSoundEffects: (mute: boolean) => void
   serverStatus: ServerStatus | null,
   setServerStatus: (status: ServerStatus) => void
-  api: KinodeClientApi | null,
-  setApi: (api: KinodeClientApi) => void
-  handleWsMessage: (json: string | Blob) => void
+  api: DartApi | null,
+  setApi: (api: DartApi) => void
+  handleUpdate: (json: string | Blob) => void
+  handleChatWsMessage: (json: string | Blob) => void
   // 
   sendPoke: (data) => void
   pokeSubscribe: () => void
@@ -59,7 +60,10 @@ const useChatStore = create<ChatStore>()(
       setServerStatus: (status: ServerStatus) => set({ serverStatus: status }),
       api: null,
       setApi: (api) => set({ api }),
-      handleWsMessage: (json: string | Blob) => {
+      handleUpdate: (json: string | Blob) => {
+        console.log('got chat json', json);
+      },
+      handleChatWsMessage: (json: string | Blob) => {
         // This function will be called when the websocket receives a message.
         // Right now you only care about progress messages, but you could add more types of messages here.
         const { muteSoundEffects, setChats, addMessage, setUserActivity, setBannedUsers, setServerStatus} = get()
@@ -127,21 +131,17 @@ const useChatStore = create<ChatStore>()(
       sendPoke: (data) => {
         const { api } = get();
         if (!api) { return; }
-        api.send({ data: data });
+        api.sendPoke({ data: data });
       },
       pokeSubscribe: () => {
-        const { sendPoke, api } = get();
+        const { api } = get();
         if (!api) { return; }
-        const data = 
-            {"ClientRequest": {"InnerClient": [0, {"JoinService":{"node": SERVER_NODE, "id":"TODO"}}]}}
-        sendPoke(data);
+        api.pokeSubscribe();
       },
       pokeUnsubscribe: () => {
-        const { sendPoke, api } = get();
+        const { api } = get();
         if (!api) { return; }
-        const data = 
-            {"ClientRequest": {"InnerClient": [0, {"ExitService":{"node": SERVER_NODE, "id":"TODO"}}]}}
-        sendPoke(data);
+        api.pokeUnsubscribe();
       },
       get,
       set,
