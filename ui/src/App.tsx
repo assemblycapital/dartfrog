@@ -1,6 +1,4 @@
 import "./App.css";
-import useChatStore from "./store/chat";
-
 import Footer from "./components/Footer";
 import ControlHeader from "./components/ControlHeader";
 import { useEffect, useRef, useState } from "react";
@@ -9,34 +7,34 @@ import ServerBox from "./components/ServerBox";
 import { WEBSOCKET_URL, } from './utils';
 import KinodeClientApi from "@kinode/client-api";
 import DartApi from "./dartclientlib/";
+import useDartStore from "./store/dart";
 
 function App() {
 
-  const [nodeConnected, setNodeConnected] = useState(false);
+  const {setApi, handleUpdate, setIsClientConnected, setServices} = useDartStore();
 
-  const {setApi, handleUpdate} = useChatStore();
 
   useEffect(() => {
-    let api = new DartApi(handleUpdate);
+    const api = new DartApi({
+      serviceUpdateHandlers: new Map(),
+      onOpen: () => {
+        setIsClientConnected(true);
+      },
+      onClose: () => {
+        setIsClientConnected(false);
+      },
+      onServicesChange: (services) => {
+        console.log("new services", services);
+        
+        setServices(services);
+      }
+    });
     setApi(api);
   }, []);
 
-  const [isServerDisconnected, setIsServerDisconnected] = useState(true);
-
-  // useEffect(() => {
-  //   if (!serverStatus) return;
-  //   if (!serverStatus.connection) return;
-  //   if (serverStatus.connection.type === ConnectionStatusType.Disconnected) {
-  //     setIsServerDisconnected(true);
-  //   } else {
-  //     setIsServerDisconnected(false);
-  //   }
-
-  // }, [serverStatus]);
-
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      // pokeUnsubscribe();
+        // pokeUnsubscribe();
     };
   
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -72,19 +70,9 @@ function App() {
       gap: "0.8rem",
     }}>
 
-      <ControlHeader nodeConnected={nodeConnected} />
+      <ControlHeader />
 
-      {isServerDisconnected ? (
-        <div
-          style={{
-            height: '400px',
-          }}
-        >
-          todo
-        </div>
-      ) : (
-        <ServerBox />
-      )}
+      <ServerBox />
 
       <Footer />
     </div>

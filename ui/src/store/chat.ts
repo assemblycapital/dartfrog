@@ -136,12 +136,12 @@ const useChatStore = create<ChatStore>()(
       pokeSubscribe: () => {
         const { api } = get();
         if (!api) { return; }
-        api.pokeSubscribe();
+        // api.pokeSubscribe();
       },
       pokeUnsubscribe: () => {
         const { api } = get();
         if (!api) { return; }
-        api.pokeUnsubscribe();
+        // api.pokeUnsubscribe();
       },
       get,
       set,

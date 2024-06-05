@@ -18,30 +18,6 @@ const DisplayUserActivity = () => {
           gap: "1rem",
         }}
       >
-        sfx: /yes /no /why /fart /people /robust /robustness
-      </div>
-      <div
-        style={{
-          fontSize: "0.8rem",
-          color: "#ffffff44",
-          cursor: "default",
-          display: "flex",
-          flexDirection: "row",
-          gap: "1rem",
-        }}
-      >
-        img: /die /kino /panda /dev /tiger /wow /cry /ok /oops
-      </div>
-      <div
-        style={{
-          fontSize: "0.8rem",
-          color: "#ffffff44",
-          cursor: "default",
-          display: "flex",
-          flexDirection: "row",
-          gap: "1rem",
-        }}
-      >
       <div
         style={{
           display: "inline-block",

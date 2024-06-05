@@ -6,13 +6,15 @@ import ChatHeader from "./ChatHeader";
 import { ConnectionStatusType, ServerStatus } from "../types/types";
 import { useEffect } from "react";
 import Spinner from "./Spinner";
+import useDartStore from "../store/dart";
 
 function ServerBox() {
+  const { services } = useDartStore();
   // const { chats, serverStatus } = useChatStore();
 
     return (
         <div>
-          todo
+          services
         </div>
     );
   // if (!serverStatus || serverStatus.connection.type === ConnectionStatusType.Disconnected) {
