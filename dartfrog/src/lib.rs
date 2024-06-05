@@ -139,8 +139,8 @@ enum ClientUpdate {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 enum ConsumerUpdate {
     FromClient(ConsumerClientUpdate),
-    FromServer(ConsumerServerUpdate),
-    FromService(ConsumerClientUpdate),
+    FromServer(String, ConsumerServerUpdate),
+    FromService(String, ConsumerServiceUpdate),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -206,7 +206,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
         // handle the request
     } else {
         // respond with NoSuchService
-        let update = ConsumerUpdate::FromServer(ConsumerServerUpdate::NoSuchService(service_id.id.clone()));
+        let update = ConsumerUpdate::FromServer(our.node().to_string(), ConsumerServerUpdate::NoSuchService(service_id.id.clone()));
         update_client_consumer(update, consumer_id)?;
     }
     Ok(())
@@ -230,14 +230,36 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: Address, u
                     ConsumerUpdate::FromClient(inner) => {
                         // handle the request
                     }
-                    ConsumerUpdate::FromServer(inner) => {
+                    ConsumerUpdate::FromServer(server_node, inner) => {
                         // handle the request
+                        if server_node != source.node {
+                            // no spoofing
+                            return Ok(());
+                        }
                     }
-                    ConsumerUpdate::FromService(inner) => {
+                    ConsumerUpdate::FromService(service_name, inner) => {
                         // handle the request
+
+                        let service_id: ServiceId = ServiceId {
+                            node: source.node.clone(),
+                            id: service_name.clone()
+                        };
                         // does the consumer have this service?
-                        // is this service on the correct server (source)?
+                        if !(consumer.services.contains_key(&service_id)) {
+                            // consumer doesn't have this service
+                            return Ok(());
+                        }
+
                         // update the connection status
+                        let service = consumer.services.get_mut(&service_id).unwrap();
+                        service.connection = ConnectionStatus::Connected(
+                            SystemTime::now()
+                                .duration_since(UNIX_EPOCH)
+                                .unwrap()
+                                .as_secs(),
+                        );
+                        // TODO something like this
+                        let connection_update = ConsumerUpdate::FromClient(ConsumerClientUpdate::Todo("service connection status updated".to_string()));
                     }
                 }
             }
