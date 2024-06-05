@@ -119,7 +119,7 @@ struct ChannelId {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 enum ServerRequest {
-    InnerService(ServiceId, ServiceRequest),
+    ServiceRequest(ServiceId, ConsumerId, ServiceRequest),
     CreateService(ServiceId),
     DeleteService(ServiceId),
     RequestServiceList(ConsumerId),
@@ -132,28 +132,28 @@ enum ServiceRequest {
     PresenceHeartbeat(ConsumerId),
     PluginMessageTODO(String)
 }
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 enum ClientUpdate {
     ConsumerUpdate(ConsumerId, ConsumerUpdate),
 }
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 enum ConsumerUpdate {
     FromClient(ConsumerClientUpdate),
     FromServer(ConsumerServerUpdate),
     FromService(ConsumerClientUpdate),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 enum ConsumerServerUpdate {
     NoSuchService(String),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 enum ConsumerClientUpdate {
     Todo(String),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 enum ConsumerServiceUpdate {
     SubscribeAck(String),
     SubscribeNack(String),
@@ -187,10 +187,71 @@ fn send_server_updates(state: &DartState, update: ClientUpdate) {
 
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
     println!("server request: {:?}", req);
+    match req {
+        ServerRequest::ServiceRequest(service_id, consumer_id, service_request) => {
+            handle_service_request(our, state, source, service_id, consumer_id, service_request)?;
+
+        }
+        _ => {
+
+        }
+    }
+    Ok(())
+}
+fn handle_service_request(our: &Address, state: &mut DartState, source: Address, service_id: ServiceId, consumer_id: ConsumerId, req: ServiceRequest) -> anyhow::Result<()> {
+    if service_id.node != our.node {
+        return Ok(());
+    }
+    if let Some(mut service) = state.server.services.get(&service_id.id) {
+        // handle the request
+    } else {
+        // respond with NoSuchService
+        let update = ConsumerUpdate::FromServer(ConsumerServerUpdate::NoSuchService(service_id.id.clone()));
+        update_client_consumer(update, consumer_id)?;
+    }
     Ok(())
 }
 
-fn handle_client_update(our: &Address, state: &mut DartState, source: Address, req: ClientUpdate) -> anyhow::Result<()> {
+fn handle_client_update(our: &Address, state: &mut DartState, source: Address, upd: ClientUpdate) -> anyhow::Result<()> {
+    // println!("client update: {:?}", upd);
+    match upd {
+        ClientUpdate::ConsumerUpdate(consumer_id, consumer_update) => {
+            if consumer_id.client_node != our.node {
+                return Ok(());
+            }
+
+            let mut consumer_exists = false;
+            if let Some(consumer) = state.client.consumers.get_mut(&consumer_id.ws_channel_id) {
+                consumer_exists = true;
+                // possibly intercept the update first
+                // TODO filter out lying updates
+                // e.g. an update could lie about its source address if not checked
+                match consumer_update.clone() {
+                    ConsumerUpdate::FromClient(inner) => {
+                        // handle the request
+                    }
+                    ConsumerUpdate::FromServer(inner) => {
+                        // handle the request
+                    }
+                    ConsumerUpdate::FromService(inner) => {
+                        // handle the request
+                        // does the consumer have this service?
+                        // is this service on the correct server (source)?
+                        // update the connection status
+                    }
+                }
+            }
+            if !(consumer_exists) {
+                return Ok(());
+                // this should be ignored, right?
+            }
+            // then send it to the actual consumer
+            update_consumer(state, consumer_id.ws_channel_id, consumer_update)?;
+        }
+        _ => {
+
+        }
+    }
     Ok(())
 }
 
@@ -218,19 +279,20 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
     println!("client request: {:?}", req);
     match req {
         ClientRequest::ConsumerRequest(num, inner) => {
-            let Some(client) = state.client.consumers.get_mut(&num) else {
+            let Some(consumer) = state.client.consumers.get_mut(&num) else {
                 println!("no client found");
                 return Ok(());
             };
-            println!("inner client request: {:?} {:?}", num, inner);
+            println!("consumer request: {:?} {:?}", num, inner);
             match inner {
                 ConsumerRequest::JoinService(sid) => {
-                    if let Some(service) = client.services.get(&sid) {
+                    if let Some(service) = consumer.services.get(&sid) {
                         // already have it
                     } else {
-                        client.services.insert(sid.clone(), new_sync_service(sid.clone()));
+                        consumer.services.insert(sid.clone(), new_sync_service(sid.clone()));
 
-                        let s_req = ServerRequest::InnerService(sid.clone(), ServiceRequest::Subscribe(get_client_id(our, client)));
+                        let consumer_id = get_client_id(our, consumer);
+                        let s_req = ServerRequest::ServiceRequest(sid.clone(), consumer_id, ServiceRequest::Subscribe(get_client_id(our, consumer)));
                         let address = get_server_address(sid.clone().node.as_str());
                         poke_server(&address, s_req)?;
                         let update = ConsumerUpdate::FromClient(ConsumerClientUpdate::Todo("clientmodule created your service, poking server".to_string()));
@@ -438,6 +500,13 @@ fn init(our: Address) {
 }
 
 
+fn update_client_consumer(update: ConsumerUpdate, consumer_id: ConsumerId) -> anyhow::Result<()> {
+    let address = get_server_address(&consumer_id.client_node);
+    Request::to(address)
+        .body(serde_json::to_vec(&DartMessage::ClientUpdate(ClientUpdate::ConsumerUpdate(consumer_id, update)))?)
+        .send()?;
+    Ok(())
+}
 fn poke_server(address:&Address, req: ServerRequest) -> anyhow::Result<()> {
     Request::to(address)
         .body(serde_json::to_vec(&DartMessage::ServerRequest(req))?)

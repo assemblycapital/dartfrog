@@ -23,25 +23,25 @@ class DartApi {
     if (!this.api) { return; }
     this.api.send({ data });
   }
+  sendRequest(req: any) {
+    if (!this.api) { return; }
+    const wrapper = {
+      "ClientRequest": {
+        "ConsumerRequest": [0, req]
+      }
+    }
+
+    this.api.send({ data:wrapper });
+  }
 
   pokeSubscribe() {
-    if (!this.api) { return; }
-    const data = {
-      "ClientRequest": {
-        "ConsumerRequest": [0, { "JoinService": { "node": SERVER_NODE, "id": "TODO" } }]
-      }
-    };
-    this.sendPoke(data);
+    const request =  { "JoinService": { "node": SERVER_NODE, "id": "TODO" } }
+    this.sendRequest(request);
   }
 
   pokeUnsubscribe() {
-    if (!this.api) { return; }
-    const data = {
-      "ClientRequest": {
-        "ConsumerRequest": [0, { "ExitService": { "node": SERVER_NODE, "id": "TODO" } }]
-      }
-    };
-    this.sendPoke(data);
+    const request =  { "ExitService": { "node": SERVER_NODE, "id": "TODO" } }
+    this.sendRequest(request);
   }
 
   private initialize() {
