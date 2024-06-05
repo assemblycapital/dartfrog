@@ -19,11 +19,6 @@ wit_bindgen::generate!({
     world: "process",
 });
 
-#[derive(Debug, Serialize, Deserialize)]
-enum WsUpdate{
-    Todo(String)
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct ChatMessage {
     id: u64,
@@ -138,10 +133,31 @@ enum ServiceRequest {
     PluginMessageTODO(String)
 }
 #[derive(Debug, Serialize, Deserialize)]
-enum UpdateFromServer {
-    SubscribeAck(ChannelId),
-    SubscribeNack(ChannelId),
-    SubscribeKick(ChannelId),
+enum ClientUpdate {
+    ConsumerUpdate(ConsumerId, ConsumerUpdate),
+}
+#[derive(Debug, Serialize, Deserialize)]
+enum ConsumerUpdate {
+    FromClient(ConsumerClientUpdate),
+    FromServer(ConsumerServerUpdate),
+    FromService(ConsumerClientUpdate),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+enum ConsumerServerUpdate {
+    NoSuchService(String),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+enum ConsumerClientUpdate {
+    Todo(String),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+enum ConsumerServiceUpdate {
+    SubscribeAck(String),
+    SubscribeNack(String),
+    SubscribeKick(String),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -163,10 +179,10 @@ enum ConsumerRequest {
 enum DartMessage {
     ServerRequest(ServerRequest),
     ClientRequest(ClientRequest),
-    UpdateFromServer(UpdateFromServer),
+    ClientUpdate(ClientUpdate),
 }
 
-fn send_server_updates(state: &DartState, update: UpdateFromServer) {
+fn send_server_updates(state: &DartState, update: ClientUpdate) {
 }
 
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
@@ -174,21 +190,8 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
     Ok(())
 }
 
-fn handle_server_update(our: &Address, state: &mut DartState, source: Address, req: UpdateFromServer) -> anyhow::Result<()> {
+fn handle_client_update(our: &Address, state: &mut DartState, source: Address, req: ClientUpdate) -> anyhow::Result<()> {
     Ok(())
-}
-
-fn safe_trim_to_boundary(s: String, max_len: usize) -> String {
-    if s.len() <= max_len {
-        return s;
-    }
-
-    let mut end = max_len;
-    while !s.is_char_boundary(end) {
-        end -= 1;
-    }
-
-    s[..end].to_string()
 }
 
 fn new_sync_service(id: ServiceId) -> SyncService {
@@ -230,8 +233,8 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                         let s_req = ServerRequest::InnerService(sid.clone(), ServiceRequest::Subscribe(get_client_id(our, client)));
                         let address = get_server_address(sid.clone().node.as_str());
                         poke_server(&address, s_req)?;
-                        let update = WsUpdate::Todo("clientmodule created your service, poking server".to_string());
-                        update_client(state, num, update)?;
+                        let update = ConsumerUpdate::FromClient(ConsumerClientUpdate::Todo("clientmodule created your service, poking server".to_string()));
+                        update_consumer(state, num, update)?;
                     }
                 }
                 _ => {
@@ -330,8 +333,8 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
             DartMessage::ClientRequest(c_req) => {
                 handle_client_request(our, state, source.clone(), c_req)?;
             }
-            DartMessage::UpdateFromServer(s_upd) => {
-                handle_server_update(our, state, source.clone(), s_upd)?;
+            DartMessage::ClientUpdate(s_upd) => {
+                handle_client_update(our, state, source.clone(), s_upd)?;
             }
             _ => {
                 return Err(anyhow::anyhow!("unexpected Request: {:?}", message));
@@ -343,21 +346,19 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
 
 }
 
-fn update_client (
+fn update_consumer (
     state: &DartState,
-    client_id: u32,
-    update: WsUpdate,
+    websocket_id: u32,
+    update: ConsumerUpdate,
 ) -> anyhow::Result<()> {
 
-    if !(state.client.consumers.contains_key(&client_id)) {
+    if !(state.client.consumers.contains_key(&websocket_id)) {
         return Ok(());
     }
 
     let blob = LazyLoadBlob {
         mime: Some("application/json".to_string()),
-        bytes: serde_json::json!({
-            "WsUpdate": update
-        })
+        bytes: serde_json::json!(update)
         .to_string()
         .as_bytes()
         .to_vec(),
@@ -365,7 +366,7 @@ fn update_client (
 
     // Send a WebSocket message to the http server in order to update the UI
     send_ws_push(
-        client_id,
+        websocket_id,
         WsMessageType::Text,
         blob,
     );
