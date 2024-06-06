@@ -61,6 +61,7 @@ export const parseServiceId = (serviceId: string) => {
   return { node, id };
 }
 
+export type AvailableServices = Map<string, Array<ParsedServiceId>>
 
 function new_service(serviceId: ParsedServiceId) : Service {
   return {
@@ -73,7 +74,8 @@ interface ConstructorArgs {
   serviceUpdateHandlers?: ServiceUpdateHandlers;
   onOpen?: () => void;
   onClose?: () => void;
-  onServicesChange?: (services: Services) => void;
+  onServicesChangeHook?: (services: Services) => void;
+  onAvailableServicesChangeHook?: (availableServices: AvailableServices) => void;
 }
 
 class DartApi {
@@ -81,23 +83,33 @@ class DartApi {
   public connectionStatus: ConnectionStatus;
   private serviceUpdateHandlers: ServiceUpdateHandlers;
   private services: Map<ServiceId, Service> = new Map();
+  private availableServices: AvailableServices = new Map();
 
   private onOpen: () => void;
   private onClose: () => void;
-  private onServicesChange: (services: Services) => void;
+  private onServicesChangeHook: (services: Services) => void = () => {};
+  private onAvailableServicesChangeHook: (availableServices: AvailableServices) => void = () => {};
 
   constructor({
     serviceUpdateHandlers = new Map(),
     onOpen = () => {},
     onClose = () => {},
-    onServicesChange = (services) => {},
+    onServicesChangeHook = (services) => {},
+    onAvailableServicesChangeHook = (availableServices) => {},
   }: ConstructorArgs = {}) {
     this.serviceUpdateHandlers = serviceUpdateHandlers;
     this.onOpen = onOpen;
     this.onClose = onClose;
-    this.onServicesChange = onServicesChange;
+    this.onServicesChangeHook = onServicesChangeHook;
+    this.onAvailableServicesChangeHook = onAvailableServicesChangeHook;
     this.setConnectionStatus(ConnectionStatusType.Connecting);
     this.initialize();
+  }
+  private onServicesChange: () => void = () => {  
+    this.onServicesChangeHook(this.services);
+  }
+  private onAvailableServicesChange: () => void = () => {  
+    this.onAvailableServicesChangeHook(this.availableServices);
   }
 
   private setConnectionStatus(status: ConnectionStatusType) {
@@ -152,8 +164,13 @@ class DartApi {
               if (!service) { return; }
               service.connectionStatus = {status:ServiceConnectionStatusType.ServiceDoesNotExist, timestamp:Date.now()};
               this.services.set(serviceId, service);
-              this.onServicesChange(this.services);
+              this.onServicesChange();
 
+          } else if (response.ServiceList) {
+              console.log('Service List:', address, response.ServiceList);
+              // Add your logic to handle the ServiceList response here
+              this.availableServices.set(address, response.ServiceList);
+              this.onAvailableServicesChange();
           } else {
               console.warn('Unknown server response:', response);
           }
@@ -176,12 +193,12 @@ class DartApi {
         service.connectionStatus = {status:ServiceConnectionStatusType.Connected, timestamp:Date.now()};
         if (response === "SubscribeAck") {
           this.services.set(serviceId, service);
-          this.onServicesChange(this.services);
+          this.onServicesChange();
           this.startPresenceHeartbeat(serviceId);
         } else if (response.ServiceMetadata) {
           service.metadata = response.ServiceMetadata;
           this.startPresenceHeartbeat(serviceId);
-          this.onServicesChange(this.services);
+          this.onServicesChange();
         } else {
           console.warn('Unknown service message format:', message);
         }
@@ -245,11 +262,22 @@ class DartApi {
   joinService(serviceId: ParsedServiceId) {
     const request =  { "JoinService": { "node": serviceId.node, "id": serviceId.id } }
     this.services.set(makeServiceId(serviceId.node, serviceId.id), new_service(serviceId));
-    this.onServicesChange(this.services);
+    this.onServicesChange();
     this.sendRequest(request);
   }
-  exitService(serviceId: ParsedServiceId) {
-    const request =  { "ExitService": { "node": serviceId.node, "id": serviceId.id } }
+  exitService(parsedServiceId: ParsedServiceId) {
+    let serviceId = makeServiceId(parsedServiceId.node, parsedServiceId.id);
+    if (!this.services.has(serviceId)) {
+      console.log("Service not found", serviceId);
+      return;
+    }
+    this.services.delete(serviceId);
+    this.onServicesChange();
+    const request =  { "ExitService": { "node": parsedServiceId.node, "id": parsedServiceId.id } }
+    this.sendRequest(request);
+  }
+  requestServiceList(serverNode: string) {
+    const request =  { "RequestServiceList": serverNode }
     this.sendRequest(request);
   }
 
@@ -272,6 +300,7 @@ class DartApi {
         this.onOpen();
         this.setConnectionStatus(ConnectionStatusType.Connected);
         this.joinService({node:SERVER_NODE, id:"chat"});
+        this.requestServiceList(SERVER_NODE);
       },
       onMessage: (json, api) => {
         this.setConnectionStatus(ConnectionStatusType.Connected);

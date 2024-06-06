@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import DartApi, { ParsedServiceId, Service, ServiceId, parseServiceId } from '../dartclientlib';
+import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId, parseServiceId } from '../dartclientlib';
 
 export interface DartStore{
   api: DartApi | null,
@@ -15,6 +15,9 @@ export interface DartStore{
   services: Map<ServiceId, Service>
   setServices: (services: Map<ServiceId, Service>) => void
   exitService: (serviceId: ParsedServiceId) => void
+  joinService: (serviceId: ParsedServiceId) => void
+  availableServices: AvailableServices
+  setAvailableServices: (availableServices: AvailableServices) => void
   // 
   get: () => DartStore 
   set: (partial: DartStore | Partial<DartStore>) => void
@@ -43,6 +46,14 @@ const useDartStore = create<DartStore>()(
 
         api.exitService(serviceId);
       },
+      joinService: (serviceId: ParsedServiceId) => {
+        const { api } = get();
+        if (!api) { return; }
+
+        api.joinService(serviceId);
+      },
+      availableServices: new Map(),
+      setAvailableServices: (availableServices) => set({ availableServices }),
       get,
       set,
     }),

@@ -134,7 +134,7 @@ enum ServerRequest {
     ServiceRequest(ServiceId, ServiceRequest),
     CreateService(ServiceId),
     DeleteService(ServiceId),
-    RequestServiceList,
+    RequestServiceList
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -158,6 +158,7 @@ enum ConsumerUpdate {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 enum ConsumerServerUpdate {
     NoSuchService(String),
+    ServiceList(Vec<ServiceId>),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -186,7 +187,6 @@ enum ConsumerRequest {
     JoinService(ServiceId),
     ExitService(ServiceId),
     ServiceHeartbeat(ServiceId),
-    SendOnChannel(ServiceRequest),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -211,6 +211,14 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             } else {
                 state.server.services.insert(service_id.id.clone(), new_service(service_id.clone()));
             }
+        }
+        ServerRequest::RequestServiceList => {
+            let services: Vec<ServiceId> = state.server.services.keys().map(|x| ServiceId {
+                node: our.node.clone(),
+                id: x.clone()
+            }).collect();
+            let update = ConsumerUpdate::FromServer(our.node.clone(), ConsumerServerUpdate::ServiceList(services));
+            update_client(update, source.node.clone())?;
         }
         _ => {
 
@@ -335,6 +343,8 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: Address, u
                         // no spoofing
                         return Ok(());
                     }
+                    update_all_consumers(&state, consumer_update.clone());
+                    
                 }
                 ConsumerUpdate::FromService(service_node, service_name, inner) => {
                     // handle the request
@@ -460,14 +470,16 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                     if let Some(service) = consumer.services.get(&sid) {
                         let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::PresenceHeartbeat);
                         let address = get_server_address(sid.clone().node.as_str());
-                        consumer.last_active = SystemTime::now()
-                            .duration_since(UNIX_EPOCH)
-                            .unwrap()
-                            .as_secs();
                         poke_server(&address, s_req)?;
                     } else {
                         // dont have this service
+                        // TODO maybe tell frontend that it's missing
                     }
+                }
+                ConsumerRequest::RequestServiceList(server_node) => {
+                    let s_req = ServerRequest::RequestServiceList;
+                    let address = get_server_address(server_node.as_str());
+                    poke_server(&address, s_req)?;
                 }
                 _ => {
                     println!("unexpected consumer request: {:?}", inner);
@@ -596,6 +608,12 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
 
     }
 
+}
+
+fn update_all_consumers (state: &DartState, update: ConsumerUpdate) {
+    for (id, consumer) in state.client.consumers.iter() {
+        update_consumer(consumer.ws_channel_id, update.clone()).unwrap();
+    }
 }
 
 fn update_consumer (

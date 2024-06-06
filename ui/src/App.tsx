@@ -11,7 +11,7 @@ import useDartStore from "./store/dart";
 
 function App() {
 
-  const {setApi, handleUpdate, setIsClientConnected, setServices} = useDartStore();
+  const {setApi, handleUpdate, setIsClientConnected, setServices, setAvailableServices} = useDartStore();
 
 
   useEffect(() => {
@@ -23,10 +23,11 @@ function App() {
       onClose: () => {
         setIsClientConnected(false);
       },
-      onServicesChange: (services) => {
-        // console.log("new services", services);
-        
+      onServicesChangeHook: (services) => {
         setServices(services);
+      },
+      onAvailableServicesChangeHook: (availableServices) => {
+        setAvailableServices(availableServices);
       }
     });
     setApi(api);

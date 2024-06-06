@@ -10,10 +10,17 @@ import useDartStore from "../store/dart";
 import { ServiceConnectionStatus, ServiceConnectionStatusType } from "../dartclientlib";
 
 function ServerBox() {
-  const { services, exitService } = useDartStore();
+  const { services, exitService, joinService, availableServices } = useDartStore();
   // const { chats, serverStatus } = useChatStore();
   if (!(services instanceof Map)) {
-    return <div>Error: services is not a Map</div>;
+    // this is pretty dumb
+    // but if i dont do it, everything explodes :)
+    return <Spinner />
+  }
+  if (!(availableServices instanceof Map)) {
+    // this is pretty dumb
+    // but if i dont do it, everything explodes :)
+    return <Spinner />
   }
 
   function stringifyServiceConnectionStatus(status: ServiceConnectionStatusType): string {
@@ -53,12 +60,66 @@ function ServerBox() {
   }
   return (
     <div>
+      <div>
+        <div
+          style={{
+            fontWeight: "bold",
+          }}
+        >
+          available services:
+        </div>
+        <div>
+        {Array.from(availableServices.entries()).map(([serverNode, aServices]) => (
+          <div
+            key={serverNode}
+          >
+            {/* <div
+              style={{
+                display:"inline-block",
+                marginRight: "0.8rem",
+              }}
+            >
+              server: {serverNode}
+            </div> */}
+            <div
+              style={{
+                display:"inline-block"
+              }}
+            >
+            {aServices.map((service) => (
+                <div
+                  key={serverNode+":"+service.id}
+                  style={{
+                    display:"inline-block"
+                  }}
+                >
+
+                  {serverNode+":"+service.id}{" "}
+                  {services.has(serverNode+":"+service.id) ? "connected" : 
+                    <button
+                      onClick={() => {
+                          joinService(service);
+                        }
+                      }
+                    >
+                      connect
+                    </button>
+                  }
+                </div>
+              ))}
+
+            </div>
+          </div>
+
+        ))}
+        </div>
+      </div>
       <div
         style={{
           fontWeight: "bold",
         }}
       >
-        services:
+        connected services:
       </div>
 
       {Array.from(services.entries()).map(([serviceId, service]) => (
