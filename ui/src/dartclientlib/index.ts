@@ -243,6 +243,16 @@ class DartApi {
     this.sendRequest(request);
   }
 
+  public close() {
+    if (!this.api) { return; }
+    const wrapper = {
+      "ClientRequest": {
+        "DeleteConsumer": 0
+      }
+    }
+
+    this.api.send({ data:wrapper });
+  }
   sendPoke(data: any) {
     if (!this.api) { return; }
     this.api.send({ data });

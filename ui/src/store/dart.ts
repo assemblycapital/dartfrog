@@ -5,6 +5,7 @@ import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId, parseS
 export interface DartStore{
   api: DartApi | null,
   setApi: (api: DartApi) => void
+  closeApi: () => void
   // 
   handleUpdate: (json: string | Blob) => void
   // 
@@ -28,6 +29,12 @@ const useDartStore = create<DartStore>()(
     (set, get) => ({
       api: null,
       setApi: (api) => set({ api }),
+      closeApi: () => {
+        const { api } = get();
+        if (!api) { return; }
+        api.close();
+        set({ api: null });
+      },
       handleUpdate: (json: string | Blob) => {
         console.log('TODO?', json);
       },

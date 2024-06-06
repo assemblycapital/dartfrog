@@ -420,6 +420,7 @@ fn get_client_id(our: &Address, consumer: &Consumer) -> ConsumerId {
         ws_channel_id: consumer.ws_channel_id,
     }
 }
+
 fn handle_client_request(our: &Address, state: &mut DartState, source: Address, req: ClientRequest) -> anyhow::Result<()> {
     println!("client request: {:?}", req);
     let now = SystemTime::now()
@@ -427,6 +428,37 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
         .unwrap()
         .as_secs();
     match req {
+        ClientRequest::DeleteConsumer(num) => {
+
+            let mut all_services: HashMap<ServiceId, HashSet<u32>> = HashMap::new();
+            for (id, consumer) in state.client.consumers.iter() {
+                for (service_id, _service) in consumer.services.iter() {
+                    all_services
+                        .entry(service_id.clone())
+                        .or_insert_with(HashSet::new)
+                        .insert(id.clone());
+                }
+            }
+            if let Some(consumer) = state.client.consumers.get(&num) {
+                for (service_id, service) in consumer.services.iter() {
+                    // TODO this kind of sucks
+                    // here we only send the unsub if no other consumer is subscribed to the service in question
+                    // 
+                    // in the future, consumers should just unsubscribe onclose,
+                    //  it just requires extending some consumer scope to the service
+                    //  but that adds some complexity, and could be inefficient if not done correctly
+                    // 
+                    let consumers_with_this_service = all_services.get(&service_id).unwrap();
+                    if consumers_with_this_service.len() == 1 {
+                        let s_req = ServerRequest::ServiceRequest(service_id.clone(), ServiceRequest::Unsubscribe);
+                        let address = get_server_address(service_id.node.as_str());
+                        poke_server(&address, s_req)?;
+                    }
+                }
+                println!("deleting consumer");
+                state.client.consumers.remove(&num);
+            }
+        }
         ClientRequest::ConsumerRequest(num, inner) => {
             let Some(consumer) = state.client.consumers.get_mut(&num) else {
                 println!("no client found");
@@ -548,6 +580,11 @@ fn handle_http_server_request(
             match serde_json::from_slice(&blob.bytes)? {
                 DartMessage::ClientRequest(c_req) => {
                     match c_req {
+                        ClientRequest::DeleteConsumer(_num) => {
+                            // write down the current channel_id, num inaccurate from the api lib
+                            let req = ClientRequest::DeleteConsumer(channel_id);
+                            handle_client_request(our, state, source.clone(), req)?;
+                        }
                         ClientRequest::ConsumerRequest(_num, inner) => {
                             // write down the current channel_id, num inaccurate from the api lib
                             let req = ClientRequest::ConsumerRequest(channel_id, inner);
@@ -559,7 +596,8 @@ fn handle_http_server_request(
                     }
                 }
                 _ => {
-                    return Err(anyhow::anyhow!("unexpected Request: {:?}", s));
+                    println!("unexpected Request: {:?}", s)
+                    // return Err(anyhow::anyhow!("unexpected Request: {:?}", s));
                 }
             }
         }
@@ -601,7 +639,8 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
                 handle_client_update(our, state, source.clone(), s_upd)?;
             }
             _ => {
-                return Err(anyhow::anyhow!("unexpected Request: {:?}", message));
+                println!("unexpected Request: {:?}", message);
+                // return Err(anyhow::anyhow!("unexpected Request: {:?}", message));
             }
         }
         Ok(())

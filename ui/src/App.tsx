@@ -11,7 +11,7 @@ import useDartStore from "./store/dart";
 
 function App() {
 
-  const {setApi, handleUpdate, setIsClientConnected, setServices, setAvailableServices} = useDartStore();
+  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, setAvailableServices} = useDartStore();
 
 
   useEffect(() => {
@@ -36,6 +36,8 @@ function App() {
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
         // pokeUnsubscribe();
+        // api.close();
+        closeApi();
     };
   
     window.addEventListener('beforeunload', handleBeforeUnload);

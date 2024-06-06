@@ -10,7 +10,7 @@ import useDartStore from "../store/dart";
 import { ServiceConnectionStatus, ServiceConnectionStatusType } from "../dartclientlib";
 
 function ServerBox() {
-  const { services, exitService, joinService, availableServices } = useDartStore();
+  const { services, exitService, joinService, availableServices, closeApi } = useDartStore();
   // const { chats, serverStatus } = useChatStore();
   if (!(services instanceof Map)) {
     // this is pretty dumb
