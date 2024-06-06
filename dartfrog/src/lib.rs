@@ -48,9 +48,8 @@ struct Presence {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct Service {
     pub id: ServiceId,
-    pub subscribers: HashSet<ConsumerId>,
+    pub metadata: ServiceMetadata,
     pub last_sent_presence: u64,
-    pub user_presence: HashMap<String, Presence>,
 }
 
 impl Hash for Service {
@@ -62,9 +61,8 @@ impl Hash for Service {
 fn new_service(id: ServiceId) -> Service {
     Service {
         id: id,
-        subscribers: HashSet::new(),
+        metadata: new_service_metadata(),
         last_sent_presence: 0,
-        user_presence: HashMap::new(),
     }
 }
 
@@ -79,10 +77,15 @@ fn new_server_state() -> ServerState {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct SyncService {
-    pub id: ServiceId,
+struct ServiceMetadata {
     pub subscribers: HashSet<ConsumerId>,
     pub user_presence: HashMap<String, Presence>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct SyncService {
+    pub id: ServiceId,
+    pub metadata: ServiceMetadata,
     pub connection: ConnectionStatus,
 }
 
@@ -165,8 +168,9 @@ enum ConsumerClientUpdate {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 enum ConsumerServiceUpdate {
     SubscribeAck,
-    SubscribeNack,
-    SubscribeKick,
+    // SubscribeAck is potentially obsolete if we always send metadata on subscribe
+    ServiceMetadata(ServiceMetadata),
+    Kick,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -217,6 +221,11 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
     }
     Ok(())
 }
+
+fn make_consumer_service_update(service_id: ServiceId, update: ConsumerServiceUpdate) -> ConsumerUpdate {
+    ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), update)
+}
+
 fn handle_service_request(our: &Address, state: &mut DartState, source: Address, service_id: ServiceId, consumer_id: ConsumerId, req: ServiceRequest) -> anyhow::Result<()> {
     if service_id.node != our.node {
         return Ok(());
@@ -225,12 +234,21 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
         // handle the request
         match req {
             ServiceRequest::Subscribe(consumer_id) => {
-                if !service.subscribers.contains(&consumer_id) {
+                if !service.metadata.subscribers.contains(&consumer_id) {
                     // already subscribed, continue anyways
                 }
-                service.subscribers.insert(consumer_id.clone());
-                let update = ConsumerUpdate::FromService(our.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::SubscribeAck);
-                update_client_consumer(update, consumer_id)?;
+                service.metadata.subscribers.insert(consumer_id.clone());
+                service.metadata.user_presence.insert(consumer_id.client_node.clone(), Presence {
+                    time: SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs(),
+                    was_online_at_time: true,
+                });
+                let ack = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::SubscribeAck);
+                let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
+                update_client_consumer(ack, consumer_id.clone())?;
+                update_client_consumer(meta, consumer_id)?;
             }
             _ => {
                 println!("unexpected service request: {:?}", req);
@@ -296,8 +314,8 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: Address, u
                                 .unwrap()
                                 .as_secs(),
                         );
-                        let connection_update = ConsumerUpdate::FromClient(ConsumerClientUpdate::Todo("service connection status updated".to_string()));
-                        update_consumer(state, consumer_id.ws_channel_id, connection_update)?;
+                        // let connection_update = ConsumerUpdate::FromClient(ConsumerClientUpdate::Todo("service connection status updated".to_string()));
+                        // update_consumer(state, consumer_id.ws_channel_id, connection_update)?;
                     }
                 }
             }
@@ -316,11 +334,16 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: Address, u
     Ok(())
 }
 
+fn new_service_metadata() -> ServiceMetadata {
+    ServiceMetadata {
+        subscribers: HashSet::new(),
+        user_presence: HashMap::new(),
+    }
+}
 fn new_sync_service(id: ServiceId) -> SyncService {
     SyncService {
         id: id,
-        subscribers: HashSet::new(),
-        user_presence: HashMap::new(),
+        metadata: new_service_metadata(),
         connection: ConnectionStatus::Connecting(
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)

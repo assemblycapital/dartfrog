@@ -24,7 +24,7 @@ function App() {
         setIsClientConnected(false);
       },
       onServicesChange: (services) => {
-        console.log("new services", services);
+        // console.log("new services", services);
         
         setServices(services);
       }

@@ -38,7 +38,23 @@ export type ServiceId = string;
 export type Service = {
   serviceId: ParsedServiceId,
   connectionStatus: ServiceConnectionStatus,
+  metadata: ServiceMetadata,
 }
+export interface ConsumerId {
+  client_node: string;
+  ws_channel_id: number;
+}
+
+export interface Presence {
+  time: number;
+  was_online_at_time: boolean;
+}
+
+export interface ServiceMetadata {
+  subscribers: Array<ConsumerId>;
+  user_presence: { [key: string]: Presence };
+}
+
 
 export type Services = Map<ServiceId, Service>;
 
@@ -46,9 +62,10 @@ export const makeServiceId = (node: string, id: string) => {
   return `${node}:${id}`;
 }
 
-function new_service(serviceId: ParsedServiceId) {
+function new_service(serviceId: ParsedServiceId) : Service {
   return {
     serviceId: serviceId,
+    metadata: {subscribers: [], user_presence: {}},
     connectionStatus: {status:ServiceConnectionStatusType.Connecting, timestamp:Date.now()}
   }
 }
@@ -92,8 +109,6 @@ class DartApi {
         return;
     }
     
-    console.log('got json', json);
-
     let parsedJson;
     try {
         parsedJson = JSON.parse(json);
@@ -115,7 +130,7 @@ class DartApi {
 
 private handleClientUpdate(message: any) {
     if (message.Todo) {
-        console.log('Client TODO:', message.Todo);
+        // console.log('Client TODO:', message.Todo);
         // Add your logic to handle the client message here
         // For example, if message.Todo is "clientmodule created your service, poking server"
     } else {
@@ -146,10 +161,31 @@ private handleServerUpdate(message: any) {
         console.warn('Unknown server message format:', message);
     }
 }
+
 private handleServiceUpdate(message: any) {
-  console.log("handle service update", message);
-  if (Array.isArray(message) && message.length > 1) {
-      const [id, response] = message;
+  if (Array.isArray(message) && message.length > 2) {
+      const [service_node, service_name, response] = message;
+      let serviceId : ServiceId = makeServiceId(service_node, service_name);
+      let service = this.services.get(serviceId);
+
+      if (!service) {
+        // console.log("Service not found", serviceId);
+        return;
+      }
+      
+      service.connectionStatus = {status:ServiceConnectionStatusType.Connected, timestamp:Date.now()};
+      if (response === "SubscribeAck") {
+        this.services.set(serviceId, service);
+        this.onServicesChange(this.services);
+      } else if (response.ServiceMetadata) {
+        console.log('Service Metadata:', response.ServiceMetadata);
+        console.log('Service:', service.metadata);
+        service.metadata = response.ServiceMetadata;
+        this.onServicesChange(this.services);
+      } else {
+        console.warn('Unknown service message format:', message);
+      }
+      
   }
 }
 

@@ -70,6 +70,24 @@ function ServerBox() {
         >
           <div>{serviceId}</div>
           {renderConnectionStatus(service.connectionStatus)}
+          <div>
+            <div>Subscribers:</div>
+            {service.metadata.subscribers.map((subscriber) => (
+              <div key={subscriber.client_node + subscriber.ws_channel_id}>
+                {subscriber.client_node} {subscriber.ws_channel_id}
+                </div>
+              ))}
+          </div>
+          <div>
+            <div>User Presence:</div>
+            {Object.entries(service.metadata.user_presence).map(([key, presence]) => (
+                <div key={key}>
+                    <p>User ID: {key}</p>
+                    <p>Time: {presence.time}</p>
+                    <p>Was Online: {presence.was_online_at_time ? 'Yes' : 'No'}</p>
+                </div>
+            ))}
+          </div>
           {/* Render other service details here */}
         </div>
       ))}
