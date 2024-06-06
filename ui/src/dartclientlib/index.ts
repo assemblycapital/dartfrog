@@ -40,18 +40,13 @@ export type Service = {
   connectionStatus: ServiceConnectionStatus,
   metadata: ServiceMetadata,
 }
-export interface ConsumerId {
-  client_node: string;
-  ws_channel_id: number;
-}
-
 export interface Presence {
   time: number;
   was_online_at_time: boolean;
 }
 
 export interface ServiceMetadata {
-  subscribers: Array<ConsumerId>;
+  subscribers: Array<string>;
   user_presence: { [key: string]: Presence };
 }
 

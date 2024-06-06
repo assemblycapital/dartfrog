@@ -61,6 +61,7 @@ function ServerBox() {
       >
         services:
       </div>
+
       {Array.from(services.entries()).map(([serviceId, service]) => (
         <div key={serviceId}
           style={{
@@ -72,11 +73,11 @@ function ServerBox() {
           {renderConnectionStatus(service.connectionStatus)}
           <div>
             <div>Subscribers:</div>
-            {service.metadata.subscribers.map((subscriber) => (
-              <div key={subscriber.client_node + subscriber.ws_channel_id}>
-                {subscriber.client_node} {subscriber.ws_channel_id}
-                </div>
-              ))}
+            {service.metadata.subscribers.map((subscriber, i) => (
+              <div key={i}>
+                {subscriber}
+              </div>
+            ))}
           </div>
           <div>
             <div>User Presence:</div>
@@ -91,6 +92,7 @@ function ServerBox() {
           {/* Render other service details here */}
         </div>
       ))}
+
     </div>
   );
 

@@ -78,7 +78,7 @@ fn new_server_state() -> ServerState {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct ServiceMetadata {
-    pub subscribers: HashSet<ConsumerId>,
+    pub subscribers: HashSet<String>,
     pub user_presence: HashMap<String, Presence>,
 }
 
@@ -131,22 +131,22 @@ struct ChannelId {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 enum ServerRequest {
-    ServiceRequest(ServiceId, ConsumerId, ServiceRequest),
+    ServiceRequest(ServiceId, ServiceRequest),
     CreateService(ServiceId),
     DeleteService(ServiceId),
-    RequestServiceList(ConsumerId),
+    RequestServiceList,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 enum ServiceRequest {
-    Subscribe(ConsumerId),
-    Unsubscribe(ConsumerId),
-    PresenceHeartbeat(ConsumerId),
+    Subscribe,
+    Unsubscribe,
+    PresenceHeartbeat,
     PluginMessageTODO(String)
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 enum ClientUpdate {
-    ConsumerUpdate(ConsumerId, ConsumerUpdate),
+    ConsumerUpdate(ConsumerUpdate),
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 enum ConsumerUpdate {
@@ -201,8 +201,8 @@ fn send_server_updates(state: &DartState, update: ClientUpdate) {
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
     println!("server request: {:?}", req);
     match req {
-        ServerRequest::ServiceRequest(service_id, consumer_id, service_request) => {
-            handle_service_request(our, state, source, service_id, consumer_id, service_request)?;
+        ServerRequest::ServiceRequest(service_id, service_request) => {
+            handle_service_request(our, state, source, service_id, service_request)?;
 
         }
         ServerRequest::CreateService(service_id) => {
@@ -226,19 +226,19 @@ fn make_consumer_service_update(service_id: ServiceId, update: ConsumerServiceUp
     ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), update)
 }
 
-fn handle_service_request(our: &Address, state: &mut DartState, source: Address, service_id: ServiceId, consumer_id: ConsumerId, req: ServiceRequest) -> anyhow::Result<()> {
+fn handle_service_request(our: &Address, state: &mut DartState, source: Address, service_id: ServiceId, req: ServiceRequest) -> anyhow::Result<()> {
     if service_id.node != our.node {
         return Ok(());
     }
     if let Some(service) = state.server.services.get_mut(&service_id.id) {
         // handle the request
         match req {
-            ServiceRequest::Subscribe(consumer_id) => {
-                if !service.metadata.subscribers.contains(&consumer_id) {
+            ServiceRequest::Subscribe => {
+                if !service.metadata.subscribers.contains(&source.node.clone()) {
                     // already subscribed, continue anyways
                 }
-                service.metadata.subscribers.insert(consumer_id.clone());
-                service.metadata.user_presence.insert(consumer_id.client_node.clone(), Presence {
+                service.metadata.subscribers.insert(source.node.clone());
+                service.metadata.user_presence.insert(source.node.clone(), Presence {
                     time: SystemTime::now()
                         .duration_since(UNIX_EPOCH)
                         .unwrap()
@@ -247,8 +247,8 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                 });
                 let ack = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::SubscribeAck);
                 let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
-                update_client_consumer(ack, consumer_id.clone())?;
-                update_client_consumer(meta, consumer_id)?;
+                update_client(ack, source.node.clone())?;
+                update_client(meta, source.node.clone())?;
             }
             _ => {
                 println!("unexpected service request: {:?}", req);
@@ -257,7 +257,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
     } else {
         // respond with NoSuchService
         let update = ConsumerUpdate::FromServer(our.node().to_string(), ConsumerServerUpdate::NoSuchService(service_id.id.clone()));
-        update_client_consumer(update, consumer_id)?;
+        update_client(update, source.node.clone())?;
     }
     Ok(())
 }
@@ -265,67 +265,59 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
 fn handle_client_update(our: &Address, state: &mut DartState, source: Address, upd: ClientUpdate) -> anyhow::Result<()> {
     println!("client update: {:?}", upd);
     match upd {
-        ClientUpdate::ConsumerUpdate(consumer_id, consumer_update) => {
-            if consumer_id.client_node != our.node {
-                return Ok(());
-            }
-
-            let mut consumer_exists = false;
-            if let Some(consumer) = state.client.consumers.get_mut(&consumer_id.ws_channel_id) {
-                consumer_exists = true;
-                // possibly intercept the update first
-                // TODO filter out lying updates
-                // e.g. an update could lie about its source address if not checked
-                match consumer_update.clone() {
-                    ConsumerUpdate::FromClient(inner) => {
-                        // handle the request
-                    }
-                    ConsumerUpdate::FromServer(server_node, inner) => {
-                        // handle the request
-                        if server_node != source.node {
-                            // no spoofing
-                            return Ok(());
-                        }
-                    }
-                    ConsumerUpdate::FromService(service_node, service_name, inner) => {
-                        // handle the request
-
-                        if service_node != source.node {
-                            // no spoofing
-                            return Ok(());
-                        }
-
-                        let service_id: ServiceId = ServiceId {
-                            node: service_node.clone(),
-                            id: service_name.clone()
-                        };
-                        // does the consumer have this service?
-                        if !(consumer.services.contains_key(&service_id)) {
-                            // consumer doesn't have this service 
-                            println!("consumer doesn't have this service {:?}, {:?}", service_id, consumer.services.keys());
-                            return Ok(());
-                        }
-
-                        // update the connection status
-                        let service = consumer.services.get_mut(&service_id).unwrap();
-                        service.connection = ConnectionStatus::Connected(
-                            SystemTime::now()
-                                .duration_since(UNIX_EPOCH)
-                                .unwrap()
-                                .as_secs(),
-                        );
-                        // let connection_update = ConsumerUpdate::FromClient(ConsumerClientUpdate::Todo("service connection status updated".to_string()));
-                        // update_consumer(state, consumer_id.ws_channel_id, connection_update)?;
+        ClientUpdate::ConsumerUpdate(consumer_update) => {
+            // possibly intercept the update first
+            // TODO filter out lying updates
+            // e.g. an update could lie about its source address if not checked
+            match consumer_update.clone() {
+                ConsumerUpdate::FromServer(server_node, inner) => {
+                    // handle the request
+                    if server_node != source.node {
+                        // no spoofing
+                        return Ok(());
                     }
                 }
+                ConsumerUpdate::FromService(service_node, service_name, inner) => {
+                    // handle the request
+
+                    if service_node != source.node {
+                        // no spoofing
+                        return Ok(());
+                    }
+
+                    let service_id: ServiceId = ServiceId {
+                        node: service_node.clone(),
+                        id: service_name.clone()
+                    };
+                    for (consumer_id, consumer) in state.client.consumers.iter_mut() {
+                        if (!consumer.services.contains_key(&service_id)) {
+                            continue;
+                        }
+                        let service = consumer.services.get_mut(&service_id).unwrap();
+                        match inner {
+                            ConsumerServiceUpdate::Kick => {
+                                consumer.services.remove(&service_id);
+                                update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
+                            }
+                            ConsumerServiceUpdate::ServiceMetadata(ref metadata) => {
+                                let service = consumer.services.get_mut(&service_id).unwrap();
+                                service.metadata = metadata.clone();
+                                service.connection = ConnectionStatus::Connected(
+                                    SystemTime::now()
+                                        .duration_since(UNIX_EPOCH)
+                                        .unwrap()
+                                        .as_secs(),
+                                );
+                                update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
+                            }
+                            _ => {
+                            }
+                        }
+                    }
+                }
+                _ => {
+                }
             }
-            if !(consumer_exists) {
-                return Ok(());
-                // this should be ignored, right?
-            }
-            // then send it to the actual consumer
-            println!("sending update to consumer: {:?}", consumer_update);
-            update_consumer(state, consumer_id.ws_channel_id, consumer_update)?;
         }
         _ => {
 
@@ -376,11 +368,11 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                         consumer.services.insert(sid.clone(), new_sync_service(sid.clone()));
 
                         let consumer_id = get_client_id(our, consumer);
-                        let s_req = ServerRequest::ServiceRequest(sid.clone(), consumer_id, ServiceRequest::Subscribe(get_client_id(our, consumer)));
+                        let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::Subscribe);
                         let address = get_server_address(sid.clone().node.as_str());
                         poke_server(&address, s_req)?;
                         let update = ConsumerUpdate::FromClient(ConsumerClientUpdate::Todo("clientmodule created your service, poking server".to_string()));
-                        update_consumer(state, num, update)?;
+                        update_consumer(num, update)?;
                     }
                 }
                 _ => {
@@ -493,14 +485,14 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
 }
 
 fn update_consumer (
-    state: &DartState,
+    // state: &DartState,
     websocket_id: u32,
     update: ConsumerUpdate,
 ) -> anyhow::Result<()> {
 
-    if !(state.client.consumers.contains_key(&websocket_id)) {
-        return Ok(());
-    }
+    // if !(state.client.consumers.contains_key(&websocket_id)) {
+    //     return Ok(());
+    // }
 
     let blob = LazyLoadBlob {
         mime: Some("application/json".to_string()),
@@ -588,10 +580,10 @@ fn init(our: Address) {
 }
 
 
-fn update_client_consumer(update: ConsumerUpdate, consumer_id: ConsumerId) -> anyhow::Result<()> {
-    let address = get_server_address(&consumer_id.client_node);
+fn update_client(update: ConsumerUpdate, client_node: String) -> anyhow::Result<()> {
+    let address = get_server_address(&client_node);
     Request::to(address)
-        .body(serde_json::to_vec(&DartMessage::ClientUpdate(ClientUpdate::ConsumerUpdate(consumer_id, update)))?)
+        .body(serde_json::to_vec(&DartMessage::ClientUpdate(ClientUpdate::ConsumerUpdate(update)))?)
         .send()?;
     Ok(())
 }
