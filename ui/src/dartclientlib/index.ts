@@ -42,7 +42,6 @@ export type Service = {
 }
 export interface Presence {
   time: number;
-  was_online_at_time: boolean;
 }
 
 export interface ServiceMetadata {
@@ -56,6 +55,11 @@ export type Services = Map<ServiceId, Service>;
 export const makeServiceId = (node: string, id: string) => {
   return `${node}:${id}`;
 }
+export const parseServiceId = (serviceId: string) => {
+  const [node, id] = serviceId.split(':');
+  return { node, id };
+}
+
 
 function new_service(serviceId: ParsedServiceId) : Service {
   return {

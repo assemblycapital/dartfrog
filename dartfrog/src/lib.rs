@@ -42,7 +42,6 @@ struct DartState {
 #[derive(Debug, Serialize, Deserialize, Clone, Hash)]
 struct Presence {
     pub time: u64,
-    pub was_online_at_time: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -243,12 +242,20 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                         .duration_since(UNIX_EPOCH)
                         .unwrap()
                         .as_secs(),
-                    was_online_at_time: true,
                 });
                 let ack = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::SubscribeAck);
                 let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
                 update_client(ack, source.node.clone())?;
-                update_client(meta, source.node.clone())?;
+                update_subscribers(meta, service.metadata.subscribers.clone())?;
+            }
+            ServiceRequest::Unsubscribe => {
+                if !service.metadata.subscribers.contains(&source.node.clone()) {
+                    // already unsubscribed, ignore
+                    return Ok(());
+                }
+                service.metadata.subscribers.remove(&source.node.clone());
+                let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
+                update_subscribers(meta, service.metadata.subscribers.clone())?;
             }
             _ => {
                 println!("unexpected service request: {:?}", req);
@@ -258,6 +265,13 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
         // respond with NoSuchService
         let update = ConsumerUpdate::FromServer(our.node().to_string(), ConsumerServerUpdate::NoSuchService(service_id.id.clone()));
         update_client(update, source.node.clone())?;
+    }
+    Ok(())
+}
+
+fn update_subscribers(update: ConsumerUpdate, subscribers: HashSet<String>) -> anyhow::Result<()> {
+    for subscriber in subscribers {
+        update_client(update.clone(), subscriber)?;
     }
     Ok(())
 }
@@ -373,6 +387,18 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                         poke_server(&address, s_req)?;
                         let update = ConsumerUpdate::FromClient(ConsumerClientUpdate::Todo("clientmodule created your service, poking server".to_string()));
                         update_consumer(num, update)?;
+                    }
+                }
+                ConsumerRequest::ExitService(sid) => {
+                    if let Some(service) = consumer.services.get(&sid) {
+                        let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::Unsubscribe);
+                        let address = get_server_address(sid.clone().node.as_str());
+                        poke_server(&address, s_req)?;
+                        consumer.services.remove(&sid);
+
+                    } else {
+                        // already have it
+                        // TODO maybe tell frontend that it's already gone
                     }
                 }
                 _ => {

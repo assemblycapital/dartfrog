@@ -10,7 +10,7 @@ import useDartStore from "../store/dart";
 import { ServiceConnectionStatus, ServiceConnectionStatusType } from "../dartclientlib";
 
 function ServerBox() {
-  const { services } = useDartStore();
+  const { services, exitService } = useDartStore();
   // const { chats, serverStatus } = useChatStore();
   if (!(services instanceof Map)) {
     return <div>Error: services is not a Map</div>;
@@ -53,7 +53,6 @@ function ServerBox() {
   }
   return (
     <div>
-    
       <div
         style={{
           fontWeight: "bold",
@@ -67,29 +66,69 @@ function ServerBox() {
           style={{
             display: "flex",
             flexDirection: "column",
+            padding: "0.8rem",
+            border: "1px solid #ffffff55",
           }}
         >
-          <div>{serviceId}</div>
-          {renderConnectionStatus(service.connectionStatus)}
-          <div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              gap: "0.8rem",
+              alignItems: "center",
+              alignContent: "center",
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                fontStyle: "italic",
+              }}
+            >
+              {serviceId}
+            </div>
+                {renderConnectionStatus(service.connectionStatus)}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              gap: "0.8rem",
+            }}
+          >
             <div>Subscribers:</div>
             {service.metadata.subscribers.map((subscriber, i) => (
               <div key={i}>
                 {subscriber}
               </div>
             ))}
-          </div>
-          <div>
+            </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              gap: "0.8rem",
+            }}
+          >
             <div>User Presence:</div>
             {Object.entries(service.metadata.user_presence).map(([key, presence]) => (
                 <div key={key}>
-                    <p>User ID: {key}</p>
-                    <p>Time: {presence.time}</p>
-                    <p>Was Online: {presence.was_online_at_time ? 'Yes' : 'No'}</p>
+                    <div>{key}</div>
+                    <div>
+                      {formatTimeStamp(presence.time*1000)}
+                    </div>
                 </div>
             ))}
           </div>
-          {/* Render other service details here */}
+          <div>
+            <button
+              onClick={() => {
+                exitService(service.serviceId);
+              }}
+              >
+                disconnect
+              </button>
+          </div>
         </div>
       ))}
 
