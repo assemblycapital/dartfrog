@@ -12,10 +12,6 @@ const ControlHeader = () => {
   // const { muteSoundEffects, setMuteSoundEffects } = useChatStore();
   const { api, isClientConnected } = useDartStore();
 
-  useEffect(() => {
-    console.log("isClientConnected", isClientConnected);
-  }, [isClientConnected]);
-
   return (
       <div
         style={{

@@ -106,6 +106,8 @@ class DartApi {
         this.handleClientUpdate(parsedJson.FromClient);
     } else if (parsedJson.FromServer) {
         this.handleServerUpdate(parsedJson.FromServer);
+    } else if (parsedJson.FromService) {
+        this.handleServiceUpdate(parsedJson.FromService);
     } else {
         console.warn('Unknown message format:', parsedJson);
     }
@@ -143,6 +145,12 @@ private handleServerUpdate(message: any) {
     } else {
         console.warn('Unknown server message format:', message);
     }
+}
+private handleServiceUpdate(message: any) {
+  console.log("handle service update", message);
+  if (Array.isArray(message) && message.length > 1) {
+      const [id, response] = message;
+  }
 }
 
   sendPoke(data: any) {

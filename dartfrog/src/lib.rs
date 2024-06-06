@@ -59,6 +59,15 @@ impl Hash for Service {
     }
 }
 
+fn new_service(id: ServiceId) -> Service {
+    Service {
+        id: id,
+        subscribers: HashSet::new(),
+        last_sent_presence: 0,
+        user_presence: HashMap::new(),
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct ServerState {
     pub services: HashMap<String, Service>,
@@ -140,7 +149,7 @@ enum ClientUpdate {
 enum ConsumerUpdate {
     FromClient(ConsumerClientUpdate),
     FromServer(String, ConsumerServerUpdate),
-    FromService(String, ConsumerServiceUpdate),
+    FromService(String, String, ConsumerServiceUpdate), // service node, service name
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -155,9 +164,9 @@ enum ConsumerClientUpdate {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 enum ConsumerServiceUpdate {
-    SubscribeAck(String),
-    SubscribeNack(String),
-    SubscribeKick(String),
+    SubscribeAck,
+    SubscribeNack,
+    SubscribeKick,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -192,6 +201,16 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             handle_service_request(our, state, source, service_id, consumer_id, service_request)?;
 
         }
+        ServerRequest::CreateService(service_id) => {
+            if service_id.node != our.node {
+                return Ok(());
+            }
+            if let Some(service) = state.server.services.get(&service_id.id) {
+                // already exists
+            } else {
+                state.server.services.insert(service_id.id.clone(), new_service(service_id.clone()));
+            }
+        }
         _ => {
 
         }
@@ -202,8 +221,21 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
     if service_id.node != our.node {
         return Ok(());
     }
-    if let Some(mut service) = state.server.services.get(&service_id.id) {
+    if let Some(service) = state.server.services.get_mut(&service_id.id) {
         // handle the request
+        match req {
+            ServiceRequest::Subscribe(consumer_id) => {
+                if !service.subscribers.contains(&consumer_id) {
+                    // already subscribed, continue anyways
+                }
+                service.subscribers.insert(consumer_id.clone());
+                let update = ConsumerUpdate::FromService(our.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::SubscribeAck);
+                update_client_consumer(update, consumer_id)?;
+            }
+            _ => {
+                println!("unexpected service request: {:?}", req);
+            }
+        }
     } else {
         // respond with NoSuchService
         let update = ConsumerUpdate::FromServer(our.node().to_string(), ConsumerServerUpdate::NoSuchService(service_id.id.clone()));
@@ -213,7 +245,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
 }
 
 fn handle_client_update(our: &Address, state: &mut DartState, source: Address, upd: ClientUpdate) -> anyhow::Result<()> {
-    // println!("client update: {:?}", upd);
+    println!("client update: {:?}", upd);
     match upd {
         ClientUpdate::ConsumerUpdate(consumer_id, consumer_update) => {
             if consumer_id.client_node != our.node {
@@ -237,16 +269,22 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: Address, u
                             return Ok(());
                         }
                     }
-                    ConsumerUpdate::FromService(service_name, inner) => {
+                    ConsumerUpdate::FromService(service_node, service_name, inner) => {
                         // handle the request
 
+                        if service_node != source.node {
+                            // no spoofing
+                            return Ok(());
+                        }
+
                         let service_id: ServiceId = ServiceId {
-                            node: source.node.clone(),
+                            node: service_node.clone(),
                             id: service_name.clone()
                         };
                         // does the consumer have this service?
                         if !(consumer.services.contains_key(&service_id)) {
-                            // consumer doesn't have this service
+                            // consumer doesn't have this service 
+                            println!("consumer doesn't have this service {:?}, {:?}", service_id, consumer.services.keys());
                             return Ok(());
                         }
 
@@ -258,8 +296,8 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: Address, u
                                 .unwrap()
                                 .as_secs(),
                         );
-                        // TODO something like this
                         let connection_update = ConsumerUpdate::FromClient(ConsumerClientUpdate::Todo("service connection status updated".to_string()));
+                        update_consumer(state, consumer_id.ws_channel_id, connection_update)?;
                     }
                 }
             }
@@ -268,6 +306,7 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: Address, u
                 // this should be ignored, right?
             }
             // then send it to the actual consumer
+            println!("sending update to consumer: {:?}", consumer_update);
             update_consumer(state, consumer_id.ws_channel_id, consumer_update)?;
         }
         _ => {
@@ -504,7 +543,11 @@ fn init(our: Address) {
         .send()
         .unwrap();
 
-    let server = get_server_address(SERVER_NODE);
+    // let server = get_server_address(SERVER_NODE);
+    poke_server(&our, ServerRequest::CreateService(ServiceId {
+        node: our.node.clone(),
+        id: "chat".to_string()
+    })).unwrap();
     let mut state = new_dart_state();
     // state.server.chat_state = load_chat_state();
 
@@ -529,6 +572,7 @@ fn update_client_consumer(update: ConsumerUpdate, consumer_id: ConsumerId) -> an
         .send()?;
     Ok(())
 }
+
 fn poke_server(address:&Address, req: ServerRequest) -> anyhow::Result<()> {
     Request::to(address)
         .body(serde_json::to_vec(&DartMessage::ServerRequest(req))?)
