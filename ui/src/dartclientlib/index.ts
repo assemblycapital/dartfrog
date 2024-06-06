@@ -33,7 +33,7 @@ export type ParsedServiceId = {
   node: string,
   id: string
 }
-export type ServiceId = String;
+export type ServiceId = string;
 
 export type Service = {
   serviceId: ParsedServiceId,

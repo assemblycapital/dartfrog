@@ -191,7 +191,7 @@ function isImageUrl(url: string) {
   return imageRegex.test(url);
 }
 
-function formatTimestamp(timestamp: number): string {
+export function formatTimestamp(timestamp: number): string {
   const date = new Date(timestamp * 1000); // convert from seconds to milliseconds
   const day = date.toLocaleDateString('en-US', { weekday: 'short' });
   const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
