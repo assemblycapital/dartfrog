@@ -104,6 +104,7 @@ struct ServiceId {
 struct Consumer {
     pub ws_channel_id: u32,
     pub services: HashMap<ServiceId, SyncService>,
+    pub last_sent_presence: u64,
 }
 
 impl Hash for Consumer{
@@ -184,7 +185,8 @@ enum ConsumerRequest {
     RequestServiceList(String),
     JoinService(ServiceId),
     ExitService(ServiceId),
-    SendOnChannel(ServerRequest),
+    ServiceHeartbeat(ServiceId),
+    SendOnChannel(ServiceRequest),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -193,10 +195,6 @@ enum DartMessage {
     ClientRequest(ClientRequest),
     ClientUpdate(ClientUpdate),
 }
-
-fn send_server_updates(state: &DartState, update: ClientUpdate) {
-}
-
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
     println!("server request: {:?}", req);
     match req {
@@ -254,6 +252,53 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                     return Ok(());
                 }
                 service.metadata.subscribers.remove(&source.node.clone());
+                let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
+                update_subscribers(meta, service.metadata.subscribers.clone())?;
+            }
+            ServiceRequest::PresenceHeartbeat => {
+                if !service.metadata.subscribers.contains(&source.node.clone()) {
+                    // not subscribed, ignore
+                    return Ok(());
+                }
+                service.metadata.user_presence.insert(source.node.clone(), Presence {
+                    time: SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs(),
+                });
+                let now = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
+                if (now - service.last_sent_presence) < 1*60 {
+                    // "regular metadata updates"
+                    // these are evoked by client heartbeats, but only sent up to a capped rate
+                    return Ok(());
+                }
+                // 
+                // check if anyone needs to be kicked
+                // 
+                let mut to_kick: HashSet<String> = HashSet::new();
+                for (user, presence) in service.metadata.user_presence.iter() {
+                    const THREE_MINUTES : u64 = 3*60;
+                    if (now - presence.time) > THREE_MINUTES {
+                        to_kick.insert(user.clone());
+                    }
+                }
+
+                for (user) in service.metadata.subscribers.iter() {
+                    if to_kick.contains(user) {
+                        let update: ConsumerUpdate = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::Kick);
+                        update_client(update, user.clone())?;
+                    }
+                }
+                service.metadata.subscribers.retain(|x| !to_kick.contains(x));
+
+                // send metadata update
+                service.last_sent_presence = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
                 let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
                 update_subscribers(meta, service.metadata.subscribers.clone())?;
             }
@@ -378,6 +423,10 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                 ConsumerRequest::JoinService(sid) => {
                     if let Some(service) = consumer.services.get(&sid) {
                         // already have it
+                        // send this anyways just to refresh the connection
+                        let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::Subscribe);
+                        let address = get_server_address(sid.clone().node.as_str());
+                        poke_server(&address, s_req)?;
                     } else {
                         consumer.services.insert(sid.clone(), new_sync_service(sid.clone()));
 
@@ -401,8 +450,21 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                         // TODO maybe tell frontend that it's already gone
                     }
                 }
+                ConsumerRequest::ServiceHeartbeat(sid) => {
+                    if let Some(service) = consumer.services.get(&sid) {
+                        let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::PresenceHeartbeat);
+                        let address = get_server_address(sid.clone().node.as_str());
+                        consumer.last_sent_presence = SystemTime::now()
+                            .duration_since(UNIX_EPOCH)
+                            .unwrap()
+                            .as_secs();
+                        poke_server(&address, s_req)?;
+                    } else {
+                        // dont have this service
+                    }
+                }
                 _ => {
-                    println!("unexpected inner client request: {:?}", inner);
+                    println!("unexpected consumer request: {:?}", inner);
                 }
             }
         }
@@ -424,6 +486,11 @@ fn handle_http_server_request(
         return Ok(());
     };
 
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
     match server_request {
         HttpServerRequest::WebSocketOpen { channel_id, .. } => {
             println!("WebSocketOpen: {:?}", channel_id);
@@ -432,6 +499,7 @@ fn handle_http_server_request(
                 Consumer {
                     ws_channel_id: channel_id,
                     services: HashMap::new(),
+                    last_sent_presence: now,
                 },
             );
         }

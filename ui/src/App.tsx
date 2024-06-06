@@ -69,7 +69,6 @@ function App() {
       flexDirection: "column",
       gap: "0.8rem",
     }}>
-
       <ControlHeader />
 
       <ServerBox />

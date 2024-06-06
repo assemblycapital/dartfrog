@@ -39,6 +39,7 @@ export type Service = {
   serviceId: ParsedServiceId,
   connectionStatus: ServiceConnectionStatus,
   metadata: ServiceMetadata,
+  heartbeatIntervalId?: NodeJS.Timeout
 }
 export interface Presence {
   time: number;
@@ -125,68 +126,105 @@ class DartApi {
     } else {
         console.warn('Unknown message format:', parsedJson);
     }
-}
-
-private handleClientUpdate(message: any) {
-    if (message.Todo) {
-        // console.log('Client TODO:', message.Todo);
-        // Add your logic to handle the client message here
-        // For example, if message.Todo is "clientmodule created your service, poking server"
-    } else {
-        console.warn('Unknown client message:', message);
-    }
-}
-
-private handleServerUpdate(message: any) {
-    if (Array.isArray(message) && message.length > 1) {
-        const [address, response] = message;
-        console.log('Server Address:', address);
-        console.log('Server Response:', response);
-
-        if (response.NoSuchService) {
-            console.log('No such service:', response.NoSuchService);
-            // Add your logic to handle the NoSuchService response here
-            let serviceId : ServiceId = makeServiceId(address, response.NoSuchService);
-            let service = this.services.get(serviceId);
-            if (!service) { return; }
-            service.connectionStatus = {status:ServiceConnectionStatusType.ServiceDoesNotExist, timestamp:Date.now()};
-            this.services.set(serviceId, service);
-            this.onServicesChange(this.services);
-
-        } else {
-            console.warn('Unknown server response:', response);
-        }
-    } else {
-        console.warn('Unknown server message format:', message);
-    }
-}
-
-private handleServiceUpdate(message: any) {
-  if (Array.isArray(message) && message.length > 2) {
-      const [service_node, service_name, response] = message;
-      let serviceId : ServiceId = makeServiceId(service_node, service_name);
-      let service = this.services.get(serviceId);
-
-      if (!service) {
-        // console.log("Service not found", serviceId);
-        return;
-      }
-      
-      service.connectionStatus = {status:ServiceConnectionStatusType.Connected, timestamp:Date.now()};
-      if (response === "SubscribeAck") {
-        this.services.set(serviceId, service);
-        this.onServicesChange(this.services);
-      } else if (response.ServiceMetadata) {
-        console.log('Service Metadata:', response.ServiceMetadata);
-        console.log('Service:', service.metadata);
-        service.metadata = response.ServiceMetadata;
-        this.onServicesChange(this.services);
-      } else {
-        console.warn('Unknown service message format:', message);
-      }
-      
   }
-}
+
+  private handleClientUpdate(message: any) {
+      if (message.Todo) {
+          // console.log('Client TODO:', message.Todo);
+          // Add your logic to handle the client message here
+          // For example, if message.Todo is "clientmodule created your service, poking server"
+      } else {
+          console.warn('Unknown client message:', message);
+      }
+  }
+
+  private handleServerUpdate(message: any) {
+      if (Array.isArray(message) && message.length > 1) {
+          const [address, response] = message;
+          console.log('Server Address:', address);
+          console.log('Server Response:', response);
+
+          if (response.NoSuchService) {
+              console.log('No such service:', response.NoSuchService);
+              // Add your logic to handle the NoSuchService response here
+              let serviceId : ServiceId = makeServiceId(address, response.NoSuchService);
+              let service = this.services.get(serviceId);
+              if (!service) { return; }
+              service.connectionStatus = {status:ServiceConnectionStatusType.ServiceDoesNotExist, timestamp:Date.now()};
+              this.services.set(serviceId, service);
+              this.onServicesChange(this.services);
+
+          } else {
+              console.warn('Unknown server response:', response);
+          }
+      } else {
+          console.warn('Unknown server message format:', message);
+      }
+  }
+
+  private handleServiceUpdate(message: any) {
+    if (Array.isArray(message) && message.length > 2) {
+        const [service_node, service_name, response] = message;
+        let serviceId : ServiceId = makeServiceId(service_node, service_name);
+        let service = this.services.get(serviceId);
+
+        if (!service) {
+          console.log("Service not found", serviceId);
+          return;
+        }
+        
+        service.connectionStatus = {status:ServiceConnectionStatusType.Connected, timestamp:Date.now()};
+        if (response === "SubscribeAck") {
+          this.services.set(serviceId, service);
+          this.onServicesChange(this.services);
+          this.startPresenceHeartbeat(serviceId);
+        } else if (response.ServiceMetadata) {
+          service.metadata = response.ServiceMetadata;
+          this.startPresenceHeartbeat(serviceId);
+          this.onServicesChange(this.services);
+        } else {
+          console.warn('Unknown service message format:', message);
+        }
+        
+    }
+  }
+
+  startPresenceHeartbeat(serviceId: ServiceId) {
+    const service = this.services.get(serviceId);
+    if (!service) {
+      console.log("Service not found", serviceId)
+      return;
+    }
+
+    // Clear any existing interval to avoid multiple timers
+    this.cancelPresenceHeartbeat(serviceId);
+
+    // Call presenceHeartbeat immediately
+    this.presenceHeartbeat(serviceId);
+
+    // Set an interval to call presenceHeartbeat
+    service.heartbeatIntervalId = setInterval(() => {
+      this.presenceHeartbeat(serviceId);
+    }, 1*60*1000);
+  }
+
+  // Method to stop the heartbeat timer
+  cancelPresenceHeartbeat(serviceId: ServiceId) {
+    const service = this.services.get(serviceId);
+    if (service && service.heartbeatIntervalId) {
+      clearInterval(service.heartbeatIntervalId);
+      service.heartbeatIntervalId = undefined;
+    }
+  }
+
+  // Your presenceHeartbeat method
+  presenceHeartbeat(serviceId: ServiceId) {
+    // Add your logic to send the presence heartbeat here
+    let parsedServiceId = parseServiceId(serviceId);
+    const request =  { "ServiceHeartbeat": { "node": parsedServiceId.node, "id": parsedServiceId.id } }
+    console.log("sending presence", serviceId);
+    this.sendRequest(request);
+  }
 
   sendPoke(data: any) {
     if (!this.api) { return; }
