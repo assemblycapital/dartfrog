@@ -104,7 +104,7 @@ struct ServiceId {
 struct Consumer {
     pub ws_channel_id: u32,
     pub services: HashMap<ServiceId, SyncService>,
-    pub last_sent_presence: u64,
+    pub last_active: u64,
 }
 
 impl Hash for Consumer{
@@ -412,6 +412,10 @@ fn get_client_id(our: &Address, consumer: &Consumer) -> ConsumerId {
 }
 fn handle_client_request(our: &Address, state: &mut DartState, source: Address, req: ClientRequest) -> anyhow::Result<()> {
     println!("client request: {:?}", req);
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
     match req {
         ClientRequest::ConsumerRequest(num, inner) => {
             let Some(consumer) = state.client.consumers.get_mut(&num) else {
@@ -419,6 +423,8 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                 return Ok(());
             };
             println!("consumer request: {:?} {:?}", num, inner);
+            consumer.last_active = now;
+
             match inner {
                 ConsumerRequest::JoinService(sid) => {
                     if let Some(service) = consumer.services.get(&sid) {
@@ -454,7 +460,7 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                     if let Some(service) = consumer.services.get(&sid) {
                         let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::PresenceHeartbeat);
                         let address = get_server_address(sid.clone().node.as_str());
-                        consumer.last_sent_presence = SystemTime::now()
+                        consumer.last_active = SystemTime::now()
                             .duration_since(UNIX_EPOCH)
                             .unwrap()
                             .as_secs();
@@ -471,6 +477,20 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
         _ => {
         }
     }
+    // clean up inactive consumers
+    let mut to_kick: HashSet<u32> = HashSet::new();
+    // iterate over consumers and remove inactive
+    for (id, consumer) in state.client.consumers.iter() {
+        const FOUR_MINUTES : u64 = 4*60;
+        if (now - consumer.last_active) > FOUR_MINUTES {
+            to_kick.insert(id.clone());
+        }
+    }
+    state.client.consumers.retain(|x, _| !to_kick.contains(x));
+
+    // TODO possibly update / kick consumer frontend
+    // not important rn because they are most likely already disconnected
+
     Ok(())
 }
 
@@ -499,7 +519,7 @@ fn handle_http_server_request(
                 Consumer {
                     ws_channel_id: channel_id,
                     services: HashMap::new(),
-                    last_sent_presence: now,
+                    last_active: now,
                 },
             );
         }
@@ -556,13 +576,13 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
 
         match serde_json::from_slice(body)? {
             DartMessage::ServerRequest(s_req) => {
-                if our.node != SERVER_NODE {
-                    // disable user processes acting as servers
-                    return Ok(());
-                }
                 handle_server_request(our, state, source.clone(), s_req)?;
             }
             DartMessage::ClientRequest(c_req) => {
+                if our.node != source.node {
+                    // we only send client requests to ourself
+                    return Ok(());
+                }
                 handle_client_request(our, state, source.clone(), c_req)?;
             }
             DartMessage::ClientUpdate(s_upd) => {
