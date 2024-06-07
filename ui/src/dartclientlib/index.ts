@@ -279,6 +279,7 @@ class DartApi {
     this.onServicesChange();
     this.sendRequest(request);
   }
+
   exitService(parsedServiceId: ParsedServiceId) {
     let serviceId = makeServiceId(parsedServiceId.node, parsedServiceId.id);
     if (!this.services.has(serviceId)) {
@@ -291,6 +292,7 @@ class DartApi {
     const request =  { "ExitService": { "node": parsedServiceId.node, "id": parsedServiceId.id } }
     this.sendRequest(request);
   }
+
   requestServiceList(serverNode: string) {
     const request =  { "RequestServiceList": serverNode }
     this.sendRequest(request);

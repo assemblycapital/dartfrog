@@ -7,10 +7,10 @@ import { Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceI
 import ChatInput from "./ChatInput";
 
 interface ServiceTabProps {
-  service: Service;
+  serviceId: ServiceId;
 }
 
-const ServiceTab: React.FC<ServiceTabProps> = ({ service }) => {
+const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId }) => {
 
   const {chats} = useChatStore();
   return (
@@ -27,6 +27,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ service }) => {
             gap: "0.3rem",
           }}
         >
+          <div>{serviceId}</div>
           <ChatHeader
             />
           <ChatBox chats={chats} />

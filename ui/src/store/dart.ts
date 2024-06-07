@@ -46,7 +46,9 @@ const useDartStore = create<DartStore>()(
       isClientConnected: false,
       setIsClientConnected: (isClientConnected) => set({ isClientConnected }),
       services: new Map(),
-      setServices: (services) => set({ services }),
+      setServices: (services) => {
+        set({ services })
+      },
       exitService: (serviceId: ParsedServiceId) => {
         const { api } = get();
         if (!api) { return; }

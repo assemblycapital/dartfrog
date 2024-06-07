@@ -10,7 +10,7 @@ import useDartStore from "../store/dart";
 import { Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "../dartclientlib";
 
 interface NewTabProps {
-  setTabService: (servid: ServiceId) => void;
+  setTabService: (serviceId: ServiceId) => void;
 }
 
 const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {

@@ -26,7 +26,6 @@ const TabbedWindowManager: React.FC = () => {
     if (currentTab && currentTab.serviceId) {
       const service = services.get(currentTab.serviceId);
       if (!service) {
-        console.log('joining service', currentTab.serviceId, services.keys())
         joinService(parseServiceId(currentTab.serviceId));
         setCurrentTabService(null);
       } else {
@@ -48,6 +47,14 @@ const TabbedWindowManager: React.FC = () => {
     } else if (index < activeTabIndex) {
       setActiveTabIndex(prevIndex => prevIndex - 1);
     }
+  }, [activeTabIndex]);
+
+  const setFromNewTab = useCallback((serviceId: string) => {
+    setTabs(currentTabs => {
+      const updatedTabs = [...currentTabs];
+      updatedTabs[activeTabIndex] = {...updatedTabs[activeTabIndex], serviceId};
+      return updatedTabs;
+    });
   }, [activeTabIndex]);
 
   return (
@@ -126,22 +133,17 @@ const TabbedWindowManager: React.FC = () => {
           "no tabs open"
         ) : (
           <div>
-              {!currentTabService ? (
+            {!tabs[activeTabIndex].serviceId ? (
                 <NewTab 
                   setTabService={(serviceId: ServiceId) => {
-                    setTabs(currentTabs => {
-                      const updatedTabs = [...currentTabs];
-                      updatedTabs[activeTabIndex] = {...updatedTabs[activeTabIndex], serviceId};
-                      return updatedTabs;
-                    });
+                    setFromNewTab(serviceId);
                   }}
                 />
-              ) : (
+            ):(
                 <OpenServiceTab
-                  service={currentTabService}
+                  serviceId={tabs[activeTabIndex].serviceId}
                 />
-              )
-              }
+            )}
           </div>
         )}
       </div>
