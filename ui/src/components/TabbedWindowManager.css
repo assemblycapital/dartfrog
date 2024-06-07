@@ -2,7 +2,7 @@ button.add-tab-button {
   color: #ffffff66;
   margin-top: 0px;
   width: 30px;
-  height: 30px; /* Added height for better centering */
+  height: 30px;
   background-color: #44444400;
   border: none;
   cursor: pointer;
@@ -10,6 +10,7 @@ button.add-tab-button {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background-color 0.25s;
 }
 .add-tab-button:hover {
   background-color: #44444499;
@@ -26,7 +27,8 @@ button.add-tab-button {
   height: 20px;
   width: 20px;
   min-width: 20px;
-  text-align:center
+  text-align:center;
+  transition: background-color 0.25s;
 }
 .close-tab-button:hover {
   background-color: #88888855;
@@ -41,13 +43,12 @@ button.add-tab-button {
   overflow: hidden;
   white-space: nowrap;
   height: 26px;
+  transition: background-color 0.25s;
 }
 
 .tab * {
   overflow: hidden;
-  /* word-wrap: wtf; */
 }
-
 
 .tab.inactive:hover {
   background-color: #ffffff09;

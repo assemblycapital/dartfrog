@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import useChatStore from '../store/chat_old';
 import { ConnectionStatusType, ServerStatus } from '../types/types';
+import { ServiceId } from '../dartclientlib';
 // import { pokeUnsubscribe } from '../utils';
 
-const ChatHeader = () => {
+interface ChatHeaderProps {
+  serviceId: ServiceId;
+}
 
+const ChatHeader: React.FC<ChatHeaderProps> = ({ serviceId}) => {
   // const { serverStatus, setServerStatus, bannedUsers } = useChatStore();
 
   const [time, setTime] = useState(new Date());
@@ -46,9 +50,10 @@ const ChatHeader = () => {
           gap: "0.8rem",
         }}
       >
+        
         <span style={{
           // fontFamily:"monospace",
-          flexGrow: 1,
+          // flexGrow: 1,
           fontSize: "0.7rem",
           cursor: "default",
 

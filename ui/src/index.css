@@ -59,7 +59,7 @@ button:hover {
   background-color: #00000011;
 }
 
-textarea {
+textarea, input[type="text"] {
   background-color: #00000022;
   border-color: #ffffff22;
 }

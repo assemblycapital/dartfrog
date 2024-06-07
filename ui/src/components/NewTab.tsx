@@ -27,12 +27,39 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
       style={{
         height: "400px",
         padding: "4px",
+        color: "#ffffffcc",
+        fontSize: "0.8rem",
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.8rem",
       }}
     >
       <div>
         <div
           style={{
             marginBottom: "0.8rem",
+            cursor: "default",
+          }}
+        >
+          create a new service:
+        </div>
+        <input type="text" placeholder="service-name" />
+        <button
+          style={{
+            cursor: "pointer",
+          }}
+          onClick={() => {
+            alert("coming soon");
+          }}
+        >
+          create
+        </button>
+      </div>
+      <div>
+        <div
+          style={{
+            marginBottom: "0.8rem",
+            cursor: "default",
           }}
         >
           known services:
@@ -71,13 +98,41 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
                     >
                       join
                     </button>
+                    <span
+                      style={{
+                        cursor: "default",
+                      }}
+                    >
                       {makeServiceId(serverNode, service.id)}
+                      </span>
                   </div>
                 ))}
             </div>
           ))}
           </div>
         </div>
+        <div>
+        <div
+          style={{
+            marginBottom: "0.8rem",
+            cursor: "default",
+          }}
+        >
+         join service by id:
+        </div>
+        <input type="text" placeholder="service-name" />
+        <input type="text" placeholder="template.os" />
+        <button
+          style={{
+            cursor: "pointer",
+          }}
+          onClick={() => {
+            alert("coming soon");
+          }}
+        >
+          join
+        </button>
+      </div>
     </div>
   );
 }

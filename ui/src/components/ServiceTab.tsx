@@ -51,6 +51,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId }) => {
             color: "#ffffff55",
             fontSize: "0.8rem",
             gap: "0.8rem",
+            cursor:"default"
           }}
         >
           <div>{serviceId}</div>
@@ -61,12 +62,11 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId }) => {
           <div>
             {!(service.connectionStatus.status === ServiceConnectionStatusType.Connected) ? (
               <div>
-                connecting...
                 {stringifyServiceConnectionStatus(service.connectionStatus.status)}
               </div>
             ) : (
               <div>
-                <ChatHeader />
+                {/* <ChatHeader serviceId={serviceId} /> */}
                 <ChatBox serviceId={serviceId} chats={chats}/>
               </div>
             )}
