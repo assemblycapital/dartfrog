@@ -9,13 +9,14 @@ import Spinner from "./Spinner";
 import useDartStore from "../store/dart";
 import { Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "../dartclientlib";
 import './NewTab.css'
+import { createSecretKey } from "crypto";
 
 interface NewTabProps {
   setTabService: (serviceId: ServiceId) => void;
 }
 
 const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
-  const { availableServices, joinService } = useDartStore();
+  const { availableServices, joinService, createService} = useDartStore();
   // 
 
   if (!(availableServices instanceof Map)) {
@@ -48,6 +49,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
       // Proceed with the creation logic
       let serviceId = inputCreateServiceName+"."+window.our?.node
       console.log("create service", serviceId);
+      createService(serviceId);
     } else {
       console.log('Invalid service name.');
     }

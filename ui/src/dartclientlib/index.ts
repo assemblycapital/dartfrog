@@ -289,6 +289,18 @@ class DartApi {
     this.api.send({ data:wrapper });
   }
 
+  sendCreateServiceRequest(serviceId: ParsedServiceId) {
+    if (!this.api) { return; }
+    // console.log("Sending request", req)
+    const wrapper = {
+      "ServerRequest": {
+        "CreateService": { "node": serviceId.node, "id": serviceId.id}
+      }
+    }
+
+    this.api.send({ data:wrapper });
+  }
+
   joinService(serviceId: ParsedServiceId) {
     const request =  { "JoinService": { "node": serviceId.node, "id": serviceId.id } }
     let rawServiceId = makeServiceId(serviceId.node, serviceId.id);

@@ -228,9 +228,11 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
     match req {
         ServerRequest::ServiceRequest(service_id, service_request) => {
             handle_service_request(our, state, source, service_id, service_request)?;
-
         }
         ServerRequest::CreateService(service_id) => {
+            if source.node != our.node {
+                return Ok(());
+            }
             if service_id.node != our.node {
                 return Ok(());
             }
@@ -648,6 +650,9 @@ fn handle_http_server_request(
             };
 
             match serde_json::from_slice(&blob.bytes)? {
+                DartMessage::ServerRequest(s_req) => {
+                    handle_server_request(our, state, source.clone(), s_req)?;
+                }
                 DartMessage::ClientRequest(c_req) => {
                     match c_req {
                         ClientRequest::DeleteConsumer(_num) => {
