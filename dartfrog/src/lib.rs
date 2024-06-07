@@ -47,10 +47,12 @@ struct Presence {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct ChatState {
     pub last_message_id: u64,
+    pub messages: Vec<ChatMessage>,
 }
 fn new_chat_state() -> ChatState {
     ChatState {
         last_message_id: 0,
+        messages: Vec::new(),
     }
 }
 
@@ -196,6 +198,7 @@ enum ConsumerServiceUpdate {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 enum ChatUpdate {
     Message(ChatMessage),
+    FullMessageHistory(Vec<ChatMessage>),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -276,6 +279,14 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                             from: source.node.clone(),
                             msg: msg,
                         };
+
+                        service.chat_state.messages.push(chat_msg.clone());
+
+                        // If the messages list is longer than 64, retain only the last 64 messages
+                        if service.chat_state.messages.len() > 64 {
+                            service.chat_state.messages = service.chat_state.messages.split_off(service.chat_state.messages.len() - 64);
+                        }
+
                         service.chat_state.last_message_id += 1;
                         let update = make_consumer_service_update(service_id.clone(),  ConsumerServiceUpdate::ChatUpdate(ChatUpdate::Message(chat_msg)));
                         update_subscribers(update, service.metadata.subscribers.clone())?;
@@ -294,8 +305,10 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                         .as_secs(),
                 });
                 let ack = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::SubscribeAck);
-                let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
+                let meta = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
+                let chat = make_consumer_service_update(service_id, ConsumerServiceUpdate::ChatUpdate(ChatUpdate::FullMessageHistory(service.chat_state.messages.clone())));
                 update_client(ack, source.node.clone())?;
+                update_client(chat, source.node.clone())?;
                 update_subscribers(meta, service.metadata.subscribers.clone())?;
             }
             ServiceRequest::Unsubscribe => {
@@ -423,7 +436,7 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: Address, u
                                 );
                                 update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
                             }
-                            ConsumerServiceUpdate::ChatUpdate(ref upd) => {
+                            ConsumerServiceUpdate::ChatUpdate(ref _upd) => {
                                 update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
                             }
                             _ => {

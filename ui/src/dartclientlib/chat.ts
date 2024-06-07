@@ -16,6 +16,13 @@ export function handleChatUpdate(chatState: ChatState, update: any) {
     if (!update) return;
     if (update['Message']) {
       chatState.messages.set(update.Message.id, update.Message);
+    } else if(update['FullMessageHistory']) {
+      chatState.messages = new Map()
+      for (let msg of update.FullMessageHistory) {
+        chatState.messages.set(msg.id, msg);
+      }
+    } else {
+      console.log('unknown chat update', update);
     }
     return {
       messages: new Map(chatState.messages)
