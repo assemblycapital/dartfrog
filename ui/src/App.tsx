@@ -3,11 +3,13 @@ import Footer from "./components/Footer";
 import ControlHeader from "./components/ControlHeader";
 import { useEffect, useRef, useState } from "react";
 import { ConnectionStatusType } from "./types/types";
-import ServerBox from "./components/ServerBox";
+import ServerBox from "./components/FullServicesView";
 import { WEBSOCKET_URL, } from './utils';
 import KinodeClientApi from "@kinode/client-api";
 import DartApi from "./dartclientlib/";
 import useDartStore from "./store/dart";
+import FullServicesView from "./components/FullServicesView";
+import BrowserBox from "./components/BrowserBox";
 
 function App() {
 
@@ -74,7 +76,8 @@ function App() {
     }}>
       <ControlHeader />
 
-      <ServerBox />
+      <BrowserBox />
+      {/* <FullServicesView /> */}
 
       <Footer />
     </div>

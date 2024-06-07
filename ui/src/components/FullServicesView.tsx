@@ -9,7 +9,7 @@ import Spinner from "./Spinner";
 import useDartStore from "../store/dart";
 import { ServiceConnectionStatus, ServiceConnectionStatusType } from "../dartclientlib";
 
-function ServerBox() {
+function FullServicesView() {
   const { services, exitService, joinService, availableServices, closeApi } = useDartStore();
   // const { chats, serverStatus } = useChatStore();
   if (!(services instanceof Map)) {
@@ -248,7 +248,7 @@ function ServerBox() {
 }
 
 
-export default ServerBox;
+export default FullServicesView;
 
 function formatTimeStamp(timestamp: number) {
   return new Date(timestamp).toLocaleTimeString();
