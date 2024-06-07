@@ -4,7 +4,7 @@ import useChatStore from "../store/chat_old";
 import ChatBox from "./ChatBox";
 import ChatHeader from "./ChatHeader";
 import { ConnectionStatusType, ServerStatus } from "../types/types";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Spinner from "./Spinner";
 import useDartStore from "../store/dart";
 import { Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "../dartclientlib";
@@ -15,12 +15,20 @@ interface NewTabProps {
 
 const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
   const { availableServices, joinService } = useDartStore();
+  // 
 
   if (!(availableServices instanceof Map)) {
     // this is pretty dumb
     // but if i dont do it, everything explodes :)
     return <Spinner />
   }
+  // 
+  const [inputJoinServiceName, setInputJoinServiceName] = useState('');
+  const [inputJoinServiceHostNode, setInputJoinServiceHostNode] = useState('');
+
+  const handleInputJoinClick = useCallback(() => {
+    setTabService(makeServiceId(inputJoinServiceHostNode, inputJoinServiceName));
+  }, [inputJoinServiceName, inputJoinServiceHostNode]);
 
   return (
     <div
@@ -120,14 +128,21 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
         >
          join service by id:
         </div>
-        <input type="text" placeholder="service-name" />
-        <input type="text" placeholder="template.os" />
+        <input type="text" placeholder="service-name" 
+          value={inputJoinServiceName}
+          onChange={(e) => setInputJoinServiceName(e.target.value)}
+        />
+        <input type="text" placeholder="template.os"
+          value={inputJoinServiceHostNode}
+          onChange={(e) => setInputJoinServiceHostNode(e.target.value)}
+          />
         <button
           style={{
             cursor: "pointer",
           }}
           onClick={() => {
-            alert("coming soon");
+            // alert("coming soon");
+            handleInputJoinClick();
           }}
         >
           join

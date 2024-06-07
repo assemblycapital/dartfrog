@@ -292,7 +292,7 @@ class DartApi {
     const request =  { "JoinService": { "node": serviceId.node, "id": serviceId.id } }
     let rawServiceId = makeServiceId(serviceId.node, serviceId.id);
     if (this.services.has(rawServiceId)) {
-      console.log("Service already exists", rawServiceId);
+      // console.log("Service already exists", rawServiceId);
       return;
     }
 

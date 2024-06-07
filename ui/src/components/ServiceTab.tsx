@@ -2,7 +2,7 @@ import DisplayUserActivity from "./DisplayUserActivity";
 import useChatStore from "../store/chat_old";
 import ChatBox from "./ChatBox";
 import ChatHeader from "./ChatHeader";
-import { Service, ServiceConnectionStatusType, ServiceId, makeServiceId } from "../dartclientlib";
+import { Service, ServiceConnectionStatusType, ServiceId, ServiceMetadata, makeServiceId } from "../dartclientlib";
 import ChatInput from "./ChatInput";
 import useDartStore from "../store/dart";
 import { useEffect, useState } from "react";
@@ -17,13 +17,15 @@ interface ServiceTabProps {
 const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId }) => {
   const { services } = useDartStore();
   const [service, setService] = useState<Service | null>(null);
-  const [chats, setChats] = useState<ChatMessageHistory>(new Map());
+  // const [chats, setChats] = useState<ChatMessageHistory>(new Map());
+  // const [metadata, setMetadata] = useState<ServiceMetadata | null>(null);
 
   useEffect(() => {
     const gotService = services.get(serviceId);
     if (gotService) {
       setService(gotService);
-      setChats(gotService.chatState.messages);
+      // setChats(gotService.chatState.messages);
+      // setMetadata(gotService.metadata);
     } else {
       setService(null);
     }
@@ -67,7 +69,8 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId }) => {
             ) : (
               <div>
                 {/* <ChatHeader serviceId={serviceId} /> */}
-                <ChatBox serviceId={serviceId} chats={chats}/>
+                <ChatBox serviceId={serviceId} chats={service.chatState.messages}/>
+                <DisplayUserActivity serviceId={serviceId} metadata={service.metadata} />
               </div>
             )}
           </div>

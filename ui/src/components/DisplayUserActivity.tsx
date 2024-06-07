@@ -1,18 +1,27 @@
 import { useCallback, useEffect, useState } from 'react';
 import useChatStore from '../store/chat_old';
 import { computeColorForName} from '../utils';
+import { ServiceId, ServiceMetadata } from '../dartclientlib';
+import useDartStore from '../store/dart';
 
-const DisplayUserActivity = () => {
+interface DisplayUserActivityProps {
+  serviceId: ServiceId;
+  metadata: ServiceMetadata;
+}
+
+const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({ serviceId, metadata}) => {
 
   // const { userActivity, nameColors, addNameColor } = useChatStore();
   const [groupedUsers, setGroupedUsers] = useState({ online: [], recentlyOnline: [], ever: [] });
 
-  const activityStatus = (wasOnline, lastActivityTime, currentTime) => {
+  const { nameColors, addNameColor } = useDartStore();
+
+  const activityStatus = (isSubscribed, lastActivityTime, currentTime) => {
     const tenMinutes = 3 * 60 * 1000; // 3 minutes in milliseconds
     const oneDay = 24 * 60 * 60 * 1000; // 1 day in milliseconds
 
 
-    if (wasOnline && currentTime - lastActivityTime <= tenMinutes) {
+    if (isSubscribed) {
         return 'online';
     } else if (currentTime - lastActivityTime <= oneDay) {
         return 'recentlyOnline';
@@ -35,51 +44,52 @@ const DisplayUserActivity = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // useEffect(() => {
-  //   const time = Date.now();
-  //   const newGroupedUsers = userActivity.reduce(
-  //       (groups, activity) => {
-  //           const status = activityStatus(activity.was_online_at_time, activity.time*1000, time);
-  //           groups[status].push(activity);
-  //           return groups;
-  //       },
-  //       { online: [], recentlyOnline: [], ever: [] }
-  //   );
+  useEffect(() => {
+    const time = Date.now();
 
-  //   // Sort each group by last activity time, descending
-  //   const sortByLastActivityTimeDesc = (a, b) => b.time - a.time;
+    const newGroupedUsers = Object.entries(metadata.user_presence).reduce(
+      (groups, [key, activity]) => {
+          let isSubscribed = metadata.subscribers.includes(key);
+          const status = activityStatus(isSubscribed, activity.time * 1000, time);
+          groups[status].push(key);
+          return groups;
+      },
+      { online: [], recentlyOnline: [], ever: [] }
+    );
+    setGroupedUsers(newGroupedUsers);
+    // Sort each group by last activity time, descending
+    // const sortByLastActivityTimeDesc = (a, b) => b.time - a.time;
 
-  //   newGroupedUsers.online.sort(sortByLastActivityTimeDesc);
-  //   newGroupedUsers.recentlyOnline.sort(sortByLastActivityTimeDesc);
-  //   newGroupedUsers.ever.sort(sortByLastActivityTimeDesc);
+    // newGroupedUsers.online.sort(sortByLastActivityTimeDesc);
+    // newGroupedUsers.recentlyOnline.sort(sortByLastActivityTimeDesc);
+    // newGroupedUsers.ever.sort(sortByLastActivityTimeDesc);
 
-  //   // Map the groups to just user names
-  //   setGroupedUsers({
-  //     online: newGroupedUsers.online.map(user => user.name),
-  //     recentlyOnline: newGroupedUsers.recentlyOnline.map(user => user.name),
-  //     ever: newGroupedUsers.ever.map(user => user.name)
-  //   });
-  // }, [userActivity, count]);
+    // // Map the groups to just user names
+    // setGroupedUsers({
+    //   online: newGroupedUsers.online.map(user => user.name),
+    //   recentlyOnline: newGroupedUsers.recentlyOnline.map(user => user.name),
+    //   ever: newGroupedUsers.ever.map(user => user.name)
+    // });
+  }, [count]);
 
-  // const getNameColor = useCallback(
-  //   (name: string) => {
-  //   let color = nameColors[name];
-  //   if (color) {
-  //     return color
-  //   }
-  //   color = computeColorForName(name);
-  //   addNameColor(name, color);
-  //   return color;
-  // }
-  // , [nameColors])
+  const getNameColor = useCallback(
+    (name: string) => {
+    let color = nameColors[name];
+    if (color) {
+      return color
+    }
+    color = computeColorForName(name);
+    addNameColor(name, color);
+    return color;
+  }
+  , [nameColors])
 
   return (
     <div style={{color: '#ffffff77', fontSize: '0.8rem', cursor: 'default'}}>
       <div>
         <span style={{fontSize: '0.8rem'}}>{groupedUsers.online.length} online: </span>
         {groupedUsers.online.map((userId, index) => (
-          // <span key={index} style={{ color: getNameColor(userId) }}>
-          <span key={index}>
+          <span key={index} style={{ color: getNameColor(userId) }}>
             {userId}
             {index < groupedUsers.online.length - 1 ? ', ' : ''}
           </span>
