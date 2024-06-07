@@ -198,10 +198,10 @@ class DartApi {
         if (response === "SubscribeAck") {
           this.services.set(serviceId, service);
           this.onServicesChange();
-          this.startPresenceHeartbeat(serviceId);
+          // this.startPresenceHeartbeat(serviceId);
         } else if (response.ServiceMetadata) {
           service.metadata = response.ServiceMetadata;
-          this.startPresenceHeartbeat(serviceId);
+          // this.startPresenceHeartbeat(serviceId);
           this.onServicesChange();
         } else {
           console.warn('Unknown service message format:', message);
@@ -275,9 +275,16 @@ class DartApi {
 
   joinService(serviceId: ParsedServiceId) {
     const request =  { "JoinService": { "node": serviceId.node, "id": serviceId.id } }
+    let rawServiceId = makeServiceId(serviceId.node, serviceId.id);
+    if (this.services.has(rawServiceId)) {
+      console.log("Service already exists", rawServiceId);
+      return;
+    }
+
     this.services.set(makeServiceId(serviceId.node, serviceId.id), new_service(serviceId));
     this.onServicesChange();
     this.sendRequest(request);
+    this.startPresenceHeartbeat(rawServiceId);
   }
 
   exitService(parsedServiceId: ParsedServiceId) {
