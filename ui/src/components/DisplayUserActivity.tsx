@@ -30,20 +30,6 @@ const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({ serviceId, me
     }
   };
 
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    // occasional rerender to update the groups
-    const interval = setInterval(() => {
-      setCount(prevCount => prevCount + 1);
-      // also use this for the heartbeat timer
-      console.log("Poking heartbeat")
-      // pokeHeartbeat();
-    }, 60*1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   useEffect(() => {
     const time = Date.now();
 
@@ -70,7 +56,7 @@ const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({ serviceId, me
     //   recentlyOnline: newGroupedUsers.recentlyOnline.map(user => user.name),
     //   ever: newGroupedUsers.ever.map(user => user.name)
     // });
-  }, [count]);
+  }, [metadata]);
 
   const getNameColor = useCallback(
     (name: string) => {
@@ -107,7 +93,6 @@ const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({ serviceId, me
           <span key={index}>{userId}{index < groupedUsers.ever.length - 1 ? ', ' : ''}</span>
         ))}
       </div>
-    <span style={{ display: 'none'}}>{count}</span>
     </div>
   );
 };

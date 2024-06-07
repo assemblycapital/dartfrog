@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ServiceId, Service, parseServiceId } from '../dartclientlib';
-import OpenServiceTab from './ServiceTab';
+import ServiceTab from './ServiceTab';
 import useDartStore from '../store/dart';
 import './TabbedWindowManager.css';
 import { PlusIcon, XIcon } from './icons/Icons';
@@ -130,7 +130,31 @@ const TabbedWindowManager: React.FC = () => {
       </div>
       <div>
         {tabs.length === 0 ? (
-          "no tabs open"
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignContent: 'center',
+              alignItems: 'center',
+              height: '400px',
+              color: '#ffffff55',
+
+            }}
+          >
+            <button
+              style={{
+                padding: '8px',
+                border: '1px solid #ffffff55',
+                borderRadius: '4px',
+                cursor: 'pointer',
+
+              }}
+              onClick={addTab}
+            >
+              create a new tab
+            </button>
+          </div>
         ) : (
           <div>
             {!tabs[activeTabIndex].serviceId ? (
@@ -140,8 +164,9 @@ const TabbedWindowManager: React.FC = () => {
                   }}
                 />
             ):(
-                <OpenServiceTab
+                <ServiceTab
                   serviceId={tabs[activeTabIndex].serviceId}
+                  services={services}
                 />
             )}
           </div>

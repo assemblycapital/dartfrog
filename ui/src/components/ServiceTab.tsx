@@ -12,20 +12,17 @@ import { ChatMessageHistory } from "../types/types";
 
 interface ServiceTabProps {
   serviceId: ServiceId;
+  services: Map<ServiceId, Service>;
 }
 
-const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId }) => {
-  const { services } = useDartStore();
+const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
   const [service, setService] = useState<Service | null>(null);
-  // const [chats, setChats] = useState<ChatMessageHistory>(new Map());
-  // const [metadata, setMetadata] = useState<ServiceMetadata | null>(null);
 
   useEffect(() => {
     const gotService = services.get(serviceId);
     if (gotService) {
       setService(gotService);
-      // setChats(gotService.chatState.messages);
-      // setMetadata(gotService.metadata);
+      console.log("service updated in servicetab")
     } else {
       setService(null);
     }

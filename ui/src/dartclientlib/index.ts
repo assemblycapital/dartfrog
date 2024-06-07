@@ -210,6 +210,7 @@ class DartApi {
         } else if (response.ServiceMetadata) {
           service.metadata = response.ServiceMetadata;
           this.services.set(serviceId, service);
+          console.log("new ServiceMetadata:", response.ServiceMetadata);
           this.onServicesChange();
         } else if (response.ChatUpdate) {
           // console.log('ChatUpdate:', response.ChatUpdate, service.chatState);
