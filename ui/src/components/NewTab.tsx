@@ -45,10 +45,16 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
           }}
         >
           {Array.from(availableServices.entries()).map(([serverNode, aServices]) => (
-            <span key={serverNode}>
+            <div key={serverNode}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.8rem",
+              }}
+            >
               {aServices.map((service) => (
                   <div
-                    key={serverNode+":"+service.id}
+                    key={makeServiceId(serverNode, service.id)}
                     style={{
                       display: "flex",
                       flexDirection: "row",
@@ -65,10 +71,10 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
                     >
                       join
                     </button>
-                    {serverNode+":"+service.id}{" "}
+                      {makeServiceId(serverNode, service.id)}
                   </div>
                 ))}
-            </span>
+            </div>
           ))}
           </div>
         </div>

@@ -54,10 +54,14 @@ export interface ServiceMetadata {
 export type Services = Map<ServiceId, Service>;
 
 export const makeServiceId = (node: string, id: string) => {
-  return `${node}:${id}`;
+  return `${id}.${node}`;
 }
 export const parseServiceId = (serviceId: string) => {
-  const [node, id] = serviceId.split(':');
+  const split = serviceId.split('.');
+  let tlz = split.slice(-1)[0];
+  let node_sub = split.slice(-2,-1)[0];
+  let id = split.slice(0,-2).join('.');
+  const node = `${node_sub}.${tlz}`
   return { node, id };
 }
 
@@ -310,7 +314,7 @@ class DartApi {
         console.log("Connected to Kinode");
         this.onOpen();
         this.setConnectionStatus(ConnectionStatusType.Connected);
-        this.joinService({node:SERVER_NODE, id:"chat"});
+        this.joinService({node:SERVER_NODE, id:"chat-1"});
         this.requestServiceList(SERVER_NODE);
       },
       onMessage: (json, api) => {

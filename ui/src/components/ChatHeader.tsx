@@ -46,21 +46,6 @@ const ChatHeader = () => {
           gap: "0.8rem",
         }}
       >
-        <button
-          style={{
-            opacity: "0.5",
-            fontSize: "0.8rem",
-            padding: "0px 2px",
-            cursor: "pointer",
-          }}
-          onClick={(e) => {
-              // setServerStatus(null);
-            // pokeUnsbscribe();
-            }
-          }
-        >
-          exit
-        </button>
         <span style={{
           // fontFamily:"monospace",
           flexGrow: 1,
@@ -87,13 +72,13 @@ const ChatHeader = () => {
           </div>
         }
 
-        <div
+        {/* <div
           style={{
             cursor: "default",
           }}
         >
           {'server'} {isConnected ? 'connected' : 'connecting...'}
-        </div>
+        </div> */}
 
       </div>
 

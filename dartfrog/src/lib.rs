@@ -732,7 +732,15 @@ fn init(our: Address) {
     // let server = get_server_address(SERVER_NODE);
     poke_server(&our, ServerRequest::CreateService(ServiceId {
         node: our.node.clone(),
-        id: "chat".to_string()
+        id: "chat-1".to_string()
+    })).unwrap();
+    poke_server(&our, ServerRequest::CreateService(ServiceId {
+        node: our.node.clone(),
+        id: "chat-2".to_string()
+    })).unwrap();
+    poke_server(&our, ServerRequest::CreateService(ServiceId {
+        node: our.node.clone(),
+        id: "chat-3".to_string()
     })).unwrap();
     let mut state = new_dart_state();
     // state.server.chat_state = load_chat_state();

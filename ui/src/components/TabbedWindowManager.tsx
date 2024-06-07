@@ -13,7 +13,7 @@ interface Tab {
 
 const TabbedWindowManager: React.FC = () => {
   const [tabs, setTabs] = useState<Tab[]>([
-    { serviceId: "fake.dev:chat" },
+    { serviceId: "chat-1.fake.dev" },
     { serviceId: null },
   ]);
 
@@ -26,6 +26,7 @@ const TabbedWindowManager: React.FC = () => {
     if (currentTab && currentTab.serviceId) {
       const service = services.get(currentTab.serviceId);
       if (!service) {
+        console.log('joining service', currentTab.serviceId, services.keys())
         joinService(parseServiceId(currentTab.serviceId));
         setCurrentTabService(null);
       } else {
