@@ -222,7 +222,7 @@ class DartApi {
     // Set an interval to call presenceHeartbeat
     service.heartbeatIntervalId = setInterval(() => {
       this.presenceHeartbeat(serviceId);
-    }, 1*60*1000);
+    }, 60*1000);
   }
 
   // Method to stop the heartbeat timer
@@ -281,6 +281,7 @@ class DartApi {
       console.log("Service not found", serviceId);
       return;
     }
+    this.cancelPresenceHeartbeat(serviceId);
     this.services.delete(serviceId);
     this.onServicesChange();
     const request =  { "ExitService": { "node": parsedServiceId.node, "id": parsedServiceId.id } }

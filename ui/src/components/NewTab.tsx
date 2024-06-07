@@ -7,9 +7,13 @@ import { ConnectionStatusType, ServerStatus } from "../types/types";
 import { useEffect, useState } from "react";
 import Spinner from "./Spinner";
 import useDartStore from "../store/dart";
-import { Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId } from "../dartclientlib";
+import { Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "../dartclientlib";
 
-const NewTab = () => {
+interface NewTabProps {
+  setTabService: (servid: ServiceId) => void;
+}
+
+const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
   const { availableServices, joinService } = useDartStore();
 
   if (!(availableServices instanceof Map)) {
@@ -17,7 +21,6 @@ const NewTab = () => {
     // but if i dont do it, everything explodes :)
     return <Spinner />
   }
-
 
   return (
     <div
@@ -57,9 +60,8 @@ const NewTab = () => {
                         cursor: "pointer",
                       }}
                       onClick={() => {
-                          joinService(service);
-                        }
-                      }
+                        setTabService(makeServiceId(serverNode, service.id));
+                      }}
                     >
                       join
                     </button>
