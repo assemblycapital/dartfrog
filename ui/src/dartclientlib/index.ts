@@ -2,7 +2,7 @@ import KinodeClientApi from "@kinode/client-api";
 import { SERVER_NODE, WEBSOCKET_URL } from '../utils';
 import { deflate } from "zlib";
 import { on } from "events";
-
+import  {ChatState, handleChatUpdate}  from "./chat"; // Import the ChatState type from the appropriate module
 export enum ConnectionStatusType {
   Connecting,
   Connected,
@@ -39,7 +39,8 @@ export type Service = {
   serviceId: ParsedServiceId,
   connectionStatus: ServiceConnectionStatus,
   metadata: ServiceMetadata,
-  heartbeatIntervalId?: NodeJS.Timeout
+  heartbeatIntervalId?: NodeJS.Timeout,
+  chatState: ChatState,
 }
 export interface Presence {
   time: number;
@@ -67,13 +68,21 @@ export const parseServiceId = (serviceId: string) => {
 
 export type AvailableServices = Map<string, Array<ParsedServiceId>>
 
+
 function new_service(serviceId: ParsedServiceId) : Service {
+  // let rawServiceId = makeServiceId(serviceId.node, serviceId.id);
+  // let chat = new ChatObject({
+  //   serviceId: rawServiceId,
+  //   messageSender: ()=>{}
+  // });
   return {
     serviceId: serviceId,
     metadata: {subscribers: [], user_presence: {}},
-    connectionStatus: {status:ServiceConnectionStatusType.Connecting, timestamp:Date.now()}
+    connectionStatus: {status:ServiceConnectionStatusType.Connecting, timestamp:Date.now()},
+    chatState: {messages: new Map()}
   }
 }
+
 interface ConstructorArgs {
   serviceUpdateHandlers?: ServiceUpdateHandlers;
   onOpen?: () => void;
@@ -200,6 +209,13 @@ class DartApi {
           this.onServicesChange();
         } else if (response.ServiceMetadata) {
           service.metadata = response.ServiceMetadata;
+          this.services.set(serviceId, service);
+          this.onServicesChange();
+        } else if (response.ChatUpdate) {
+          console.log('ChatUpdate:', response.ChatUpdate, service.chatState);
+          let newChatState = handleChatUpdate(service.chatState, response.ChatUpdate);
+          service.chatState = newChatState;
+          this.services.set(serviceId, service);
           this.onServicesChange();
         } else {
           console.warn('Unknown service message format:', message);
@@ -262,6 +278,7 @@ class DartApi {
 
   sendRequest(req: any) {
     if (!this.api) { return; }
+    console.log("Sending request", req)
     const wrapper = {
       "ClientRequest": {
         "ConsumerRequest": [0, req]

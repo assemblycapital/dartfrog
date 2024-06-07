@@ -1,9 +1,16 @@
 import React, { useCallback, useState } from 'react';
 import { maybeReplaceWithImage, } from '../utils';
+import useDartStore from '../store/dart';
+import { parseServiceId } from '../dartclientlib';
 
-const ChatInput = () => {
+interface ChatInputProps {
+  serviceId: string;
+}
+
+const ChatInput: React.FC<ChatInputProps> = ({ serviceId }) => {
   const [chatMessageInputText, setChatMessageInputText] = useState('');
 
+  const { pokeService } = useDartStore();
   const handleInputChange = (event) => {
     setChatMessageInputText(event.target.value);
   };
@@ -15,9 +22,16 @@ const ChatInput = () => {
 
       // Create a message object
       let text = maybeReplaceWithImage(chatMessageInputText);
-      const data = {"ClientRequest": {"SendToServer": {"ChatMessage": text}}};
+      const data = {
+          "SendMessage": 
+            text
+        }
       // sendPoke(data);
       setChatMessageInputText("");
+
+      let parsedServiceId = parseServiceId(serviceId);
+
+      pokeService(parsedServiceId, data);
     },
     [chatMessageInputText]
   );

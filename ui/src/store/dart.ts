@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId, parseServiceId } from '../dartclientlib';
+import { ChatMessageHistory } from '../types/types';
 
-export interface DartStore{
+export interface DartStore {
   api: DartApi | null,
   setApi: (api: DartApi) => void
   closeApi: () => void
@@ -17,6 +18,7 @@ export interface DartStore{
   setServices: (services: Map<ServiceId, Service>) => void
   exitService: (serviceId: ParsedServiceId) => void
   joinService: (serviceId: ParsedServiceId) => void
+  pokeService: (parsedServiceId: ParsedServiceId, data:any) => void
   availableServices: AvailableServices
   setAvailableServices: (availableServices: AvailableServices) => void
   // 
@@ -61,6 +63,19 @@ const useDartStore = create<DartStore>()(
 
         api.joinService(serviceId);
       },
+      pokeService: (parsedServiceId: ParsedServiceId, data:any) => {
+        const { api } = get();
+        if (!api) { return; }
+
+        console.log('pokeService', parsedServiceId, data)
+        const request =  { "SendToService": 
+        [
+          { "node": parsedServiceId.node, "id": parsedServiceId.id },
+          data,
+        ]
+      }
+        api.sendRequest(request);
+      },
       availableServices: new Map(),
       setAvailableServices: (availableServices) => set({ availableServices }),
       get,
@@ -81,4 +96,6 @@ const parsePresence = (presence: any) => {
     }));
 }
 
-export default useDartStore
+
+
+export default useDartStore;

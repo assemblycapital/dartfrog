@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import useChatStore from '../store/chat';
+import useChatStore from '../store/chat_old';
 import { ConnectionStatusType, ServerStatus } from '../types/types';
 // import { pokeUnsubscribe } from '../utils';
 

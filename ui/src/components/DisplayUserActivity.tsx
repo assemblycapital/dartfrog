@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import useChatStore from '../store/chat';
+import useChatStore from '../store/chat_old';
 import { computeColorForName} from '../utils';
 
 const DisplayUserActivity = () => {

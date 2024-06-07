@@ -1,15 +1,36 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChatMessage, ChatMessageHistory } from '../types/types';
-import useChatStore from '../store/chat';
+import useChatStore from '../store/chat_old';
 import { computeColorForName } from '../utils';
 import ChatInput from './ChatInput';
-import useDartStore from '../dartclientlib/';
+import { Service, ServiceId, makeServiceId } from '../dartclientlib/';
+
+import useDartStore from "../store/dart";
 
 interface ChatBoxProps {
+  serviceId: ServiceId;
   chats: ChatMessageHistory
 }
 
-const ChatBox: React.FC<ChatBoxProps> = ({ chats }) => {
+const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chats}) => {
+  // const { services } = useDartStore();
+  // const [service, setService] = useState<Service | null>(null);
+
+  // useEffect(() => {
+  //   const gotService = services.get(serviceId);
+  //   if (gotService) {
+  //     setService(gotService);
+  //   } else {
+  //     setService(null);
+  //   }
+  // }, [services, serviceId]);
+
+  // if (!service) {
+  //   <div>
+  //     error
+  //   </div>
+  // }
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const isResizing = useRef(false);
@@ -17,6 +38,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chats }) => {
   // const { nameColors, addNameColor } = useDartStore();
   const [ chatMessageList, setChatMessageList ] = useState<Array<ChatMessage>>([]);
   const [containerHeight, setContainerHeight] = useState(400);
+
 
   // const getNameColor = useCallback(
   //   (name: string) => {
@@ -31,6 +53,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chats }) => {
   // , [nameColors])
 
   useEffect(() => {
+    // console.log('new chats')
     if (chats.size === 0) return;
     if (!chats.values) return;
     const sortedMessages = Array.from(chats.values()).sort((a, b) => a.id - b.id);
@@ -165,7 +188,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chats }) => {
         />
       </div>
       </div>
-      <ChatInput />
+      <ChatInput serviceId={serviceId} />
       <div
         style={{
           height: '8px',

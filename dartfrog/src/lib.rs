@@ -45,10 +45,21 @@ struct Presence {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+struct ChatState {
+    pub last_message_id: u64,
+}
+fn new_chat_state() -> ChatState {
+    ChatState {
+        last_message_id: 0,
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct Service {
     pub id: ServiceId,
     pub metadata: ServiceMetadata,
     pub last_sent_presence: u64,
+    pub chat_state: ChatState,
 }
 
 impl Hash for Service {
@@ -62,6 +73,7 @@ fn new_service(id: ServiceId) -> Service {
         id: id,
         metadata: new_service_metadata(),
         last_sent_presence: 0,
+        chat_state: new_chat_state(),
     }
 }
 
@@ -138,11 +150,17 @@ enum ServerRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+enum ChatRequest {
+    SendMessage(String),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 enum ServiceRequest {
     Subscribe,
     Unsubscribe,
     PresenceHeartbeat,
-    PluginMessageTODO(String)
+    PluginMessageTODO(String), // plugin id
+    ChatRequest(ChatRequest),
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 enum ClientUpdate {
@@ -169,9 +187,15 @@ enum ConsumerClientUpdate {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 enum ConsumerServiceUpdate {
     SubscribeAck,
-    // SubscribeAck is potentially obsolete if we always send metadata on subscribe
     ServiceMetadata(ServiceMetadata),
     Kick,
+    PluginUpdateTODO,
+    ChatUpdate(ChatUpdate),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+enum ChatUpdate {
+    Message(ChatMessage),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -187,6 +211,7 @@ enum ConsumerRequest {
     JoinService(ServiceId),
     ExitService(ServiceId),
     ServiceHeartbeat(ServiceId),
+    SendToService(ServiceId, ChatRequest),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -238,6 +263,25 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
     if let Some(service) = state.server.services.get_mut(&service_id.id) {
         // handle the request
         match req {
+            ServiceRequest::ChatRequest(req) => {
+                match req {
+                    ChatRequest::SendMessage(msg) => {
+                        
+                        let chat_msg = ChatMessage {
+                            id: service.chat_state.last_message_id,
+                            time: SystemTime::now()
+                                .duration_since(UNIX_EPOCH)
+                                .unwrap()
+                                .as_secs(),
+                            from: source.node.clone(),
+                            msg: msg,
+                        };
+                        service.chat_state.last_message_id += 1;
+                        let update = make_consumer_service_update(service_id.clone(),  ConsumerServiceUpdate::ChatUpdate(ChatUpdate::Message(chat_msg)));
+                        update_subscribers(update, service.metadata.subscribers.clone())?;
+                    }
+                }
+            }
             ServiceRequest::Subscribe => {
                 if !service.metadata.subscribers.contains(&source.node.clone()) {
                     // already subscribed, continue anyways
@@ -379,6 +423,9 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: Address, u
                                 );
                                 update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
                             }
+                            ConsumerServiceUpdate::ChatUpdate(ref upd) => {
+                                update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
+                            }
                             _ => {
                             }
                         }
@@ -461,7 +508,7 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
         }
         ClientRequest::ConsumerRequest(num, inner) => {
             let Some(consumer) = state.client.consumers.get_mut(&num) else {
-                println!("no client found");
+                println!("no consumer found {:?} {:?}", num, inner);
                 return Ok(());
             };
             println!("consumer request: {:?} {:?}", num, inner);
@@ -512,6 +559,16 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                     let s_req = ServerRequest::RequestServiceList;
                     let address = get_server_address(server_node.as_str());
                     poke_server(&address, s_req)?;
+                }
+                ConsumerRequest::SendToService(sid, req ) => {
+                    if let Some(service) = consumer.services.get(&sid) {
+                        let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::ChatRequest(req));
+                        let address = get_server_address(sid.clone().node.as_str());
+                        poke_server(&address, s_req)?;
+                    } else {
+                        // dont have this service
+                        // TODO maybe tell frontend that it's missing
+                    }
                 }
                 _ => {
                     println!("unexpected consumer request: {:?}", inner);
