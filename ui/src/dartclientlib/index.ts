@@ -157,11 +157,11 @@ class DartApi {
   private handleServerUpdate(message: any) {
       if (Array.isArray(message) && message.length > 1) {
           const [address, response] = message;
-          console.log('Server Address:', address);
-          console.log('Server Response:', response);
+          // console.log('Server Address:', address);
+          // console.log('Server Response:', response);
 
           if (response.NoSuchService) {
-              console.log('No such service:', response.NoSuchService);
+              // console.log('No such service:', response.NoSuchService);
               // Add your logic to handle the NoSuchService response here
               let serviceId : ServiceId = makeServiceId(address, response.NoSuchService);
               let service = this.services.get(serviceId);
@@ -171,7 +171,7 @@ class DartApi {
               this.onServicesChange();
 
           } else if (response.ServiceList) {
-              console.log('Service List:', address, response.ServiceList);
+              // console.log('Service List:', address, response.ServiceList);
               // Add your logic to handle the ServiceList response here
               this.availableServices.set(address, response.ServiceList);
               this.onAvailableServicesChange();
@@ -198,10 +198,8 @@ class DartApi {
         if (response === "SubscribeAck") {
           this.services.set(serviceId, service);
           this.onServicesChange();
-          // this.startPresenceHeartbeat(serviceId);
         } else if (response.ServiceMetadata) {
           service.metadata = response.ServiceMetadata;
-          // this.startPresenceHeartbeat(serviceId);
           this.onServicesChange();
         } else {
           console.warn('Unknown service message format:', message);
@@ -243,7 +241,7 @@ class DartApi {
     // Add your logic to send the presence heartbeat here
     let parsedServiceId = parseServiceId(serviceId);
     const request =  { "ServiceHeartbeat": { "node": parsedServiceId.node, "id": parsedServiceId.id } }
-    console.log("sending presence", serviceId);
+    // console.log("sending presence", serviceId);
     this.sendRequest(request);
   }
 

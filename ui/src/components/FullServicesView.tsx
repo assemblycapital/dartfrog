@@ -9,6 +9,21 @@ import Spinner from "./Spinner";
 import useDartStore from "../store/dart";
 import { ServiceConnectionStatus, ServiceConnectionStatusType } from "../dartclientlib";
 
+export function stringifyServiceConnectionStatus(status: ServiceConnectionStatusType): string {
+  switch (status) {
+    case ServiceConnectionStatusType.Connecting:
+      return "Connecting";
+    case ServiceConnectionStatusType.Connected:
+      return "Connected";
+    case ServiceConnectionStatusType.Disconnected:
+      return "Disconnected";
+    case ServiceConnectionStatusType.ServiceDoesNotExist:
+      return "ServiceDoesNotExist";
+    default:
+      return "Unknown Status";
+  }
+}
+
 function FullServicesView() {
   const { services, exitService, joinService, availableServices, closeApi } = useDartStore();
   // const { chats, serverStatus } = useChatStore();
@@ -23,20 +38,6 @@ function FullServicesView() {
     return <Spinner />
   }
 
-  function stringifyServiceConnectionStatus(status: ServiceConnectionStatusType): string {
-    switch (status) {
-      case ServiceConnectionStatusType.Connecting:
-        return "Connecting";
-      case ServiceConnectionStatusType.Connected:
-        return "Connected";
-      case ServiceConnectionStatusType.Disconnected:
-        return "Disconnected";
-      case ServiceConnectionStatusType.ServiceDoesNotExist:
-        return "ServiceDoesNotExist";
-      default:
-        return "Unknown Status";
-    }
-  }
     
   function renderConnectionStatus(status: ServiceConnectionStatus) {
     

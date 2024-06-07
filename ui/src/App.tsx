@@ -72,7 +72,7 @@ function App() {
       width: "100%",
       display: "flex",
       flexDirection: "column",
-      gap: "0.8rem",
+      gap: "0.4rem",
     }}>
       <ControlHeader />
 
