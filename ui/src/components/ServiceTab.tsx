@@ -29,10 +29,6 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId }) => {
     }
   }, [services, serviceId]);
 
-  useEffect(() => {
-    console.log("new chats", chats);
-  }, [chats]);
-
   return (
     <div
       style={{

@@ -35,22 +35,22 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chats}) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const isResizing = useRef(false);
 
-  // const { nameColors, addNameColor } = useDartStore();
+  const { nameColors, addNameColor } = useDartStore();
   const [ chatMessageList, setChatMessageList ] = useState<Array<ChatMessage>>([]);
   const [containerHeight, setContainerHeight] = useState(400);
 
 
-  // const getNameColor = useCallback(
-  //   (name: string) => {
-  //     let color = nameColors[name];
-  //     if (color) {
-  //       return color
-  //     }
-  //     color = computeColorForName(name);
-  //     addNameColor(name, color);
-  //     return color;
-  //   }
-  // , [nameColors])
+  const getNameColor = useCallback(
+    (name: string) => {
+      let color = nameColors[name];
+      if (color) {
+        return color
+      }
+      color = computeColorForName(name);
+      addNameColor(name, color);
+      return color;
+    }
+  , [nameColors])
 
   useEffect(() => {
     // console.log('new chats')
@@ -176,9 +176,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chats}) => {
               <div style={{color:"#ffffff77", fontSize: "0.8rem", display: "inline-block", marginRight:"5px", cursor: "default"}}>
                 <span>{formatTimestamp(message.time)}</span>
               </div>
-              {/* <div style={{color: getNameColor(message.from), display: "inline-block", marginRight:"5px", cursor:"default"}}>
+              <div style={{color: getNameColor(message.from), display: "inline-block", marginRight:"5px", cursor:"default"}}>
                 <span>{message.from}:</span>
-              </div> */}
+              </div>
             </div>
             {getMessageInnerText(message.msg)}
           </div>

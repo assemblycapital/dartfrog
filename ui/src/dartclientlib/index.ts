@@ -212,7 +212,7 @@ class DartApi {
           this.services.set(serviceId, service);
           this.onServicesChange();
         } else if (response.ChatUpdate) {
-          console.log('ChatUpdate:', response.ChatUpdate, service.chatState);
+          // console.log('ChatUpdate:', response.ChatUpdate, service.chatState);
           let newChatState = handleChatUpdate(service.chatState, response.ChatUpdate);
           service.chatState = newChatState;
           this.services.set(serviceId, service);
@@ -278,7 +278,7 @@ class DartApi {
 
   sendRequest(req: any) {
     if (!this.api) { return; }
-    console.log("Sending request", req)
+    // console.log("Sending request", req)
     const wrapper = {
       "ClientRequest": {
         "ConsumerRequest": [0, req]

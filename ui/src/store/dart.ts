@@ -22,6 +22,10 @@ export interface DartStore {
   availableServices: AvailableServices
   setAvailableServices: (availableServices: AvailableServices) => void
   // 
+  // chat stuff here until its properly abstracted later
+  nameColors: Map<string, string>
+  addNameColor: (name:string, color:string) => void
+  // 
   get: () => DartStore 
   set: (partial: DartStore | Partial<DartStore>) => void
 }
@@ -67,7 +71,7 @@ const useDartStore = create<DartStore>()(
         const { api } = get();
         if (!api) { return; }
 
-        console.log('pokeService', parsedServiceId, data)
+        // console.log('pokeService', parsedServiceId, data)
         const request =  { "SendToService": 
         [
           { "node": parsedServiceId.node, "id": parsedServiceId.id },
@@ -78,6 +82,13 @@ const useDartStore = create<DartStore>()(
       },
       availableServices: new Map(),
       setAvailableServices: (availableServices) => set({ availableServices }),
+      // chat stuff
+      nameColors: new Map<string, string>(),
+      addNameColor: (name:string, color:string) => {
+        const { nameColors } = get()
+        nameColors[name] = color;
+        set({ nameColors: nameColors })
+      },
       get,
       set,
     }),
@@ -95,7 +106,6 @@ const parsePresence = (presence: any) => {
       was_online_at_time: value['was_online_at_time'] as boolean
     }));
 }
-
 
 
 export default useDartStore;
