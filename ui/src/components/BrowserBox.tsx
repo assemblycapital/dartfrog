@@ -8,7 +8,6 @@ import { useEffect } from "react";
 import Spinner from "./Spinner";
 import useDartStore from "../store/dart";
 import { ServiceConnectionStatus, ServiceConnectionStatusType } from "../dartclientlib";
-import OpenServiceTab from "./ServiceTab";
 import TabbedWindowManager from "./TabbedWindowManager";
 
 function BrowserBox() {

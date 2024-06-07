@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from "react";
 import Spinner from "./Spinner";
 import useDartStore from "../store/dart";
 import { Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "../dartclientlib";
+import './NewTab.css'
 
 interface NewTabProps {
   setTabService: (serviceId: ServiceId) => void;
@@ -25,6 +26,33 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
   // 
   const [inputJoinServiceName, setInputJoinServiceName] = useState('');
   const [inputJoinServiceHostNode, setInputJoinServiceHostNode] = useState('');
+
+  const [inputCreateServiceName, setInputCreateServiceName] = useState('');
+  const [isCreateInputValid, setIsCreateInputValid] = useState(true);
+
+  const validateCreateInput = (value) => {
+    if (value==='') return true;
+    const regex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+    return regex.test(value);
+  };
+
+  const handleCreateInputChange = (e) => {
+    const value = e.target.value;
+    setInputCreateServiceName(value);
+    setIsCreateInputValid(validateCreateInput(value));
+  };
+  const handleInputCreateClick = useCallback(() => {
+    if (isCreateInputValid) {
+      if (inputCreateServiceName ==='') return;
+      console.log('Service name is valid:', inputCreateServiceName);
+      // Proceed with the creation logic
+      let serviceId = inputCreateServiceName+"."+window.our?.node
+      console.log("create service", serviceId);
+    } else {
+      console.log('Invalid service name.');
+    }
+    // setTabService(makeServiceId(inputJoinServiceHostNode, inputJoinServiceName));
+  }, [inputCreateServiceName]);
 
   const handleInputJoinClick = useCallback(() => {
     setTabService(makeServiceId(inputJoinServiceHostNode, inputJoinServiceName));
@@ -51,17 +79,21 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
         >
           create a new service:
         </div>
-        <input type="text" placeholder="service-name" />
-        <button
-          style={{
-            cursor: "pointer",
-          }}
-          onClick={() => {
-            alert("coming soon");
-          }}
-        >
-          create
-        </button>
+        <input
+        type="text"
+        placeholder="service-name"
+        value={inputCreateServiceName}
+        onChange={handleCreateInputChange}
+        className={`${isCreateInputValid ? '' : 'invalid'}`}
+      />
+      <button
+        style={{
+          cursor: 'pointer',
+        }}
+        onClick={handleInputCreateClick}
+      >
+        create
+      </button>
       </div>
       <div>
         <div
@@ -109,6 +141,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
                     <span
                       style={{
                         cursor: "default",
+                        alignContent: "center",
                       }}
                     >
                       {makeServiceId(serverNode, service.id)}

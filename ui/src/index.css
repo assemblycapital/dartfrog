@@ -64,6 +64,18 @@ textarea, input[type="text"] {
   border-color: #ffffff22;
 }
 
+input[type="text"] {
+  padding: 4px 8px;
+  /* border-radius: 4px; */
+  border: 2px solid #ffffff22;
+}
+
+input[type="text"].invalid {
+  padding: 4px 8px;
+  /* border-radius: 4px; */
+  border: 1px solid #ff000066;
+}
+
 .chat-message:hover {
   background:#00000011;
 }

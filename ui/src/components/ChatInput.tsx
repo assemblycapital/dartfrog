@@ -54,9 +54,11 @@ const ChatInput: React.FC<ChatInputProps> = ({ serviceId }) => {
           }
         }}
       />
-      <button style={{ cursor: 'pointer' }} onClick={sendChat}>
+      <div>
+      <button style={{ cursor: 'pointer', height: '100%' }} onClick={sendChat}>
         Send
       </button>
+      </div>
     </div>
   );
 };

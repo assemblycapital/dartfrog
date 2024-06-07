@@ -22,7 +22,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
     const gotService = services.get(serviceId);
     if (gotService) {
       setService(gotService);
-      console.log("service updated in servicetab")
+      // console.log("service updated in servicetab")
     } else {
       setService(null);
     }
