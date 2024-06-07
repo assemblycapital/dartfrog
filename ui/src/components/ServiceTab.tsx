@@ -15,7 +15,11 @@ interface ServiceTabProps {
 
 const ServiceTab: React.FC<ServiceTabProps> = ({ service }) => {
   return (
-    <div>
+    <div
+      style={{
+        height: "400px",
+      }}
+    >
         <div
           style={{
             display: "flex",

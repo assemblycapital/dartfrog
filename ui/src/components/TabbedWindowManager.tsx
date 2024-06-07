@@ -4,6 +4,7 @@ import OpenServiceTab from './ServiceTab';
 import useDartStore from '../store/dart';
 import './TabbedWindowManager.css';
 import { PlusIcon, XIcon } from './icons/Icons';
+import NewTab from './NewTab';
 
 interface Tab {
   serviceId: ServiceId | null;
@@ -16,7 +17,7 @@ const TabbedWindowManager: React.FC = () => {
   ]);
 
   const [activeTabIndex, setActiveTabIndex] = useState<number>(0);
-  const [currentTabId, setCurrentTabId] = useState<ServiceId | null>(null);
+  // const [currentTabId, setCurrentTabId] = useState<ServiceId | null>(null);
   const [currentTabService, setCurrentTabService] = useState<Service | null>(null);
 
   const {services} = useDartStore();
@@ -34,6 +35,22 @@ const TabbedWindowManager: React.FC = () => {
     }
   }, [tabs, activeTabIndex, services]);
 
+  useEffect(() => {
+
+    const currentTab = tabs[activeTabIndex];
+    if (currentTab && currentTab.serviceId) {
+      // setCurrentTabId(currentTab.serviceId);
+      const service = services.get(currentTab.serviceId);
+      if (service) {
+        setCurrentTabService(service);
+      } else {
+        setCurrentTabService(null);
+      }
+    } else {
+      setCurrentTabService(null);
+    }
+  }, [activeTabIndex])
+
   const addTab = useCallback(() => {
     setTabs(prevTabs => [...prevTabs, { serviceId: null }]);
   }, []);
@@ -49,8 +66,12 @@ const TabbedWindowManager: React.FC = () => {
 
   return (
     <div>
-        {activeTabIndex}
-      <div style={{ display: 'flex' }}>
+      <div style={{
+        display: 'flex',
+        borderBottom: '2px solid #ffffff22',
+
+
+       }}>
         {tabs.map((tab, index) => (
           <div key={index}
             style={{
@@ -114,19 +135,13 @@ const TabbedWindowManager: React.FC = () => {
           "no tabs open" 
         ): (
           <div>
-              {currentTabId === null ? (
-                "tab creation screen..."
+              {!currentTabService ? (
+                // "tab creation screen..."
+                <NewTab />
               ):(
-                <>
-                {!currentTabService ? (
-                  "tab creation screen..."
-                ) :(
-                  <OpenServiceTab
-                    service={currentTabService}
-                    />
-                )
-                }
-                </>
+                <OpenServiceTab
+                  service={currentTabService}
+                  />
               )
               }
           </div>
