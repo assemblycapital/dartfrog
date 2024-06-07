@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ServiceId, Service } from '../dartclientlib';
 import OpenServiceTab from './ServiceTab';
 import useDartStore from '../store/dart';
@@ -21,41 +21,35 @@ const TabbedWindowManager: React.FC = () => {
 
   const {services} = useDartStore();
 
-  useEffect(() => {
-    if (!tabs[activeTabIndex]) return;
-    setCurrentTabId(tabs[activeTabIndex].serviceId)
-    if (tabs[activeTabIndex].serviceId === null) {
-      setCurrentTabService(null);
-    } else {
-      // fetch service
-      let got = services.get(tabs[activeTabIndex].serviceId as ServiceId)
-      if (got) {
-        console.log("got service", got)
-        setCurrentTabService(got)
+   // Simplify the effect that updates service-related states
+   useEffect(() => {
+    const currentTab = tabs[activeTabIndex];
+    if (currentTab && currentTab.serviceId) {
+      const service = services.get(currentTab.serviceId);
+      if (service) {
+        // console.log("Service found:", service);
       } else {
-        console.log("service not found")
+        console.log("Service not found");
       }
     }
-  }, [tabs, activeTabIndex]);
+  }, [tabs, activeTabIndex, services]);
 
-  const addTab = () => {
-    const newTab: Tab = {
-      serviceId: null,
-    };
-    setTabs([...tabs, newTab]);
-  };
+  const addTab = useCallback(() => {
+    setTabs(prevTabs => [...prevTabs, { serviceId: null }]);
+  }, []);
 
-  const removeTab = (index: number) => {
-    setTabs(tabs.filter((_, i) => i !== index));
+  const closeTab = useCallback((index: number) => {
+    setTabs(prevTabs => prevTabs.filter((_, i) => i !== index));
     if (index === activeTabIndex) {
-      setActiveTabIndex(0);
+      setActiveTabIndex(prevIndex => prevIndex === 0 ? 0 : prevIndex - 1);
     } else if (index < activeTabIndex) {
-      setActiveTabIndex(activeTabIndex - 1);
+      setActiveTabIndex(prevIndex => prevIndex - 1);
     }
-  };
+  }, [activeTabIndex]);
 
   return (
     <div>
+        {activeTabIndex}
       <div style={{ display: 'flex' }}>
         {tabs.map((tab, index) => (
           <div key={index}
@@ -87,7 +81,11 @@ const TabbedWindowManager: React.FC = () => {
                 >
                   {tab.serviceId ? tab.serviceId : 'new tab'}
                 </div>
-                <div onClick={() => removeTab(index)}
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation(); // This stops the click event from bubbling up to the parent div
+                    closeTab(index);
+                  }}
                   className="close-tab-button"
                 >
                   <XIcon />
@@ -111,22 +109,28 @@ const TabbedWindowManager: React.FC = () => {
         </button>
       </div>
       <div
-        // style={{
-        //   borderBottom: '1px solid #ffffff33',
-        // }}
       >
-        {tabs.length === 0 ? "TODO" : 
+        {tabs.length === 0 ? (
+          "no tabs open" 
+        ): (
           <div>
-              {currentTabId === null ? "TODO" :
+              {currentTabId === null ? (
+                "tab creation screen..."
+              ):(
                 <>
-                {!currentTabService ? "TODO" :
+                {!currentTabService ? (
+                  "tab creation screen..."
+                ) :(
                   <OpenServiceTab
                     service={currentTabService}
                     />
+                )
                 }
                 </>
+              )
               }
           </div>
+        )
         }
       </div>
     </div>
