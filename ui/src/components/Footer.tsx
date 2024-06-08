@@ -5,9 +5,17 @@ const DisplayUserActivity = () => {
       style={{
       display: "flex",
       flexDirection: "column",
+          fontSize: "0.8rem",
+          color: "#ffffff44",
       gap: "0.8rem",
       }}
       >
+      <div>
+        sfx: /yes /no /why /fart /people /robust /robustness
+      </div>
+      <div>
+        img: /die /kino /panda /dev /tiger /wow /cry /ok /oops
+      </div>
       <div
         style={{
           fontSize: "0.8rem",

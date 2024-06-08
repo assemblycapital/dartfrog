@@ -1,5 +1,6 @@
 import { ServiceId } from ".";
 import { ChatMessageHistory } from "../types/types";
+import { maybePlaySoundEffect } from "../utils";
 
 
 // export interface ChatObjectConstructorArgs {
@@ -16,6 +17,7 @@ export function handleChatUpdate(chatState: ChatState, update: any) {
     if (!update) return;
     if (update['Message']) {
       chatState.messages.set(update.Message.id, update.Message);
+      maybePlaySoundEffect(update.Message.msg, false);
     } else if(update['FullMessageHistory']) {
       chatState.messages = new Map()
       for (let msg of update.FullMessageHistory) {

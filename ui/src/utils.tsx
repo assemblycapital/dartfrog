@@ -30,6 +30,32 @@ export const IS_FAKE = true;
 export const SERVER_NODE = IS_FAKE ? "fake.dev" : "waterhouse.os";
 export const PROCESS_NAME = "dartfrog:dartfrog:herobrine.os";
 
+export const soundEffectCommands = {
+  '/fart': 'assets/wet.mp3',
+  '/no': 'assets/hell-naw-dog.mp3',
+  '/yes': 'assets/oh-yes.mp3',
+  '/why': 'assets/why.mp3',
+  '/people': 'assets/the-people.mp3',
+  '/robust': 'assets/robust-josh.mp3',
+  '/robustness': 'assets/robust-basile.mp3',
+}
+
+
+export const maybePlaySoundEffect = (msg: string, muteSoundEffects: boolean) => {
+  console.log('maybePlaySoundEffect')
+  console.log(msg)
+  if (muteSoundEffects) {
+    console.log('muted')
+    return;
+  }
+  if (msg in soundEffectCommands) {
+    console.log('playing')
+    const sound = new Audio(soundEffectCommands[msg]);
+    sound.play();
+  }
+}
+
+
 // export const pokeSubscribe = () => {
 //   }
 
