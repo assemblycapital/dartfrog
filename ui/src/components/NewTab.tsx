@@ -140,11 +140,23 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
               display: 'inline-block'
             }}
           >
-            <select name="serviceOption" id="serviceOption">
-              <option value="Option1" selected>Text Chat</option>
+            <select name="serviceOption" id="serviceOption" defaultValue={"Option1"}>
+              <option value="Option1" >Text Chat</option>
               <option value="Option2" disabled>Voice Chat</option>
-              <option value="Option3" disabled>Quake Live</option>
-              <option value="Option4" disabled>Minecraft</option>
+              <option value="Option2" disabled>Static File Server</option>
+              <option value="Option3" disabled>First Person Shooter</option>
+              <option value="Option4" disabled>Custom Plugin</option>
+            </select>
+          </div>
+          <div
+            style={{
+              display: 'inline-block'
+            }}
+          >
+            <select name="serviceOption" id="otherServiceOption" defaultValue={"Option1"}>
+              <option value="Option1" >Public</option>
+              <option value="Option2" disabled>Private</option>
+              <option value="Option2" disabled>Secret</option>
             </select>
           </div>
           <button

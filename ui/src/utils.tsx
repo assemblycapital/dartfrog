@@ -26,7 +26,7 @@ export const WEBSOCKET_URL = import.meta.env.DEV
 //   }
 
 
-export const IS_FAKE = true;
+export const IS_FAKE = false;
 export const SERVER_NODE = IS_FAKE ? "fake.dev" : "waterhouse.os";
 export const PROCESS_NAME = "dartfrog:dartfrog:herobrine.os";
 
@@ -42,14 +42,10 @@ export const soundEffectCommands = {
 
 
 export const maybePlaySoundEffect = (msg: string, muteSoundEffects: boolean) => {
-  console.log('maybePlaySoundEffect')
-  console.log(msg)
   if (muteSoundEffects) {
-    console.log('muted')
     return;
   }
   if (msg in soundEffectCommands) {
-    console.log('playing')
     const sound = new Audio(soundEffectCommands[msg]);
     sound.play();
   }

@@ -56,22 +56,46 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
           <div>{serviceId}</div>
         </div>
         {!service ? (
-          <Spinner />
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "400px",
+            }}
+          >
+            <Spinner />
+          </div>
         ) : (
           <div>
             {!(service.connectionStatus.status === ServiceConnectionStatusType.Connected) ? (
               <div>
-                {stringifyServiceConnectionStatus(service.connectionStatus.status)}
+              {(service.connectionStatus.status === ServiceConnectionStatusType.Connecting) ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        height: "400px",
+                      }}
+                    >
+                      <Spinner />
+                    </div>
+                  ) : (
+                  <div>
+                    {stringifyServiceConnectionStatus(service.connectionStatus.status)}
+                  </div>
+                  )}
+                  </div>
+                  ) : (
+                    <div>
+                      {/* <ChatHeader serviceId={serviceId} /> */}
+                      <ChatBox serviceId={serviceId} chats={service.chatState.messages}/>
+                      <DisplayUserActivity serviceId={serviceId} metadata={service.metadata} />
+                    </div>
+                )}
               </div>
-            ) : (
-              <div>
-                {/* <ChatHeader serviceId={serviceId} /> */}
-                <ChatBox serviceId={serviceId} chats={service.chatState.messages}/>
-                <DisplayUserActivity serviceId={serviceId} metadata={service.metadata} />
-              </div>
-            )}
-          </div>
-        )}
+          )}
       </div>
     </div>
   );
