@@ -15,7 +15,7 @@ interface TabbedWindowManagerProps {
 }
 const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({}) => {
   const [tabs, setTabs] = useState<Tab[]>([
-    { serviceId: "chat-1.fake.dev" },
+    { serviceId: "chat.fake.dev" },
     { serviceId: null },
   ]);
 

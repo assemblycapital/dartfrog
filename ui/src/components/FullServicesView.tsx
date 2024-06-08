@@ -19,6 +19,8 @@ export function stringifyServiceConnectionStatus(status: ServiceConnectionStatus
       return "Disconnected";
     case ServiceConnectionStatusType.ServiceDoesNotExist:
       return "ServiceDoesNotExist";
+    case ServiceConnectionStatusType.Kicked:
+      return "Kicked";
     default:
       return "Unknown Status";
   }

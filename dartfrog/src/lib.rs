@@ -242,6 +242,19 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                 state.server.services.insert(service_id.id.clone(), new_service(service_id.clone()));
             }
         }
+        ServerRequest::DeleteService(service_id) => {
+            if source.node != our.node {
+                return Ok(());
+            }
+            if let Some(service) = state.server.services.get(&service_id.id) {
+                for subscriber in service.metadata.subscribers.clone() {
+                    let update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::Kick);
+                    update_client(update, subscriber)?;
+                }
+                state.server.services.remove(&service_id.id.clone());
+            }
+
+        }
         ServerRequest::RequestServiceList => {
             let services: Vec<ServiceId> = state.server.services.keys().map(|x| ServiceId {
                 node: our.node.clone(),
@@ -807,15 +820,7 @@ fn init(our: Address) {
     // let server = get_server_address(SERVER_NODE);
     poke_server(&our, ServerRequest::CreateService(ServiceId {
         node: our.node.clone(),
-        id: "chat-1".to_string()
-    })).unwrap();
-    poke_server(&our, ServerRequest::CreateService(ServiceId {
-        node: our.node.clone(),
-        id: "chat-2".to_string()
-    })).unwrap();
-    poke_server(&our, ServerRequest::CreateService(ServiceId {
-        node: our.node.clone(),
-        id: "chat-3".to_string()
+        id: "chat".to_string()
     })).unwrap();
     let mut state = new_dart_state();
     // state.server.chat_state = load_chat_state();

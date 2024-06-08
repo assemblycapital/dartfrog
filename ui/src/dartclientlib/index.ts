@@ -22,6 +22,7 @@ export enum ServiceConnectionStatusType {
   Connected,
   Disconnected,
   ServiceDoesNotExist,
+  Kicked,
 }
 
 export type ServiceConnectionStatus = {
@@ -224,6 +225,12 @@ class DartApi {
           service.chatState = newChatState;
           this.services.set(serviceId, service);
           this.onServicesChange();
+        } else if (response === 'Kick') {
+          service.connectionStatus = {status:ServiceConnectionStatusType.Kicked, timestamp:Date.now()};
+          this.cancelPresenceHeartbeat(serviceId);
+          // TODO?
+          // this.services.delete(serviceId);
+          this.onServicesChange();
         } else {
           console.warn('Unknown service message format:', message);
         }
@@ -297,10 +304,20 @@ class DartApi {
 
   sendCreateServiceRequest(serviceId: ParsedServiceId) {
     if (!this.api) { return; }
-    // console.log("Sending request", req)
     const wrapper = {
       "ServerRequest": {
         "CreateService": { "node": serviceId.node, "id": serviceId.id}
+      }
+    }
+
+    this.api.send({ data:wrapper });
+  }
+
+  sendDeleteServiceRequest(serviceId: ParsedServiceId) {
+    if (!this.api) { return; }
+    const wrapper = {
+      "ServerRequest": {
+        "DeleteService": { "node": serviceId.node, "id": serviceId.id}
       }
     }
 
@@ -363,7 +380,7 @@ class DartApi {
         console.log("Connected to Kinode");
         this.onOpen();
         this.setConnectionStatus(ConnectionStatusType.Connected);
-        this.joinService({node:SERVER_NODE, id:"chat-1"});
+        this.joinService({node:SERVER_NODE, id:"chat"});
         this.requestServiceList(SERVER_NODE);
         this.requestServiceList(window.our?.node);
       },

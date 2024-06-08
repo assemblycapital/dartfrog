@@ -20,7 +20,9 @@ export interface DartStore {
   joinService: (serviceId: ParsedServiceId) => void
   pokeService: (parsedServiceId: ParsedServiceId, data:any) => void
   createService: (serviceId: ServiceId) => void
-  requestServiceList: (serverNode: string) => void
+  deleteService: (serviceId: ServiceId) => void
+  requestServiceList: (serviceId: ServiceId) => void
+  requestAllServiceList: () => void
   availableServices: AvailableServices
   setAvailableServices: (availableServices: AvailableServices) => void
   // 
@@ -89,10 +91,23 @@ const useDartStore = create<DartStore>()(
         api.sendCreateServiceRequest(parsedServiceId);
 
       },
+      deleteService: (serviceId: ServiceId) => {
+        const { api } = get();
+        if (!api) { return; }
+        let parsedServiceId = parseServiceId(serviceId);
+        api.sendDeleteServiceRequest(parsedServiceId);
+
+      },
       requestServiceList: (serverNode: string) => {
         const { api } = get();
         if (!api) { return; }
         api.requestServiceList(serverNode);
+
+      },
+      requestAllServiceList: () => {
+        const { api } = get();
+        if (!api) { return; }
+        api.requestAllInServiceList();
 
       },
       availableServices: new Map(),

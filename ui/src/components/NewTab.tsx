@@ -16,11 +16,15 @@ interface NewTabProps {
 }
 
 const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
-  const { requestServiceList, availableServices, joinService, createService} = useDartStore();
+  const { requestAllServiceList, requestServiceList, availableServices, joinService, createService, deleteService} = useDartStore();
   // 
 
   const [ myServices, setMyServices ] = useState<ParsedServiceId[]>([]);
   const [ otherServices, setOtherServices ] = useState<ParsedServiceId[]>([]);
+  useEffect(() => {
+    requestAllServiceList();
+  }, []);
+
   useEffect(() => { 
     let me = window.our?.node;
     let mine = []
@@ -158,7 +162,8 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
                     color: "#ff000077"
                   }}
                   onClick={() => {
-                    alert("coming soon");
+                    deleteService(makeServiceId(service.node, service.id));
+                    requestServiceList(window.our?.node);
                   }}
                 >
                   delete
