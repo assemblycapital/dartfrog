@@ -210,7 +210,13 @@ class DartApi {
         } else if (response.ServiceMetadata) {
           service.metadata = response.ServiceMetadata;
           this.services.set(serviceId, service);
-          // console.log("new ServiceMetadata:", response.ServiceMetadata);
+          for (let user of Object.keys(response.ServiceMetadata.user_presence)) {
+            if (!this.availableServices.has(user)) {
+              this.requestServiceList(user);
+              this.availableServices.set(user, []);
+              this.onAvailableServicesChange();
+            }
+          }
           this.onServicesChange();
         } else if (response.ChatUpdate) {
           // console.log('ChatUpdate:', response.ChatUpdate, service.chatState);
@@ -333,6 +339,12 @@ class DartApi {
     this.sendRequest(request);
   }
 
+  requestAllInServiceList() {
+    for (let [serverNode, _] of this.availableServices) {
+      this.requestServiceList(serverNode);
+    }
+  }
+
   private initialize() {
     console.log("Attempting to connect to Kinode...");
     if (!(window.our?.node && window.our?.process)) {
@@ -353,6 +365,7 @@ class DartApi {
         this.setConnectionStatus(ConnectionStatusType.Connected);
         this.joinService({node:SERVER_NODE, id:"chat-1"});
         this.requestServiceList(SERVER_NODE);
+        this.requestServiceList(window.our?.node);
       },
       onMessage: (json, api) => {
         this.setConnectionStatus(ConnectionStatusType.Connected);

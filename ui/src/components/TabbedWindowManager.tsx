@@ -137,7 +137,6 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({}) => {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
-              alignContent: 'center',
               alignItems: 'center',
               height: '400px',
               color: '#ffffff55',
@@ -150,7 +149,12 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({}) => {
                 border: '1px solid #ffffff55',
                 borderRadius: '4px',
                 cursor: 'pointer',
-
+                width: '200px',
+                textAlign: 'center',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '40px', // Adjust this value as needed
               }}
               onClick={addTab}
             >
