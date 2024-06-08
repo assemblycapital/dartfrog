@@ -51,12 +51,13 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
   }
   // 
   const [inputJoinServiceName, setInputJoinServiceName] = useState('');
+  const [isJoinServiceNameInputValid, setIsJoinServiceNameInputValid] = useState(true);
   const [inputJoinServiceHostNode, setInputJoinServiceHostNode] = useState('');
 
   const [inputCreateServiceName, setInputCreateServiceName] = useState('');
   const [isCreateInputValid, setIsCreateInputValid] = useState(true);
 
-  const validateCreateInput = (value) => {
+  const validateServiceName = (value) => {
     if (value==='') return true;
     const regex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
     return regex.test(value);
@@ -65,16 +66,24 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
   const handleCreateInputChange = (e) => {
     const value = e.target.value;
     setInputCreateServiceName(value);
-    setIsCreateInputValid(validateCreateInput(value));
+    setIsCreateInputValid(validateServiceName(value));
   };
+
+  const handleJoinServiceNameInputChange= (e) => {
+    const value = e.target.value;
+    setInputJoinServiceName(value);
+    setIsJoinServiceNameInputValid(validateServiceName(value));
+  };
+
   const handleInputCreateClick = useCallback(() => {
     if (isCreateInputValid) {
-      if (inputCreateServiceName ==='') return;
+      if (inputCreateServiceName === '') return;
       // console.log('Service name is valid:', inputCreateServiceName);
       // Proceed with the creation logic
       let serviceId = inputCreateServiceName+"."+window.our?.node
       // console.log("create service", serviceId);
       createService(serviceId);
+      setInputCreateServiceName('');
       requestServiceList(window.our?.node);
     } else {
       // console.log('Invalid service name.');
@@ -83,7 +92,13 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
   }, [inputCreateServiceName]);
 
   const handleInputJoinClick = useCallback(() => {
-    setTabService(makeServiceId(inputJoinServiceHostNode, inputJoinServiceName));
+    if (isJoinServiceNameInputValid) {
+      if (inputJoinServiceHostNode === '') return;
+
+
+      if (inputJoinServiceName === '') return;
+      setTabService(makeServiceId(inputJoinServiceHostNode, inputJoinServiceName));
+    }
   }, [inputJoinServiceName, inputJoinServiceHostNode]);
 
   return (
@@ -120,6 +135,18 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
           onChange={handleCreateInputChange}
           className={`${isCreateInputValid ? '' : 'invalid'}`}
           />
+          <div
+            style={{
+              display: 'inline-block'
+            }}
+          >
+            <select name="serviceOption" id="serviceOption">
+              <option value="Option1" selected>Text Chat</option>
+              <option value="Option2" disabled>Voice Chat</option>
+              <option value="Option3" disabled>Quake Live</option>
+              <option value="Option4" disabled>Minecraft</option>
+            </select>
+          </div>
           <button
             style={{
               cursor: 'pointer',
@@ -130,6 +157,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
           </button>
         </div>
 
+            </div>
         <div
           style={{
             display: "flex",
@@ -137,6 +165,9 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
             gap: "0.8rem",
           }}
           >
+          <div>
+            my services:
+          </div>
           {myServices.map((service) => (
               <div
                 key={makeServiceId(service.node, service.id)}
@@ -178,7 +209,6 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
                   </span>
               </div>
             ))}
-            </div>
       </div>
       <div>
         <div
@@ -238,7 +268,8 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
         </div>
         <input type="text" placeholder="service-name" 
           value={inputJoinServiceName}
-          onChange={(e) => setInputJoinServiceName(e.target.value)}
+          onChange={handleJoinServiceNameInputChange}
+          className={`${isJoinServiceNameInputValid ? '' : 'invalid'}`}
         />
         <input type="text" placeholder="template.os"
           value={inputJoinServiceHostNode}

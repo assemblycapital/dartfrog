@@ -6,6 +6,7 @@ import './TabbedWindowManager.css';
 import { PlusIcon, XIcon } from './icons/Icons';
 import NewTab from './NewTab';
 import { join } from 'path';
+import { SERVER_NODE } from '../utils';
 
 interface Tab {
   serviceId: ServiceId | null;
@@ -15,7 +16,7 @@ interface TabbedWindowManagerProps {
 }
 const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({}) => {
   const [tabs, setTabs] = useState<Tab[]>([
-    { serviceId: "chat.fake.dev" },
+    { serviceId: "chat."+SERVER_NODE },
     { serviceId: null },
   ]);
 
