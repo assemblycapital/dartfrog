@@ -7,11 +7,14 @@ import { ConnectionStatusType, ServerStatus } from "../types/types";
 import { useEffect } from "react";
 import Spinner from "./Spinner";
 import useDartStore from "../store/dart";
-import { ServiceConnectionStatus, ServiceConnectionStatusType } from "../dartclientlib";
+import { AvailableServices, ServiceConnectionStatus, ServiceConnectionStatusType } from "../dartclientlib";
 import TabbedWindowManager from "./TabbedWindowManager";
 
-function BrowserBox() {
-  const { services, exitService, joinService, availableServices, closeApi } = useDartStore();
+interface BrowserBoxProps {
+}
+const BrowserBox: React.FC<BrowserBoxProps> = ({}) => {
+  const { services, availableServices, exitService, joinService, closeApi } = useDartStore();
+  
   // const { chats, serverStatus } = useChatStore();
   if (!(services instanceof Map)) {
     // this is pretty dumb

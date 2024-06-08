@@ -96,7 +96,10 @@ const useDartStore = create<DartStore>()(
 
       },
       availableServices: new Map(),
-      setAvailableServices: (availableServices) => set({ availableServices }),
+      setAvailableServices: (availableServices) => {
+        // console.log('setAvailableServices', new Map(availableServices))
+        set({ availableServices: new Map(availableServices) })
+      },
       // chat stuff
       nameColors: new Map<string, string>(),
       addNameColor: (name:string, color:string) => {

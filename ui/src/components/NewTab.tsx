@@ -7,7 +7,7 @@ import { ConnectionStatusType, ServerStatus } from "../types/types";
 import { useCallback, useEffect, useState } from "react";
 import Spinner from "./Spinner";
 import useDartStore from "../store/dart";
-import { ParsedServiceId, Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "../dartclientlib";
+import { AvailableServices, ParsedServiceId, Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "../dartclientlib";
 import './NewTab.css'
 import { createSecretKey } from "crypto";
 
@@ -16,7 +16,7 @@ interface NewTabProps {
 }
 
 const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
-  const { availableServices, requestServiceList, joinService, createService} = useDartStore();
+  const { requestServiceList, availableServices, joinService, createService} = useDartStore();
   // 
 
   const [ myServices, setMyServices ] = useState<ParsedServiceId[]>([]);

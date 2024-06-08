@@ -10,10 +10,11 @@ import DartApi from "./dartclientlib/";
 import useDartStore from "./store/dart";
 import FullServicesView from "./components/FullServicesView";
 import BrowserBox from "./components/BrowserBox";
+import { availableParallelism } from "os";
 
 function App() {
 
-  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, setAvailableServices} = useDartStore();
+  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, setAvailableServices, availableServices} = useDartStore();
 
 
   useEffect(() => {

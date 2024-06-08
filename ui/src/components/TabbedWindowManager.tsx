@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ServiceId, Service, parseServiceId } from '../dartclientlib';
+import { ServiceId, Service, parseServiceId, AvailableServices } from '../dartclientlib';
 import ServiceTab from './ServiceTab';
 import useDartStore from '../store/dart';
 import './TabbedWindowManager.css';
@@ -11,7 +11,9 @@ interface Tab {
   serviceId: ServiceId | null;
 }
 
-const TabbedWindowManager: React.FC = () => {
+interface TabbedWindowManagerProps {
+}
+const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({}) => {
   const [tabs, setTabs] = useState<Tab[]>([
     { serviceId: "chat-1.fake.dev" },
     { serviceId: null },
