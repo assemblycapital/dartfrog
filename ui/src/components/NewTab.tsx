@@ -7,7 +7,7 @@ import { ConnectionStatusType, ServerStatus } from "../types/types";
 import { useCallback, useEffect, useState } from "react";
 import Spinner from "./Spinner";
 import useDartStore from "../store/dart";
-import { Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "../dartclientlib";
+import { ParsedServiceId, Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "../dartclientlib";
 import './NewTab.css'
 import { createSecretKey } from "crypto";
 
@@ -16,8 +16,29 @@ interface NewTabProps {
 }
 
 const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
-  const { availableServices, joinService, createService} = useDartStore();
+  const { availableServices, requestServiceList, joinService, createService} = useDartStore();
   // 
+
+  const [ myServices, setMyServices ] = useState<ParsedServiceId[]>([]);
+  const [ otherServices, setOtherServices ] = useState<ParsedServiceId[]>([]);
+  useEffect(() => { 
+    let me = window.our?.node;
+    let mine = []
+    let other = []
+    for (let [serverNode, aServices] of availableServices) {
+      if (serverNode === me) {
+        for (let a of aServices) {
+          mine.push(a)
+        }
+      } else {
+        for (let a of aServices) {
+          other.push(a)
+        }
+      }
+    }
+    setMyServices(mine);
+    setOtherServices(other);
+  }, [availableServices]);
 
   if (!(availableServices instanceof Map)) {
     // this is pretty dumb
@@ -45,13 +66,14 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
   const handleInputCreateClick = useCallback(() => {
     if (isCreateInputValid) {
       if (inputCreateServiceName ==='') return;
-      console.log('Service name is valid:', inputCreateServiceName);
+      // console.log('Service name is valid:', inputCreateServiceName);
       // Proceed with the creation logic
       let serviceId = inputCreateServiceName+"."+window.our?.node
-      console.log("create service", serviceId);
+      // console.log("create service", serviceId);
       createService(serviceId);
+      requestServiceList(window.our?.node);
     } else {
-      console.log('Invalid service name.');
+      // console.log('Invalid service name.');
     }
     // setTabService(makeServiceId(inputJoinServiceHostNode, inputJoinServiceName));
   }, [inputCreateServiceName]);
@@ -63,7 +85,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
   return (
     <div
       style={{
-        height: "400px",
+        minHeight: "400px",
         padding: "4px",
         color: "#ffffffcc",
         fontSize: "0.8rem",
@@ -72,30 +94,86 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
         gap: "0.8rem",
       }}
     >
-      <div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.8rem",
+        }}
+      >
         <div
           style={{
-            marginBottom: "0.8rem",
             cursor: "default",
           }}
         >
           create a new service:
         </div>
-        <input
-        type="text"
-        placeholder="service-name"
-        value={inputCreateServiceName}
-        onChange={handleCreateInputChange}
-        className={`${isCreateInputValid ? '' : 'invalid'}`}
-      />
-      <button
-        style={{
-          cursor: 'pointer',
-        }}
-        onClick={handleInputCreateClick}
-      >
-        create
-      </button>
+        <div>
+          <input
+          type="text"
+          placeholder="service-name"
+          value={inputCreateServiceName}
+          onChange={handleCreateInputChange}
+          className={`${isCreateInputValid ? '' : 'invalid'}`}
+          />
+          <button
+            style={{
+              cursor: 'pointer',
+            }}
+            onClick={handleInputCreateClick}
+          >
+            create
+          </button>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.8rem",
+          }}
+          >
+          {myServices.map((service) => (
+              <div
+                key={makeServiceId(service.node, service.id)}
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "0.4rem",
+                }}
+              >
+                <button
+                  style={{
+                    cursor: "pointer",
+                  }}
+                  onClick={() => {
+                    setTabService(makeServiceId(service.node, service.id));
+                  }}
+                >
+                  join
+                </button>
+                <button
+                  style={{
+                    cursor: "pointer",
+                    color: "#ff000077"
+                  }}
+                  onClick={() => {
+                    alert("coming soon");
+                  }}
+                >
+                  delete
+                </button>
+                <span
+                  style={{
+                    cursor: "default",
+                    alignContent: "center",
+                  }}
+                >
+                  {makeServiceId(service.node, service.id)}
+                  </span>
+              </div>
+            ))}
+            </div>
       </div>
       <div>
         <div
@@ -113,45 +191,35 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
             gap: "0.8rem",
           }}
         >
-          {Array.from(availableServices.entries()).map(([serverNode, aServices]) => (
-            <div key={serverNode}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.8rem",
-              }}
-            >
-              {aServices.map((service) => (
-                  <div
-                    key={makeServiceId(serverNode, service.id)}
-                    style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      gap: "0.4rem",
-                    }}
-                  >
-                    <button
-                      style={{
-                        cursor: "pointer",
-                      }}
-                      onClick={() => {
-                        setTabService(makeServiceId(serverNode, service.id));
-                      }}
-                    >
-                      join
-                    </button>
-                    <span
-                      style={{
-                        cursor: "default",
-                        alignContent: "center",
-                      }}
-                    >
-                      {makeServiceId(serverNode, service.id)}
-                      </span>
-                  </div>
-                ))}
-            </div>
-          ))}
+          {otherServices.map((service) => (
+              <div
+                key={makeServiceId(service.node, service.id)}
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "0.4rem",
+                }}
+              >
+                <button
+                  style={{
+                    cursor: "pointer",
+                  }}
+                  onClick={() => {
+                    setTabService(makeServiceId(service.node, service.id));
+                  }}
+                >
+                  join
+                </button>
+                <span
+                  style={{
+                    cursor: "default",
+                    alignContent: "center",
+                  }}
+                >
+                  {makeServiceId(service.node, service.id)}
+                  </span>
+              </div>
+            ))}
           </div>
         </div>
         <div>

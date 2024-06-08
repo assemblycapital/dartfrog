@@ -180,7 +180,13 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chats}) => {
                 <span>{message.from}:</span>
               </div>
             </div>
-            {getMessageInnerText(message.msg)}
+            <span
+              style={{
+                cursor: "default",
+              }}
+            >
+              {getMessageInnerText(message.msg)}
+            </span>
           </div>
         ))}
         <div id="messages-end-ref" ref={messagesEndRef}

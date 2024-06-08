@@ -16,12 +16,28 @@ function BrowserBox() {
   if (!(services instanceof Map)) {
     // this is pretty dumb
     // but if i dont do it, everything explodes :)
-    return <Spinner />
+    return (
+      <div
+        style={{
+          height: '400px',
+        }}
+      >
+        <Spinner />
+      </div>
+    )
   }
   if (!(availableServices instanceof Map)) {
     // this is pretty dumb
     // but if i dont do it, everything explodes :)
-    return <Spinner />
+    return (
+      <div
+        style={{
+          height: '400px',
+        }}
+      >
+        <Spinner />
+      </div>
+    )
   }
 
 
