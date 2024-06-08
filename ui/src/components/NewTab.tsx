@@ -123,6 +123,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
         <div
           style={{
             cursor: "default",
+            userSelect: "none",
           }}
         >
           create a new service:
@@ -177,7 +178,13 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
             gap: "0.8rem",
           }}
           >
-          <div>
+          <div
+            style={{
+              cursor: "default",
+              userSelect: "none",
+
+            }}
+          >
             my services:
           </div>
           {myServices.map((service) => (
@@ -214,6 +221,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
                 <span
                   style={{
                     cursor: "default",
+                    userSelect: "none",
                     alignContent: "center",
                   }}
                 >
@@ -227,6 +235,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
           style={{
             marginBottom: "0.8rem",
             cursor: "default",
+            userSelect: "none",
           }}
         >
           known services:
@@ -261,6 +270,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
                   style={{
                     cursor: "default",
                     alignContent: "center",
+                    userSelect: "none",
                   }}
                 >
                   {makeServiceId(service.node, service.id)}
@@ -274,6 +284,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
           style={{
             marginBottom: "0.8rem",
             cursor: "default",
+            userSelect: "none",
           }}
         >
          join service by id:

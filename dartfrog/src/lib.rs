@@ -224,7 +224,7 @@ enum DartMessage {
     ClientUpdate(ClientUpdate),
 }
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
-    println!("server request: {:?}", req);
+    // println!("server request: {:?}", req);
     match req {
         ServerRequest::ServiceRequest(service_id, service_request) => {
             handle_service_request(our, state, source, service_id, service_request)?;
@@ -402,7 +402,7 @@ fn update_subscribers(update: ConsumerUpdate, subscribers: HashSet<String>) -> a
 }
 
 fn handle_client_update(our: &Address, state: &mut DartState, source: Address, upd: ClientUpdate) -> anyhow::Result<()> {
-    println!("client update: {:?}", upd);
+    // println!("client update: {:?}", upd);
     match upd {
         ClientUpdate::ConsumerUpdate(consumer_update) => {
             // possibly intercept the update first
@@ -497,7 +497,7 @@ fn get_client_id(our: &Address, consumer: &Consumer) -> ConsumerId {
 }
 
 fn handle_client_request(our: &Address, state: &mut DartState, source: Address, req: ClientRequest) -> anyhow::Result<()> {
-    println!("client request: {:?}", req);
+    // println!("client request: {:?}", req);
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -530,16 +530,16 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                         poke_server(&address, s_req)?;
                     }
                 }
-                println!("deleting consumer");
+                // println!("deleting consumer");
                 state.client.consumers.remove(&num);
             }
         }
         ClientRequest::ConsumerRequest(num, inner) => {
             let Some(consumer) = state.client.consumers.get_mut(&num) else {
-                println!("no consumer found {:?} {:?}", num, inner);
+                // println!("no consumer found {:?} {:?}", num, inner);
                 return Ok(());
             };
-            println!("consumer request: {:?} {:?}", num, inner);
+            // println!("consumer request: {:?} {:?}", num, inner);
             consumer.last_active = now;
 
             match inner {
@@ -642,7 +642,7 @@ fn handle_http_server_request(
 
     match server_request {
         HttpServerRequest::WebSocketOpen { channel_id, .. } => {
-            println!("WebSocketOpen: {:?}", channel_id);
+            // println!("WebSocketOpen: {:?}", channel_id);
             state.client.consumers.insert(
                 channel_id,
                 Consumer {
@@ -789,7 +789,7 @@ fn new_dart_state() -> DartState {
 
 call_init!(init);
 fn init(our: Address) {
-    println!("initializing dartfrog");
+    println!("initializing");
     
     // Serve the index.html and other UI files found in pkg/ui at the root path.
     http::serve_ui(&our, "ui", true, false, vec!["/"]).unwrap();

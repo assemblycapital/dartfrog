@@ -52,6 +52,7 @@ const ControlHeader = () => {
           <span
           style={{
             cursor: "default",
+            userSelect: "none",
           }}
           >
             <span

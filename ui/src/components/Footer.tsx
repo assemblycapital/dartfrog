@@ -8,6 +8,7 @@ const DisplayUserActivity = () => {
           fontSize: "0.8rem",
           color: "#ffffff44",
       gap: "0.8rem",
+      userSelect: "none",
       }}
       >
       <div>

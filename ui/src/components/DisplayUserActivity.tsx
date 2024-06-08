@@ -72,12 +72,13 @@ const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({ serviceId, me
 
   return (
     <div style={{color: '#ffffff77', fontSize: '0.8rem', cursor: 'default',
+      userSelect: "none",
       marginTop: '0.5rem',
     }}>
       <div>
         <span style={{fontSize: '0.8rem'}}>{groupedUsers.online.length} online: </span>
         {groupedUsers.online.map((userId, index) => (
-          <span key={index} style={{ color: getNameColor(userId) }}>
+          <span key={index} style={{ color: getNameColor(userId), userSelect: 'text'}}>
             {userId}
             {index < groupedUsers.online.length - 1 ? ', ' : ''}
           </span>
@@ -86,13 +87,22 @@ const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({ serviceId, me
       <div>
         <span style={{fontSize: '0.8rem'}}>{groupedUsers.recentlyOnline.length} recently online: </span>
         {groupedUsers.recentlyOnline.map((userId, index) => (
-          <span key={index}>{userId}{index < groupedUsers.recentlyOnline.length - 1 ? ', ' : ''}</span>
+          <span key={index}
+            style={{
+              userSelect: 'text',
+            }}
+          >
+            {userId}{index < groupedUsers.recentlyOnline.length - 1 ? ', ' : ''}</span>
         ))}
       </div>
       <div>
         <span style={{fontSize: '0.8rem'}}>{groupedUsers.ever.length} others: </span>
         {groupedUsers.ever.map((userId, index) => (
-          <span key={index}>{userId}{index < groupedUsers.ever.length - 1 ? ', ' : ''}</span>
+          <span key={index}
+            style={{
+              userSelect: 'text',
+            }}
+          >{userId}{index < groupedUsers.ever.length - 1 ? ', ' : ''}</span>
         ))}
       </div>
     </div>
