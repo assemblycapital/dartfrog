@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::hash::{Hash, Hasher};
 
 mod constants;
 use kinode_process_lib::{http, await_message, call_init, println, Address, Request,
@@ -18,20 +19,6 @@ wit_bindgen::generate!({
     world: "process",
 });
 
-#[derive(Debug, Serialize, Deserialize)]
-struct ServerStatus {
-    pub server_node: String,
-    pub status: ConnectionStatus,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-enum WsUpdate{
-    NewChat(ChatMessage),
-    NewChatState(ChatState),
-    NewPresenceState(HashMap<String, Presence>),
-    ServerStatus(ServerStatus),
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct ChatMessage {
     id: u64,
@@ -47,335 +34,593 @@ enum ConnectionStatus {
     Disconnected,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 struct DartState {
     pub client: ClientState,
     pub server: ServerState,
 }
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Hash)]
 struct Presence {
     pub time: u64,
-    pub was_online_at_time: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct ChatState {
-    pub latest_chat_msg_id: u64,
-    pub chat_history: Vec<ChatMessage>,
-    pub user_presence: HashMap<String, Presence>,
-    pub banned_users: HashSet<String>,
+    pub last_message_id: u64,
+    pub messages: Vec<ChatMessage>,
+}
+fn new_chat_state() -> ChatState {
+    ChatState {
+        last_message_id: 0,
+        messages: Vec::new(),
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct Service {
+    pub id: ServiceId,
+    pub metadata: ServiceMetadata,
+    pub last_sent_presence: u64,
+    pub chat_state: ChatState,
+}
+
+impl Hash for Service {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
+}
+
+fn new_service(id: ServiceId) -> Service {
+    Service {
+        id: id,
+        metadata: new_service_metadata(),
+        last_sent_presence: 0,
+        chat_state: new_chat_state(),
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct ServerState {
-    pub chat_state: ChatState,
-    pub subscribers: HashSet<Address>,
-    pub last_sent_presence: u64,
+    pub services: HashMap<String, Service>,
+}
+fn new_server_state() -> ServerState {
+    ServerState {
+        services: HashMap::new(),
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct SyncServerState {
-    pub address: Address,
+struct ServiceMetadata {
+    pub subscribers: HashSet<String>,
+    pub user_presence: HashMap<String, Presence>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct SyncService {
+    pub id: ServiceId,
+    pub metadata: ServiceMetadata,
     pub connection: ConnectionStatus,
-    pub chat_state: ChatState,
+}
+
+#[derive(Hash, Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
+struct ConsumerId {
+    pub client_node: String,
+    pub ws_channel_id: u32,
+}
+
+#[derive(Hash, Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
+struct ServiceId {
+    pub node: String,
+    pub id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+struct Consumer {
+    pub ws_channel_id: u32,
+    pub services: HashMap<ServiceId, SyncService>,
+    pub last_active: u64,
+}
+
+impl Hash for Consumer{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.ws_channel_id.hash(state);
+    }
+}
+
+#[derive(Debug, Clone)]
 struct ClientState {
-    pub server: Option<SyncServerState>,
-    pub ws_channels: HashSet<u32>,
+    pub consumers: HashMap<u32, Consumer>,
+}
+fn new_client_state() -> ClientState {
+    ClientState {
+        consumers: HashMap::new(),
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct ChannelId {
+    pub service_id: ServiceId,
+    pub consumer_id: ConsumerId,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 enum ServerRequest {
-    ChatMessage(String),
+    ServiceRequest(ServiceId, ServiceRequest),
+    CreateService(ServiceId),
+    DeleteService(ServiceId),
+    RequestServiceList
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+enum ChatRequest {
+    SendMessage(String),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+enum ServiceRequest {
     Subscribe,
     Unsubscribe,
     PresenceHeartbeat,
-    RequestChatState,
-    Ban(String),
-    UnBan(String),
-    WipeChatHistory,
+    PluginMessageTODO(String), // plugin id
+    ChatRequest(ChatRequest),
 }
-#[derive(Debug, Serialize, Deserialize)]
-enum UpdateFromServer {
-    ChatMessage(ChatMessage),
-    ChatState(ChatState),
+#[derive(Debug, Serialize, Deserialize, Clone)]
+enum ClientUpdate {
+    ConsumerUpdate(ConsumerUpdate),
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+enum ConsumerUpdate {
+    FromClient(ConsumerClientUpdate),
+    FromServer(String, ConsumerServerUpdate),
+    FromService(String, String, ConsumerServiceUpdate), // service node, service name
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+enum ConsumerServerUpdate {
+    NoSuchService(String),
+    ServiceList(Vec<ServiceId>),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+enum ConsumerClientUpdate {
+    Todo(String),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+enum ConsumerServiceUpdate {
     SubscribeAck,
-    KickSubscriber,
-    NewPresenceState(HashMap<String, Presence>),
+    ServiceMetadata(ServiceMetadata),
+    Kick,
+    PluginUpdateTODO,
+    ChatUpdate(ChatUpdate),
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+enum ChatUpdate {
+    Message(ChatMessage),
+    FullMessageHistory(Vec<ChatMessage>),
+}
+
 #[derive(Debug, Serialize, Deserialize)]
-enum ClientRequest {
-    SendToServer(ServerRequest),
-    SetServer(Option<Address>),
+enum ClientRequest{
+    ConsumerRequest(u32, ConsumerRequest),
+    CreateConsumer(u32),
+    DeleteConsumer(u32),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+enum ConsumerRequest {
+    RequestServiceList(String),
+    JoinService(ServiceId),
+    ExitService(ServiceId),
+    ServiceHeartbeat(ServiceId),
+    SendToService(ServiceId, ChatRequest),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 enum DartMessage {
     ServerRequest(ServerRequest),
     ClientRequest(ClientRequest),
-    UpdateFromServer(UpdateFromServer),
+    ClientUpdate(ClientUpdate),
 }
-
-fn send_server_updates(state: &DartState, update: UpdateFromServer) {
-    let value = DartMessage::UpdateFromServer(update);
-    for sub in state.server.subscribers.iter() {
-        let send_body : Vec<u8> =
-            serde_json::to_vec(&value).unwrap();
-        Request::new()
-            .target(sub)
-            .body(send_body)
-            .send()
-            .unwrap();
-    }
-}
-
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
     // println!("server request: {:?}", req);
-    let now = {
-        let start = SystemTime::now();
-        start.duration_since(UNIX_EPOCH).unwrap().as_secs() 
-    };
     match req {
-        ServerRequest::PresenceHeartbeat => {
-            state.server.chat_state.user_presence.insert(source.node.clone(), Presence{time:now, was_online_at_time: true});
-            // if last sent presence is more than 2 minutes ago, send new presence state
-            if (now - state.server.last_sent_presence) > 2*60 {
-                send_server_updates(state, UpdateFromServer::NewPresenceState(state.server.chat_state.user_presence.clone()));
-                state.server.last_sent_presence = now;
+        ServerRequest::ServiceRequest(service_id, service_request) => {
+            handle_service_request(our, state, source, service_id, service_request)?;
+        }
+        ServerRequest::CreateService(service_id) => {
+            if source.node != our.node {
+                return Ok(());
             }
-            // if any user has been offline for more than 5 minutes, kick and remove from subscribers
-            let offline_duration = 5*60; // 5 minutes in seconds
-            let mut to_remove = Vec::new();
-            for (node, presence) in state.server.chat_state.user_presence.iter() {
-                if (now - presence.time) > offline_duration {
-                    to_remove.push(node.clone());
+            if service_id.node != our.node {
+                return Ok(());
+            }
+            if let Some(service) = state.server.services.get(&service_id.id) {
+                // already exists
+            } else {
+                state.server.services.insert(service_id.id.clone(), new_service(service_id.clone()));
+            }
+        }
+        ServerRequest::DeleteService(service_id) => {
+            if source.node != our.node {
+                return Ok(());
+            }
+            if let Some(service) = state.server.services.get(&service_id.id) {
+                for subscriber in service.metadata.subscribers.clone() {
+                    let update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::Kick);
+                    update_client(update, subscriber)?;
                 }
+                state.server.services.remove(&service_id.id.clone());
             }
 
-            for node in to_remove {
-                let node_address = get_dartfrog_address(&node);
-                if !state.server.subscribers.contains(&node_address) {
-                    continue;
-                }
-                state.server.subscribers.remove(&node_address);
-                let _ = poke_node(node.clone(), UpdateFromServer::KickSubscriber);
-            }
-            save_chat_state(&state.server.chat_state);
         }
-        ServerRequest::ChatMessage(msg) => {
-            if(state.server.chat_state.banned_users.contains(&source.node)) {
-                return Ok(());
-            }
-            state.server.chat_state.latest_chat_msg_id += 1;
-            let chat_msg = ChatMessage {
-                id: state.server.chat_state.latest_chat_msg_id,
-                time: now,
-                from: source.node.clone(),
-                msg: safe_trim_to_boundary(msg, 2048)
-            };
-            // state.server.chat_state.chat_history.push(chat_msg.clone());
-            let chat_history = &mut state.server.chat_state.chat_history;
-            const MAX_CHAT_HISTORY: usize = 32;
-            if chat_history.len() >= MAX_CHAT_HISTORY {
-                chat_history.remove(0);
-            }
-            chat_history.push(chat_msg.clone());
+        ServerRequest::RequestServiceList => {
+            let services: Vec<ServiceId> = state.server.services.keys().map(|x| ServiceId {
+                node: our.node.clone(),
+                id: x.clone()
+            }).collect();
+            let update = ConsumerUpdate::FromServer(our.node.clone(), ConsumerServerUpdate::ServiceList(services));
+            update_client(update, source.node.clone())?;
+        }
+        _ => {
 
-            send_server_updates(state, UpdateFromServer::ChatMessage(chat_msg.clone()));
-            state.server.chat_state.user_presence.insert(source.node.clone(), Presence{time:now, was_online_at_time: true});
-            save_chat_state(&state.server.chat_state);
-        }
-        ServerRequest::RequestChatState => {
-            let send_body : Vec<u8> = 
-                serde_json::to_vec(&DartMessage::UpdateFromServer(UpdateFromServer::ChatState(state.server.chat_state.clone()))).unwrap();
-            Request::new()
-                .target(source)
-                .body(send_body)
-                .send()
-                .unwrap();
-
-        }
-        ServerRequest::Subscribe => {
-            state.server.subscribers.insert(source.clone());
-            state.server.chat_state.user_presence.insert(source.node.clone(), Presence{time:now, was_online_at_time: true});
-            let send_body : Vec<u8> = 
-                serde_json::to_vec(&DartMessage::UpdateFromServer(UpdateFromServer::ChatState(state.server.chat_state.clone()))).unwrap();
-            Request::new()
-                .target(source.clone()) // Clone the source variable
-                .body(send_body)
-                .send()
-                .unwrap();
-            let send_body : Vec<u8> = 
-                serde_json::to_vec(&DartMessage::UpdateFromServer(UpdateFromServer::SubscribeAck)).unwrap();
-            Request::new()
-                .target(source.clone()) // Clone the source variable
-                .body(send_body)
-                .send()
-                .unwrap();
-
-            if(state.server.chat_state.banned_users.contains(&source.node)) {
-                return Ok(());
-            }
-            send_server_updates(state, UpdateFromServer::NewPresenceState(state.server.chat_state.user_presence.clone()));
-        }
-        ServerRequest::Unsubscribe => {
-            state.server.subscribers.remove(&source);
-            state.server.chat_state.user_presence.insert(source.node.clone(), Presence{time:now, was_online_at_time: false});
-            send_server_updates(state, UpdateFromServer::NewPresenceState(state.server.chat_state.user_presence.clone()));
-        }
-        ServerRequest::Ban(user) => {
-            if source.node != SERVER_NODE {
-                return Ok(());
-            }
-            if user == SERVER_NODE {
-                // don't ban yourself
-                return Ok(());
-            }
-            state.server.chat_state.banned_users.insert(user);
-            send_server_updates(state, UpdateFromServer::ChatState(state.server.chat_state.clone()));
-            save_chat_state(&state.server.chat_state);
-        }
-        ServerRequest::UnBan(user) => {
-            if source.node != SERVER_NODE {
-                return Ok(());
-            }
-            state.server.chat_state.banned_users.remove(&user);
-            send_server_updates(state, UpdateFromServer::ChatState(state.server.chat_state.clone()));
-            save_chat_state(&state.server.chat_state);
-        }
-        ServerRequest::WipeChatHistory => {
-            if source.node != SERVER_NODE {
-                return Ok(());
-            }
-            state.server.chat_state.chat_history.clear();
-            send_server_updates(state, UpdateFromServer::ChatState(state.server.chat_state.clone()));
-            save_chat_state(&state.server.chat_state);
         }
     }
     Ok(())
 }
 
-fn handle_server_update(our: &Address, state: &mut DartState, source: Address, req: UpdateFromServer) -> anyhow::Result<()> {
-    if let Some(server) = &mut state.client.server {
-        if source != server.address {
-            return Ok(());
-        }
-        match req {
-            UpdateFromServer::ChatMessage(chat)=> {
-                send_ws_update(WsUpdate::NewChat(chat), &state.client.ws_channels).unwrap();
-            }
-            UpdateFromServer::SubscribeAck => {
-                let now = {
-                    let start = SystemTime::now();
-                    start.duration_since(UNIX_EPOCH).unwrap().as_secs() 
-                };
-                server.connection = ConnectionStatus::Connected(now);
-                send_ws_update(WsUpdate::ServerStatus(ServerStatus {
-                    server_node: server.address.node.to_string(),
-                    status: ConnectionStatus::Connected(now),
-                }), &state.client.ws_channels).unwrap();
-            }
-            UpdateFromServer::KickSubscriber => {
-                state.client.server = None;
-                // update frontend?
-                // this currently only happens if the frontend is closed / offline until a timeout happens
-            }
-            UpdateFromServer::ChatState(chat_state)=> {
-                server.chat_state = chat_state.clone();
-                send_ws_update(WsUpdate::NewChatState(chat_state), &state.client.ws_channels).unwrap();
-            }
-            UpdateFromServer::NewPresenceState(presence)=> {
-                send_ws_update(WsUpdate::NewPresenceState(presence), &state.client.ws_channels).unwrap();
-            }
-        }
-        Ok(())
+fn make_consumer_service_update(service_id: ServiceId, update: ConsumerServiceUpdate) -> ConsumerUpdate {
+    ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), update)
+}
 
-    } else {
+fn handle_service_request(our: &Address, state: &mut DartState, source: Address, service_id: ServiceId, req: ServiceRequest) -> anyhow::Result<()> {
+    if service_id.node != our.node {
         return Ok(());
     }
-}
+    if let Some(service) = state.server.services.get_mut(&service_id.id) {
+        // handle the request
+        match req {
+            ServiceRequest::ChatRequest(req) => {
+                match req {
+                    ChatRequest::SendMessage(msg) => {
+                        
+                        let chat_msg = ChatMessage {
+                            id: service.chat_state.last_message_id,
+                            time: SystemTime::now()
+                                .duration_since(UNIX_EPOCH)
+                                .unwrap()
+                                .as_secs(),
+                            from: source.node.clone(),
+                            msg: msg,
+                        };
 
-fn safe_trim_to_boundary(s: String, max_len: usize) -> String {
-    if s.len() <= max_len {
-        return s;
-    }
+                        service.chat_state.messages.push(chat_msg.clone());
 
-    let mut end = max_len;
-    while !s.is_char_boundary(end) {
-        end -= 1;
-    }
-
-    s[..end].to_string()
-}
-
-fn handle_client_request(our: &Address, state: &mut DartState, source: Address, req: ClientRequest) -> anyhow::Result<()> {
-    // println!("client request: {:?}", req);
-    if source.node != *our.node {
-        return Err(anyhow::anyhow!("invalid source: {:?}", source));
-    }
-
-    match req {
-        ClientRequest::SendToServer(freq) => {
-            match freq.clone() {
-                ServerRequest::ChatMessage(msg) => {
-                    let trimmed_msg = safe_trim_to_boundary(msg, 2048);
-                    let chat_req = ServerRequest::ChatMessage(trimmed_msg.clone());
-                    let command = parse_chat_command(&trimmed_msg);
-                    match command {
-                        Some(command_req) => {
-                            poke_server(state, command_req)?;
-                            poke_server(state, chat_req)?;
+                        // If the messages list is longer than 64, retain only the last 64 messages
+                        if service.chat_state.messages.len() > 64 {
+                            service.chat_state.messages = service.chat_state.messages.split_off(service.chat_state.messages.len() - 64);
                         }
-                        _ => {
-                            poke_server(state, chat_req)?;
-                            
+
+                        service.chat_state.last_message_id += 1;
+                        let update = make_consumer_service_update(service_id.clone(),  ConsumerServiceUpdate::ChatUpdate(ChatUpdate::Message(chat_msg)));
+                        update_subscribers(update, service.metadata.subscribers.clone())?;
+                    }
+                }
+            }
+            ServiceRequest::Subscribe => {
+                if !service.metadata.subscribers.contains(&source.node.clone()) {
+                    // already subscribed, continue anyways
+                }
+                service.metadata.subscribers.insert(source.node.clone());
+                service.metadata.user_presence.insert(source.node.clone(), Presence {
+                    time: SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs(),
+                });
+                let ack = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::SubscribeAck);
+                let meta = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
+                let chat = make_consumer_service_update(service_id, ConsumerServiceUpdate::ChatUpdate(ChatUpdate::FullMessageHistory(service.chat_state.messages.clone())));
+                update_client(ack, source.node.clone())?;
+                update_client(chat, source.node.clone())?;
+                update_subscribers(meta, service.metadata.subscribers.clone())?;
+            }
+            ServiceRequest::Unsubscribe => {
+                if !service.metadata.subscribers.contains(&source.node.clone()) {
+                    // already unsubscribed, ignore
+                    return Ok(());
+                }
+                service.metadata.subscribers.remove(&source.node.clone());
+                let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
+                update_subscribers(meta, service.metadata.subscribers.clone())?;
+            }
+            ServiceRequest::PresenceHeartbeat => {
+                if !service.metadata.subscribers.contains(&source.node.clone()) {
+                    // not subscribed, ignore
+                    return Ok(());
+                }
+                service.metadata.user_presence.insert(source.node.clone(), Presence {
+                    time: SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs(),
+                });
+                let now = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
+                if (now - service.last_sent_presence) < 1*60 {
+                    // "regular metadata updates"
+                    // these are evoked by client heartbeats, but only sent up to a capped rate
+                    return Ok(());
+                }
+                // 
+                // check if anyone needs to be kicked
+                // 
+                let mut to_kick: HashSet<String> = HashSet::new();
+                for (user, presence) in service.metadata.user_presence.iter() {
+                    const THREE_MINUTES : u64 = 3*60;
+                    if (now - presence.time) > THREE_MINUTES {
+                        to_kick.insert(user.clone());
+                    }
+                }
+
+                for (user) in service.metadata.subscribers.iter() {
+                    if to_kick.contains(user) {
+                        let update: ConsumerUpdate = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::Kick);
+                        update_client(update, user.clone())?;
+                    }
+                }
+                service.metadata.subscribers.retain(|x| !to_kick.contains(x));
+
+                // send metadata update
+                service.last_sent_presence = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
+                let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
+                update_subscribers(meta, service.metadata.subscribers.clone())?;
+            }
+            _ => {
+                println!("unexpected service request: {:?}", req);
+            }
+        }
+    } else {
+        // respond with NoSuchService
+        let update = ConsumerUpdate::FromServer(our.node().to_string(), ConsumerServerUpdate::NoSuchService(service_id.id.clone()));
+        update_client(update, source.node.clone())?;
+    }
+    Ok(())
+}
+
+fn update_subscribers(update: ConsumerUpdate, subscribers: HashSet<String>) -> anyhow::Result<()> {
+    for subscriber in subscribers {
+        update_client(update.clone(), subscriber)?;
+    }
+    Ok(())
+}
+
+fn handle_client_update(our: &Address, state: &mut DartState, source: Address, upd: ClientUpdate) -> anyhow::Result<()> {
+    // println!("client update: {:?}", upd);
+    match upd {
+        ClientUpdate::ConsumerUpdate(consumer_update) => {
+            // possibly intercept the update first
+            // TODO filter out lying updates
+            // e.g. an update could lie about its source address if not checked
+            match consumer_update.clone() {
+                ConsumerUpdate::FromServer(server_node, inner) => {
+                    // handle the request
+                    if server_node != source.node {
+                        // no spoofing
+                        return Ok(());
+                    }
+                    update_all_consumers(&state, consumer_update.clone());
+                    
+                }
+                ConsumerUpdate::FromService(service_node, service_name, inner) => {
+                    // handle the request
+
+                    if service_node != source.node {
+                        // no spoofing
+                        return Ok(());
+                    }
+
+                    let service_id: ServiceId = ServiceId {
+                        node: service_node.clone(),
+                        id: service_name.clone()
+                    };
+                    for (consumer_id, consumer) in state.client.consumers.iter_mut() {
+                        if (!consumer.services.contains_key(&service_id)) {
+                            continue;
+                        }
+                        let service = consumer.services.get_mut(&service_id).unwrap();
+                        match inner {
+                            ConsumerServiceUpdate::Kick => {
+                                consumer.services.remove(&service_id);
+                                update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
+                            }
+                            ConsumerServiceUpdate::ServiceMetadata(ref metadata) => {
+                                let service = consumer.services.get_mut(&service_id).unwrap();
+                                service.metadata = metadata.clone();
+                                service.connection = ConnectionStatus::Connected(
+                                    SystemTime::now()
+                                        .duration_since(UNIX_EPOCH)
+                                        .unwrap()
+                                        .as_secs(),
+                                );
+                                update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
+                            }
+                            ConsumerServiceUpdate::ChatUpdate(ref _upd) => {
+                                update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
+                            }
+                            _ => {
+                            }
                         }
                     }
                 }
                 _ => {
-                    poke_server(state, freq)?;
                 }
             }
         }
-        ClientRequest::SetServer(mad) => {
-            // println!("got set server request {:?}", mad);
-            if let Some(add) = mad {
-                subscribe_to_server(state, &add)?;
-            } else {
-                poke_server(state, ServerRequest::Unsubscribe)?;
-                let server = &mut state.client.server;
-                if let Some(server) = server {
-                    let update = WsUpdate::ServerStatus(ServerStatus {
-                        server_node: server.address.node.to_string(),
-                        status: ConnectionStatus::Disconnected,
-                    });
-                    let _ = send_ws_update(update, &state.client.ws_channels);
-                }
-                state.client.server = None;
-            }
+        _ => {
+
         }
     }
     Ok(())
 }
 
-fn parse_chat_command(input: &str) -> Option<ServerRequest> {
-    let parts: Vec<&str> = input.split_whitespace().collect();
-
-    if parts.len() < 1 {
-        None
-    } else if parts[0] == "/ban" {
-        let who = parts[1].to_string();
-        Some(ServerRequest::Ban(who.clone()))
-    } else if parts[0] == "/unban" {
-        let who = parts[1].to_string();
-        Some(ServerRequest::UnBan(who.clone()))
-    } else if parts[0] == "/wipe" {
-        Some(ServerRequest::WipeChatHistory)
-    } else {
-        None
+fn new_service_metadata() -> ServiceMetadata {
+    ServiceMetadata {
+        subscribers: HashSet::new(),
+        user_presence: HashMap::new(),
     }
+}
+fn new_sync_service(id: ServiceId) -> SyncService {
+    SyncService {
+        id: id,
+        metadata: new_service_metadata(),
+        connection: ConnectionStatus::Connecting(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        ),
+    }
+}
+
+fn get_client_id(our: &Address, consumer: &Consumer) -> ConsumerId {
+    ConsumerId {
+        client_node: our.node.clone(),
+        ws_channel_id: consumer.ws_channel_id,
+    }
+}
+
+fn handle_client_request(our: &Address, state: &mut DartState, source: Address, req: ClientRequest) -> anyhow::Result<()> {
+    // println!("client request: {:?}", req);
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    match req {
+        ClientRequest::DeleteConsumer(num) => {
+
+            let mut all_services: HashMap<ServiceId, HashSet<u32>> = HashMap::new();
+            for (id, consumer) in state.client.consumers.iter() {
+                for (service_id, _service) in consumer.services.iter() {
+                    all_services
+                        .entry(service_id.clone())
+                        .or_insert_with(HashSet::new)
+                        .insert(id.clone());
+                }
+            }
+            if let Some(consumer) = state.client.consumers.get(&num) {
+                for (service_id, service) in consumer.services.iter() {
+                    // TODO this kind of sucks
+                    // here we only send the unsub if no other consumer is subscribed to the service in question
+                    // 
+                    // in the future, consumers should just unsubscribe onclose,
+                    //  it just requires extending some consumer scope to the service
+                    //  but that adds some complexity, and could be inefficient if not done correctly
+                    // 
+                    let consumers_with_this_service = all_services.get(&service_id).unwrap();
+                    if consumers_with_this_service.len() == 1 {
+                        let s_req = ServerRequest::ServiceRequest(service_id.clone(), ServiceRequest::Unsubscribe);
+                        let address = get_server_address(service_id.node.as_str());
+                        poke_server(&address, s_req)?;
+                    }
+                }
+                // println!("deleting consumer");
+                state.client.consumers.remove(&num);
+            }
+        }
+        ClientRequest::ConsumerRequest(num, inner) => {
+            let Some(consumer) = state.client.consumers.get_mut(&num) else {
+                // println!("no consumer found {:?} {:?}", num, inner);
+                return Ok(());
+            };
+            // println!("consumer request: {:?} {:?}", num, inner);
+            consumer.last_active = now;
+
+            match inner {
+                ConsumerRequest::JoinService(sid) => {
+                    if let Some(service) = consumer.services.get(&sid) {
+                        // already have it
+                        // send this anyways just to refresh the connection
+                        let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::Subscribe);
+                        let address = get_server_address(sid.clone().node.as_str());
+                        poke_server(&address, s_req)?;
+                    } else {
+                        consumer.services.insert(sid.clone(), new_sync_service(sid.clone()));
+
+                        let consumer_id = get_client_id(our, consumer);
+                        let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::Subscribe);
+                        let address = get_server_address(sid.clone().node.as_str());
+                        poke_server(&address, s_req)?;
+                        let update = ConsumerUpdate::FromClient(ConsumerClientUpdate::Todo("clientmodule created your service, poking server".to_string()));
+                        update_consumer(num, update)?;
+                    }
+                }
+                ConsumerRequest::ExitService(sid) => {
+                    if let Some(service) = consumer.services.get(&sid) {
+                        let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::Unsubscribe);
+                        let address = get_server_address(sid.clone().node.as_str());
+                        poke_server(&address, s_req)?;
+                        consumer.services.remove(&sid);
+
+                    } else {
+                        // already have it
+                        // TODO maybe tell frontend that it's already gone
+                    }
+                }
+                ConsumerRequest::ServiceHeartbeat(sid) => {
+                    if let Some(service) = consumer.services.get(&sid) {
+                        let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::PresenceHeartbeat);
+                        let address = get_server_address(sid.clone().node.as_str());
+                        poke_server(&address, s_req)?;
+                    } else {
+                        // dont have this service
+                        // TODO maybe tell frontend that it's missing
+                    }
+                }
+                ConsumerRequest::RequestServiceList(server_node) => {
+                    let s_req = ServerRequest::RequestServiceList;
+                    let address = get_server_address(server_node.as_str());
+                    poke_server(&address, s_req)?;
+                }
+                ConsumerRequest::SendToService(sid, req ) => {
+                    if let Some(service) = consumer.services.get(&sid) {
+                        let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::ChatRequest(req));
+                        let address = get_server_address(sid.clone().node.as_str());
+                        poke_server(&address, s_req)?;
+                    } else {
+                        // dont have this service
+                        // TODO maybe tell frontend that it's missing
+                    }
+                }
+                _ => {
+                    println!("unexpected consumer request: {:?}", inner);
+                }
+            }
+        }
+        _ => {
+        }
+    }
+    // clean up inactive consumers
+    let mut to_kick: HashSet<u32> = HashSet::new();
+    // iterate over consumers and remove inactive
+    for (id, consumer) in state.client.consumers.iter() {
+        const FOUR_MINUTES : u64 = 4*60;
+        if (now - consumer.last_active) > FOUR_MINUTES {
+            to_kick.insert(id.clone());
+        }
+    }
+    state.client.consumers.retain(|x, _| !to_kick.contains(x));
+
+    // TODO possibly update / kick consumer frontend
+    // not important rn because they are most likely already disconnected
+
+    Ok(())
 }
 
 fn handle_http_server_request(
@@ -390,59 +635,64 @@ fn handle_http_server_request(
         return Ok(());
     };
 
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
     match server_request {
         HttpServerRequest::WebSocketOpen { channel_id, .. } => {
-            state.client.ws_channels.insert(channel_id);
-            // send last chat state if available?
-            if let Some(server) = &state.client.server {
-                let chat_state = server.chat_state.clone();
-                send_ws_update(WsUpdate::NewChatState(chat_state), &state.client.ws_channels).unwrap();
-            }
+            // println!("WebSocketOpen: {:?}", channel_id);
+            state.client.consumers.insert(
+                channel_id,
+                Consumer {
+                    ws_channel_id: channel_id,
+                    services: HashMap::new(),
+                    last_active: now,
+                },
+            );
         }
-        HttpServerRequest::WebSocketPush { .. } => {
-            // let Some(blob) = get_blob() else {
-            //     return Ok(());
-            // };
-            // take messages on POST request instead
-        }
-        HttpServerRequest::WebSocketClose(channel_id) => {
-            state.client.ws_channels.remove(&channel_id);
-        }
-        HttpServerRequest::Http(request) => {
-            let request_type = request.method()?;
-            let request_type_str = request_type.as_str();
-            if request_type_str != "POST" {
-                return Ok(());
-            }
-
+        HttpServerRequest::WebSocketPush { channel_id, message_type : _} => {
             let Some(blob) = get_blob() else {
                 return Ok(());
             };
-            let Ok(s) = String::from_utf8(blob.bytes) else {
+
+            let Ok(s) = String::from_utf8(blob.bytes.clone()) else {
+                println!("error parsing utf8 ws push");
                 return Ok(());
             };
-            match serde_json::from_str(&s)? {
-                DartMessage::ClientRequest(c_req) => {
 
-                    let mut headers = HashMap::new();
-                    headers.insert("Content-Type".to_string(), "application/json".to_string());
-                    send_response(
-                        StatusCode::OK,
-                        Some(headers),
-                        serde_json::to_vec(b"")
-                        .unwrap(),
-                    );
-
-                    let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::ClientRequest(c_req)).unwrap();
-                    Request::new()
-                        .target(our)
-                        .body(send_body)
-                        .send()
-                        .unwrap();
+            match serde_json::from_slice(&blob.bytes)? {
+                DartMessage::ServerRequest(s_req) => {
+                    handle_server_request(our, state, source.clone(), s_req)?;
                 }
-                // couldn't parse json
-                _ => { }
+                DartMessage::ClientRequest(c_req) => {
+                    match c_req {
+                        ClientRequest::DeleteConsumer(_num) => {
+                            // write down the current channel_id, num inaccurate from the api lib
+                            let req = ClientRequest::DeleteConsumer(channel_id);
+                            handle_client_request(our, state, source.clone(), req)?;
+                        }
+                        ClientRequest::ConsumerRequest(_num, inner) => {
+                            // write down the current channel_id, num inaccurate from the api lib
+                            let req = ClientRequest::ConsumerRequest(channel_id, inner);
+                            handle_client_request(our, state, source.clone(), req)?;
+                        }
+                        _ => {
+                            println!("unexpected client request: {:?}", c_req);
+                        }
+                    }
+                }
+                _ => {
+                    println!("unexpected Request: {:?}", s)
+                    // return Err(anyhow::anyhow!("unexpected Request: {:?}", s));
+                }
             }
+        }
+        HttpServerRequest::WebSocketClose(channel_id) => {
+            state.client.consumers.remove(&channel_id);
+        }
+        HttpServerRequest::Http(request) => {
         }
     };
 
@@ -464,20 +714,21 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
 
         match serde_json::from_slice(body)? {
             DartMessage::ServerRequest(s_req) => {
-                if our.node != SERVER_NODE {
-                    // disable user processes acting as servers
-                    return Ok(());
-                }
                 handle_server_request(our, state, source.clone(), s_req)?;
             }
             DartMessage::ClientRequest(c_req) => {
+                if our.node != source.node {
+                    // we only send client requests to ourself
+                    return Ok(());
+                }
                 handle_client_request(our, state, source.clone(), c_req)?;
             }
-            DartMessage::UpdateFromServer(s_upd) => {
-                handle_server_update(our, state, source.clone(), s_upd)?;
+            DartMessage::ClientUpdate(s_upd) => {
+                handle_client_update(our, state, source.clone(), s_upd)?;
             }
             _ => {
-                return Err(anyhow::anyhow!("unexpected Request: {:?}", message));
+                println!("unexpected Request: {:?}", message);
+                // return Err(anyhow::anyhow!("unexpected Request: {:?}", message));
             }
         }
         Ok(())
@@ -485,75 +736,50 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
     }
 
 }
-fn send_ws_update(
-    update: WsUpdate,
-    open_channels: &HashSet<u32>,
+
+fn update_all_consumers (state: &DartState, update: ConsumerUpdate) {
+    for (id, consumer) in state.client.consumers.iter() {
+        update_consumer(consumer.ws_channel_id, update.clone()).unwrap();
+    }
+}
+
+fn update_consumer (
+    // state: &DartState,
+    websocket_id: u32,
+    update: ConsumerUpdate,
 ) -> anyhow::Result<()> {
 
-    for channel in open_channels {
-        // Generate a blob for the new message
-        let blob = LazyLoadBlob {
-            mime: Some("application/json".to_string()),
-            bytes: serde_json::json!({
-                "WsUpdate": update
-            })
-            .to_string()
-            .as_bytes()
-            .to_vec(),
-        };
+    // if !(state.client.consumers.contains_key(&websocket_id)) {
+    //     return Ok(());
+    // }
 
-        // Send a WebSocket message to the http server in order to update the UI
-        send_ws_push(
-            *channel,
-            WsMessageType::Text,
-            blob,
-        );
-    }
+    let blob = LazyLoadBlob {
+        mime: Some("application/json".to_string()),
+        bytes: serde_json::json!(update)
+        .to_string()
+        .as_bytes()
+        .to_vec(),
+    };
+
+    // Send a WebSocket message to the http server in order to update the UI
+    send_ws_push(
+        websocket_id,
+        WsMessageType::Text,
+        blob,
+    );
     Ok(())
 }
 
 const IS_FAKE: bool = !cfg!(feature = "prod");
 const SERVER_NODE: &str = if IS_FAKE { "fake.dev" } else { "waterhouse.os" };
 const PROCESS_NAME : &str = "dartfrog:dartfrog:herobrine.os";
-fn get_dartfrog_address(node_id: &str) -> Address {
+
+fn get_server_address(node_id: &str) -> Address {
     let s =
         format!("{}@{}", node_id, PROCESS_NAME);
     Address::from_str(&s).unwrap()
 }
 
-fn save_chat_state(state: &ChatState) {
-    set_state(&bincode::serialize(&state).unwrap());
-}
-
-fn load_chat_state() -> ChatState {
-    match get_typed_state(|bytes| Ok(bincode::deserialize::<ChatState>(bytes)?)) {
-        Some(state) => state,
-        None => new_chat_state(),
-    }
-}
-
-fn new_client_state() -> ClientState {
-    ClientState {
-        server: None,
-        ws_channels: HashSet::new(),
-    }
-}
-
-fn new_chat_state() -> ChatState {
-    ChatState {
-        latest_chat_msg_id: 0,
-        chat_history: Vec::new(),
-        user_presence: HashMap::new(),
-        banned_users: HashSet::new(),
-    }
-}
-fn new_server_state() -> ServerState {
-    ServerState {
-        chat_state: new_chat_state(),
-        subscribers: HashSet::new(),
-        last_sent_presence: 0,
-    }
-}
 
 fn new_dart_state() -> DartState {
     DartState {
@@ -564,7 +790,7 @@ fn new_dart_state() -> DartState {
 
 call_init!(init);
 fn init(our: Address) {
-    println!("initializing dartfrog");
+    println!("initializing");
     
     // Serve the index.html and other UI files found in pkg/ui at the root path.
     http::serve_ui(&our, "ui", true, false, vec!["/"]).unwrap();
@@ -582,7 +808,7 @@ fn init(our: Address) {
                     "label": "dartfrog",
                     "icon": constants::HOMEPAGE_IMAGE,
                     "path": "/",
-                    "widget": get_widget(),
+                    // "widget": get_widget(),
                 }
             })
             .to_string()
@@ -592,231 +818,39 @@ fn init(our: Address) {
         .send()
         .unwrap();
 
-    let server = get_dartfrog_address(SERVER_NODE);
+    // let server = get_server_address(SERVER_NODE);
+    poke_server(&our, ServerRequest::CreateService(ServiceId {
+        node: our.node.clone(),
+        id: "chat".to_string()
+    })).unwrap();
+
     let mut state = new_dart_state();
-    state.server.chat_state = load_chat_state();
+    // state.server.chat_state = load_chat_state();
 
     // subscribe to SERVER
-    let _ = subscribe_to_server(&mut state, &server);
+    // let _ = subscribe_to_server(&mut state, &server);
 
     loop {
         match handle_message(&our, &mut state) {
             Ok(()) => {}
             Err(e) => {
-                println!("error: {:?}", e);
+                println!("handle_message error: {:?}", e);
             }
         };
     }
 }
 
-fn poke_node(node: String, req: UpdateFromServer) -> anyhow::Result<()> {
-    let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::UpdateFromServer(req)).unwrap();
-    Request::new()
-        .target(get_dartfrog_address(&node))
-        .body(send_body)
-        .send()
-        .unwrap();
+fn update_client(update: ConsumerUpdate, client_node: String) -> anyhow::Result<()> {
+    let address = get_server_address(&client_node);
+    Request::to(address)
+        .body(serde_json::to_vec(&DartMessage::ClientUpdate(ClientUpdate::ConsumerUpdate(update)))?)
+        .send()?;
     Ok(())
 }
 
-fn poke_server(state: &DartState, req: ServerRequest) -> anyhow::Result<()> {
-    if let Some(server) = &state.client.server {
-        let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::ServerRequest(req)).unwrap();
-        Request::new()
-            .target(server.address.clone())
-            .body(send_body)
-            .send()
-            .unwrap();
-        Ok(())
-    } else {
-        Ok(())
-    }
-}
-
-fn set_new_server(state: &mut DartState, server: &Address) -> anyhow::Result<()> {
-    let now = {
-        let start = SystemTime::now();
-        start.duration_since(UNIX_EPOCH).unwrap().as_secs() 
-    };
-    state.client.server = Some(SyncServerState {
-                address: server.clone(),
-                connection: ConnectionStatus::Connecting(now),
-                chat_state: new_chat_state(),
-                });
-    send_ws_update(WsUpdate::ServerStatus(ServerStatus {
-        server_node: server.node.to_string(),
-        status: ConnectionStatus::Connecting(now),
-    }), &state.client.ws_channels).unwrap();
+fn poke_server(address:&Address, req: ServerRequest) -> anyhow::Result<()> {
+    Request::to(address)
+        .body(serde_json::to_vec(&DartMessage::ServerRequest(req))?)
+        .send()?;
     Ok(())
-}
-
-fn subscribe_to_server(state: &mut DartState, server: &Address) -> anyhow::Result<()> {
-    if let Some(state_server) = &mut state.client.server {
-        if state_server.address != *server {
-            poke_server(state, ServerRequest::Unsubscribe)?;
-            set_new_server(state, server)?;
-        }
-    } else {
-        set_new_server(state, server)?;
-    }
-    
-    let send_body : Vec<u8> = serde_json::to_vec(&DartMessage::ServerRequest(ServerRequest::Subscribe)).unwrap();
-    // await response and retry?
-    Request::new()
-        .target(server)
-        .body(send_body)
-        .send()
-        .unwrap();
-    
-    Ok(())
-}
-
-fn get_widget() -> String {
-    return format!(r#"
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fart Dog</title>
-    <style>
-        * {{
-            box-sizing: border-box;
-        }}
-        body {{
-            margin: 0;
-            height: 100vh;
-            max-height: 100vh;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            font-size: x-small;
-        }}
-        input {{
-            border: none;
-            background-color: #FFFFFF11;
-            border-radius: 4px;
-            color: white;
-            align-self: stretch;
-            margin-top: 0.5rem;
-        }}
-        #chat-container {{
-            padding: 0.5rem;
-            display: flex;
-            flex-direction: column;
-            backdrop-filter: brightness(1.25);
-            border-radius: 0.75rem;
-            gap: 0.25em;
-            align-items: stretch;
-            flex-grow: 1;
-            margin: 0;
-            overflow-y: auto;
-        }}
-        .message {{
-            margin: 0;
-            display: flex;
-            align-items: flex-end;
-        }}
-        .message .from {{
-            font-weight: bold;
-            max-width: 33%;
-        }}
-        .message .message-content {{
-            margin-left: 8px;
-            flex-grow: 1;
-        }}
-    </style>
-</head>
-<body>
-    <div id="chat-container"></div>
-    <input 
-        type="text" 
-        id="chat-input" 
-        autocomplete="off"
-    />
-    <script>
-        const scrollToBottom = function() {{
-            const chatContainer = document.getElementById('chat-container');
-            if (chatContainer) {{
-                chatContainer.scrollTop = 99999;
-            }}
-        }}
-        const eraseMessages = function() {{
-            var chatContainer = document.getElementById("chat-container");
-
-            // Remove all its children
-            while (chatContainer.firstChild) {{
-                chatContainer.removeChild(chatContainer.firstChild);
-            }}
-        }}
-        const appendMessage = function(msg) {{
-            const node = document.createElement("div");
-            node.classList += 'message'
-            node.innerHTML = `
-                <span class="from">${{msg.from}}:</span>
-                <span class="message-content">${{msg.msg}}</span>
-            `;
-            document.getElementById("chat-container").appendChild(node);
-            scrollToBottom();
-        }}
-
-        const IS_FAKE = {IS_FAKE};
-        const SERVER_NODE = IS_FAKE ? "fake.dev" : "waterhouse.os";
-        const PROCESS_NAME = "dartfrog:dartfrog:herobrine.os";
-        const BASE_URL = `${{parent.location.href}}dartfrog:dartfrog:herobrine.os`;
-        const pokeSubscribe = () => {{
-            const data = {{"ClientRequest": {{"SetServer": SERVER_NODE+"@"+PROCESS_NAME}}}};
-            // console.log("poking", data);
-            fetch(`${{BASE_URL}}/api`, {{
-                method: "POST",
-                body: JSON.stringify(data),
-              }});
-        }}
-
-        pokeSubscribe();
-
-        const ws = new WebSocket(`ws://${{parent.location.host}}/${{PROCESS_NAME}}`);
-        ws.onmessage = function(event) {{
-            const data = JSON.parse(event.data);
-            if (data.WsUpdate) {{
-                if (data.WsUpdate.NewChat) {{
-                    const msg = data.WsUpdate.NewChat;
-                    appendMessage(msg);
-                }} else if (data.WsUpdate.NewChatState) {{
-                    if (Array.isArray(data.WsUpdate.NewChatState.chat_history)) {{
-                        eraseMessages();
-                        for (let msg of data.WsUpdate.NewChatState.chat_history) {{
-                            appendMessage(msg);
-                        }}
-                    }}
-                }} else {{
-                    // console.log({{ dartfrogData: data }});
-                }}
-            }}
-        }}
-
-        document.getElementById('chat-input').addEventListener('keyup', async function(event) {{
-            if (event.key === 'Enter') {{
-                const data = {{ "ClientRequest": {{ "SendToServer": {{ "ChatMessage": this.value }} }} }};
-                try {{
-                    const result = await fetch(`${{parent.location.href}}dartfrog:dartfrog:herobrine.os/api`, {{
-                        method: "POST",
-                        body: JSON.stringify(data),
-                    }});
-
-                    if (!result.ok) throw new Error("HTTP request failed");
-                    else {{
-                        this.value = ''; // Clear input after sending
-                        scrollToBottom();
-                    }}
-                }} catch (error) {{
-                    console.error(error);
-                }}
-            }}
-         }});
-    </script>
-</body>
-</html>
-"#).to_string();
 }

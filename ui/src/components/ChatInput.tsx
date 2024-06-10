@@ -1,9 +1,16 @@
 import React, { useCallback, useState } from 'react';
-import { maybeReplaceWithImage, sendPoke } from '../utils';
+import { maybeReplaceWithImage, } from '../utils';
+import useDartStore from '../store/dart';
+import { parseServiceId } from '../dartclientlib';
 
-const ChatInput = () => {
+interface ChatInputProps {
+  serviceId: string;
+}
+
+const ChatInput: React.FC<ChatInputProps> = ({ serviceId }) => {
   const [chatMessageInputText, setChatMessageInputText] = useState('');
 
+  const { pokeService } = useDartStore();
   const handleInputChange = (event) => {
     setChatMessageInputText(event.target.value);
   };
@@ -15,9 +22,16 @@ const ChatInput = () => {
 
       // Create a message object
       let text = maybeReplaceWithImage(chatMessageInputText);
-      const data = {"ClientRequest": {"SendToServer": {"ChatMessage": text}}};
-      sendPoke(data);
+      const data = {
+          "SendMessage": 
+            text
+        }
+      // sendPoke(data);
       setChatMessageInputText("");
+
+      let parsedServiceId = parseServiceId(serviceId);
+
+      pokeService(parsedServiceId, data);
     },
     [chatMessageInputText]
   );
@@ -29,6 +43,7 @@ const ChatInput = () => {
         style={{
           flexGrow: 1,
           fontFamily: 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
+          marginRight: '0px',
         }}
         id="chat-input"
         value={chatMessageInputText}
@@ -40,9 +55,11 @@ const ChatInput = () => {
           }
         }}
       />
-      <button style={{ cursor: 'pointer' }} onClick={sendChat}>
+      <div>
+      <button style={{ cursor: 'pointer', height: '100%' }} onClick={sendChat}>
         Send
       </button>
+      </div>
     </div>
   );
 };

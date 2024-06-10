@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
-import useChatStore from '../store/chat';
+import useChatStore from '../store/chat_old';
 import { ConnectionStatusType, ServerStatus } from '../types/types';
-import { pokeUnsubscribe } from '../utils';
+import { ServiceId } from '../dartclientlib';
+// import { pokeUnsubscribe } from '../utils';
 
-const ChatHeader = () => {
+interface ChatHeaderProps {
+  serviceId: ServiceId;
+}
 
-  const { serverStatus, setServerStatus, bannedUsers } = useChatStore();
+const ChatHeader: React.FC<ChatHeaderProps> = ({ serviceId}) => {
+  // const { serverStatus, setServerStatus, bannedUsers } = useChatStore();
 
   const [time, setTime] = useState(new Date());
   useEffect(() => {
@@ -17,21 +21,21 @@ const ChatHeader = () => {
   }, []);
   const [isBanned, setIsBanned] = useState(false);
 
-  useEffect(() => {
-    setIsBanned(bannedUsers.includes(window.our?.node));
-  }, [bannedUsers]);
+  // useEffect(() => {
+  //   setIsBanned(bannedUsers.includes(window.our?.node));
+  // }, [bannedUsers]);
 
   const [isConnected, setIsConnected] = useState(false);
-  useEffect(() => {
-    if (!serverStatus) return;
-    if (!serverStatus.connection) return;
-    if (serverStatus.connection.type === ConnectionStatusType.Connected) {
-      setIsConnected(true);
-    } else if (serverStatus.connection.type === ConnectionStatusType.Disconnected) {
-      setIsConnected(false);
-    }
+  // useEffect(() => {
+  //   if (!serverStatus) return;
+  //   if (!serverStatus.connection) return;
+  //   if (serverStatus.connection.type === ConnectionStatusType.Connected) {
+  //     setIsConnected(true);
+  //   } else if (serverStatus.connection.type === ConnectionStatusType.Disconnected) {
+  //     setIsConnected(false);
+  //   }
 
-  }, [serverStatus]);
+  // }, [serverStatus]);
 
 
   return (
@@ -46,24 +50,10 @@ const ChatHeader = () => {
           gap: "0.8rem",
         }}
       >
-        <button
-          style={{
-            opacity: "0.5",
-            fontSize: "0.8rem",
-            padding: "0px 2px",
-            cursor: "pointer",
-          }}
-          onClick={(e) => {
-              setServerStatus(null);
-              pokeUnsubscribe();
-            }
-          }
-        >
-          exit
-        </button>
+        
         <span style={{
           // fontFamily:"monospace",
-          flexGrow: 1,
+          // flexGrow: 1,
           fontSize: "0.7rem",
           cursor: "default",
 
@@ -87,13 +77,13 @@ const ChatHeader = () => {
           </div>
         }
 
-        <div
+        {/* <div
           style={{
             cursor: "default",
           }}
         >
           {'server'} {isConnected ? 'connected' : 'connecting...'}
-        </div>
+        </div> */}
 
       </div>
 

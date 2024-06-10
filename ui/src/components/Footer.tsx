@@ -5,31 +5,16 @@ const DisplayUserActivity = () => {
       style={{
       display: "flex",
       flexDirection: "column",
+          fontSize: "0.8rem",
+          color: "#ffffff44",
       gap: "0.8rem",
+      userSelect: "none",
       }}
       >
-      <div
-        style={{
-          fontSize: "0.8rem",
-          color: "#ffffff44",
-          cursor: "default",
-          display: "flex",
-          flexDirection: "row",
-          gap: "1rem",
-        }}
-      >
+      <div>
         sfx: /yes /no /why /fart /people /robust /robustness
       </div>
-      <div
-        style={{
-          fontSize: "0.8rem",
-          color: "#ffffff44",
-          cursor: "default",
-          display: "flex",
-          flexDirection: "row",
-          gap: "1rem",
-        }}
-      >
+      <div>
         img: /die /kino /panda /dev /tiger /wow /cry /ok /oops
       </div>
       <div

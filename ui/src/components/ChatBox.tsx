@@ -1,21 +1,44 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChatMessage, ChatMessageHistory } from '../types/types';
-import useChatStore from '../store/chat';
+import useChatStore from '../store/chat_old';
 import { computeColorForName } from '../utils';
 import ChatInput from './ChatInput';
+import { Service, ServiceId, makeServiceId } from '../dartclientlib/';
+
+import useDartStore from "../store/dart";
 
 interface ChatBoxProps {
+  serviceId: ServiceId;
   chats: ChatMessageHistory
 }
 
-const ChatBox: React.FC<ChatBoxProps> = ({ chats }) => {
+const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chats}) => {
+  // const { services } = useDartStore();
+  // const [service, setService] = useState<Service | null>(null);
+
+  // useEffect(() => {
+  //   const gotService = services.get(serviceId);
+  //   if (gotService) {
+  //     setService(gotService);
+  //   } else {
+  //     setService(null);
+  //   }
+  // }, [services, serviceId]);
+
+  // if (!service) {
+  //   <div>
+  //     error
+  //   </div>
+  // }
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const isResizing = useRef(false);
 
-  const { nameColors, addNameColor } = useChatStore();
+  const { nameColors, addNameColor } = useDartStore();
   const [ chatMessageList, setChatMessageList ] = useState<Array<ChatMessage>>([]);
   const [containerHeight, setContainerHeight] = useState(400);
+
 
   const getNameColor = useCallback(
     (name: string) => {
@@ -30,6 +53,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chats }) => {
   , [nameColors])
 
   useEffect(() => {
+    // console.log('new chats')
     if (chats.size === 0) return;
     if (!chats.values) return;
     const sortedMessages = Array.from(chats.values()).sort((a, b) => a.id - b.id);
@@ -156,7 +180,13 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chats }) => {
                 <span>{message.from}:</span>
               </div>
             </div>
-            {getMessageInnerText(message.msg)}
+            <span
+              style={{
+                cursor: "default",
+              }}
+            >
+              {getMessageInnerText(message.msg)}
+            </span>
           </div>
         ))}
         <div id="messages-end-ref" ref={messagesEndRef}
@@ -164,7 +194,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chats }) => {
         />
       </div>
       </div>
-      <ChatInput />
+      <ChatInput serviceId={serviceId} />
       <div
         style={{
           height: '8px',
@@ -190,7 +220,7 @@ function isImageUrl(url: string) {
   return imageRegex.test(url);
 }
 
-function formatTimestamp(timestamp: number): string {
+export function formatTimestamp(timestamp: number): string {
   const date = new Date(timestamp * 1000); // convert from seconds to milliseconds
   const day = date.toLocaleDateString('en-US', { weekday: 'short' });
   const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });

@@ -9,40 +9,61 @@ export const WEBSOCKET_URL = import.meta.env.DEV
   ? `${PROXY_TARGET.replace('http', 'ws')}`
   : undefined;
 
+// export const sendPoke =  async (data) => {
+//     try {
+//       const result = await fetch(`${BASE_URL}/api`, {
+//         method: "POST",
+//         body: JSON.stringify(data),
+//       });
 
-export const sendPoke =  async (data) => {
-    try {
-      const result = await fetch(`${BASE_URL}/api`, {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+//       if (!result.ok) throw new Error("HTTP request failed");
 
-      if (!result.ok) throw new Error("HTTP request failed");
-
-      // Add the message if the POST request was successful
-    } catch (error) {
-      console.error(error);
-    }
+//       // Add the message if the POST request was successful
+//     } catch (error) {
+//       console.error(error);
+//     }
     
-  }
+//   }
 
-export const pokeUnsubscribe = () => {
-    const data = {"ClientRequest": {"SetServer": null}};
-    sendPoke(data);
-  }
 
 export const IS_FAKE = false;
 export const SERVER_NODE = IS_FAKE ? "fake.dev" : "waterhouse.os";
 export const PROCESS_NAME = "dartfrog:dartfrog:herobrine.os";
-export const pokeSubscribe = () => {
-    const data = {"ClientRequest": {"SetServer": SERVER_NODE+"@"+PROCESS_NAME}};
-    sendPoke(data);
-  }
 
-export const pokeHeartbeat = () => {
-    const data = {"ClientRequest": {"SendToServer": "PresenceHeartbeat"}};
-    sendPoke(data);
+export const soundEffectCommands = {
+  '/fart': 'assets/wet.mp3',
+  '/no': 'assets/hell-naw-dog.mp3',
+  '/yes': 'assets/oh-yes.mp3',
+  '/why': 'assets/why.mp3',
+  '/people': 'assets/the-people.mp3',
+  '/robust': 'assets/robust-josh.mp3',
+  '/robustness': 'assets/robust-basile.mp3',
+}
+
+
+export const maybePlaySoundEffect = (msg: string, muteSoundEffects: boolean) => {
+  if (muteSoundEffects) {
+    return;
   }
+  if (msg in soundEffectCommands) {
+    const sound = new Audio(soundEffectCommands[msg]);
+    sound.play();
+  }
+}
+
+
+// export const pokeSubscribe = () => {
+//   }
+
+// export const pokeHeartbeat = () => {
+//     const data = {"ClientRequest": {"SendToServer": "PresenceHeartbeat"}};
+//     sendPoke(data);
+//   }
+
+// export const pokeUnsubscribe = () => {
+//     const data = {"ClientRequest": {"InnerClient": null}};
+//     sendPoke(data);
+//   }
 
 export function computeColorForName(name: string): string {
   let hash: number = Math.abs(simpleHash(name));

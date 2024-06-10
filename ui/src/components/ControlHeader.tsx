@@ -1,8 +1,16 @@
-import useChatStore from '../store/chat';
+import { useState, useEffect } from "react";
+import useDartStore from "../store/dart";
+import { ConnectionStatusType } from "../dartclientlib";
 
-const ControlHeader = (nodeConnected) => {
+// type ControlHeaderProps = {
+//   nodeConnected: boolean;
+// };
 
-  const { muteSoundEffects, setMuteSoundEffects } = useChatStore();
+// const ControlHeader = ({ nodeConnected }: ControlHeaderProps) => {
+const ControlHeader = () => {
+
+  // const { muteSoundEffects, setMuteSoundEffects } = useChatStore();
+  const { api, isClientConnected } = useDartStore();
 
   return (
       <div
@@ -37,22 +45,6 @@ const ControlHeader = (nodeConnected) => {
                 </span>
             </div>
           </a>
-          <button onClick={() => {
-              if(muteSoundEffects) {
-                setMuteSoundEffects(false);
-              } else {
-                setMuteSoundEffects(true);
-              }
-            }}
-            style={{
-              opacity: "0.5",
-              fontSize: "0.8rem",
-              padding: "0px 2px",
-              cursor: "pointer",
-            }}
-            >
-            {muteSoundEffects ? 'unmute' : 'mute'}
-          </button>
 
         </div>
 
@@ -60,9 +52,17 @@ const ControlHeader = (nodeConnected) => {
           <span
           style={{
             cursor: "default",
+            userSelect: "none",
           }}
           >
-          {window.our.node} {' '} {nodeConnected ? 'connected': 'connecting...'}
+            <span
+              style={{
+                fontWeight: "bold",
+              }}
+            >
+              {window.our.node}
+            </span>
+          {' '} {isClientConnected ? 'connected': 'connecting...'}
           </span>
         </div>
 
