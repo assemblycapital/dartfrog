@@ -773,6 +773,7 @@ fn update_consumer (
 const IS_FAKE: bool = !cfg!(feature = "prod");
 const SERVER_NODE: &str = if IS_FAKE { "fake.dev" } else { "waterhouse.os" };
 const PROCESS_NAME : &str = "dartfrog:dartfrog:herobrine.os";
+
 fn get_server_address(node_id: &str) -> Address {
     let s =
         format!("{}@{}", node_id, PROCESS_NAME);
@@ -822,6 +823,7 @@ fn init(our: Address) {
         node: our.node.clone(),
         id: "chat".to_string()
     })).unwrap();
+
     let mut state = new_dart_state();
     // state.server.chat_state = load_chat_state();
 
@@ -837,7 +839,6 @@ fn init(our: Address) {
         };
     }
 }
-
 
 fn update_client(update: ConsumerUpdate, client_node: String) -> anyhow::Result<()> {
     let address = get_server_address(&client_node);
