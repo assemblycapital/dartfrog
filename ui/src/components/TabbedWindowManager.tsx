@@ -141,7 +141,6 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({}) => {
               alignItems: 'center',
               height: '400px',
               color: '#ffffff55',
-
             }}
           >
             <button

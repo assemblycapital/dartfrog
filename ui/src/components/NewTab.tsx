@@ -209,7 +209,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
                 <button
                   style={{
                     cursor: "pointer",
-                    color: "#ff000077"
+                    color: "#ff666677"
                   }}
                   onClick={() => {
                     deleteService(makeServiceId(service.node, service.id));
