@@ -4,6 +4,9 @@ use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::hash::{Hash, Hasher};
 
+mod types;
+use types::*;
+
 mod constants;
 use kinode_process_lib::{http, await_message, call_init, println, Address, Request,
     get_blob, get_typed_state, set_state,
@@ -19,210 +22,6 @@ wit_bindgen::generate!({
     world: "process",
 });
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct ChatMessage {
-    id: u64,
-    time: u64,
-    from: String,
-    msg: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-enum ConnectionStatus {
-    Connecting(u64), // time when we started connecting
-    Connected(u64), // last time heard
-    Disconnected,
-}
-
-#[derive(Debug)]
-struct DartState {
-    pub client: ClientState,
-    pub server: ServerState,
-}
-#[derive(Debug, Serialize, Deserialize, Clone, Hash)]
-struct Presence {
-    pub time: u64,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct ChatState {
-    pub last_message_id: u64,
-    pub messages: Vec<ChatMessage>,
-}
-fn new_chat_state() -> ChatState {
-    ChatState {
-        last_message_id: 0,
-        messages: Vec::new(),
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct Service {
-    pub id: ServiceId,
-    pub metadata: ServiceMetadata,
-    pub last_sent_presence: u64,
-    pub chat_state: ChatState,
-}
-
-impl Hash for Service {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
-    }
-}
-
-fn new_service(id: ServiceId) -> Service {
-    Service {
-        id: id,
-        metadata: new_service_metadata(),
-        last_sent_presence: 0,
-        chat_state: new_chat_state(),
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct ServerState {
-    pub services: HashMap<String, Service>,
-}
-fn new_server_state() -> ServerState {
-    ServerState {
-        services: HashMap::new(),
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct ServiceMetadata {
-    pub subscribers: HashSet<String>,
-    pub user_presence: HashMap<String, Presence>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct SyncService {
-    pub id: ServiceId,
-    pub metadata: ServiceMetadata,
-    pub connection: ConnectionStatus,
-}
-
-#[derive(Hash, Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
-struct ConsumerId {
-    pub client_node: String,
-    pub ws_channel_id: u32,
-}
-
-#[derive(Hash, Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
-struct ServiceId {
-    pub node: String,
-    pub id: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct Consumer {
-    pub ws_channel_id: u32,
-    pub services: HashMap<ServiceId, SyncService>,
-    pub last_active: u64,
-}
-
-impl Hash for Consumer{
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.ws_channel_id.hash(state);
-    }
-}
-
-#[derive(Debug, Clone)]
-struct ClientState {
-    pub consumers: HashMap<u32, Consumer>,
-}
-fn new_client_state() -> ClientState {
-    ClientState {
-        consumers: HashMap::new(),
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct ChannelId {
-    pub service_id: ServiceId,
-    pub consumer_id: ConsumerId,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-enum ServerRequest {
-    ServiceRequest(ServiceId, ServiceRequest),
-    CreateService(ServiceId),
-    DeleteService(ServiceId),
-    RequestServiceList
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-enum ChatRequest {
-    SendMessage(String),
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-enum ServiceRequest {
-    Subscribe,
-    Unsubscribe,
-    PresenceHeartbeat,
-    PluginMessageTODO(String), // plugin id
-    ChatRequest(ChatRequest),
-}
-#[derive(Debug, Serialize, Deserialize, Clone)]
-enum ClientUpdate {
-    ConsumerUpdate(ConsumerUpdate),
-}
-#[derive(Debug, Serialize, Deserialize, Clone)]
-enum ConsumerUpdate {
-    FromClient(ConsumerClientUpdate),
-    FromServer(String, ConsumerServerUpdate),
-    FromService(String, String, ConsumerServiceUpdate), // service node, service name
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-enum ConsumerServerUpdate {
-    NoSuchService(String),
-    ServiceList(Vec<ServiceId>),
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-enum ConsumerClientUpdate {
-    Todo(String),
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-enum ConsumerServiceUpdate {
-    SubscribeAck,
-    ServiceMetadata(ServiceMetadata),
-    Kick,
-    PluginUpdateTODO,
-    ChatUpdate(ChatUpdate),
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-enum ChatUpdate {
-    Message(ChatMessage),
-    FullMessageHistory(Vec<ChatMessage>),
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-enum ClientRequest{
-    ConsumerRequest(u32, ConsumerRequest),
-    CreateConsumer(u32),
-    DeleteConsumer(u32),
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-enum ConsumerRequest {
-    RequestServiceList(String),
-    JoinService(ServiceId),
-    ExitService(ServiceId),
-    ServiceHeartbeat(ServiceId),
-    SendToService(ServiceId, ChatRequest),
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-enum DartMessage {
-    ServerRequest(ServerRequest),
-    ClientRequest(ClientRequest),
-    ClientUpdate(ClientUpdate),
-}
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
     // println!("server request: {:?}", req);
     match req {
@@ -470,24 +269,6 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: Address, u
     Ok(())
 }
 
-fn new_service_metadata() -> ServiceMetadata {
-    ServiceMetadata {
-        subscribers: HashSet::new(),
-        user_presence: HashMap::new(),
-    }
-}
-fn new_sync_service(id: ServiceId) -> SyncService {
-    SyncService {
-        id: id,
-        metadata: new_service_metadata(),
-        connection: ConnectionStatus::Connecting(
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_secs(),
-        ),
-    }
-}
 
 fn get_client_id(our: &Address, consumer: &Consumer) -> ConsumerId {
     ConsumerId {
@@ -652,7 +433,15 @@ fn handle_http_server_request(
                 },
             );
         }
-        HttpServerRequest::WebSocketPush { channel_id, message_type : _} => {
+        HttpServerRequest::WebSocketPush { channel_id, message_type} => {
+            if message_type == WsMessageType::Close {
+                state.client.consumers.remove(&channel_id);
+                return Ok(());
+            }
+            if message_type != WsMessageType::Binary {
+                println!("unexpected ws push type: {:?}", message_type);
+                return Ok(());
+            }
             let Some(blob) = get_blob() else {
                 return Ok(());
             };
@@ -709,11 +498,12 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
     }
     if message.source().node == our.node
         && message.source().process == "http_server:distro:sys" {
+        // println!("http_server request: {:?}", message);
         handle_http_server_request(our, state, source, body)
     } else {
-
         match serde_json::from_slice(body)? {
             DartMessage::ServerRequest(s_req) => {
+                // println!("server request: {:?}", message);
                 handle_server_request(our, state, source.clone(), s_req)?;
             }
             DartMessage::ClientRequest(c_req) => {
@@ -721,9 +511,11 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
                     // we only send client requests to ourself
                     return Ok(());
                 }
+                // println!("client request: {:?}", message);
                 handle_client_request(our, state, source.clone(), c_req)?;
             }
             DartMessage::ClientUpdate(s_upd) => {
+                // println!("client update: {:?}", message);
                 handle_client_update(our, state, source.clone(), s_upd)?;
             }
             _ => {
