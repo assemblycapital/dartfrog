@@ -1,19 +1,18 @@
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::hash::{Hash, Hasher};
 
 mod types;
+use kinode_process_lib::{spawn, OnExit};
 use types::*;
 
 mod constants;
 use kinode_process_lib::{http, await_message, call_init, println, Address, Request,
-    get_blob, get_typed_state, set_state,
+    get_blob,
     LazyLoadBlob,
     http::{
-        send_response, send_ws_push, HttpServerRequest,
-        StatusCode, WsMessageType,
+        send_ws_push, HttpServerRequest,
+        WsMessageType,
     },
 };
 
@@ -35,7 +34,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             if service_id.node != our.node {
                 return Ok(());
             }
-            if let Some(service) = state.server.services.get(&service_id.id) {
+            if let Some(_service) = state.server.services.get(&service_id.id) {
                 // already exists
             } else {
                 state.server.services.insert(service_id.id.clone(), new_service(service_id.clone()));
@@ -61,9 +60,6 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             }).collect();
             let update = ConsumerUpdate::FromServer(our.node.clone(), ConsumerServerUpdate::ServiceList(services));
             update_client(update, source.node.clone())?;
-        }
-        _ => {
-
         }
     }
     Ok(())
@@ -165,7 +161,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                     }
                 }
 
-                for (user) in service.metadata.subscribers.iter() {
+                for user in service.metadata.subscribers.iter() {
                     if to_kick.contains(user) {
                         let update: ConsumerUpdate = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::Kick);
                         update_client(update, user.clone())?;
@@ -200,7 +196,7 @@ fn update_subscribers(update: ConsumerUpdate, subscribers: HashSet<String>) -> a
     Ok(())
 }
 
-fn handle_client_update(our: &Address, state: &mut DartState, source: Address, upd: ClientUpdate) -> anyhow::Result<()> {
+fn handle_client_update(_our: &Address, state: &mut DartState, source: Address, upd: ClientUpdate) -> anyhow::Result<()> {
     // println!("client update: {:?}", upd);
     match upd {
         ClientUpdate::ConsumerUpdate(consumer_update) => {
@@ -208,7 +204,7 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: Address, u
             // TODO filter out lying updates
             // e.g. an update could lie about its source address if not checked
             match consumer_update.clone() {
-                ConsumerUpdate::FromServer(server_node, inner) => {
+                ConsumerUpdate::FromServer(server_node, _inner) => {
                     // handle the request
                     if server_node != source.node {
                         // no spoofing
@@ -229,11 +225,10 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: Address, u
                         node: service_node.clone(),
                         id: service_name.clone()
                     };
-                    for (consumer_id, consumer) in state.client.consumers.iter_mut() {
-                        if (!consumer.services.contains_key(&service_id)) {
+                    for (_consumer_id, consumer) in state.client.consumers.iter_mut() {
+                        if !consumer.services.contains_key(&service_id) {
                             continue;
                         }
-                        let service = consumer.services.get_mut(&service_id).unwrap();
                         match inner {
                             ConsumerServiceUpdate::Kick => {
                                 consumer.services.remove(&service_id);
@@ -262,9 +257,6 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: Address, u
                 }
             }
         }
-        _ => {
-
-        }
     }
     Ok(())
 }
@@ -277,7 +269,7 @@ fn get_client_id(our: &Address, consumer: &Consumer) -> ConsumerId {
     }
 }
 
-fn handle_client_request(our: &Address, state: &mut DartState, source: Address, req: ClientRequest) -> anyhow::Result<()> {
+fn handle_client_request(our: &Address, state: &mut DartState, _source: Address, req: ClientRequest) -> anyhow::Result<()> {
     // println!("client request: {:?}", req);
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -296,7 +288,7 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                 }
             }
             if let Some(consumer) = state.client.consumers.get(&num) {
-                for (service_id, service) in consumer.services.iter() {
+                for (service_id, _service) in consumer.services.iter() {
                     // TODO this kind of sucks
                     // here we only send the unsub if no other consumer is subscribed to the service in question
                     // 
@@ -325,7 +317,7 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
 
             match inner {
                 ConsumerRequest::JoinService(sid) => {
-                    if let Some(service) = consumer.services.get(&sid) {
+                    if let Some(_service) = consumer.services.get(&sid) {
                         // already have it
                         // send this anyways just to refresh the connection
                         let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::Subscribe);
@@ -334,7 +326,7 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                     } else {
                         consumer.services.insert(sid.clone(), new_sync_service(sid.clone()));
 
-                        let consumer_id = get_client_id(our, consumer);
+                        let _consumer_id = get_client_id(our, consumer);
                         let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::Subscribe);
                         let address = get_server_address(sid.clone().node.as_str());
                         poke_server(&address, s_req)?;
@@ -343,7 +335,7 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                     }
                 }
                 ConsumerRequest::ExitService(sid) => {
-                    if let Some(service) = consumer.services.get(&sid) {
+                    if let Some(_service) = consumer.services.get(&sid) {
                         let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::Unsubscribe);
                         let address = get_server_address(sid.clone().node.as_str());
                         poke_server(&address, s_req)?;
@@ -355,7 +347,7 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                     }
                 }
                 ConsumerRequest::ServiceHeartbeat(sid) => {
-                    if let Some(service) = consumer.services.get(&sid) {
+                    if let Some(_service) = consumer.services.get(&sid) {
                         let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::PresenceHeartbeat);
                         let address = get_server_address(sid.clone().node.as_str());
                         poke_server(&address, s_req)?;
@@ -370,7 +362,7 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                     poke_server(&address, s_req)?;
                 }
                 ConsumerRequest::SendToService(sid, req ) => {
-                    if let Some(service) = consumer.services.get(&sid) {
+                    if let Some(_service) = consumer.services.get(&sid) {
                         let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::ChatRequest(req));
                         let address = get_server_address(sid.clone().node.as_str());
                         poke_server(&address, s_req)?;
@@ -378,9 +370,6 @@ fn handle_client_request(our: &Address, state: &mut DartState, source: Address, 
                         // dont have this service
                         // TODO maybe tell frontend that it's missing
                     }
-                }
-                _ => {
-                    println!("unexpected consumer request: {:?}", inner);
                 }
             }
         }
@@ -481,7 +470,7 @@ fn handle_http_server_request(
         HttpServerRequest::WebSocketClose(channel_id) => {
             state.client.consumers.remove(&channel_id);
         }
-        HttpServerRequest::Http(request) => {
+        HttpServerRequest::Http(_request) => {
         }
     };
 
@@ -518,19 +507,13 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
                 // println!("client update: {:?}", message);
                 handle_client_update(our, state, source.clone(), s_upd)?;
             }
-            _ => {
-                println!("unexpected Request: {:?}", message);
-                // return Err(anyhow::anyhow!("unexpected Request: {:?}", message));
-            }
         }
         Ok(())
-
     }
-
 }
 
 fn update_all_consumers (state: &DartState, update: ConsumerUpdate) {
-    for (id, consumer) in state.client.consumers.iter() {
+    for (_id, consumer) in state.client.consumers.iter() {
         update_consumer(consumer.ws_channel_id, update.clone()).unwrap();
     }
 }
@@ -562,8 +545,8 @@ fn update_consumer (
     Ok(())
 }
 
-const IS_FAKE: bool = !cfg!(feature = "prod");
-const SERVER_NODE: &str = if IS_FAKE { "fake.dev" } else { "waterhouse.os" };
+// const IS_FAKE: bool = !cfg!(feature = "prod");
+// const SERVER_NODE: &str = if IS_FAKE { "fake.dev" } else { "waterhouse.os" };
 const PROCESS_NAME : &str = "dartfrog:dartfrog:herobrine.os";
 
 fn get_server_address(node_id: &str) -> Address {
@@ -621,6 +604,28 @@ fn init(our: Address) {
 
     // subscribe to SERVER
     // let _ = subscribe_to_server(&mut state, &server);
+
+    let _child_process_id = match spawn(
+        // name of the child process
+        Some("spawned_child_process"),
+        // path to find the compiled Wasm file for the child process
+        &format!("{}/pkg/chat.wasm", our.package_id()),
+        // what to do when this process crashes/panics/finishes
+        OnExit::None,
+        // capabilities to pass onto the child
+        vec![],
+        vec![],
+        // this process will not be public
+        false,
+    ) {
+        Ok(spawned_process_id) => {
+            spawned_process_id
+        }
+        Err(e) => {
+            panic!("couldn't spawn, {:?}", e);
+        }
+    };
+
 
     loop {
         match handle_message(&our, &mut state) {

@@ -30,10 +30,6 @@ pub struct DartState {
     pub client: ClientState,
     pub server: ServerState,
 }
-// #[derive(Debug, Serialize, Deserialize, Clone, Hash)]
-// struct Presence {
-//     pub time: u64,
-// }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ChatState {
