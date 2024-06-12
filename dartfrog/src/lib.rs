@@ -2,10 +2,10 @@ use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-mod types;
+// mod common;
+use common::*;
 use kinode_process_lib::vfs::{create_drive, open_file};
 use kinode_process_lib::{spawn, OnExit};
-use types::*;
 
 mod constants;
 use kinode_process_lib::{http, await_message, call_init, println, Address, Request,
@@ -21,6 +21,31 @@ wit_bindgen::generate!({
     path: "wit",
     world: "process",
 });
+
+fn start_plugin_process(name:String, service_name:String, our:&Address) {
+    println!("spawning process: {} {}", name, service_name);
+    let _child_process_id = match spawn(
+        // name of the child process
+        Some(&format!("df-plugin-{}-{}", name, service_name)),
+        // path to find the compiled Wasm file for the child process
+        &format!("{}/pkg/{}.wasm", our.package_id(), name),
+        // what to do when this process crashes/panics/finishes
+        OnExit::None,
+        // capabilities to pass onto the child
+        vec![],
+        vec![],
+        // this process will not be public
+        false,
+    ) {
+        Ok(spawned_process_id) => {
+            println!("spawned process: {:?}", spawned_process_id);
+            spawned_process_id
+        }
+        Err(e) => {
+            panic!("couldn't spawn, {:?}", e);
+        }
+    };
+}
 
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
     // println!("server request: {:?}", req);
@@ -38,7 +63,11 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             if let Some(_service) = state.server.services.get(&service_id.id) {
                 // already exists
             } else {
-                let service = new_service(service_id.clone());
+                let mut service = new_service(service_id.clone());
+                for plugin in plugins {
+                    service.metadata.plugins.insert(plugin.clone());
+                    start_plugin_process(plugin, service.id.id.clone(), our)
+                }
                 state.server.services.insert(service_id.id.clone(), service.clone());
                 // TODO read_service??? for restoring state
                 write_service(state.server.drive_path.clone(), &service)?;
@@ -619,43 +648,18 @@ fn init(our: Address) {
         .unwrap();
 
     // let server = get_server_address(SERVER_NODE);
-    let plugins = Vec::new();
+    let mut plugins = Vec::new();
+    plugins.push("chat".to_string());
     poke_server(&our, ServerRequest::CreateService(ServiceId {
         node: our.node.clone(),
         id: "chat".to_string()
     }, plugins)).unwrap();
 
     let mut state = new_dart_state();
-    // state.server.chat_state = load_chat_state();
 
     let drive_path: String = create_drive(our.package_id(), "dartfrog", None).unwrap();
     println!("drive_path: {:?}", drive_path);
     state.server.drive_path = drive_path;
-
-    // subscribe to SERVER
-    // let _ = subscribe_to_server(&mut state, &server);
-
-    let _child_process_id = match spawn(
-        // name of the child process
-        Some("spawned_child_process"),
-        // path to find the compiled Wasm file for the child process
-        &format!("{}/pkg/chat.wasm", our.package_id()),
-        // what to do when this process crashes/panics/finishes
-        OnExit::None,
-        // capabilities to pass onto the child
-        vec![],
-        vec![],
-        // this process will not be public
-        false,
-    ) {
-        Ok(spawned_process_id) => {
-            spawned_process_id
-        }
-        Err(e) => {
-            panic!("couldn't spawn, {:?}", e);
-        }
-    };
-
 
     loop {
         match handle_message(&our, &mut state) {
