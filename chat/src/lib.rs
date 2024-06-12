@@ -3,8 +3,8 @@ use kinode_process_lib::{await_message, call_init, println, vfs::open_file, Addr
 };
 
 wit_bindgen::generate!({
-    path: "wit",
-    world: "process",
+    path: "target/wit",
+    world: "process-v0",
 });
 
 fn read_service(drive_path: &String, service_id: &ServiceId) -> anyhow::Result<()> {
@@ -18,7 +18,7 @@ fn read_service(drive_path: &String, service_id: &ServiceId) -> anyhow::Result<(
                 // Fail silently if we can't parse the request
                 return Ok(())
             };
-            println!("read service: {:?}", service);
+            // println!("read service: {:?}", service);
         }
         Err(e) => {
             println!("error reading service metadata: {:?}", e);
@@ -30,23 +30,38 @@ fn read_service(drive_path: &String, service_id: &ServiceId) -> anyhow::Result<(
 fn handle_message(our: &Address, _state: &mut ChatState, meta: &mut Option<PluginMetadata>) -> anyhow::Result<()> {
     let message = await_message()?;
 
+    println!("chat.wasm received message: {:?}", message);
     let body = message.body();
     let source = message.source();
     if !message.is_request() {
-        return Err(anyhow::anyhow!("unexpected Response: {:?}", message));
+        println!("unexpected response");
+        return Ok(());
+        // return Err(anyhow::anyhow!("unexpected Response: {:?}", message));
     }
     if message.source().node != our.node {
         // TODO also check source process?
-        return Err(anyhow::anyhow!("unexpected source: {:?}", source));
+        // return Err(anyhow::anyhow!("unexpected source: {:?}", source));
+        println!("unexpected source: {:?}", source);
+        return Ok(());
     }
 
     if meta.is_none() {
         // need to init before using
-        if let PluginInput::Init(init) = serde_json::from_slice(body)? {
-            println!("received init message: {:?}", init);
-            *meta = Some(init);
+        match serde_json::from_slice(body)? {
+            PluginInput::Kill => {
+                println!("chat.wasm received kill message");
+                return Err(anyhow::anyhow!("kill message received"));
+            }
+
+            PluginInput::Init(init) => {
+                println!("chat.wasm received init message");
+                // println!("received init message: {:?}", init);
+                *meta = Some(init);
+            }
+            _ => {
+
+            }
         }
-        return Ok(());
     }
 
     if let Some(meta) = meta {
@@ -61,7 +76,7 @@ fn handle_message(our: &Address, _state: &mut ChatState, meta: &mut Option<Plugi
                 println!("inside chat module client request: {:?}", from);
             }
             PluginInput::ClientJoined(from) => {
-                println!("double WTF inside chat module client joined: {:?}", from);
+                println!("888 WTF inside chat module client joined: {:?}", from);
             }
             PluginInput::ClientExited(from) => {
                 println!("client exit: {:?}", from);
@@ -86,7 +101,7 @@ fn init(our: Address) {
                     println!("Exiting loop due to kill message");
                     break;
                 }
-                println!("handle_message error: {:?}", e);
+                println!("chat.wasm handle_message error: {:?}", e);
             }
         };
     }

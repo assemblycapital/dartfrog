@@ -14,9 +14,9 @@
             "0.1.3": "8aac947d3277b740946c81bcf0088defd605560d18cbbd252910af7af1428313",
             "0.1.4": "1da7d48c4ce9b0fbfc4e927de514e3d625ff1aeb29c2d521f77f621a81af1224",
             "0.2.0": "e9d3fb762d7f63a2068da93b806ea97975765b4db06473ba78a00fe9127b5a4a"
-        }
+        },
+        "wit_version": 0
     },
-    "wit_version": 0,
     "external_url": "",
     "animation_url": ""
 }

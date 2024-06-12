@@ -4,8 +4,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 // mod common;
 use common::*;
-use kinode_process_lib::{get_on_exit, set_on_exit, OnExit};
-// use kinode::process::standard::{OnExit, get_on_exit, set_on_exit};
 use kinode_process_lib::vfs::{create_drive, open_file};
 mod constants;
 use kinode_process_lib::{http, await_message, call_init, println, Address, Request,
@@ -21,8 +19,8 @@ use kinode_process_lib::{http, await_message, call_init, println, Address, Reque
 };
 
 wit_bindgen::generate!({
-    path: "wit",
-    world: "process",
+    path: "target/wit",
+    world: "process-v0",
 });
 
 fn start_plugin_process(name:String, service:&Service, our:&Address, drive_path:String) {
@@ -31,17 +29,26 @@ fn start_plugin_process(name:String, service:&Service, our:&Address, drive_path:
 
     // request_capabilities();
 
-    let _ = poke_plugin(&plugin_address, PluginInput::Kill);
+    // let _ = poke_plugin(&plugin_address, PluginInput::Kill);
 
     // TODO only grant drive read access
     let caps = our_capabilities();
 
     let mut on_exit = kinode_process_lib::OnExit::get();
+    println!("plugin address {},", plugin_address);
     let req = kinode_process_lib::Request::to(plugin_address.clone())
         .body(serde_json::to_vec(&PluginInput::Kill).unwrap());
-    let _ = on_exit.add_request(req);
+    if let Ok(()) = on_exit.add_request(req) {
+        println!("added kill request");
+    } else {
+        println!("failed to add kill request");
+    }
 
-    let _ = on_exit.set();
+    if let Ok(()) = on_exit.set() {
+        println!("set on exit");
+    } else {
+        println!("failed to set on exit");
+    }
 
     match spawn(
         // name of the child process
