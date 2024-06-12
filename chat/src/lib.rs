@@ -55,22 +55,21 @@ fn handle_message(our: &Address, _state: &mut ChatState, meta: &mut Option<Plugi
         match serde_json::from_slice(body)? {
             PluginInput::Kill => {
                 println!("received kill message");
-                // TODO
+                return Err(anyhow::anyhow!("kill message received"));
             }
             PluginInput::ClientRequest(from, _req) => {
                 println!("inside chat module client request: {:?}", from);
             }
             PluginInput::ClientJoined(from) => {
-                println!("inside chat module client joined: {:?}", from);
+                println!("double WTF inside chat module client joined: {:?}", from);
             }
             PluginInput::ClientExited(from) => {
                 println!("client exit: {:?}", from);
             }
-            _ => {
-            }
+            _ => {}
         }
     }
-    
+
     Ok(())
 }
 
@@ -83,6 +82,10 @@ fn init(our: Address) {
         match handle_message(&our, &mut state, &mut meta) {
             Ok(()) => {}
             Err(e) => {
+                if e.to_string().contains("kill message received") {
+                    println!("Exiting loop due to kill message");
+                    break;
+                }
                 println!("handle_message error: {:?}", e);
             }
         };

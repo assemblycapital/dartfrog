@@ -4,9 +4,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 // mod common;
 use common::*;
+use kinode_process_lib::{get_on_exit, set_on_exit, OnExit};
+// use kinode::process::standard::{OnExit, get_on_exit, set_on_exit};
 use kinode_process_lib::vfs::{create_drive, open_file};
-use kinode_process_lib::{spawn, OnExit};
-
 mod constants;
 use kinode_process_lib::{http, await_message, call_init, println, Address, Request,
     get_blob,
@@ -15,7 +15,9 @@ use kinode_process_lib::{http, await_message, call_init, println, Address, Reque
         send_ws_push, HttpServerRequest,
         WsMessageType,
     },
-   our_capabilities
+    our_capabilities,
+    spawn,
+    
 };
 
 wit_bindgen::generate!({
@@ -24,10 +26,22 @@ wit_bindgen::generate!({
 });
 
 fn start_plugin_process(name:String, service:&Service, our:&Address, drive_path:String) {
-    // get this capability from our store
-    
-    let caps = our_capabilities();
+    // kill it if it already exists
+    let plugin_address = get_plugin_address(&name, our.node.as_str(), &service.id.id);
+
+    // request_capabilities();
+
+    let _ = poke_plugin(&plugin_address, PluginInput::Kill);
+
     // TODO only grant drive read access
+    let caps = our_capabilities();
+
+    let mut on_exit = kinode_process_lib::OnExit::get();
+    let req = kinode_process_lib::Request::to(plugin_address.clone())
+        .body(serde_json::to_vec(&PluginInput::Kill).unwrap());
+    let _ = on_exit.add_request(req);
+
+    let _ = on_exit.set();
 
     match spawn(
         // name of the child process
@@ -35,7 +49,7 @@ fn start_plugin_process(name:String, service:&Service, our:&Address, drive_path:
         // path to find the compiled Wasm file for the child process
         &format!("{}/pkg/{}.wasm", our.package_id(), name),
         // what to do when this process crashes/panics/finishes
-        OnExit::None,
+        kinode_process_lib::OnExit::None,
         // capabilities to pass onto the child
         caps,
         vec![],
