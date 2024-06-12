@@ -12,7 +12,7 @@ fn read_service(drive_path: &String, service_id: &ServiceId) -> anyhow::Result<(
     let file_path = format!("{}/{}.service.txt", drive_path, service_name);
     let file = open_file(&file_path, true, None);
     match file {
-        Ok(mut file) => {
+        Ok(file) => {
             let bytes = file.read()?;
             let Ok(service) = serde_json::from_slice::<Service>(&bytes) else {
                 // Fail silently if we can't parse the request
@@ -26,7 +26,8 @@ fn read_service(drive_path: &String, service_id: &ServiceId) -> anyhow::Result<(
     }
     Ok(())
 }
-fn handle_message(our: &Address, state: &mut ChatState, meta: &mut Option<PluginMetadata>) -> anyhow::Result<()> {
+
+fn handle_message(our: &Address, _state: &mut ChatState, meta: &mut Option<PluginMetadata>) -> anyhow::Result<()> {
     let message = await_message()?;
 
     let body = message.body();
@@ -49,18 +50,21 @@ fn handle_message(our: &Address, state: &mut ChatState, meta: &mut Option<Plugin
     }
 
     if let Some(meta) = meta {
-        read_service(&meta.drive_path, &meta.service.id);
+        read_service(&meta.drive_path, &meta.service.id)?;
 
         match serde_json::from_slice(body)? {
             PluginInput::Kill => {
                 println!("received kill message");
                 // TODO
             }
-            PluginInput::ClientRequest(from, req) => {
+            PluginInput::ClientRequest(from, _req) => {
+                println!("inside chat module client request: {:?}", from);
             }
             PluginInput::ClientJoined(from) => {
+                println!("inside chat module client joined: {:?}", from);
             }
             PluginInput::ClientExited(from) => {
+                println!("client exit: {:?}", from);
             }
             _ => {
             }

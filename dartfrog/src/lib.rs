@@ -15,6 +15,7 @@ use kinode_process_lib::{http, await_message, call_init, println, Address, Reque
         send_ws_push, HttpServerRequest,
         WsMessageType,
     },
+   our_capabilities
 };
 
 wit_bindgen::generate!({
@@ -22,27 +23,37 @@ wit_bindgen::generate!({
     world: "process",
 });
 
-fn start_plugin_process(name:String, service_name:String, our:&Address) {
-    println!("spawning process: {} {}", name, service_name);
-    let _child_process_id = match spawn(
+fn start_plugin_process(name:String, service:&Service, our:&Address, drive_path:String) {
+    // get this capability from our store
+    
+    let caps = our_capabilities();
+    // TODO only grant drive read access
+
+    match spawn(
         // name of the child process
-        Some(&format!("df-plugin-{}-{}", name, service_name)),
+        Some(&format!("df-plugin-{}-{}", name, service.id.id)),
         // path to find the compiled Wasm file for the child process
         &format!("{}/pkg/{}.wasm", our.package_id(), name),
         // what to do when this process crashes/panics/finishes
         OnExit::None,
         // capabilities to pass onto the child
-        vec![],
+        caps,
         vec![],
         // this process will not be public
         false,
     ) {
         Ok(spawned_process_id) => {
             println!("spawned process: {:?}", spawned_process_id);
-            spawned_process_id
+            // initialize it
+            poke_plugin(&get_plugin_address(&name, our.node.as_str(), &service.id.id), PluginInput::Init(PluginMetadata {
+                plugin_name: name.clone(),
+                drive_path: drive_path,
+                service: service.clone()
+            })).unwrap();
+            // print!("couldn't spawn, {:?}", e)
         }
         Err(e) => {
-            panic!("couldn't spawn, {:?}", e);
+            print!("couldn't spawn, {:?}", e)
         }
     };
 }
@@ -66,7 +77,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                 let mut service = new_service(service_id.clone());
                 for plugin in plugins {
                     service.metadata.plugins.insert(plugin.clone());
-                    start_plugin_process(plugin, service.id.id.clone(), our)
+                    start_plugin_process(plugin, &service, our, state.server.drive_path.clone())
                 }
                 state.server.services.insert(service_id.id.clone(), service.clone());
                 // TODO read_service??? for restoring state
@@ -120,6 +131,17 @@ fn write_service(drive_path: String, service: &Service) -> anyhow::Result<()> {
     Ok(())
 }
 
+fn poke_plugins(plugins: &HashSet<String>, poke: PluginInput, service_name: &String, our: &Address) -> anyhow::Result<()> {
+    for plugin in plugins {
+        let address = get_plugin_address(plugin, our.node.as_str(), service_name);
+        println!("poking plugin: {:?}", address);
+        Request::to(address)
+            .body(serde_json::to_vec(&poke)?)
+            .send()?;
+    }
+    Ok(())
+}
+
 fn handle_service_request(our: &Address, state: &mut DartState, source: Address, service_id: ServiceId, req: ServiceRequest) -> anyhow::Result<()> {
     if service_id.node != our.node {
         return Ok(());
@@ -166,6 +188,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                         .as_secs(),
                 });
                 write_service(state.server.drive_path.clone(), service)?;
+                poke_plugins(&service.metadata.plugins, PluginInput::ClientJoined(source.node.clone()), &service.id.id, our)?;
                 let ack = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::SubscribeAck);
                 let meta = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
                 let chat = make_consumer_service_update(service_id, ConsumerServiceUpdate::ChatUpdate(ChatUpdate::FullMessageHistory(service.chat_state.messages.clone())));
@@ -609,6 +632,13 @@ fn get_server_address(node_id: &str) -> Address {
     Address::from_str(&s).unwrap()
 }
 
+const PACKAGE_NAME : &str = "dartfrog:herobrine.os";
+fn get_plugin_address(plugin_name: &str, node_id: &str, service_name: &str) -> Address {
+    let s =
+        format!("{}@df-plugin-{}-{}:{}", node_id, plugin_name, service_name, PACKAGE_NAME);
+    Address::from_str(&s).unwrap()
+}
+
 
 fn new_dart_state() -> DartState {
     DartState {
@@ -648,6 +678,11 @@ fn init(our: Address) {
         .unwrap();
 
     // let server = get_server_address(SERVER_NODE);
+    let mut state = new_dart_state();
+
+    let drive_path: String = create_drive(our.package_id(), "dartfrog", None).unwrap();
+    state.server.drive_path = drive_path;
+
     let mut plugins = Vec::new();
     plugins.push("chat".to_string());
     poke_server(&our, ServerRequest::CreateService(ServiceId {
@@ -655,11 +690,6 @@ fn init(our: Address) {
         id: "chat".to_string()
     }, plugins)).unwrap();
 
-    let mut state = new_dart_state();
-
-    let drive_path: String = create_drive(our.package_id(), "dartfrog", None).unwrap();
-    println!("drive_path: {:?}", drive_path);
-    state.server.drive_path = drive_path;
 
     loop {
         match handle_message(&our, &mut state) {
@@ -682,6 +712,13 @@ fn update_client(update: ConsumerUpdate, client_node: String) -> anyhow::Result<
 fn poke_server(address:&Address, req: ServerRequest) -> anyhow::Result<()> {
     Request::to(address)
         .body(serde_json::to_vec(&DartMessage::ServerRequest(req))?)
+        .send()?;
+    Ok(())
+}
+
+fn poke_plugin(address:&Address, poke: PluginInput) -> anyhow::Result<()> {
+    Request::to(address)
+        .body(serde_json::to_vec(&poke)?)
         .send()?;
     Ok(())
 }
