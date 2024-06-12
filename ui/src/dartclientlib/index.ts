@@ -306,7 +306,10 @@ class DartApi {
     if (!this.api) { return; }
     const wrapper = {
       "ServerRequest": {
-        "CreateService": { "node": serviceId.node, "id": serviceId.id}
+        "CreateService": [
+          { "node": serviceId.node, "id": serviceId.id },
+          [] // plugins
+        ]
       }
     }
 

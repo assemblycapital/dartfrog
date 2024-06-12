@@ -3,6 +3,7 @@ use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 mod types;
+use kinode_process_lib::vfs::{create_drive, open_file};
 use kinode_process_lib::{spawn, OnExit};
 use types::*;
 
@@ -27,7 +28,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
         ServerRequest::ServiceRequest(service_id, service_request) => {
             handle_service_request(our, state, source, service_id, service_request)?;
         }
-        ServerRequest::CreateService(service_id) => {
+        ServerRequest::CreateService(service_id, plugins) => {
             if source.node != our.node {
                 return Ok(());
             }
@@ -37,7 +38,10 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             if let Some(_service) = state.server.services.get(&service_id.id) {
                 // already exists
             } else {
-                state.server.services.insert(service_id.id.clone(), new_service(service_id.clone()));
+                let service = new_service(service_id.clone());
+                state.server.services.insert(service_id.id.clone(), service.clone());
+                // TODO read_service??? for restoring state
+                write_service(state.server.drive_path.clone(), &service)?;
             }
         }
         ServerRequest::DeleteService(service_id) => {
@@ -67,6 +71,24 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
 
 fn make_consumer_service_update(service_id: ServiceId, update: ConsumerServiceUpdate) -> ConsumerUpdate {
     ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), update)
+}
+
+fn write_service(drive_path: String, service: &Service) -> anyhow::Result<()> {
+    let service_name = service.id.id.clone();
+    let file_path = format!("{}/{}.service.txt", drive_path, service_name);
+    let file = open_file(&file_path, true, None);
+    match file {
+        Ok(mut file) => {
+            let metadata = serde_json::to_string(&service)?;
+            let bytes = metadata.as_bytes();
+            file.set_len(bytes.len() as u64)?;
+            file.write_all(metadata.as_bytes())?;
+        }
+        Err(e) => {
+            println!("error writing service metadata: {:?}", e);
+        }
+    }
+    Ok(())
 }
 
 fn handle_service_request(our: &Address, state: &mut DartState, source: Address, service_id: ServiceId, req: ServiceRequest) -> anyhow::Result<()> {
@@ -114,6 +136,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                         .unwrap()
                         .as_secs(),
                 });
+                write_service(state.server.drive_path.clone(), service)?;
                 let ack = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::SubscribeAck);
                 let meta = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
                 let chat = make_consumer_service_update(service_id, ConsumerServiceUpdate::ChatUpdate(ChatUpdate::FullMessageHistory(service.chat_state.messages.clone())));
@@ -127,6 +150,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                     return Ok(());
                 }
                 service.metadata.subscribers.remove(&source.node.clone());
+                write_service(state.server.drive_path.clone(), service)?;
                 let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
                 update_subscribers(meta, service.metadata.subscribers.clone())?;
             }
@@ -174,6 +198,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                     .duration_since(UNIX_EPOCH)
                     .unwrap()
                     .as_secs();
+                write_service(state.server.drive_path.clone(), service)?;
                 let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
                 update_subscribers(meta, service.metadata.subscribers.clone())?;
             }
@@ -594,13 +619,18 @@ fn init(our: Address) {
         .unwrap();
 
     // let server = get_server_address(SERVER_NODE);
+    let plugins = Vec::new();
     poke_server(&our, ServerRequest::CreateService(ServiceId {
         node: our.node.clone(),
         id: "chat".to_string()
-    })).unwrap();
+    }, plugins)).unwrap();
 
     let mut state = new_dart_state();
     // state.server.chat_state = load_chat_state();
+
+    let drive_path: String = create_drive(our.package_id(), "dartfrog", None).unwrap();
+    println!("drive_path: {:?}", drive_path);
+    state.server.drive_path = drive_path;
 
     // subscribe to SERVER
     // let _ = subscribe_to_server(&mut state, &server);

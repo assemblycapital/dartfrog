@@ -25,7 +25,7 @@ pub enum ConnectionStatus {
     Disconnected,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DartState {
     pub client: ClientState,
     pub server: ServerState,
@@ -70,6 +70,7 @@ pub fn new_service_metadata() -> ServiceMetadata {
   ServiceMetadata {
       subscribers: HashSet::new(),
       user_presence: HashMap::new(),
+      plugins: HashSet::new(),
   }
 }
 pub fn new_sync_service(id: ServiceId) -> SyncService {
@@ -88,10 +89,12 @@ pub fn new_sync_service(id: ServiceId) -> SyncService {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ServerState {
     pub services: HashMap<String, Service>,
+    pub drive_path: String,
 }
 pub fn new_server_state() -> ServerState {
     ServerState {
         services: HashMap::new(),
+        drive_path: String::from(""),
     }
 }
 
@@ -99,6 +102,7 @@ pub fn new_server_state() -> ServerState {
 pub struct ServiceMetadata {
     pub subscribers: HashSet<String>,
     pub user_presence: HashMap<String, Presence>,
+    pub plugins: HashSet<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -152,7 +156,7 @@ pub struct ChannelId {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ServerRequest {
     ServiceRequest(ServiceId, ServiceRequest),
-    CreateService(ServiceId),
+    CreateService(ServiceId, Vec<String>), // service id, plugins
     DeleteService(ServiceId),
     RequestServiceList
 }
@@ -167,6 +171,8 @@ pub enum ServiceRequest {
     Subscribe,
     Unsubscribe,
     PresenceHeartbeat,
+    AddPlugin(String),
+    RemovePlugin(String),
     PluginMessageTODO(String), // plugin id
     ChatRequest(ChatRequest),
 }
