@@ -379,6 +379,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "chat"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "kinode_process_lib",
+ "serde",
+ "serde_json",
+ "wit-bindgen",
+]
+
+[[package]]
 name = "const-hex"
 version = "1.11.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

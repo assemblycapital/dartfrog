@@ -209,7 +209,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
                 <button
                   style={{
                     cursor: "pointer",
-                    color: "#ff000077"
+                    color: "#ff666699"
                   }}
                   onClick={() => {
                     deleteService(makeServiceId(service.node, service.id));
@@ -221,7 +221,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
                 <span
                   style={{
                     cursor: "default",
-                    userSelect: "none",
+                    // userSelect: "none",
                     alignContent: "center",
                   }}
                 >
@@ -264,13 +264,13 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
                     setTabService(makeServiceId(service.node, service.id));
                   }}
                 >
-                  join
+                  join wtf
                 </button>
                 <span
                   style={{
                     cursor: "default",
                     alignContent: "center",
-                    userSelect: "none",
+                    // userSelect: "none",
                   }}
                 >
                   {makeServiceId(service.node, service.id)}
