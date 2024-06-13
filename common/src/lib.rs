@@ -249,6 +249,7 @@ pub enum PluginInput {
 pub enum PluginOutput {
     UpdateSubscribers(String), // untyped update string JSON
     UpdateClient(String, String), // node name, untyped update string JSON
+    ShuttingDown
 }
 
 #[derive(Debug, Serialize, Deserialize)]

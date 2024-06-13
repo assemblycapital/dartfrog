@@ -27,56 +27,49 @@ fn start_plugin_process(name:String, service:&Service, our:&Address, drive_path:
     // kill it if it already exists
     let plugin_address = get_plugin_address(&name, our.node.as_str(), &service.id.id);
 
-    // request_capabilities();
+    match wrap_spawn_plugin(our, name.clone(), service.clone()) {
+        Ok(_spawned_process_id) => {
+            // kill "after" spawning to get capabilities :p
+            // this is a workaround because on_exit doesn't work as intended in current version
+            let _ = Request::to(&plugin_address)
+                .body(serde_json::to_vec(&PluginInput::Kill).unwrap())
+                .send_and_await_response(1).unwrap();
 
-    // let _ = poke_plugin(&plugin_address, PluginInput::Kill);
-
-    // TODO only grant drive read access
-    let caps = our_capabilities();
-
-    let mut on_exit = kinode_process_lib::OnExit::get();
-    println!("plugin address {},", plugin_address);
-    let req = kinode_process_lib::Request::to(plugin_address.clone())
-        .body(serde_json::to_vec(&PluginInput::Kill).unwrap());
-    if let Ok(()) = on_exit.add_request(req) {
-        println!("added kill request");
-    } else {
-        println!("failed to add kill request");
-    }
-
-    if let Ok(()) = on_exit.set() {
-        println!("set on exit");
-    } else {
-        println!("failed to set on exit");
-    }
-
-    match spawn(
-        // name of the child process
-        Some(&format!("df-plugin-{}-{}", name, service.id.id)),
-        // path to find the compiled Wasm file for the child process
-        &format!("{}/pkg/{}.wasm", our.package_id(), name),
-        // what to do when this process crashes/panics/finishes
-        kinode_process_lib::OnExit::None,
-        // capabilities to pass onto the child
-        caps,
-        vec![],
-        // this process will not be public
-        false,
-    ) {
-        Ok(spawned_process_id) => {
-            println!("spawned process: {:?}", spawned_process_id);
-            // initialize it
-            poke_plugin(&get_plugin_address(&name, our.node.as_str(), &service.id.id), PluginInput::Init(PluginMetadata {
-                plugin_name: name.clone(),
-                drive_path: drive_path,
-                service: service.clone()
-            })).unwrap();
-            // print!("couldn't spawn, {:?}", e)
+            match wrap_spawn_plugin(our, name.clone(), service.clone()) {
+                // initialize it
+                Ok(_spawned_process_id) => {
+                    poke_plugin(&plugin_address, PluginInput::Init(PluginMetadata {
+                        plugin_name: name.clone(),
+                        drive_path: drive_path,
+                        service: service.clone()
+                    })).unwrap();
+                }
+                Err(e) => {
+                    print!("couldn't spawn, {:?}", e)
+                }
+            }
         }
         Err(e) => {
             print!("couldn't spawn, {:?}", e)
         }
     };
+}
+
+fn wrap_spawn_plugin(our: &Address, plugin_name: String, service: Service) -> Result<kinode_process_lib::ProcessId, kinode_process_lib::SpawnError> {
+    spawn(
+        // name of the child process
+        Some(&format!("df-plugin-{}-{}", plugin_name, service.id.id)),
+        // path to find the compiled Wasm file for the child process
+        &format!("{}/pkg/{}.wasm", our.package_id(), plugin_name),
+        // what to do when this process crashes/panics/finishes
+        kinode_process_lib::OnExit::None,
+        // capabilities to pass onto the child
+        // TODO only grant drive read access
+        our_capabilities(),
+        vec![],
+        // this process will not be public
+        false,
+    )
 }
 
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {

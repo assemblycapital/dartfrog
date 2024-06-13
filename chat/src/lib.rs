@@ -1,5 +1,5 @@
-use common::{new_chat_state, ChatState, PluginInput, PluginMetadata, Service, ServiceId};
-use kinode_process_lib::{await_message, call_init, println, vfs::open_file, Address
+use common::{new_chat_state, ChatState, PluginInput, PluginMetadata, PluginOutput, Service, ServiceId};
+use kinode_process_lib::{await_message, call_init, println, vfs::open_file, Address, Response, Request
 };
 
 wit_bindgen::generate!({
@@ -30,7 +30,7 @@ fn read_service(drive_path: &String, service_id: &ServiceId) -> anyhow::Result<(
 fn handle_message(our: &Address, _state: &mut ChatState, meta: &mut Option<PluginMetadata>) -> anyhow::Result<()> {
     let message = await_message()?;
 
-    println!("chat.wasm received message: {:?}", message);
+    // println!("child received message: {:?}", message);
     let body = message.body();
     let source = message.source();
     if !message.is_request() {
@@ -44,17 +44,16 @@ fn handle_message(our: &Address, _state: &mut ChatState, meta: &mut Option<Plugi
         println!("unexpected source: {:?}", source);
         return Ok(());
     }
-
     if meta.is_none() {
         // need to init before using
         match serde_json::from_slice(body)? {
             PluginInput::Kill => {
-                println!("chat.wasm received kill message");
+                // println!("child received kill message");
                 return Err(anyhow::anyhow!("kill message received"));
             }
 
             PluginInput::Init(init) => {
-                println!("chat.wasm received init message");
+                println!("child received init message");
                 // println!("received init message: {:?}", init);
                 *meta = Some(init);
             }
@@ -69,14 +68,18 @@ fn handle_message(our: &Address, _state: &mut ChatState, meta: &mut Option<Plugi
 
         match serde_json::from_slice(body)? {
             PluginInput::Kill => {
-                println!("received kill message");
+                // println!("received kill message");
+                // response doesn't get out before we exit...
+                // Response::new()
+                //     .body(serde_json::to_vec(&PluginOutput::ShuttingDown).unwrap())
+                //     .send().unwrap();
                 return Err(anyhow::anyhow!("kill message received"));
             }
             PluginInput::ClientRequest(from, _req) => {
                 println!("inside chat module client request: {:?}", from);
             }
             PluginInput::ClientJoined(from) => {
-                println!("888 WTF inside chat module client joined: {:?}", from);
+                println!("inside chat module client joined: {:?}", from);
             }
             PluginInput::ClientExited(from) => {
                 println!("client exit: {:?}", from);
@@ -90,7 +93,7 @@ fn handle_message(our: &Address, _state: &mut ChatState, meta: &mut Option<Plugi
 
 call_init!(init);
 fn init(our: Address) {
-    println!("initializing chat process!");
+    // println!("initializing child process. our: {:?}", our);
     let mut meta: Option<PluginMetadata> = None;
     let mut state: ChatState = new_chat_state();
     loop {
@@ -98,10 +101,10 @@ fn init(our: Address) {
             Ok(()) => {}
             Err(e) => {
                 if e.to_string().contains("kill message received") {
-                    println!("Exiting loop due to kill message");
+                    println!("{:?} shutting down", our.process.process_name);
                     break;
                 }
-                println!("chat.wasm handle_message error: {:?}", e);
+                // println!("chat.wasm handle_message error: {:?}", e);
             }
         };
     }
