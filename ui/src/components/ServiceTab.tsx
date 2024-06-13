@@ -90,7 +90,15 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
                   ) : (
                     <div>
                       {/* <ChatHeader serviceId={serviceId} /> */}
-                      <ChatBox serviceId={serviceId} chats={service.chatState.messages}/>
+                      {(service.pluginStates.chat !== undefined) ? (
+
+                        <ChatBox serviceId={serviceId} chatState={service.pluginStates.chat}/>
+                      ):(
+                        <>
+                          <div>chat plugin not available</div>
+                        </>
+                      )}
+
                       <DisplayUserActivity serviceId={serviceId} metadata={service.metadata} />
                     </div>
                 )}

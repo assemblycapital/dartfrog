@@ -6,13 +6,15 @@ import ChatInput from './ChatInput';
 import { Service, ServiceId, makeServiceId } from '../dartclientlib/';
 
 import useDartStore from "../store/dart";
+import { ChatState } from '../dartclientlib/chat';
+import Spinner from './Spinner';
 
 interface ChatBoxProps {
   serviceId: ServiceId;
-  chats: ChatMessageHistory
+  chatState: ChatState
 }
 
-const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chats}) => {
+const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState}) => {
   // const { services } = useDartStore();
   // const [service, setService] = useState<Service | null>(null);
 
@@ -52,14 +54,24 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chats}) => {
     }
   , [nameColors])
 
+  if (!(chatState)) {
+    // this is pretty dumb
+    // but if i dont do it, everything explodes :)
+    return (
+      <div
+      >
+        <Spinner />
+      </div>
+    )
+  }
   useEffect(() => {
     // console.log('new chats')
-    if (chats.size === 0) return;
-    if (!chats.values) return;
-    const sortedMessages = Array.from(chats.values()).sort((a, b) => a.id - b.id);
+    if (chatState.messages.size === 0) return;
+    if (!chatState.messages.values) return;
+    const sortedMessages = Array.from(chatState.messages.values()).sort((a, b) => a.id - b.id);
     setChatMessageList(sortedMessages);
 
-  }, [chats]);
+  }, [chatState.messages]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -80,7 +92,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chats}) => {
 
   useEffect(() => {
     scrollDownChat();
-  }, [chats, scrollDownChat]);
+  }, [chatState, scrollDownChat]);
 
   const getMessageInnerText = useCallback(
     (message: string) => {

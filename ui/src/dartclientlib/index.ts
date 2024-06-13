@@ -41,7 +41,7 @@ export type Service = {
   connectionStatus: ServiceConnectionStatus,
   metadata: ServiceMetadata,
   heartbeatIntervalId?: NodeJS.Timeout,
-  chatState: ChatState,
+  pluginStates: { [key: string]: any },
 }
 export interface Presence {
   time: number;
@@ -80,7 +80,7 @@ function new_service(serviceId: ParsedServiceId) : Service {
     serviceId: serviceId,
     metadata: {subscribers: [], user_presence: {}},
     connectionStatus: {status:ServiceConnectionStatusType.Connecting, timestamp:Date.now()},
-    chatState: {messages: new Map()}
+    pluginStates: {},
   }
 }
 
@@ -219,12 +219,6 @@ class DartApi {
             }
           }
           this.onServicesChange();
-        } else if (response.ChatUpdate) {
-          // console.log('ChatUpdate:', response.ChatUpdate, service.chatState);
-          let newChatState = handleChatUpdate(service.chatState, response.ChatUpdate);
-          service.chatState = newChatState;
-          this.services.set(serviceId, service);
-          this.onServicesChange();
         } else if (response === 'Kick') {
           service.connectionStatus = {status:ServiceConnectionStatusType.Kicked, timestamp:Date.now()};
           this.cancelPresenceHeartbeat(serviceId);
@@ -241,10 +235,14 @@ class DartApi {
     }
   }
 
-  handlePluginUpdate(plugin:string, update: any, serviceId, service) {
+  handlePluginUpdate(plugin:string, update: any, serviceId: ServiceId, service: Service) {
     if (plugin === "chat") {
-      let newChatState = handleChatUpdate(service.chatState, update);
-      service.chatState = newChatState;
+      if (service.pluginStates.chat === undefined) {
+        service.pluginStates.chat = {messages: new Map()};
+      }
+      let chatState = service.pluginStates.chat;
+      let newChatState = handleChatUpdate(chatState, update);
+      service.pluginStates.chat = newChatState;
       this.services.set(serviceId, service);
       this.onServicesChange();
     } else {

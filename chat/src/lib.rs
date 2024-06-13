@@ -1,4 +1,4 @@
-use std::{time::{SystemTime, UNIX_EPOCH}, usize::MAX};
+use std::time::{SystemTime, UNIX_EPOCH};
 use common::{handle_message, update_client, update_subscribers, PluginMetadata, PluginState};
 use kinode_process_lib::{call_init, println, Address};
 use serde::{Deserialize, Serialize};
