@@ -1,32 +1,66 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use common::{get_server_address, new_chat_state, ChatMessage, ChatRequest, ChatState, ChatUpdate, DartMessage, PluginInput, PluginMetadata, PluginOutput, ServerRequest, Service, ServiceId, ServiceRequest, PROCESS_NAME};
-use kinode_process_lib::{await_message, call_init, println, vfs::open_file, Address, Response, Request
+use common::{get_server_address, DartMessage, PluginInput, PluginMetadata, PluginOutput, ServerRequest, Service, ServiceId, ServiceRequest};
+use kinode_process_lib::{await_message, call_init, println, vfs::open_file, Address, Request
 };
+use serde::{Deserialize, Serialize};
 
 wit_bindgen::generate!({
     path: "target/wit",
     world: "process-v0",
 });
 
-fn read_service(drive_path: &String, service_id: &ServiceId) -> anyhow::Result<()> {
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ChatUpdate {
+    Message(ChatMessage),
+    FullMessageHistory(Vec<ChatMessage>),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ChatMessage {
+    pub id: u64,
+    pub time: u64,
+    pub from: String,
+    pub msg: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ChatRequest {
+    SendMessage(String),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ChatState {
+    pub last_message_id: u64,
+    pub messages: Vec<ChatMessage>,
+}
+
+pub fn new_chat_state() -> ChatState {
+    ChatState {
+        last_message_id: 0,
+        messages: Vec::new(),
+    }
+}
+
+
+
+fn read_service(drive_path: &String, service_id: &ServiceId) -> anyhow::Result<Service> {
     let service_name = service_id.id.clone();
     let file_path = format!("{}/{}.service.txt", drive_path, service_name);
     let file = open_file(&file_path, true, None);
     match file {
         Ok(file) => {
             let bytes = file.read()?;
-            let Ok(service) = serde_json::from_slice::<Service>(&bytes) else {
-                // Fail silently if we can't parse the request
-                return Ok(())
-            };
-            // println!("read service: {:?}", service);
+            if let Ok(service) = serde_json::from_slice::<Service>(&bytes) {
+                Ok(service)
+            } else {
+                Err(anyhow::anyhow!("error parsing service"))
+            }
         }
-        Err(e) => {
-            println!("error reading service metadata: {:?}", e);
+        Err(_e) => {
+            Err(anyhow::anyhow!("error opening file"))
         }
     }
-    Ok(())
 }
 
 fn handle_message(our: &Address, state: &mut ChatState, meta: &mut Option<PluginMetadata>) -> anyhow::Result<()> {
@@ -66,7 +100,14 @@ fn handle_message(our: &Address, state: &mut ChatState, meta: &mut Option<Plugin
     }
 
     if let Some(meta) = meta {
-        read_service(&meta.drive_path, &meta.service.id)?;
+        match read_service(&meta.drive_path, &meta.service.id) {
+            Ok(service) => {
+                meta.service = service;
+            }
+            Err(e) => {
+                println!("error reading service: {:?}", e);
+            }
+        }
 
         match serde_json::from_slice(body)? {
             PluginInput::Kill => {
@@ -79,7 +120,7 @@ fn handle_message(our: &Address, state: &mut ChatState, meta: &mut Option<Plugin
                 let chat_history = ChatUpdate::FullMessageHistory(state.messages.clone());
                 update_client(our, from, chat_history, meta)?;
             }
-            PluginInput::ClientExited(from) => {
+            PluginInput::ClientExited(_from) => {
             }
             _ => {}
         }

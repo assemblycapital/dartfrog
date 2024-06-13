@@ -5,19 +5,11 @@ use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use std::hash::{Hash, Hasher};
-use kinode_process_lib::{Address};
+use kinode_process_lib::Address;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Hash)]
 pub struct Presence {
     pub time: u64,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ChatMessage {
-    pub id: u64,
-    pub time: u64,
-    pub from: String,
-    pub msg: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -34,23 +26,10 @@ pub struct DartState {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ChatState {
-    pub last_message_id: u64,
-    pub messages: Vec<ChatMessage>,
-}
-pub fn new_chat_state() -> ChatState {
-    ChatState {
-        last_message_id: 0,
-        messages: Vec::new(),
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Service {
     pub id: ServiceId,
     pub metadata: ServiceMetadata,
     pub last_sent_presence: u64,
-    pub chat_state: ChatState,
 }
 
 impl Hash for Service {
@@ -64,7 +43,6 @@ pub fn new_service(id: ServiceId) -> Service {
         id: id,
         metadata: new_service_metadata(),
         last_sent_presence: 0,
-        chat_state: new_chat_state(),
     }
 }
 
@@ -163,10 +141,6 @@ pub enum ServerRequest {
     RequestServiceList,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum ChatRequest {
-    SendMessage(String),
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ServiceRequest {
@@ -176,7 +150,6 @@ pub enum ServiceRequest {
     AddPlugin(String),
     RemovePlugin(String),
     PluginRequest(String, String), // plugin name, untyped request string JSON
-    // ChatRequest(ChatRequest),
     PluginOutput(String, PluginOutput) // plugin name, pluginOutput
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -206,16 +179,9 @@ pub enum ConsumerServiceUpdate {
     SubscribeAck,
     ServiceMetadata(ServiceMetadata),
     Kick,
-    PluginUpdate(String, String), // plugin, update
-    // ChatUpdate(ChatUpdate),
+    // TODO better way to encode the plugin update than as a json string
+    PluginUpdate(String, String), // plugin_name, update 
 }
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum ChatUpdate {
-    Message(ChatMessage),
-    FullMessageHistory(Vec<ChatMessage>),
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ClientRequest{
     ConsumerRequest(u32, ConsumerRequest),
