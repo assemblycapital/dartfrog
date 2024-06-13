@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import Spinner from "./Spinner";
 import { stringifyServiceConnectionStatus } from "./FullServicesView";
 import { ChatMessageHistory } from "../types/types";
+import Piano from "./Piano/Piano";
 
 interface ServiceTabProps {
   serviceId: ServiceId;
@@ -88,16 +89,48 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
                   )}
                   </div>
                   ) : (
-                    <div>
-                      {/* <ChatHeader serviceId={serviceId} /> */}
-                      {(service.pluginStates.chat !== undefined) ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.3rem",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: "0.8rem",
+                        }}
+                      >
+                        <div
+                          style={{
+                            flex: 1,
+                          }}
+                        >
 
-                        <ChatBox serviceId={serviceId} chatState={service.pluginStates.chat}/>
-                      ):(
-                        <>
-                          <div>chat plugin not available</div>
-                        </>
-                      )}
+                          <Piano />
+                        </div>
+
+                        <div
+                          style={{
+                            flex: 1,
+                          }}
+                         >
+
+                          {(service.pluginStates.chat !== undefined) ? (
+
+                            <ChatBox serviceId={serviceId} chatState={service.pluginStates.chat}/>
+                          ):(
+                            <>
+                              <div>chat plugin not available</div>
+                            </>
+                            )}
+                        </div>
+  
+                      </div>
 
                       <DisplayUserActivity serviceId={serviceId} metadata={service.metadata} />
                     </div>
