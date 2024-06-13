@@ -1,9 +1,11 @@
 use serde::{Serialize, Deserialize};
 
 use std::collections::{HashMap, HashSet};
+use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use std::hash::{Hash, Hasher};
+use kinode_process_lib::{Address};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Hash)]
 pub struct Presence {
@@ -158,7 +160,7 @@ pub enum ServerRequest {
     ServiceRequest(ServiceId, ServiceRequest),
     CreateService(ServiceId, Vec<String>), // service id, plugins
     DeleteService(ServiceId),
-    RequestServiceList
+    RequestServiceList,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -173,8 +175,9 @@ pub enum ServiceRequest {
     PresenceHeartbeat,
     AddPlugin(String),
     RemovePlugin(String),
-    PluginMessageTODO(String), // plugin id
-    ChatRequest(ChatRequest),
+    PluginRequest(String, String), // plugin name, untyped request string JSON
+    // ChatRequest(ChatRequest),
+    PluginOutput(String, PluginOutput) // plugin name, pluginOutput
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ClientUpdate {
@@ -203,8 +206,8 @@ pub enum ConsumerServiceUpdate {
     SubscribeAck,
     ServiceMetadata(ServiceMetadata),
     Kick,
-    PluginUpdateTODO,
-    ChatUpdate(ChatUpdate),
+    PluginUpdate(String, String), // plugin, update
+    // ChatUpdate(ChatUpdate),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -226,8 +229,23 @@ pub enum ConsumerRequest {
     JoinService(ServiceId),
     ExitService(ServiceId),
     ServiceHeartbeat(ServiceId),
-    SendToService(ServiceId, ChatRequest),
+    SendToService(ServiceId, ServiceRequest),
 }
+pub const PROCESS_NAME : &str = "dartfrog:dartfrog:herobrine.os";
+
+pub fn get_server_address(node_id: &str) -> Address {
+    let s =
+        format!("{}@{}", node_id, PROCESS_NAME);
+    Address::from_str(&s).unwrap()
+}
+
+const PACKAGE_NAME : &str = "dartfrog:herobrine.os";
+pub fn get_plugin_address(plugin_name: &str, node_id: &str, service_name: &str) -> Address {
+    let s =
+        format!("{}@df-plugin-{}-{}:{}", node_id, plugin_name, service_name, PACKAGE_NAME);
+    Address::from_str(&s).unwrap()
+}
+
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PluginMetadata {
@@ -245,7 +263,7 @@ pub enum PluginInput {
     ClientRequest(String, String), // node name, untyped request string JSON
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PluginOutput {
     UpdateSubscribers(String), // untyped update string JSON
     UpdateClient(String, String), // node name, untyped update string JSON

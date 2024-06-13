@@ -14,6 +14,7 @@ export type ChatState = {
 }
 
 export function handleChatUpdate(chatState: ChatState, update: any) {
+    update = JSON.parse(update);
     if (!update) return;
     if (update['Message']) {
       chatState.messages.set(update.Message.id, update.Message);

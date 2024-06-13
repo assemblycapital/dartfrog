@@ -107,6 +107,10 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                     let update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::Kick);
                     update_client(update, subscriber)?;
                 }
+                for plugin in service.metadata.plugins.clone() {
+                    let address = get_plugin_address(&plugin, our.node.as_str(), &service_id.id);
+                    poke_plugin(&address, PluginInput::Kill)?;
+                }
                 state.server.services.remove(&service_id.id.clone());
             }
 
@@ -148,7 +152,7 @@ fn write_service(drive_path: String, service: &Service) -> anyhow::Result<()> {
 fn poke_plugins(plugins: &HashSet<String>, poke: PluginInput, service_name: &String, our: &Address) -> anyhow::Result<()> {
     for plugin in plugins {
         let address = get_plugin_address(plugin, our.node.as_str(), service_name);
-        println!("poking plugin: {:?}", address);
+        // println!("poking plugin: {:?}", address);
         Request::to(address)
             .body(serde_json::to_vec(&poke)?)
             .send()?;
@@ -163,31 +167,32 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
     if let Some(service) = state.server.services.get_mut(&service_id.id) {
         // handle the request
         match req {
-            ServiceRequest::ChatRequest(req) => {
-                match req {
-                    ChatRequest::SendMessage(msg) => {
-                        
-                        let chat_msg = ChatMessage {
-                            id: service.chat_state.last_message_id,
-                            time: SystemTime::now()
-                                .duration_since(UNIX_EPOCH)
-                                .unwrap()
-                                .as_secs(),
-                            from: source.node.clone(),
-                            msg: msg,
-                        };
-
-                        service.chat_state.messages.push(chat_msg.clone());
-
-                        // If the messages list is longer than 64, retain only the last 64 messages
-                        if service.chat_state.messages.len() > 64 {
-                            service.chat_state.messages = service.chat_state.messages.split_off(service.chat_state.messages.len() - 64);
-                        }
-
-                        service.chat_state.last_message_id += 1;
-                        let update = make_consumer_service_update(service_id.clone(),  ConsumerServiceUpdate::ChatUpdate(ChatUpdate::Message(chat_msg)));
-                        update_subscribers(update, service.metadata.subscribers.clone())?;
+            ServiceRequest::PluginOutput(plugin_name, plugin_out) => {
+                if service.metadata.plugins.contains(&plugin_name) {
+                    let plugin_address = get_plugin_address(&plugin_name, our.node.as_str(), &service_id.id);
+                    if source != plugin_address {
+                        // no spoofing
+                        return Ok(());
                     }
+
+                    match plugin_out {
+                        PluginOutput::UpdateSubscribers(update) => {
+                            let wrap_update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::PluginUpdate(plugin_name, update));
+                            update_subscribers(wrap_update, service.metadata.subscribers.clone())?;
+                        }
+                        PluginOutput::UpdateClient(to, update) => {
+                            let wrap_update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::PluginUpdate(plugin_name, update));
+                            update_client(wrap_update, to)?;
+                        }
+                        _ => {
+                        }
+                    }
+                }
+            }
+            ServiceRequest::PluginRequest(plugin_name, plugin_req) => {
+                if service.metadata.plugins.contains(&plugin_name) {
+                    let plugin_address = get_plugin_address(&plugin_name, our.node.as_str(), &service_id.id);
+                    poke_plugin(&plugin_address, PluginInput::ClientRequest(source.node.clone(), plugin_req))?;
                 }
             }
             ServiceRequest::Subscribe => {
@@ -205,9 +210,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                 poke_plugins(&service.metadata.plugins, PluginInput::ClientJoined(source.node.clone()), &service.id.id, our)?;
                 let ack = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::SubscribeAck);
                 let meta = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
-                let chat = make_consumer_service_update(service_id, ConsumerServiceUpdate::ChatUpdate(ChatUpdate::FullMessageHistory(service.chat_state.messages.clone())));
                 update_client(ack, source.node.clone())?;
-                update_client(chat, source.node.clone())?;
                 update_subscribers(meta, service.metadata.subscribers.clone())?;
             }
             ServiceRequest::Unsubscribe => {
@@ -216,6 +219,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                     return Ok(());
                 }
                 service.metadata.subscribers.remove(&source.node.clone());
+                poke_plugins(&service.metadata.plugins, PluginInput::ClientExited(source.node.clone()), &service.id.id, our)?;
                 write_service(state.server.drive_path.clone(), service)?;
                 let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
                 update_subscribers(meta, service.metadata.subscribers.clone())?;
@@ -255,6 +259,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                     if to_kick.contains(user) {
                         let update: ConsumerUpdate = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::Kick);
                         update_client(update, user.clone())?;
+                        poke_plugins(&service.metadata.plugins, PluginInput::ClientExited(source.node.clone()), &service.id.id, our)?;
                     }
                 }
                 service.metadata.subscribers.retain(|x| !to_kick.contains(x));
@@ -336,8 +341,11 @@ fn handle_client_update(_our: &Address, state: &mut DartState, source: Address, 
                                 );
                                 update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
                             }
-                            ConsumerServiceUpdate::ChatUpdate(ref _upd) => {
-                                update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
+                            ConsumerServiceUpdate::PluginUpdate(ref plugin, ref _upd) => {
+                                let service = consumer.services.get_mut(&service_id).unwrap();
+                                if service.metadata.plugins.contains(plugin) {
+                                    update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
+                                }
                             }
                             _ => {
                             }
@@ -454,7 +462,7 @@ fn handle_client_request(our: &Address, state: &mut DartState, _source: Address,
                 }
                 ConsumerRequest::SendToService(sid, req ) => {
                     if let Some(_service) = consumer.services.get(&sid) {
-                        let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::ChatRequest(req));
+                        let s_req = ServerRequest::ServiceRequest(sid.clone(), req);
                         let address = get_server_address(sid.clone().node.as_str());
                         poke_server(&address, s_req)?;
                     } else {
@@ -638,21 +646,6 @@ fn update_consumer (
 
 // const IS_FAKE: bool = !cfg!(feature = "prod");
 // const SERVER_NODE: &str = if IS_FAKE { "fake.dev" } else { "waterhouse.os" };
-const PROCESS_NAME : &str = "dartfrog:dartfrog:herobrine.os";
-
-fn get_server_address(node_id: &str) -> Address {
-    let s =
-        format!("{}@{}", node_id, PROCESS_NAME);
-    Address::from_str(&s).unwrap()
-}
-
-const PACKAGE_NAME : &str = "dartfrog:herobrine.os";
-fn get_plugin_address(plugin_name: &str, node_id: &str, service_name: &str) -> Address {
-    let s =
-        format!("{}@df-plugin-{}-{}:{}", node_id, plugin_name, service_name, PACKAGE_NAME);
-    Address::from_str(&s).unwrap()
-}
-
 
 fn new_dart_state() -> DartState {
     DartState {

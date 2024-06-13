@@ -231,10 +231,24 @@ class DartApi {
           // TODO?
           // this.services.delete(serviceId);
           this.onServicesChange();
+        } else if (response.PluginUpdate) {
+          const [plugin_name, update] = response.PluginUpdate;
+          this.handlePluginUpdate(plugin_name, update, serviceId, service);
         } else {
           console.warn('Unknown service message format:', message);
         }
         
+    }
+  }
+
+  handlePluginUpdate(plugin:string, update: any, serviceId, service) {
+    if (plugin === "chat") {
+      let newChatState = handleChatUpdate(service.chatState, update);
+      service.chatState = newChatState;
+      this.services.set(serviceId, service);
+      this.onServicesChange();
+    } else {
+      console.warn('Unknown plugin:', plugin, update);
     }
   }
 
@@ -308,7 +322,7 @@ class DartApi {
       "ServerRequest": {
         "CreateService": [
           { "node": serviceId.node, "id": serviceId.id },
-          [] // plugins
+          ["chat"] // plugins
         ]
       }
     }
