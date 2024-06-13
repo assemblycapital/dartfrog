@@ -533,6 +533,7 @@ dependencies = [
 name = "common"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "kinode_process_lib",
  "serde",
  "serde_json",

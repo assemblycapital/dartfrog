@@ -1,8 +1,6 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
-use common::{get_server_address, DartMessage, PluginInput, PluginMetadata, PluginOutput, ServerRequest, Service, ServiceId, ServiceRequest};
-use kinode_process_lib::{await_message, call_init, println, vfs::open_file, Address, Request
-};
+use std::{time::{SystemTime, UNIX_EPOCH}, usize::MAX};
+use common::{handle_message, update_client, update_subscribers, PluginMetadata, PluginState};
+use kinode_process_lib::{call_init, println, Address};
 use serde::{Deserialize, Serialize};
 
 wit_bindgen::generate!({
@@ -10,13 +8,7 @@ wit_bindgen::generate!({
     world: "process-v0",
 });
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum ChatUpdate {
-    Message(ChatMessage),
-    FullMessageHistory(Vec<ChatMessage>),
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ChatMessage {
     pub id: u64,
     pub time: u64,
@@ -24,179 +16,89 @@ pub struct ChatMessage {
     pub msg: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone, Serialize)]
+pub enum ChatUpdate {
+    Message(ChatMessage),
+    FullMessageHistory(Vec<ChatMessage>),
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub enum ChatRequest {
     SendMessage(String),
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone)]
 pub struct ChatState {
     pub last_message_id: u64,
     pub messages: Vec<ChatMessage>,
 }
 
-pub fn new_chat_state() -> ChatState {
-    ChatState {
-        last_message_id: 0,
-        messages: Vec::new(),
-    }
+fn get_now() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
 }
 
-
-
-fn read_service(drive_path: &String, service_id: &ServiceId) -> anyhow::Result<Service> {
-    let service_name = service_id.id.clone();
-    let file_path = format!("{}/{}.service.txt", drive_path, service_name);
-    let file = open_file(&file_path, true, None);
-    match file {
-        Ok(file) => {
-            let bytes = file.read()?;
-            if let Ok(service) = serde_json::from_slice::<Service>(&bytes) {
-                Ok(service)
-            } else {
-                Err(anyhow::anyhow!("error parsing service"))
-            }
-        }
-        Err(_e) => {
-            Err(anyhow::anyhow!("error opening file"))
-        }
-    }
-}
-
-fn handle_message(our: &Address, state: &mut ChatState, meta: &mut Option<PluginMetadata>) -> anyhow::Result<()> {
-    let message = await_message()?;
-
-    // println!("child received message: {:?}", message);
-    let body = message.body();
-    let source = message.source();
-    if !message.is_request() {
-        println!("unexpected response");
-        return Ok(());
-        // return Err(anyhow::anyhow!("unexpected Response: {:?}", message));
-    }
-    if message.source().node != our.node {
-        // TODO also check source process?
-        // return Err(anyhow::anyhow!("unexpected source: {:?}", source));
-        println!("unexpected source: {:?}", source);
-        return Ok(());
-    }
-    if meta.is_none() {
-        // need to init before using
-        match serde_json::from_slice(body)? {
-            PluginInput::Kill => {
-                // println!("child received kill message");
-                return Err(anyhow::anyhow!("kill message received"));
-            }
-
-            PluginInput::Init(init) => {
-                // println!("child received init message");
-                // println!("received init message: {:?}", init);
-                *meta = Some(init);
-            }
-            _ => {
-
-            }
+impl PluginState for ChatState {
+    fn new() -> Self {
+        ChatState {
+            last_message_id: 0,
+            messages: Vec::new(),
         }
     }
 
-    if let Some(meta) = meta {
-        match read_service(&meta.drive_path, &meta.service.id) {
-            Ok(service) => {
-                meta.service = service;
-            }
-            Err(e) => {
-                println!("error reading service: {:?}", e);
-            }
-        }
-
-        match serde_json::from_slice(body)? {
-            PluginInput::Kill => {
-                return Err(anyhow::anyhow!("kill message received"));
-            }
-            PluginInput::ClientRequest(from, req) => {
-                handle_client_request(our, state, meta, from, req)?;
-            }
-            PluginInput::ClientJoined(from) => {
-                let chat_history = ChatUpdate::FullMessageHistory(state.messages.clone());
-                update_client(our, from, chat_history, meta)?;
-            }
-            PluginInput::ClientExited(_from) => {
-            }
-            _ => {}
-        }
+    fn handle_exit(&mut self, _from: String, _meta: &PluginMetadata, _our: &Address) -> anyhow::Result<()> {
+        Ok(())
     }
 
-    Ok(())
-}
-
-fn handle_client_request(our: &Address, state: &mut ChatState, meta: &PluginMetadata, from: String, req: String) -> anyhow::Result<()> {
-    let Ok(request) = serde_json::from_str::<ChatRequest>(&req) else {
-        println!("error parsing request: {:?}", req);
-        return Ok(());
-    };
-    // println!("chat module: client request: {:?}", request);
-    match request {
-        ChatRequest::SendMessage(msg) => {
-            let chat_msg = ChatMessage {
-                id: state.last_message_id,
-                time: SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs(),
-                from: from.clone(),
-                msg: msg,
-            };
-
-            if state.messages.len() > 64 {
-                state.messages = state.messages.split_off(state.messages.len() - 64);
-            }
-
-            state.last_message_id += 1;
-            state.messages.push(chat_msg.clone());
-            let chat_upd = ChatUpdate::Message(chat_msg.clone());
-            update_subscribers(our, chat_upd, meta)?;
-        }
+    fn handle_join(&mut self, from: String, meta: &PluginMetadata, our: &Address) -> anyhow::Result<()> {
+        let chat_history = ChatUpdate::FullMessageHistory(self.messages.clone());
+        update_client(our, from, chat_history, meta)?;
+        Ok(())
     }
-    Ok(())
-}
 
-fn update_client(our: &Address, to: String, update: ChatUpdate, meta: &PluginMetadata) -> anyhow::Result<()> {
-    let update = serde_json::to_string(&update).unwrap();
-    let address = get_server_address(&our.node);
-    let dart_message = 
-        DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginOutput(meta.plugin_name.clone(), PluginOutput::UpdateClient(to, update))));
-    let _ = Request::to(address)
-        .body(serde_json::to_vec(&dart_message).unwrap())
-        .send()?;
-    Ok(())
-}
-fn update_subscribers(our: &Address, update: ChatUpdate, meta: &PluginMetadata) -> anyhow::Result<()> {
-    let update = serde_json::to_string(&update).unwrap();
-    let address = get_server_address(&our.node);
-    let dart_message = 
-        DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginOutput(meta.plugin_name.clone(), PluginOutput::UpdateSubscribers(update))));
-    let _ = Request::to(address)
-        .body(serde_json::to_vec(&dart_message).unwrap())
-        .send()?;
-    Ok(())
-}
+    fn handle_request(&mut self, from: String, req: String, meta: &PluginMetadata, our: &Address) -> anyhow::Result<()> {
+        let Ok(request) = serde_json::from_str::<ChatRequest>(&req) else {
+            println!("error parsing request: {:?}", req);
+            return Ok(());
+        };
+        match request {
+            ChatRequest::SendMessage(msg) => {
+                let chat_msg = ChatMessage {
+                    id: self.last_message_id,
+                    time: get_now(),
+                    from: from.clone(),
+                    msg: msg,
+                };
 
+                const MAX_CHAT_HISTORY: usize = 64;
+                if self.messages.len() > MAX_CHAT_HISTORY {
+                    self.messages = self.messages.split_off(self.messages.len() - MAX_CHAT_HISTORY);
+                }
 
+                self.last_message_id += 1;
+                self.messages.push(chat_msg.clone());
+                let chat_upd = ChatUpdate::Message(chat_msg.clone());
+                update_subscribers(our, chat_upd, meta)?;
+            }
+        }
+        Ok(())
+    }
+}
 
 call_init!(init);
 fn init(our: Address) {
-    // println!("initializing child process. our: {:?}", our);
     let mut meta: Option<PluginMetadata> = None;
-    let mut state: ChatState = new_chat_state();
+    let mut state: ChatState = ChatState::new();
     loop {
         match handle_message(&our, &mut state, &mut meta) {
             Ok(()) => {}
             Err(e) => {
                 if e.to_string().contains("kill message received") {
-                    println!("{:?} shutting down", our.process.process_name);
+                    // shut down from parent Kill request
                     break;
                 }
-                // println!("chat.wasm handle_message error: {:?}", e);
             }
         };
     }

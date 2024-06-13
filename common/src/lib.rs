@@ -1,3 +1,4 @@
+use kinode_process_lib::vfs::open_file;
 use serde::{Serialize, Deserialize};
 
 use std::collections::{HashMap, HashSet};
@@ -5,7 +6,7 @@ use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use std::hash::{Hash, Hasher};
-use kinode_process_lib::Address;
+use kinode_process_lib::{await_message, Address, Request};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Hash)]
 pub struct Presence {
@@ -241,4 +242,112 @@ pub enum DartMessage {
     ServerRequest(ServerRequest),
     ClientRequest(ClientRequest),
     ClientUpdate(ClientUpdate),
+}
+
+
+// plugin library, probably should be in a separate file
+pub trait PluginState {
+    fn new() -> Self;
+    fn handle_request(&mut self, from: String, req: String, meta: &PluginMetadata, our: &Address) -> anyhow::Result<()>;
+    fn handle_join(&mut self, from: String, meta: &PluginMetadata, our: &Address) -> anyhow::Result<()>;
+    fn handle_exit(&mut self, from: String, meta: &PluginMetadata, our: &Address) -> anyhow::Result<()>;
+}
+
+pub fn read_service(drive_path: &String, service_id: &ServiceId) -> anyhow::Result<Service> {
+    let service_name = service_id.id.clone();
+    let file_path = format!("{}/{}.service.txt", drive_path, service_name);
+    let file = open_file(&file_path, true, None);
+    match file {
+        Ok(file) => {
+            let bytes = file.read()?;
+            if let Ok(service) = serde_json::from_slice::<Service>(&bytes) {
+                Ok(service)
+            } else {
+                Err(anyhow::anyhow!("error parsing service"))
+            }
+        }
+        Err(_e) => {
+            Err(anyhow::anyhow!("error opening file"))
+        }
+    }
+}
+
+pub fn handle_message<S: PluginState>(our: &Address, state: &mut S, meta: &mut Option<PluginMetadata>) -> anyhow::Result<()> {
+    let message = await_message()?;
+
+    let body = message.body();
+    let source = message.source();
+    if !message.is_request() {
+        println!("unexpected response");
+        return Ok(());
+    }
+    if message.source().node != our.node {
+        println!("unexpected source: {:?}", source);
+        return Ok(());
+    }
+    if meta.is_none() {
+        match serde_json::from_slice(body)? {
+            PluginInput::Kill => {
+                return Err(anyhow::anyhow!("kill message received"));
+            }
+
+            PluginInput::Init(init) => {
+                *meta = Some(init);
+            }
+            _ => {}
+        }
+    }
+
+    if let Some(meta) = meta {
+        match read_service(&meta.drive_path, &meta.service.id) {
+            Ok(service) => {
+                meta.service = service;
+            }
+            Err(e) => {
+                println!("error reading service: {:?}", e);
+            }
+        }
+
+        match serde_json::from_slice(body)? {
+            PluginInput::Kill => {
+                return Err(anyhow::anyhow!("kill message received"));
+            }
+            PluginInput::ClientRequest(from, req) => {
+                state.handle_request(from, req, meta, our)?;
+            }
+            PluginInput::ClientJoined(from) => {
+                // Initialize or handle client join as needed
+                state.handle_join(from, meta, our)?;
+            }
+            PluginInput::ClientExited(from) => {
+                // Handle client exit as needed
+                state.handle_exit(from, meta, our)?;
+            }
+            _ => {}
+        }
+    }
+
+    Ok(())
+}
+
+pub fn update_client(our: &Address, to: String, update: impl Serialize, meta: &PluginMetadata) -> anyhow::Result<()> {
+    let update = serde_json::to_string(&update).unwrap();
+    let address = get_server_address(&our.node);
+    let dart_message = 
+        DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginOutput(meta.plugin_name.clone(), PluginOutput::UpdateClient(to, update))));
+    let _ = Request::to(address)
+        .body(serde_json::to_vec(&dart_message).unwrap())
+        .send()?;
+    Ok(())
+}
+
+pub fn update_subscribers(our: &Address, update: impl Serialize, meta: &PluginMetadata) -> anyhow::Result<()> {
+    let update = serde_json::to_string(&update).unwrap();
+    let address = get_server_address(&our.node);
+    let dart_message = 
+        DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginOutput(meta.plugin_name.clone(), PluginOutput::UpdateSubscribers(update))));
+    let _ = Request::to(address)
+        .body(serde_json::to_vec(&dart_message).unwrap())
+        .send()?;
+    Ok(())
 }
