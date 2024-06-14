@@ -9,6 +9,7 @@ import Spinner from "./Spinner";
 import { stringifyServiceConnectionStatus } from "./FullServicesView";
 import { ChatMessageHistory } from "../types/types";
 import Piano from "./Piano/Piano";
+import ServiceConnectedDisplay from "./ServiceConnectedDisplay";
 
 interface ServiceTabProps {
   serviceId: ServiceId;
@@ -21,8 +22,8 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
   useEffect(() => {
     const gotService = services.get(serviceId);
     if (gotService) {
-      setService(gotService);
-      console.log("service updated in servicetab")
+      setService({ ...gotService });
+      // console.log("service updated in servicetab")
     } else {
       setService(null);
     }
@@ -75,68 +76,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
                   )}
                   </div>
                   ) : (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "0.3rem",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          gap: "0.8rem",
-                        }}
-                      >
-                          {((service.pluginStates.piano !== undefined) &&
-                            (service.metadata.plugins.includes("piano")))
-                          ? (
-
-                            <div
-                              style={{
-                                flex: 1,
-                                height: "100%",
-                                alignContent: "center",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                justifyItems: "center",
-                              }}
-                            >
-                              <Piano serviceId={serviceId} pianoState={service.pluginStates.piano.state} />
-                            </div>
-                          ):(
-                            <>
-                              {/* <div>piano plugin not available</div> */}
-                            </>
-                            )}
-
-                        <div
-                          style={{
-                            flex: 1,
-                          }}
-                         >
-
-                          {((service.pluginStates.chat !== undefined) &&
-                            (service.pluginStates.chat.state !== null ))
-                          ? (
-                              <>
-                              <ChatHeader serviceId={serviceId} />
-                              <ChatBox serviceId={serviceId} chatState={service.pluginStates.chat.state}/>
-                              </>
-                          ):(
-                            <>
-                              {/* <div>chat plugin not available</div> */}
-                            </>
-                            )}
-                        </div>
-  
-                      </div>
-
-                      <DisplayUserActivity serviceId={serviceId} metadata={service.metadata} />
-                    </div>
+                    <ServiceConnectedDisplay serviceId={serviceId} service={service} />
                 )}
               </div>
           )}

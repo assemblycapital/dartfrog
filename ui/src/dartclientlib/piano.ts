@@ -16,9 +16,7 @@ export function handlePianoUpdate(pianoState: PianoState, update: any) {
     update = JSON.parse(update);
     if (!update) return;
     if (update['NotePlayed']) {
-      console.log('note played', update.NotePlayed);
       let [from, note] = update.NotePlayed;
-      let time = Date.now();
       let newNotePlayed = {
         note: note,
         from: from,

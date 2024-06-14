@@ -29,7 +29,7 @@ const CreateService: React.FC = () => {
   const handleInputCreateClick = useCallback(() => {
     if (isCreateInputValid && inputCreateServiceName !== '') {
       let serviceId = `${inputCreateServiceName}.${window.our?.node}`;
-      console.log(selectedPermission, selectedPlugin);
+      // console.log(selectedPermission, selectedPlugin);
       if (selectedPlugin === 'text-chat') {
         createService(serviceId, ["chat"]);
       } else if (selectedPlugin === 'piano') {
@@ -38,11 +38,22 @@ const CreateService: React.FC = () => {
       setInputCreateServiceName('');
       requestServiceList(window.our?.node);
       setSpinner(true);
+  
+      setTimeout(() => {
+        setSpinner(false);
+      }, 1500);
     }
   }, [inputCreateServiceName, selectedPlugin, selectedPermission, isCreateInputValid]);
-
+  
   return (
-    <div>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.3rem",
+        // padding: "0.5rem",
+      }}
+    >
       <div style={{ cursor: "default", userSelect: "none" }}>
         create a new service:
       </div>
@@ -80,11 +91,10 @@ const CreateService: React.FC = () => {
           }}
           onClick={handleInputCreateClick}
         >
-        {spinner ? (
-          <Spinner size={"20px"} />
-        ) : ( <span>create</span>)}
+          create
         </button>
       </div>
+      {spinner && <Spinner />}
     </div>
   )
 }

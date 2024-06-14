@@ -193,6 +193,16 @@ class DartApi {
       }
   }
 
+  private initialPluginState(plugin:string) {
+    if (plugin === "chat") {
+      return { exists: true, state: { messages: new Map() } }
+    } else if (plugin === "piano") {
+      return { exists: true, state: { notePlayed: null } }
+    } else {
+      return { exists: true, state: null }
+    }
+  }
+
   private handleServiceUpdate(message: any) {
     if (Array.isArray(message) && message.length > 2) {
         const [service_node, service_name, response] = message;
@@ -204,7 +214,6 @@ class DartApi {
           return;
         }
         
-        console.log('Service Update:', response);
         service.connectionStatus = {status:ServiceConnectionStatusType.Connected, timestamp:Date.now()};
         if (response === "SubscribeAck") {
           this.services.set(serviceId, service);
@@ -213,7 +222,7 @@ class DartApi {
           service.metadata = response.ServiceMetadata;
           for (const plugin of service.metadata.plugins) {
               if (service.pluginStates[plugin] === undefined){
-                service.pluginStates[plugin] = {exists: true, state: null};
+                service.pluginStates[plugin] = this.initialPluginState(plugin);
               }
           }
           this.services.set(serviceId, service);
@@ -244,10 +253,8 @@ class DartApi {
   handlePluginUpdate(plugin:string, update: any, serviceId: ServiceId, service: Service) {
     if (plugin === "chat") {
       if (service.pluginStates.chat === undefined) {
-        service.pluginStates.chat = { exists: true, state: null}
-      }
-      if (service.pluginStates.chat.state === null ) {
-        service.pluginStates.chat.state = { messages: new Map() }
+        let chatState = { messages: new Map() }
+        service.pluginStates.chat = { exists: true, state: chatState}
       }
       let chatState = service.pluginStates.chat.state;
       let newChatState = handleChatUpdate(chatState, update);
@@ -256,15 +263,11 @@ class DartApi {
       this.onServicesChange();
     } else if (plugin === "piano") {
       if (service.pluginStates.piano === undefined) {
-        service.pluginStates.piano = { exists: true, state: null}
-      }
-      if (service.pluginStates.piano.state === null ) {
-        service.pluginStates.piano.state = {}
+        let pianoState = { notePlayed: null }
+        service.pluginStates.piano = { exists: true, state: pianoState }
       }
       let pianoState = service.pluginStates.piano.state;
       let newPianoState = handlePianoUpdate(pianoState, update);
-      // service.pluginStates.piano.state = newPianoState;
-      // console.log("newPianoState", newPianoState);
       let prevService = service;
       let new_service = {
         ...prevService,

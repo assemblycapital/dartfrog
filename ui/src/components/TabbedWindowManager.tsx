@@ -40,8 +40,13 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({}) => {
   }, [tabs, services]);
 
   const addTab = useCallback(() => {
-    setTabs(prevTabs => [...prevTabs, { serviceId: null }]);
+    setTabs(prevTabs => {
+      const newTabs = [...prevTabs, { serviceId: null }];
+      setActiveTabIndex(newTabs.length - 1);  // Set the active tab index to the new tab
+      return newTabs;
+    });
   }, []);
+  
 
   const closeTab = useCallback((index: number) => {
     setTabs(prevTabs => prevTabs.filter((_, i) => i !== index));
