@@ -30,7 +30,6 @@ const notes = [
   { note: 'D5', isSharp: false, fileName: 'd5.mp3', key: "'" },
 ];
 
-
 interface PianoProps {
   serviceId: ServiceId;
   pianoState: PianoState;
@@ -46,9 +45,13 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
     console.log("Piano.tsx state changed", pianoState)
     if (pianoState == null) return;
     if( pianoState.notePlayed === null) return;
+    let now = Date.now();
+    let elapsed = now - pianoState.notePlayed.timestamp;
+    if (elapsed > 1000) return;
+    if (pianoState.notePlayed.note === null) return;
     let sound = sounds[pianoState.notePlayed.note]
     if (!sound) {
-      console.log("Sound not found for note", pianoState.notePlayed)
+      console.log("Sound not found for note", pianoState.notePlayed.note)
       return
     }
     console.log("Playing sound", pianoState.notePlayed.note)
@@ -70,7 +73,7 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
       if (isFocused) {
         const note = notes.find(n => n.key === event.key);
         if (note && sounds[note.note] && !pressedKeys[note.note]) {
-          sounds[note.note].play();
+          handlePlayNote(note.note);
           setPressedKeys(prev => ({ ...prev, [note.note]: true }));
         }
       }
@@ -117,6 +120,12 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
       onFocus={() => setIsFocused(true)}
       onBlur={() => setIsFocused(false)}
       ref={pianoRef}
+      style={{
+        alignContent: "center",
+        alignItems: "center",
+        justifyContent: "center",
+        justifyItems: "center",
+      }}
     >
       {notes.map((note) => (
         <PianoKey 

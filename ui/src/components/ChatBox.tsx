@@ -7,6 +7,7 @@ import { Service, ServiceId, makeServiceId } from '../dartclientlib/';
 import useDartStore from "../store/dart";
 import { ChatState } from '../dartclientlib/chat';
 import Spinner from './Spinner';
+import ChatHeader from './ChatHeader';
 
 interface ChatBoxProps {
   serviceId: ServiceId;

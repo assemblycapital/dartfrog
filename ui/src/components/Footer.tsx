@@ -11,12 +11,7 @@ const DisplayUserActivity = () => {
       userSelect: "none",
       }}
       >
-      <div>
-        sfx: /yes /no /why /fart /people /robust /robustness
-      </div>
-      <div>
-        img: /die /kino /panda /dev /tiger /wow /cry /ok /oops
-      </div>
+
       <div
         style={{
           fontSize: "0.8rem",

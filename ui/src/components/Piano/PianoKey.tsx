@@ -13,7 +13,7 @@ interface PianoKeyProps {
 const PianoKey: React.FC<PianoKeyProps> = ({ note, keyLetter, isSharp, playSound, isPressed }) => {
   return (
     <div
-      className={`piano-key ${isSharp ? 'sharp' : 'natural'} ${isPressed ? 'pressed' : ''}`}
+      className={`piano-key ${isSharp ? 'sharp' : 'natural'} ${isPressed ? 'pressed-input' : ''}`}
       onClick={playSound}
     >
       {keyLetter}

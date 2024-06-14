@@ -42,19 +42,6 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
           gap: "0.3rem",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            color: "#ffffff55",
-            fontSize: "0.8rem",
-            gap: "0.8rem",
-            cursor:"default"
-          }}
-        >
-          <div>{serviceId}</div>
-        </div>
         {!service ? (
           <div
             style={{
@@ -111,6 +98,11 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
                             <div
                               style={{
                                 flex: 1,
+                                height: "100%",
+                                alignContent: "center",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                justifyItems: "center",
                               }}
                             >
                               <Piano serviceId={serviceId} pianoState={service.pluginStates.piano.state} />
@@ -130,11 +122,13 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
                           {((service.pluginStates.chat !== undefined) &&
                             (service.pluginStates.chat.state !== null ))
                           ? (
-
-                            <ChatBox serviceId={serviceId} chatState={service.pluginStates.chat.state}/>
+                              <>
+                              <ChatHeader serviceId={serviceId} />
+                              <ChatBox serviceId={serviceId} chatState={service.pluginStates.chat.state}/>
+                              </>
                           ):(
                             <>
-                              <div>chat plugin not available</div>
+                              {/* <div>chat plugin not available</div> */}
                             </>
                             )}
                         </div>

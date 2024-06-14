@@ -1,8 +1,15 @@
 .piano {
-  width:100%;
-  height:100%;
+  height:300px;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  justify-items: center;
 }
 .piano-key {
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  justify-items: center;
   width: 40px;
   height: 200px;
   margin: 1px;
@@ -19,6 +26,9 @@
   border: 1px solid black;
   color: black;
 }
+.piano-key.natural:hover {
+  background-color: #ffffffcc;
+}
 
 .piano-key.sharp {
   background-color: black;
@@ -30,7 +40,20 @@
   z-index: 1;
   position: relative;
 }
+.piano-key.sharp:hover {
+  background-color: #444444;
+}
 
-.piano-key.pressed {
-  background-color: lightblue; /* or any color you prefer for the pressed state */
+.piano-key {
+  background-color: white; /* Replace with your default color */
+  transition: background-color 0.3s ease-out; /* Smooth transition when releasing */
+}
+
+.piano-key.sharp.pressed-input{
+  background-color: #444; /* Any color you prefer for the pressed state */
+  transition: none; /* No transition when pressing */
+}
+.piano-key.natural.pressed-input{
+  background-color: #ffffffcc; /* Any color you prefer for the pressed state */
+  transition: none; /* No transition when pressing */
 }
