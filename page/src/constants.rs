@@ -1,4 +1,4 @@
-pub const default_html : &str = r#"<!DOCTYPE html>
+pub const DEFAULT_HTML : &str = r#"<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">

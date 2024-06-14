@@ -35,6 +35,8 @@ const CreateService: React.FC = () => {
         createService(serviceId, ["chat", "piano"]);
       } else if (selectedPlugin === 'page') {
         createService(serviceId, ["chat", "page"]);
+      } else if (selectedPlugin === 'chess') {
+        createService(serviceId, ["chat", "chess"]);
       }
       setInputCreateServiceName('');
       requestServiceList(window.our?.node);
@@ -73,7 +75,8 @@ const CreateService: React.FC = () => {
         >
           <option value="text-chat">Text Chat</option>
           <option value="piano">Piano</option>
-          <option value="page">Page</option> {/* Added new option here */}
+          <option value="page">Page</option>
+          <option value="chess">Chess</option>
         </select>
         <select
           name="servicePermissionsOption"

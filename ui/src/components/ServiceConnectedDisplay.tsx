@@ -5,6 +5,7 @@ import Piano from './Piano/Piano';
 import DisplayUserActivity from './DisplayUserActivity';
 import PagePluginBox from './PagePluginBox';
 import "./ServiceConnectedDisplay.css"
+import ChessPluginBox from './ChessPluginBox';
 
 const ServiceConnectedDisplay = ({ serviceId, service }) => {
   const [plugins, setPlugins] = useState([]);
@@ -33,6 +34,8 @@ const ServiceConnectedDisplay = ({ serviceId, service }) => {
         return <Piano serviceId={serviceId} pianoState={service.pluginStates.piano.state} />;
       case 'page':
         return <PagePluginBox serviceId={serviceId} pageState={service.pluginStates.page.state} />;
+      case 'chess':
+        return <ChessPluginBox serviceId={serviceId} chessState={service.pluginStates.chess.state} />;
       default:
         return <div>{`${pluginName} plugin not available`}</div>;
     }

@@ -5,6 +5,7 @@ import { on } from "events";
 import  {ChatState, handleChatUpdate}  from "./chat"; // Import the ChatState type from the appropriate module
 import { handlePianoUpdate } from "./piano";
 import { handlePageUpdate } from "./page";
+import { handleChessUpdate, newChessState } from "./chess";
 export enum ConnectionStatusType {
   Connecting,
   Connected,
@@ -242,7 +243,6 @@ class DartApi {
         } else {
           console.warn('Unknown service message format:', message);
         }
-        
     }
   }
 
@@ -293,6 +293,8 @@ private getInitialPluginState(plugin: string): any {
             return { notePlayed: null };
         case "page":
             return { page: "" };
+        case "chess":
+            return newChessState();
         default:
             return null;  // Default state or throw error if plugin is unrecognized.
     }
@@ -307,6 +309,8 @@ private getPluginUpdateHandler(plugin: string): (currentState: any, update: any)
             return handlePianoUpdate;
         case "page":
             return handlePageUpdate;
+        case "chess":
+            return handleChessUpdate;
         default:
             return null;  // Return null or throw error if handler for plugin is unrecognized.
     }
@@ -367,7 +371,7 @@ private getPluginUpdateHandler(plugin: string): (currentState: any, update: any)
 
   sendRequest(req: any) {
     if (!this.api) { return; }
-    console.log("Sending request", req)
+    // console.log("Sending request", req)
     const wrapper = {
       "ClientRequest": {
         "ConsumerRequest": [0, req]

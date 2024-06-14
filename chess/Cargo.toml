@@ -1,0 +1,22 @@
+[package]
+name = "chess"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+bincode = "1.3.3"
+kinode_process_lib = { git = "https://github.com/kinode-dao/process_lib", rev = "43afdf4" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+wit-bindgen = "0.24.0"
+common = { path = "../common" }
+
+[features]
+prod = []
+
+[lib]
+crate-type = ["cdylib"]
+
+[package.metadata.component]
+package = "kinode:process"

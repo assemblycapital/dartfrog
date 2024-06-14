@@ -1,5 +1,5 @@
 use common::{handle_message, update_client, update_subscribers, PluginMetadata, PluginState};
-use constants::default_html;
+use constants::DEFAULT_HTML;
 use kinode_process_lib::{call_init, println, Address};
 use serde::{Deserialize, Serialize};
 
@@ -27,7 +27,7 @@ pub struct PageState {
 impl PluginState for PageState {
     fn new() -> Self {
         PageState {
-            page: default_html.to_string(),
+            page: DEFAULT_HTML.to_string(),
         }
     }
 
