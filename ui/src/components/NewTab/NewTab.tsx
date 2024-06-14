@@ -180,7 +180,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
                     setTabService(makeServiceId(service.node, service.id));
                   }}
                 >
-                  join wtf
+                  join
                 </button>
                 <span
                   style={{

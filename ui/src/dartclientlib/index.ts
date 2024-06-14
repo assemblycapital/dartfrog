@@ -193,15 +193,6 @@ class DartApi {
       }
   }
 
-  private initialPluginState(plugin:string) {
-    if (plugin === "chat") {
-      return { exists: true, state: { messages: new Map() } }
-    } else if (plugin === "piano") {
-      return { exists: true, state: { notePlayed: null } }
-    } else {
-      return { exists: true, state: null }
-    }
-  }
 
   private handleServiceUpdate(message: any) {
     if (Array.isArray(message) && message.length > 2) {
@@ -222,7 +213,11 @@ class DartApi {
           service.metadata = response.ServiceMetadata;
           for (const plugin of service.metadata.plugins) {
               if (service.pluginStates[plugin] === undefined){
-                service.pluginStates[plugin] = this.initialPluginState(plugin);
+                // initialize plugins
+                service.pluginStates[plugin] = {
+                    exists: true,
+                    state: this.getInitialPluginState(plugin)
+                };
               }
           }
           this.services.set(serviceId, service);
@@ -250,44 +245,68 @@ class DartApi {
     }
   }
 
-  handlePluginUpdate(plugin:string, update: any, serviceId: ServiceId, service: Service) {
-    if (plugin === "chat") {
-      if (service.pluginStates.chat === undefined) {
-        let chatState = { messages: new Map() }
-        service.pluginStates.chat = { exists: true, state: chatState}
-      }
-      let chatState = service.pluginStates.chat.state;
-      let newChatState = handleChatUpdate(chatState, update);
-      service.pluginStates.chat.state = newChatState;
-      this.services.set(serviceId, service);
-      this.onServicesChange();
-    } else if (plugin === "piano") {
-      if (service.pluginStates.piano === undefined) {
-        let pianoState = { notePlayed: null }
-        service.pluginStates.piano = { exists: true, state: pianoState }
-      }
-      let pianoState = service.pluginStates.piano.state;
-      let newPianoState = handlePianoUpdate(pianoState, update);
-      let prevService = service;
-      let new_service = {
-        ...prevService,
-        pluginStates: {
-          ...prevService.pluginStates,
-          piano: {
-            ...prevService.pluginStates.piano,
-            state: { ...newPianoState }
-          }
-        }
-      };
-
-
-      this.services.set(serviceId, new_service);
-
-      this.onServicesChange();
-    } else {
-      console.warn('Unknown plugin:', plugin, update);
+  handlePluginUpdate(plugin: string, update: any, serviceId: ServiceId, service: Service) {
+    // Ensure the plugin exists in the service, with a default state if not present.
+    if (!service.pluginStates[plugin]) {
+        // Initialize the plugin state based on the plugin type.
+        service.pluginStates[plugin] = {
+            exists: true,
+            state: this.getInitialPluginState(plugin)
+        };
     }
-  }
+
+    // Retrieve the update handler for the plugin.
+    const updateHandler = this.getPluginUpdateHandler(plugin);
+    if (!updateHandler) {
+        console.warn('Update handler not found for plugin:', plugin);
+        return;
+    }
+
+    // Update the state using the specific plugin's update handler.
+    const currentState = service.pluginStates[plugin].state;
+    const newState = updateHandler(currentState, update);
+
+    // Update the service with the new state.
+    const newService = {
+      ...service, // Copy all properties of the existing service
+      pluginStates: {
+          ...service.pluginStates, // Copy all existing plugin states
+          [plugin]: { // Update only the specific plugin's state
+              ...service.pluginStates[plugin], // Copy the existing plugin's properties
+              state: newState // Set the new state
+          }
+      }
+    };
+
+    // Replace the old service with the new one in the services map.
+    this.services.set(serviceId, newService);
+    this.onServicesChange();
+}
+
+// Helper method to return the initial state based on the plugin name.
+private getInitialPluginState(plugin: string): any {
+    switch (plugin) {
+        case "chat":
+            return { messages: new Map() };
+        case "piano":
+            return { notePlayed: null };
+        default:
+            return null;  // Default state or throw error if plugin is unrecognized.
+    }
+}
+
+// Helper method to return the update handler function based on the plugin name.
+private getPluginUpdateHandler(plugin: string): (currentState: any, update: any) => any {
+    switch (plugin) {
+        case "chat":
+            return handleChatUpdate;
+        case "piano":
+            return handlePianoUpdate;
+        default:
+            return null;  // Return null or throw error if handler for plugin is unrecognized.
+    }
+}
+
 
   startPresenceHeartbeat(serviceId: ServiceId) {
     const service = this.services.get(serviceId);
