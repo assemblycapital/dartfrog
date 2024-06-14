@@ -1,12 +1,14 @@
 import { useCallback, useState } from "react";
 import { validateServiceName } from "./NewTab";
 import useDartStore from "../../store/dart";
+import Spinner from "../Spinner";
 
 const CreateService: React.FC = () => {
   const [inputCreateServiceName, setInputCreateServiceName] = useState('');
   const [isCreateInputValid, setIsCreateInputValid] = useState(true);
   const [selectedPlugin, setSelectedPlugin] = useState('text-chat');
   const [selectedPermission, setSelectedPermission] = useState('public');
+  const [spinner, setSpinner] = useState(false);
 
   const { requestServiceList, createService } = useDartStore();
 
@@ -35,6 +37,7 @@ const CreateService: React.FC = () => {
       }
       setInputCreateServiceName('');
       requestServiceList(window.our?.node);
+      setSpinner(true);
     }
   }, [inputCreateServiceName, selectedPlugin, selectedPermission, isCreateInputValid]);
 
@@ -71,10 +74,15 @@ const CreateService: React.FC = () => {
           <option value="hidden" disabled>Hidden</option>
         </select>
         <button
-          style={{ cursor: 'pointer' }}
+          style={{
+            cursor: 'pointer',
+            justifyContent: 'center',
+          }}
           onClick={handleInputCreateClick}
         >
-          create
+        {spinner ? (
+          <Spinner size={"20px"} />
+        ) : ( <span>create</span>)}
         </button>
       </div>
     </div>

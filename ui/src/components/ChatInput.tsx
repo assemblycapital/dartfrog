@@ -50,6 +50,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ serviceId }) => {
           flexGrow: 1,
           fontFamily: 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
           marginRight: '0px',
+          resize: 'vertical',
         }}
         id="chat-input"
         value={chatMessageInputText}

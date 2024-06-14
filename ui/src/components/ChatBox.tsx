@@ -17,6 +17,7 @@ interface ChatBoxProps {
 const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const chatInputRef = useRef<HTMLDivElement | null>(null);  // Reference for ChatInput
   const isResizing = useRef(false);
 
   const { nameColors, addNameColor } = useDartStore();
@@ -105,12 +106,23 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
 
   const resize = (e: MouseEvent) => {
     if (isResizing.current && containerRef.current) {
-      const newHeight = e.clientY - containerRef.current.getBoundingClientRect().top - 65;
-      if (newHeight > 100) {
+      const containerTop = containerRef.current.getBoundingClientRect().top;
+      const chatInputHeight = chatInputRef.current ? chatInputRef.current.offsetHeight : 0;
+
+      // Dynamically calculate gap size in pixels
+      const style = window.getComputedStyle(containerRef.current);
+      const gap = parseFloat(style.gap) || 0;
+
+      // Consider the gap in the height calculation
+      const newHeight = e.clientY - containerTop - chatInputHeight - 2 * gap; // gap above and below ChatInput
+
+      if (newHeight > 100) { // Minimum height check
         setContainerHeight(newHeight);
       }
     }
   };
+
+  
 
   const stopResizing = () => {
     isResizing.current = false;
@@ -150,7 +162,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
           <div id="messages-end-ref" ref={messagesEndRef} style={{ display: "inline" }} />
         </div>
       </div>
-      <ChatInput serviceId={serviceId} />
+      <div ref={chatInputRef}>
+        <ChatInput serviceId={serviceId} />
+      </div>
       <div
         style={{
           height: '8px',

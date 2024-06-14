@@ -1,5 +1,5 @@
 .piano {
-  height:300px;
+  min-height:300px;
   align-items: center;
   align-content: center;
   justify-content: center;
