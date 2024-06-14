@@ -1,5 +1,4 @@
 import DisplayUserActivity from "./DisplayUserActivity";
-import useChatStore from "../store/chat_old";
 
 import ChatBox from "./ChatBox";
 import ChatHeader from "./ChatHeader";

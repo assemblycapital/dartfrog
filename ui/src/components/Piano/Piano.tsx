@@ -1,8 +1,11 @@
 // Piano.tsx
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Howl } from 'howler';
 import PianoKey from './PianoKey';
 import './Piano.css';
+import { ServiceId, parseServiceId } from '../../dartclientlib';
+import useDartStore from '../../store/dart';
+import { PianoState } from '../../dartclientlib/piano';
 
 const PIANO_NOTES_FOLDER = 'assets/piano_notes';
 
@@ -27,11 +30,30 @@ const notes = [
   { note: 'D5', isSharp: false, fileName: 'd5.mp3', key: "'" },
 ];
 
-const Piano: React.FC = () => {
+
+interface PianoProps {
+  serviceId: ServiceId;
+  pianoState: PianoState;
+}
+const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
+  const { pokeService } = useDartStore();
   const [sounds, setSounds] = useState<{ [key: string]: Howl }>({});
   const [pressedKeys, setPressedKeys] = useState<{ [key: string]: boolean }>({});
   const [isFocused, setIsFocused] = useState(false);
   const pianoRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    console.log("Piano state changed", pianoState)
+    if (pianoState == null) return;
+    if( pianoState.notePlayed === null) return;
+    let sound = sounds[pianoState.notePlayed.note]
+    if (!sound) {
+      console.log("Sound not found for note", pianoState.notePlayed)
+      return
+    }
+    console.log("Playing sound", pianoState.notePlayed.note)
+    sound.play();
+  }, [pianoState, sounds])
 
   useEffect(() => {
     const loadedSounds: { [key: string]: Howl } = {};
@@ -72,6 +94,22 @@ const Piano: React.FC = () => {
     };
   }, [isFocused, sounds, pressedKeys]);
 
+  const handlePlayNote = useCallback((note: string) => {
+    const innerPluginRequest = {
+        "PlayNote": 
+          note
+        }
+    const data = {
+          "PluginRequest": [
+            "piano",
+            JSON.stringify(innerPluginRequest)
+      ]
+    }
+
+    let parsedServiceId = parseServiceId(serviceId);
+    pokeService(parsedServiceId, data);
+  }, [pokeService]);
+
   return (
     <div
       className="piano"
@@ -86,7 +124,10 @@ const Piano: React.FC = () => {
           note={note.note} 
           keyLetter={note.key}
           isSharp={note.isSharp} 
-          playSound={() => sounds[note.note]?.play()} 
+          playSound={() => {
+            handlePlayNote(note.note);
+            }
+          }
           isPressed={!!pressedKeys[note.note]}
         />
       ))}

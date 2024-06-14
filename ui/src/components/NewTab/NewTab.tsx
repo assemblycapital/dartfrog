@@ -1,22 +1,27 @@
-import DisplayUserActivity from "./DisplayUserActivity";
-import useChatStore from "../store/chat_old";
-
-import ChatBox from "./ChatBox";
-import ChatHeader from "./ChatHeader";
-import { ConnectionStatusType, ServerStatus } from "../types/types";
+import DisplayUserActivity from "../DisplayUserActivity";
+import ChatBox from "../ChatBox";
+import ChatHeader from "../ChatHeader";
+import { ConnectionStatusType, ServerStatus } from "../../types/types";
 import { useCallback, useEffect, useState } from "react";
-import Spinner from "./Spinner";
-import useDartStore from "../store/dart";
-import { AvailableServices, ParsedServiceId, Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "../dartclientlib";
+import Spinner from "../Spinner";
+import useDartStore from "../../store/dart";
+import { AvailableServices, ParsedServiceId, Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "../../dartclientlib";
 import './NewTab.css'
 import { createSecretKey } from "crypto";
+import CreateService from "./CreateService";
+
+export const validateServiceName = (value) => {
+  if (value==='') return true;
+  const regex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+  return regex.test(value);
+};
 
 interface NewTabProps {
   setTabService: (serviceId: ServiceId) => void;
 }
 
 const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
-  const { requestAllServiceList, requestServiceList, availableServices, joinService, createService, deleteService} = useDartStore();
+  const { requestAllServiceList, requestServiceList, availableServices, deleteService} = useDartStore();
   // 
 
   const [ myServices, setMyServices ] = useState<ParsedServiceId[]>([]);
@@ -54,47 +59,15 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
   const [isJoinServiceNameInputValid, setIsJoinServiceNameInputValid] = useState(true);
   const [inputJoinServiceHostNode, setInputJoinServiceHostNode] = useState('');
 
-  const [inputCreateServiceName, setInputCreateServiceName] = useState('');
-  const [isCreateInputValid, setIsCreateInputValid] = useState(true);
-
-  const validateServiceName = (value) => {
-    if (value==='') return true;
-    const regex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-    return regex.test(value);
-  };
-
-  const handleCreateInputChange = (e) => {
-    const value = e.target.value;
-    setInputCreateServiceName(value);
-    setIsCreateInputValid(validateServiceName(value));
-  };
-
   const handleJoinServiceNameInputChange= (e) => {
     const value = e.target.value;
     setInputJoinServiceName(value);
     setIsJoinServiceNameInputValid(validateServiceName(value));
   };
 
-  const handleInputCreateClick = useCallback(() => {
-    if (isCreateInputValid) {
-      if (inputCreateServiceName === '') return;
-      // console.log('Service name is valid:', inputCreateServiceName);
-      // Proceed with the creation logic
-      let serviceId = inputCreateServiceName+"."+window.our?.node
-      // console.log("create service", serviceId);
-      createService(serviceId);
-      setInputCreateServiceName('');
-      requestServiceList(window.our?.node);
-    } else {
-      // console.log('Invalid service name.');
-    }
-    // setTabService(makeServiceId(inputJoinServiceHostNode, inputJoinServiceName));
-  }, [inputCreateServiceName]);
-
   const handleInputJoinClick = useCallback(() => {
     if (isJoinServiceNameInputValid) {
       if (inputJoinServiceHostNode === '') return;
-
 
       if (inputJoinServiceName === '') return;
       setTabService(makeServiceId(inputJoinServiceHostNode, inputJoinServiceName));
@@ -113,64 +86,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
         gap: "0.8rem",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.8rem",
-        }}
-      >
-        <div
-          style={{
-            cursor: "default",
-            userSelect: "none",
-          }}
-        >
-          create a new service:
-        </div>
-        <div>
-          <input
-          type="text"
-          placeholder="service-name"
-          value={inputCreateServiceName}
-          onChange={handleCreateInputChange}
-          className={`${isCreateInputValid ? '' : 'invalid'}`}
-          />
-          <div
-            style={{
-              display: 'inline-block'
-            }}
-          >
-            <select name="serviceOption" id="serviceOption" defaultValue={"Option1"}>
-              <option value="Option1" >Text Chat</option>
-              <option value="Option2" disabled>Voice Chat</option>
-              <option value="Option2" disabled>Static File Server</option>
-              <option value="Option3" disabled>First Person Shooter</option>
-              <option value="Option4" disabled>Custom Plugin</option>
-            </select>
-          </div>
-          <div
-            style={{
-              display: 'inline-block'
-            }}
-          >
-            <select name="serviceOption" id="otherServiceOption" defaultValue={"Option1"}>
-              <option value="Option1" >Public</option>
-              <option value="Option2" disabled>Private</option>
-              <option value="Option2" disabled>Secret</option>
-            </select>
-          </div>
-          <button
-            style={{
-              cursor: 'pointer',
-            }}
-            onClick={handleInputCreateClick}
-          >
-            create
-          </button>
-        </div>
-
-            </div>
+        <CreateService />
         <div
           style={{
             display: "flex",

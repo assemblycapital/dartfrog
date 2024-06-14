@@ -4,7 +4,7 @@ import ServiceTab from './ServiceTab';
 import useDartStore from '../store/dart';
 import './TabbedWindowManager.css';
 import { PlusIcon, XIcon } from './icons/Icons';
-import NewTab from './NewTab';
+import NewTab from './NewTab/NewTab';
 import { join } from 'path';
 import { SERVER_NODE } from '../utils';
 
@@ -26,19 +26,18 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({}) => {
   const { services, exitService, joinService } = useDartStore();
 
   useEffect(() => {
-    const currentTab = tabs[activeTabIndex];
-    if (currentTab && currentTab.serviceId) {
-      const service = services.get(currentTab.serviceId);
-      if (!service) {
-        joinService(parseServiceId(currentTab.serviceId));
-        setCurrentTabService(null);
-      } else {
-        setCurrentTabService(service);
+    tabs.forEach(tab => {
+      if (tab && tab.serviceId) {
+        const service = services.get(tab.serviceId);
+        if (!service) {
+          joinService(parseServiceId(tab.serviceId));
+        } else {
+          // Optionally update some state or cache with the service details
+          // This step depends on what you need to do with the service once it's confirmed to be joined
+        }
       }
-    } else {
-      setCurrentTabService(null);
-    }
-  }, [tabs, activeTabIndex, services]);
+    });
+  }, [tabs, services]);
 
   const addTab = useCallback(() => {
     setTabs(prevTabs => [...prevTabs, { serviceId: null }]);

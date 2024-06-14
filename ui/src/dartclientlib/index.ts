@@ -3,6 +3,7 @@ import { SERVER_NODE, WEBSOCKET_URL } from '../utils';
 import { deflate } from "zlib";
 import { on } from "events";
 import  {ChatState, handleChatUpdate}  from "./chat"; // Import the ChatState type from the appropriate module
+import { handlePianoUpdate } from "./piano";
 export enum ConnectionStatusType {
   Connecting,
   Connected,
@@ -41,7 +42,9 @@ export type Service = {
   connectionStatus: ServiceConnectionStatus,
   metadata: ServiceMetadata,
   heartbeatIntervalId?: NodeJS.Timeout,
-  pluginStates: { [key: string]: any },
+  pluginStates: { [key: string]:
+    { exists: boolean, state: any }
+  },
 }
 export interface Presence {
   time: number;
@@ -50,6 +53,7 @@ export interface Presence {
 export interface ServiceMetadata {
   subscribers: Array<string>;
   user_presence: { [key: string]: Presence };
+  plugins: Array<string>;
 }
 
 
@@ -71,16 +75,12 @@ export type AvailableServices = Map<string, Array<ParsedServiceId>>
 
 
 function new_service(serviceId: ParsedServiceId) : Service {
-  // let rawServiceId = makeServiceId(serviceId.node, serviceId.id);
-  // let chat = new ChatObject({
-  //   serviceId: rawServiceId,
-  //   messageSender: ()=>{}
-  // });
   return {
     serviceId: serviceId,
-    metadata: {subscribers: [], user_presence: {}},
+    metadata: {subscribers: [], user_presence: {}, plugins: []},
     connectionStatus: {status:ServiceConnectionStatusType.Connecting, timestamp:Date.now()},
-    pluginStates: {},
+    pluginStates: {
+    },
   }
 }
 
@@ -204,12 +204,16 @@ class DartApi {
           return;
         }
         
+        console.log('Service Update:', response);
         service.connectionStatus = {status:ServiceConnectionStatusType.Connected, timestamp:Date.now()};
         if (response === "SubscribeAck") {
           this.services.set(serviceId, service);
           this.onServicesChange();
         } else if (response.ServiceMetadata) {
           service.metadata = response.ServiceMetadata;
+          for (const plugin of service.metadata.plugins) {
+              service.pluginStates[plugin] = {exists: true, state: null};
+          }
           this.services.set(serviceId, service);
           for (let user of Object.keys(response.ServiceMetadata.user_presence)) {
             if (!this.availableServices.has(user)) {
@@ -238,13 +242,31 @@ class DartApi {
   handlePluginUpdate(plugin:string, update: any, serviceId: ServiceId, service: Service) {
     if (plugin === "chat") {
       if (service.pluginStates.chat === undefined) {
-        service.pluginStates.chat = {messages: new Map()};
+        return;
       }
-      let chatState = service.pluginStates.chat;
+      if (service.pluginStates.chat.state === null ) {
+        service.pluginStates.chat.state = { messages: new Map() }
+      }
+      let chatState = service.pluginStates.chat.state;
+      console.log("chatState", chatState)
       let newChatState = handleChatUpdate(chatState, update);
-      service.pluginStates.chat = newChatState;
+      service.pluginStates.chat.state = newChatState;
+      console.log("newChatState", newChatState)
       this.services.set(serviceId, service);
       this.onServicesChange();
+    } else if (plugin === "piano") {
+      if (service.pluginStates.piano === undefined) {
+        return
+      }
+      if (service.pluginStates.piano.state === null ) {
+        service.pluginStates.piano.state = {}
+      }
+      let pianoState = service.pluginStates.piano.state;
+      let newPianoState = handlePianoUpdate(pianoState, update);
+      service.pluginStates.piano.state = newPianoState;
+      this.services.set(serviceId, service);
+      this.onServicesChange();
+
     } else {
       console.warn('Unknown plugin:', plugin, update);
     }
@@ -314,13 +336,13 @@ class DartApi {
     this.api.send({ data:wrapper });
   }
 
-  sendCreateServiceRequest(serviceId: ParsedServiceId) {
+  sendCreateServiceRequest(serviceId: ParsedServiceId, plugins: Array<String>) {
     if (!this.api) { return; }
     const wrapper = {
       "ServerRequest": {
         "CreateService": [
           { "node": serviceId.node, "id": serviceId.id },
-          ["chat"] // plugins
+          plugins
         ]
       }
     }

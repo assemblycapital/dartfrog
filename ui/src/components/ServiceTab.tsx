@@ -1,5 +1,4 @@
 import DisplayUserActivity from "./DisplayUserActivity";
-import useChatStore from "../store/chat_old";
 import ChatBox from "./ChatBox";
 import ChatHeader from "./ChatHeader";
 import { Service, ServiceConnectionStatusType, ServiceId, ServiceMetadata, makeServiceId } from "../dartclientlib";
@@ -105,14 +104,22 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
                           gap: "0.8rem",
                         }}
                       >
-                        <div
-                          style={{
-                            flex: 1,
-                          }}
-                        >
+                          {((service.pluginStates.piano !== undefined) &&
+                            (service.metadata.plugins.includes("piano")))
+                          ? (
 
-                          <Piano />
-                        </div>
+                            <div
+                              style={{
+                                flex: 1,
+                              }}
+                            >
+                              <Piano serviceId={serviceId} pianoState={service.pluginStates.piano.state} />
+                            </div>
+                          ):(
+                            <>
+                              {/* <div>piano plugin not available</div> */}
+                            </>
+                            )}
 
                         <div
                           style={{
@@ -120,9 +127,11 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
                           }}
                          >
 
-                          {(service.pluginStates.chat !== undefined) ? (
+                          {((service.pluginStates.chat !== undefined) &&
+                            (service.pluginStates.chat.state !== null ))
+                          ? (
 
-                            <ChatBox serviceId={serviceId} chatState={service.pluginStates.chat}/>
+                            <ChatBox serviceId={serviceId} chatState={service.pluginStates.chat.state}/>
                           ):(
                             <>
                               <div>chat plugin not available</div>

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import useChatStore from '../store/chat_old';
 import { computeColorForName} from '../utils';
 import { ServiceId, ServiceMetadata } from '../dartclientlib';
 import useDartStore from '../store/dart';
