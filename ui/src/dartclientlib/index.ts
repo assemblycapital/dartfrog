@@ -4,6 +4,7 @@ import { deflate } from "zlib";
 import { on } from "events";
 import  {ChatState, handleChatUpdate}  from "./chat"; // Import the ChatState type from the appropriate module
 import { handlePianoUpdate } from "./piano";
+import { handlePageUpdate } from "./page";
 export enum ConnectionStatusType {
   Connecting,
   Connected,
@@ -290,6 +291,8 @@ private getInitialPluginState(plugin: string): any {
             return { messages: new Map() };
         case "piano":
             return { notePlayed: null };
+        case "page":
+            return { page: "" };
         default:
             return null;  // Default state or throw error if plugin is unrecognized.
     }
@@ -302,6 +305,8 @@ private getPluginUpdateHandler(plugin: string): (currentState: any, update: any)
             return handleChatUpdate;
         case "piano":
             return handlePianoUpdate;
+        case "page":
+            return handlePageUpdate;
         default:
             return null;  // Return null or throw error if handler for plugin is unrecognized.
     }
@@ -362,7 +367,7 @@ private getPluginUpdateHandler(plugin: string): (currentState: any, update: any)
 
   sendRequest(req: any) {
     if (!this.api) { return; }
-    // console.log("Sending request", req)
+    console.log("Sending request", req)
     const wrapper = {
       "ClientRequest": {
         "ConsumerRequest": [0, req]

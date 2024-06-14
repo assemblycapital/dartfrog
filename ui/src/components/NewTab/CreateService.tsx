@@ -29,11 +29,12 @@ const CreateService: React.FC = () => {
   const handleInputCreateClick = useCallback(() => {
     if (isCreateInputValid && inputCreateServiceName !== '') {
       let serviceId = `${inputCreateServiceName}.${window.our?.node}`;
-      // console.log(selectedPermission, selectedPlugin);
       if (selectedPlugin === 'text-chat') {
         createService(serviceId, ["chat"]);
       } else if (selectedPlugin === 'piano') {
         createService(serviceId, ["chat", "piano"]);
+      } else if (selectedPlugin === 'page') {
+        createService(serviceId, ["chat", "page"]);
       }
       setInputCreateServiceName('');
       requestServiceList(window.our?.node);
@@ -51,7 +52,6 @@ const CreateService: React.FC = () => {
         display: "flex",
         flexDirection: "column",
         gap: "0.3rem",
-        // padding: "0.5rem",
       }}
     >
       <div style={{ cursor: "default", userSelect: "none" }}>
@@ -73,6 +73,7 @@ const CreateService: React.FC = () => {
         >
           <option value="text-chat">Text Chat</option>
           <option value="piano">Piano</option>
+          <option value="page">Page</option> {/* Added new option here */}
         </select>
         <select
           name="servicePermissionsOption"

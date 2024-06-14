@@ -44,12 +44,12 @@ fn start_plugin_process(name:String, service:&Service, our:&Address, drive_path:
                     })).unwrap();
                 }
                 Err(e) => {
-                    print!("couldn't spawn, {:?}", e)
+                    println!("couldn't spawn, {:?}", e)
                 }
             }
         }
         Err(e) => {
-            print!("couldn't spawn, {:?}", e)
+            println!("couldn't spawn, {:?}", e)
         }
     };
 }

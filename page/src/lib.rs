@@ -1,61 +1,72 @@
-use common::{handle_message, update_subscribers, PluginMetadata, PluginState};
+use common::{handle_message, update_client, update_subscribers, PluginMetadata, PluginState};
+use constants::default_html;
 use kinode_process_lib::{call_init, println, Address};
 use serde::{Deserialize, Serialize};
 
+mod constants;
 wit_bindgen::generate!({
     path: "target/wit",
     world: "process-v0",
 });
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum PianoRequest {
-    PlayNote(String), // note
+pub enum PageRequest{
+    Write(String),
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub enum PianoUpdate {
-    NotePlayed(String, String) // from, note
+pub enum PageUpdate {
+    PageState(String),
 }
 
 #[derive(Debug, Clone)]
-pub struct PianoState {
-    _todo: u64,
+pub struct PageState {
+    page: String,
 }
 
-impl PluginState for PianoState {
+impl PluginState for PageState {
     fn new() -> Self {
-        PianoState { _todo: 0 }
+        PageState {
+            page: default_html.to_string(),
+        }
     }
 
     fn handle_exit(&mut self, _from: String, _meta: &PluginMetadata, _our: &Address) -> anyhow::Result<()> {
         Ok(())
     }
 
-    fn handle_join(&mut self, _from: String, _meta: &PluginMetadata, _our: &Address) -> anyhow::Result<()> {
+    fn handle_join(&mut self, from: String, meta: &PluginMetadata, our: &Address) -> anyhow::Result<()> {
+        let state_update = PageUpdate::PageState(self.page.clone());
+        update_client(our, from, state_update, meta)?;
         Ok(())
     }
 
     fn handle_request(&mut self, from: String, req: String, meta: &PluginMetadata, our: &Address) -> anyhow::Result<()> {
-        let Ok(request) = serde_json::from_str::<PianoRequest>(&req) else {
+        // println!("Page plugin received request: {:?}", req);
+        if from != our.node() {
+            return Ok(());
+        }
+        let Ok(request) = serde_json::from_str::<PageRequest>(&req) else {
             println!("error parsing request: {:?}", req);
             return Ok(());
         };
         match request {
-            PianoRequest::PlayNote(note) => {
-                let update = PianoUpdate::NotePlayed(from.clone(), note.clone());
-                // let update_str = serde_json::to_string(&update).unwrap();
-                update_subscribers(our, &update, meta)?;
+            PageRequest::Write(page) => {
+                self.page = page;
+                let state_update = PageUpdate::PageState(self.page.clone());
+                update_subscribers(our, state_update, meta)?;
             }
         }
+
         Ok(())
     }
 }
 
 call_init!(init);
 fn init(our: Address) {
-    // println!("Piano plugin started");
+    // println!("Page plugin started");
     let mut meta: Option<PluginMetadata> = None;
-    let mut state: PianoState = PianoState::new();
+    let mut state: PageState = PageState::new();
     loop {
         match handle_message(&our, &mut state, &mut meta) {
             Ok(()) => {}

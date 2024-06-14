@@ -75,7 +75,8 @@ const useDartStore = create<DartStore>()(
         const { api } = get();
         if (!api) { return; }
 
-        // console.log('pokeService', parsedServiceId, data)
+        console.log('pokeService', parsedServiceId, data)
+
         const request =  { "SendToService": 
         [
           { "node": parsedServiceId.node, "id": parsedServiceId.id },

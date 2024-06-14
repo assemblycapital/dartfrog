@@ -4,6 +4,7 @@ members = [
     "dartfrog",
     "chat",
     "piano",
+    "page",
     "common",
 ]
 
