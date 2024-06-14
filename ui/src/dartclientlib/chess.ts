@@ -26,19 +26,28 @@ export function handleChessUpdate(chessState: ChessState, update: string): Chess
     const parsedUpdate = JSON.parse(update);
     if (!parsedUpdate) return chessState;
 
-    console.log('Chess update:', parsedUpdate);
     if (parsedUpdate['ChessState']) {
-        console.log('Chess update handling', parsedUpdate);
         // Handle updates to the entire chess game state
+        let updateGame = parsedUpdate.ChessState.game;
+        let newChessGame;
+
+        if (updateGame===null) {
+            newChessGame = null;
+        } else {
+            newChessGame = {
+                white: updateGame.white,
+                black: updateGame.black,
+                isWhiteTurn: updateGame.is_white_turn,
+                moves: updateGame.moves
+            }
+        }
+
         let newChessState = {
-            game: parsedUpdate.ChessState.game,
+            game: newChessGame,
             queuedWhite: parsedUpdate.ChessState.queued_white,
             queuedBlack: parsedUpdate.ChessState.queued_black
         }
         return { ...newChessState };
-        // chessState.game = parsedUpdate.ChessState.game;
-        // chessState.queuedWhite = parsedUpdate.ChessState.queuedWhite;
-        // chessState.queuedBlack = parsedUpdate.ChessState.queuedBlack;
 
     } else {
         console.log('Unknown chess update', parsedUpdate);

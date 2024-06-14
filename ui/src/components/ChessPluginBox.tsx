@@ -4,7 +4,7 @@ import { ServiceId, parseServiceId } from '../dartclientlib';
 import useDartStore from '../store/dart';
 import { ChessState } from '../dartclientlib/chess';
 import Chessboard from 'chessboardjsx';
-import { send } from 'process';
+import './ChessPluginBox.css'; // Import the CSS file for styling
 
 interface ChessPluginBoxProps {
   serviceId: ServiceId;
@@ -15,11 +15,11 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
   const { pokeService } = useDartStore();
   const [chess] = useState(new Chess());
   const [gameFen, setGameFen] = useState(chess.fen());
+  const [canPlayerMove, setCanPlayerMove] = useState(false);
 
   useEffect(() => {
     if (!chessState.game) return;
-    console.log("chessState.game", chessState.game);
-    // chess.reset();
+    chess.reset();
     for (let move of chessState.game.moves) {
       try {
         const result = chess.move(move);
@@ -29,6 +29,8 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
       }
     }
     setGameFen(chess.fen());
+    let canMove = getCanPlayerMove();
+    setCanPlayerMove(canMove);
   }, [chessState, chess]);
 
   const sendChessRequest = useCallback((req) => {
@@ -43,10 +45,9 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
         // invalid move
         return;
     }
-    console.log("res", res);
     sendChessRequest({ "Move": res });
 
-  }, [chess, sendChessRequest]);
+  }, [chess, sendChessRequest, canPlayerMove]);
 
   function cloneChess(chessInstance) {
     const newChess = new Chess();
@@ -54,7 +55,28 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
     return newChess;
   }
   
-  function isMoveValid(moveObject, chessInstance) {
+  const getCanPlayerMove = useCallback(() => {
+    if (!chessState.game) return false;
+    console.log(chessState.game.isWhiteTurn)
+    const currentPlayer = chessState.game.isWhiteTurn ? 'White' : 'Black';
+    
+    console.log(`Current Player: ${currentPlayer}`);
+    console.log(`Our Node: ${window.our.node}`);
+    console.log(`White Player: ${chessState.game.white}`);
+    console.log(`Black Player: ${chessState.game.black}`);
+    const isValidPlayer = (currentPlayer === 'White' && window.our.node === chessState.game.white) ||
+                          (currentPlayer === 'Black' && window.our.node === chessState.game.black);
+  
+    console.log(`Can Player Move: ${isValidPlayer}`);
+    return isValidPlayer;
+  }, [chessState]);
+
+
+  const isMoveValid = useCallback((moveObject, chessInstance) => {
+    if (!canPlayerMove) {
+      console.log('Not your turn')
+      return null;
+    }
     const { sourceSquare, targetSquare, piece } = moveObject;
     const clonedChess = cloneChess(chessInstance);
     try {
@@ -72,32 +94,54 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
       console.log(`Invalid move attempted: ${sourceSquare} to ${targetSquare}`);
       return null;
     }
-  }
+  }, [canPlayerMove])
   
-    return (
-      <div>
-        {chessState.game ? (
-          <>
+  return (
+    <div className="chess-container">
+      {chessState.game ? (
+        <>
+          <div className="chessboard">
+            <Chessboard 
+              position={gameFen} 
+              width={320}
+              onDrop={onDrop} 
+            />
+          </div>
+          <div className="game-info">
+            <p>{chessState.game.isWhiteTurn}</p>
             <p>Current Turn: {chessState.game.isWhiteTurn ? 'White' : 'Black'}</p>
             <p>White Player: {chessState.game.white}</p>
             <p>Black Player: {chessState.game.black}</p>
-            <p>Moves: {chessState.game.moves.join(", ")}</p>
-            <div>
-              <Chessboard position={gameFen} 
-                width={320}
-                // position={position}
-                onDrop={onDrop}
-              />
-            </div>
-          </>
-        ) : (
+          </div>
+        </>
+      ) : (
         <div>
-          <button onClick={() => sendChessRequest({ "Queue": "White" })}>Queue as White</button>
-          <button onClick={() => sendChessRequest({ "Queue": "Black" })}>Queue as Black</button>
+            <div
+              style={{
+                fontWeight: "bold",
+                marginBottom: "10px",
+              }}
+            >
+              chess game lobby
+            </div>
+            <p>Queued White Player: {chessState.queuedWhite || "None"}</p>
+            <p>Queued Black Player: {chessState.queuedBlack || "None"}</p>
+            <button 
+              onClick={() => sendChessRequest({ "Queue": "White" })}
+              disabled={chessState.queuedWhite !== null}
+            >
+              Queue as White
+            </button>
+            <button 
+              onClick={() => sendChessRequest({ "Queue": "Black" })}
+              disabled={chessState.queuedBlack !== null}
+            >
+              Queue as Black
+            </button>
         </div>
-        )}
-      </div>
-    );
+      )}
+    </div>
+  );
 };
 
 export default ChessPluginBox;
