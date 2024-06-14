@@ -43,7 +43,7 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
   const pianoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.log("Piano state changed", pianoState)
+    console.log("Piano.tsx state changed", pianoState)
     if (pianoState == null) return;
     if( pianoState.notePlayed === null) return;
     let sound = sounds[pianoState.notePlayed.note]

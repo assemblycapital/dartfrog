@@ -212,7 +212,9 @@ class DartApi {
         } else if (response.ServiceMetadata) {
           service.metadata = response.ServiceMetadata;
           for (const plugin of service.metadata.plugins) {
-              service.pluginStates[plugin] = {exists: true, state: null};
+              if (service.pluginStates[plugin] === undefined){
+                service.pluginStates[plugin] = {exists: true, state: null};
+              }
           }
           this.services.set(serviceId, service);
           for (let user of Object.keys(response.ServiceMetadata.user_presence)) {
@@ -242,31 +244,43 @@ class DartApi {
   handlePluginUpdate(plugin:string, update: any, serviceId: ServiceId, service: Service) {
     if (plugin === "chat") {
       if (service.pluginStates.chat === undefined) {
-        return;
+        service.pluginStates.chat = { exists: true, state: null}
       }
       if (service.pluginStates.chat.state === null ) {
         service.pluginStates.chat.state = { messages: new Map() }
       }
       let chatState = service.pluginStates.chat.state;
-      console.log("chatState", chatState)
       let newChatState = handleChatUpdate(chatState, update);
       service.pluginStates.chat.state = newChatState;
-      console.log("newChatState", newChatState)
       this.services.set(serviceId, service);
       this.onServicesChange();
     } else if (plugin === "piano") {
       if (service.pluginStates.piano === undefined) {
-        return
+        service.pluginStates.piano = { exists: true, state: null}
       }
       if (service.pluginStates.piano.state === null ) {
         service.pluginStates.piano.state = {}
       }
       let pianoState = service.pluginStates.piano.state;
       let newPianoState = handlePianoUpdate(pianoState, update);
-      service.pluginStates.piano.state = newPianoState;
-      this.services.set(serviceId, service);
-      this.onServicesChange();
+      // service.pluginStates.piano.state = newPianoState;
+      // console.log("newPianoState", newPianoState);
+      let prevService = service;
+      let new_service = {
+        ...prevService,
+        pluginStates: {
+          ...prevService.pluginStates,
+          piano: {
+            ...prevService.pluginStates.piano,
+            state: { ...newPianoState }
+          }
+        }
+      };
 
+
+      this.services.set(serviceId, new_service);
+
+      this.onServicesChange();
     } else {
       console.warn('Unknown plugin:', plugin, update);
     }
