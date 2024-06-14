@@ -1,7 +1,6 @@
 use common::{handle_message, update_client, update_subscribers, PluginMetadata, PluginState};
 use kinode_process_lib::{call_init, println, Address};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 wit_bindgen::generate!({
     path: "target/wit",
@@ -79,8 +78,18 @@ impl PluginState for ChessState {
         match request {
             ChessRequest::Queue(color) => {
                 match color {
-                    ChessColor::White => self.queued_white = Some(from.clone()),
-                    ChessColor::Black => self.queued_black = Some(from.clone()),
+                    ChessColor::White => {
+                        // Only set the queue if it is currently None
+                        if self.queued_white.is_none() {
+                            self.queued_white = Some(from.clone());
+                        }
+                    },
+                    ChessColor::Black => {
+                        // Only set the queue if it is currently None
+                        if self.queued_black.is_none() {
+                            self.queued_black = Some(from.clone());
+                        }
+                    },
                 }
 
                 if self.queued_white.is_some() && self.queued_black.is_some() {
@@ -98,6 +107,12 @@ impl PluginState for ChessState {
             }
             ChessRequest::Move(move_string) => {
                 if let Some(game) = &mut self.game {
+                    if game.is_white_turn && from != game.white {
+                        return Ok(());
+                    }
+                    if !game.is_white_turn && from != game.black {
+                        return Ok(());
+                    }
                     game.moves.push(move_string);
                     game.is_white_turn = !game.is_white_turn;
                 }

@@ -57,24 +57,16 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
   
   const getCanPlayerMove = useCallback(() => {
     if (!chessState.game) return false;
-    console.log(chessState.game.isWhiteTurn)
     const currentPlayer = chessState.game.isWhiteTurn ? 'White' : 'Black';
-    
-    console.log(`Current Player: ${currentPlayer}`);
-    console.log(`Our Node: ${window.our.node}`);
-    console.log(`White Player: ${chessState.game.white}`);
-    console.log(`Black Player: ${chessState.game.black}`);
     const isValidPlayer = (currentPlayer === 'White' && window.our.node === chessState.game.white) ||
                           (currentPlayer === 'Black' && window.our.node === chessState.game.black);
   
-    console.log(`Can Player Move: ${isValidPlayer}`);
     return isValidPlayer;
   }, [chessState]);
 
 
   const isMoveValid = useCallback((moveObject, chessInstance) => {
     if (!canPlayerMove) {
-      console.log('Not your turn')
       return null;
     }
     const { sourceSquare, targetSquare, piece } = moveObject;
@@ -85,13 +77,13 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
         to: targetSquare,
       });
       if (result === null) {
-        console.log(`Invalid move attempted: ${sourceSquare} to ${targetSquare}`);
+        // console.log(`Invalid move attempted: ${sourceSquare} to ${targetSquare}`);
         return null;
       }
       return clonedChess.history()[0];
 
     } catch (error) {
-      console.log(`Invalid move attempted: ${sourceSquare} to ${targetSquare}`);
+      // console.log(`Invalid move attempted: ${sourceSquare} to ${targetSquare}`);
       return null;
     }
   }, [canPlayerMove])
@@ -126,18 +118,28 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
             </div>
             <p>Queued White Player: {chessState.queuedWhite || "None"}</p>
             <p>Queued Black Player: {chessState.queuedBlack || "None"}</p>
-            <button 
-              onClick={() => sendChessRequest({ "Queue": "White" })}
-              disabled={chessState.queuedWhite !== null}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+              }}
             >
-              Queue as White
-            </button>
-            <button 
-              onClick={() => sendChessRequest({ "Queue": "Black" })}
-              disabled={chessState.queuedBlack !== null}
-            >
-              Queue as Black
-            </button>
+              <button 
+                className='queue-button'
+                onClick={() => sendChessRequest({ "Queue": "White" })}
+                disabled={chessState.queuedWhite !== null}
+              >
+                Queue as White
+              </button>
+              <button 
+                className='queue-button'
+                onClick={() => sendChessRequest({ "Queue": "Black" })}
+                disabled={chessState.queuedBlack !== null}
+              >
+                Queue as Black
+              </button>
+            </div>
         </div>
       )}
     </div>

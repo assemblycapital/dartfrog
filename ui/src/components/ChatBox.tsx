@@ -38,10 +38,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
   );
 
   useEffect(() => {
-    if (chatState.messages.size === 0) return;
+    // if (chatState.messages.size === 0) return;
     const sortedMessages = Array.from(chatState.messages.values()).sort((a, b) => a.id - b.id);
     setChatMessageList(sortedMessages);
-  }, [chatState.messages]);
+  }, [serviceId, chatState.messages]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

@@ -6,7 +6,6 @@ pub const DEFAULT_HTML : &str = r#"<!DOCTYPE html>
     <style>
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
   font-weight: 400;
 
   color-scheme: dark;
@@ -17,19 +16,27 @@ pub const DEFAULT_HTML : &str = r#"<!DOCTYPE html>
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 0.8rem;
 }
 h1 {
-  font-size: 1.2em;
+  font-size: 1rem;
   line-height: 1.1;
 }
 
     </style>
 </head>
 <body>
-<h1>DartFrog Release Notes - Version 0.2.1</h1>
+<h1>dartfrog Release Notes - Version 0.2.1</h1>
 <img src="https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/kino.webp" alt="Kino" width="200" height="200">
-<p>In 0.2.1, chat REALLY is just a plugin. its backend is about 100 lines of code.</p>
-<p>more plugins: a networked piano, and a "page" plugin for html+css, which is what you're reading now.</p>
+<p>In 0.2.1, chat is fr just a plugin.</p>
+<p>New plugins:
+    <ul>
+        <li>multiplayer piano</li>
+        <li>chess (with spectator mode)</li>
+        <li>"page" for HTML+CSS, which is what you're reading now.</li>
+    </ul>
+</p>
+<p>If a page plugin is hosted on your node, you can edit it with the "edit" button in the bottom left.</p>
 </body>
 </html>"#;
 
