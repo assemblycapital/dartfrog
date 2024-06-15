@@ -2,7 +2,7 @@
     {
         "process_name": "dartfrog",
         "process_wasm_path": "/dartfrog.wasm",
-        "on_exit": "Restart",
+        "on_exit": {"Requests": []},
         "request_networking": true,
         "request_capabilities": [
             "http_server:distro:sys",

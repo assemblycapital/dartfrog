@@ -22,10 +22,16 @@ const ChatInput: React.FC<ChatInputProps> = ({ serviceId }) => {
 
       // Create a message object
       let text = maybeReplaceWithImage(chatMessageInputText);
-      const data = {
+      const innerPluginRequest = {
           "SendMessage": 
             text
-        }
+          }
+      const data = {
+            "PluginRequest": [
+              "chat",
+              JSON.stringify(innerPluginRequest)
+        ]
+      }
       // sendPoke(data);
       setChatMessageInputText("");
 
@@ -44,6 +50,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ serviceId }) => {
           flexGrow: 1,
           fontFamily: 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
           marginRight: '0px',
+          resize: 'vertical',
         }}
         id="chat-input"
         value={chatMessageInputText}

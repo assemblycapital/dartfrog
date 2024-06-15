@@ -1,0 +1,36 @@
+.chess-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+  color: #ffffff88;
+  font-size: 0.8rem;
+}
+
+.chessboard {
+  margin-bottom: 20px;
+}
+
+.game-info {
+  text-align: center;
+  padding: 10px;
+  border-radius: 5px;
+  width: 320px;
+}
+
+.game-info p {
+  margin: 5px 0;
+}
+
+.queue-button {
+  width:200px;
+  padding: 2rem;
+  display: flex;            /* Aligns child elements using the Flexbox layout */
+  align-items: center;      /* Centers the text vertically */
+  justify-content: center;  /* Centers the text horizontally */
+  text-align: center;       /* Ensures the text is centered if it wraps */
+  white-space: nowrap;      /* Prevents the text from wrapping to the next line */
+  overflow: hidden;         /* Hides any text that overflows the button's boundaries */
+  text-overflow: ellipsis;  /* Adds an ellipsis (...) if the text overflows */
+}
+

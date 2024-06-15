@@ -1,5 +1,4 @@
 import DisplayUserActivity from "./DisplayUserActivity";
-import useChatStore from "../store/chat_old";
 import ChatBox from "./ChatBox";
 import ChatHeader from "./ChatHeader";
 import { Service, ServiceConnectionStatusType, ServiceId, ServiceMetadata, makeServiceId } from "../dartclientlib";
@@ -9,6 +8,8 @@ import { useEffect, useState } from "react";
 import Spinner from "./Spinner";
 import { stringifyServiceConnectionStatus } from "./FullServicesView";
 import { ChatMessageHistory } from "../types/types";
+import Piano from "./Piano/Piano";
+import ServiceConnectedDisplay from "./ServiceConnectedDisplay";
 
 interface ServiceTabProps {
   serviceId: ServiceId;
@@ -21,7 +22,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
   useEffect(() => {
     const gotService = services.get(serviceId);
     if (gotService) {
-      setService(gotService);
+      setService({ ...gotService });
       // console.log("service updated in servicetab")
     } else {
       setService(null);
@@ -42,19 +43,6 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
           gap: "0.3rem",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            color: "#ffffff55",
-            fontSize: "0.8rem",
-            gap: "0.8rem",
-            cursor:"default"
-          }}
-        >
-          <div>{serviceId}</div>
-        </div>
         {!service ? (
           <div
             style={{
@@ -88,11 +76,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
                   )}
                   </div>
                   ) : (
-                    <div>
-                      {/* <ChatHeader serviceId={serviceId} /> */}
-                      <ChatBox serviceId={serviceId} chats={service.chatState.messages}/>
-                      <DisplayUserActivity serviceId={serviceId} metadata={service.metadata} />
-                    </div>
+                    <ServiceConnectedDisplay serviceId={serviceId} service={service} />
                 )}
               </div>
           )}

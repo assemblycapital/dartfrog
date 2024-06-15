@@ -4,7 +4,7 @@ import ServiceTab from './ServiceTab';
 import useDartStore from '../store/dart';
 import './TabbedWindowManager.css';
 import { PlusIcon, XIcon } from './icons/Icons';
-import NewTab from './NewTab';
+import NewTab from './NewTab/NewTab';
 import { join } from 'path';
 import { SERVER_NODE } from '../utils';
 
@@ -17,6 +17,7 @@ interface TabbedWindowManagerProps {
 const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({}) => {
   const [tabs, setTabs] = useState<Tab[]>([
     { serviceId: "chat."+SERVER_NODE },
+    // { serviceId: "chat."+window.our.node},
     { serviceId: null },
   ]);
 
@@ -25,23 +26,27 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({}) => {
   const { services, exitService, joinService } = useDartStore();
 
   useEffect(() => {
-    const currentTab = tabs[activeTabIndex];
-    if (currentTab && currentTab.serviceId) {
-      const service = services.get(currentTab.serviceId);
-      if (!service) {
-        joinService(parseServiceId(currentTab.serviceId));
-        setCurrentTabService(null);
-      } else {
-        setCurrentTabService(service);
+    tabs.forEach(tab => {
+      if (tab && tab.serviceId) {
+        const service = services.get(tab.serviceId);
+        if (!service) {
+          joinService(parseServiceId(tab.serviceId));
+        } else {
+          // Optionally update some state or cache with the service details
+          // This step depends on what you need to do with the service once it's confirmed to be joined
+        }
       }
-    } else {
-      setCurrentTabService(null);
-    }
-  }, [tabs, activeTabIndex, services]);
+    });
+  }, [tabs, services]);
 
   const addTab = useCallback(() => {
-    setTabs(prevTabs => [...prevTabs, { serviceId: null }]);
+    setTabs(prevTabs => {
+      const newTabs = [...prevTabs, { serviceId: null }];
+      setActiveTabIndex(newTabs.length - 1);  // Set the active tab index to the new tab
+      return newTabs;
+    });
   }, []);
+  
 
   const closeTab = useCallback((index: number) => {
     setTabs(prevTabs => prevTabs.filter((_, i) => i !== index));
@@ -141,7 +146,6 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({}) => {
               alignItems: 'center',
               height: '400px',
               color: '#ffffff55',
-
             }}
           >
             <button

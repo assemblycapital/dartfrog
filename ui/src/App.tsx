@@ -50,23 +50,23 @@ function App() {
     };
   }, []);
   
-  useEffect(() => {
-    // when the user presses a key a-z, focus #chat-input
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key.match(/[a-z]/i)) {
-        const chatInput = document.getElementById('chat-input');
-        if (chatInput) {
-          chatInput.focus();
-        }
-      }
-    };
+  // useEffect(() => {
+  //   // when the user presses a key a-z, focus #chat-input
+  //   const handleKeyDown = (event: KeyboardEvent) => {
+  //     if (event.key.match(/[a-z]/i)) {
+  //       const chatInput = document.getElementById('chat-input');
+  //       if (chatInput) {
+  //         chatInput.focus();
+  //       }
+  //     }
+  //   };
 
-    document.addEventListener('keydown', handleKeyDown);
+  //   document.addEventListener('keydown', handleKeyDown);
 
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
+  //   return () => {
+  //     document.removeEventListener('keydown', handleKeyDown);
+  //   };
+  // }, []);
 
   return (
     <div style={{

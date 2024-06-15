@@ -3,6 +3,9 @@ import { SERVER_NODE, WEBSOCKET_URL } from '../utils';
 import { deflate } from "zlib";
 import { on } from "events";
 import  {ChatState, handleChatUpdate}  from "./chat"; // Import the ChatState type from the appropriate module
+import { handlePianoUpdate } from "./piano";
+import { handlePageUpdate } from "./page";
+import { handleChessUpdate, newChessState } from "./chess";
 export enum ConnectionStatusType {
   Connecting,
   Connected,
@@ -41,7 +44,9 @@ export type Service = {
   connectionStatus: ServiceConnectionStatus,
   metadata: ServiceMetadata,
   heartbeatIntervalId?: NodeJS.Timeout,
-  chatState: ChatState,
+  pluginStates: { [key: string]:
+    { exists: boolean, state: any }
+  },
 }
 export interface Presence {
   time: number;
@@ -50,6 +55,7 @@ export interface Presence {
 export interface ServiceMetadata {
   subscribers: Array<string>;
   user_presence: { [key: string]: Presence };
+  plugins: Array<string>;
 }
 
 
@@ -71,16 +77,12 @@ export type AvailableServices = Map<string, Array<ParsedServiceId>>
 
 
 function new_service(serviceId: ParsedServiceId) : Service {
-  // let rawServiceId = makeServiceId(serviceId.node, serviceId.id);
-  // let chat = new ChatObject({
-  //   serviceId: rawServiceId,
-  //   messageSender: ()=>{}
-  // });
   return {
     serviceId: serviceId,
-    metadata: {subscribers: [], user_presence: {}},
+    metadata: {subscribers: [], user_presence: {}, plugins: []},
     connectionStatus: {status:ServiceConnectionStatusType.Connecting, timestamp:Date.now()},
-    chatState: {messages: new Map()}
+    pluginStates: {
+    },
   }
 }
 
@@ -193,6 +195,7 @@ class DartApi {
       }
   }
 
+
   private handleServiceUpdate(message: any) {
     if (Array.isArray(message) && message.length > 2) {
         const [service_node, service_name, response] = message;
@@ -210,6 +213,15 @@ class DartApi {
           this.onServicesChange();
         } else if (response.ServiceMetadata) {
           service.metadata = response.ServiceMetadata;
+          for (const plugin of service.metadata.plugins) {
+              if (service.pluginStates[plugin] === undefined){
+                // initialize plugins
+                service.pluginStates[plugin] = {
+                    exists: true,
+                    state: this.getInitialPluginState(plugin)
+                };
+              }
+          }
           this.services.set(serviceId, service);
           for (let user of Object.keys(response.ServiceMetadata.user_presence)) {
             if (!this.availableServices.has(user)) {
@@ -219,24 +231,91 @@ class DartApi {
             }
           }
           this.onServicesChange();
-        } else if (response.ChatUpdate) {
-          // console.log('ChatUpdate:', response.ChatUpdate, service.chatState);
-          let newChatState = handleChatUpdate(service.chatState, response.ChatUpdate);
-          service.chatState = newChatState;
-          this.services.set(serviceId, service);
-          this.onServicesChange();
         } else if (response === 'Kick') {
           service.connectionStatus = {status:ServiceConnectionStatusType.Kicked, timestamp:Date.now()};
           this.cancelPresenceHeartbeat(serviceId);
           // TODO?
           // this.services.delete(serviceId);
           this.onServicesChange();
+        } else if (response.PluginUpdate) {
+          const [plugin_name, update] = response.PluginUpdate;
+          this.handlePluginUpdate(plugin_name, update, serviceId, service);
         } else {
           console.warn('Unknown service message format:', message);
         }
-        
     }
   }
+
+  handlePluginUpdate(plugin: string, update: any, serviceId: ServiceId, service: Service) {
+    // Ensure the plugin exists in the service, with a default state if not present.
+    if (!service.pluginStates[plugin]) {
+        // Initialize the plugin state based on the plugin type.
+        service.pluginStates[plugin] = {
+            exists: true,
+            state: this.getInitialPluginState(plugin)
+        };
+    }
+
+    // Retrieve the update handler for the plugin.
+    const updateHandler = this.getPluginUpdateHandler(plugin);
+    if (!updateHandler) {
+        console.warn('Update handler not found for plugin:', plugin);
+        return;
+    }
+
+    // Update the state using the specific plugin's update handler.
+    const currentState = service.pluginStates[plugin].state;
+    const newState = updateHandler(currentState, update);
+
+    // Update the service with the new state.
+    const newService = {
+      ...service, // Copy all properties of the existing service
+      pluginStates: {
+          ...service.pluginStates, // Copy all existing plugin states
+          [plugin]: { // Update only the specific plugin's state
+              ...service.pluginStates[plugin], // Copy the existing plugin's properties
+              state: newState // Set the new state
+          }
+      }
+    };
+
+    // Replace the old service with the new one in the services map.
+    this.services.set(serviceId, newService);
+    this.onServicesChange();
+}
+
+// Helper method to return the initial state based on the plugin name.
+private getInitialPluginState(plugin: string): any {
+    switch (plugin) {
+        case "chat":
+            return { messages: new Map() };
+        case "piano":
+            return { notePlayed: null };
+        case "page":
+            return { page: "" };
+        case "chess":
+            return newChessState();
+        default:
+            return null;  // Default state or throw error if plugin is unrecognized.
+    }
+}
+
+// Helper method to return the update handler function based on the plugin name.
+private getPluginUpdateHandler(plugin: string): (currentState: any, update: any) => any {
+    switch (plugin) {
+        case "chat":
+            return handleChatUpdate;
+        case "piano":
+            return handlePianoUpdate;
+        case "page":
+            return handlePageUpdate;
+        case "chess":
+            return handleChessUpdate;
+        default:
+            return null;  // Return null or throw error if handler for plugin is unrecognized.
+    }
+}
+
 
   startPresenceHeartbeat(serviceId: ServiceId) {
     const service = this.services.get(serviceId);
@@ -302,11 +381,14 @@ class DartApi {
     this.api.send({ data:wrapper });
   }
 
-  sendCreateServiceRequest(serviceId: ParsedServiceId) {
+  sendCreateServiceRequest(serviceId: ParsedServiceId, plugins: Array<String>) {
     if (!this.api) { return; }
     const wrapper = {
       "ServerRequest": {
-        "CreateService": { "node": serviceId.node, "id": serviceId.id}
+        "CreateService": [
+          { "node": serviceId.node, "id": serviceId.id },
+          plugins
+        ]
       }
     }
 
