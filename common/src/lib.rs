@@ -6,7 +6,7 @@ use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use std::hash::{Hash, Hasher};
-use kinode_process_lib::{await_message, Address, Request};
+use kinode_process_lib::{Address, Request};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Hash)]
 pub struct Presence {
@@ -270,64 +270,6 @@ pub fn read_service(drive_path: &String, service_id: &ServiceId) -> anyhow::Resu
             Err(anyhow::anyhow!("error opening file"))
         }
     }
-}
-
-pub fn handle_message<S: PluginState>(our: &Address, state: &mut S, meta: &mut Option<PluginMetadata>) -> anyhow::Result<()> {
-    let message = await_message()?;
-
-    let body = message.body();
-    let source = message.source();
-    if !message.is_request() {
-        println!("unexpected response");
-        return Ok(());
-    }
-    if message.source().node != our.node {
-        println!("unexpected source: {:?}", source);
-        return Ok(());
-    }
-    if meta.is_none() {
-        match serde_json::from_slice(body)? {
-            PluginInput::Kill => {
-                return Err(anyhow::anyhow!("kill message received"));
-            }
-
-            PluginInput::Init(init) => {
-                *meta = Some(init);
-            }
-            _ => {}
-        }
-    }
-
-    if let Some(meta) = meta {
-        match read_service(&meta.drive_path, &meta.service.id) {
-            Ok(service) => {
-                meta.service = service;
-            }
-            Err(e) => {
-                println!("error reading service: {:?}", e);
-            }
-        }
-
-        match serde_json::from_slice(body)? {
-            PluginInput::Kill => {
-                return Err(anyhow::anyhow!("kill message received"));
-            }
-            PluginInput::ClientRequest(from, req) => {
-                state.handle_request(from, req, meta, our)?;
-            }
-            PluginInput::ClientJoined(from) => {
-                // Initialize or handle client join as needed
-                state.handle_join(from, meta, our)?;
-            }
-            PluginInput::ClientExited(from) => {
-                // Handle client exit as needed
-                state.handle_exit(from, meta, our)?;
-            }
-            _ => {}
-        }
-    }
-
-    Ok(())
 }
 
 pub fn update_client(our: &Address, to: String, update: impl Serialize, meta: &PluginMetadata) -> anyhow::Result<()> {

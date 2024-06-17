@@ -1,5 +1,5 @@
 {
-  "name": "df-ui",
+  "name": "df-chat-ui",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,15 +7,13 @@
     "dev": "vite --port 3000",
     "start": "vite --port 3000",
     "build": "tsc && vite build",
-    "copy": "mkdir -p ../pkg/ui && rm -rf ../pkg/ui/* && cp -r dist/* ../pkg/ui/",
+    "copy": "mkdir -p ../pkg/chat-ui && rm -rf ../pkg/chat-ui/* && cp -r dist/* ../pkg/chat-ui/",
     "build:copy": "npm run build && npm run copy",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
   "dependencies": {
     "@kinode/client-api": "^0.1.0",
-    "chess.js": "^1.0.0-beta.8",
-    "chessboardjsx": "^2.4.7",
     "howler": "^2.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

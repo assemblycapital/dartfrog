@@ -22,55 +22,6 @@ wit_bindgen::generate!({
     world: "process-v0",
 });
 
-fn start_plugin_process(name:String, service:&Service, our:&Address, drive_path:String) {
-    // kill it if it already exists
-    let plugin_address = get_plugin_address(&name, our.node.as_str(), &service.id.id);
-
-    match wrap_spawn_plugin(our, name.clone(), service.clone()) {
-        Ok(_spawned_process_id) => {
-            // kill "after" spawning to get capabilities :p
-            // this is a workaround because on_exit doesn't work as intended in current version
-            let _ = Request::to(&plugin_address)
-                .body(serde_json::to_vec(&PluginInput::Kill).unwrap())
-                .send_and_await_response(1).unwrap();
-
-            match wrap_spawn_plugin(our, name.clone(), service.clone()) {
-                // initialize it
-                Ok(_spawned_process_id) => {
-                    poke_plugin(&plugin_address, PluginInput::Init(PluginMetadata {
-                        plugin_name: name.clone(),
-                        drive_path: drive_path,
-                        service: service.clone()
-                    })).unwrap();
-                }
-                Err(e) => {
-                    println!("couldn't spawn, {:?}", e)
-                }
-            }
-        }
-        Err(e) => {
-            println!("couldn't spawn, {:?}", e)
-        }
-    };
-}
-
-fn wrap_spawn_plugin(our: &Address, plugin_name: String, service: Service) -> Result<kinode_process_lib::ProcessId, kinode_process_lib::SpawnError> {
-    spawn(
-        // name of the child process
-        Some(&format!("df-plugin-{}-{}", plugin_name, service.id.id)),
-        // path to find the compiled Wasm file for the child process
-        &format!("{}/pkg/{}.wasm", our.package_id(), plugin_name),
-        // what to do when this process crashes/panics/finishes
-        kinode_process_lib::OnExit::None,
-        // capabilities to pass onto the child
-        // TODO only grant drive read access
-        our_capabilities(),
-        vec![],
-        // this process will not be public
-        false,
-    )
-}
-
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
     // println!("server request: {:?}", req);
     match req {
@@ -90,7 +41,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                 let mut service = new_service(service_id.clone());
                 for plugin in plugins {
                     service.metadata.plugins.insert(plugin.clone());
-                    start_plugin_process(plugin, &service, our, state.server.drive_path.clone())
+                    // start_plugin_process(plugin, &service, our, state.server.drive_path.clone())
                 }
                 state.server.services.insert(service_id.id.clone(), service.clone());
                 // TODO read_service??? for restoring state

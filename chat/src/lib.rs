@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
-use common::{handle_message, update_client, update_subscribers, PluginMetadata, PluginState};
-use kinode_process_lib::{call_init, println, Address};
+use common::{update_client, update_subscribers, PluginMetadata, PluginState};
+use kinode_process_lib::{await_message, call_init, println, Address};
 use serde::{Deserialize, Serialize};
 
 wit_bindgen::generate!({
@@ -87,18 +87,33 @@ impl PluginState for ChatState {
     }
 }
 
+fn handle_message(our: &Address, state: &mut ChatState, meta: &mut Option<PluginMetadata>) -> anyhow::Result<()> {
+    let message = await_message()?;
+
+    let body = message.body();
+    let source = message.source();
+    println!("chat received message");
+    Ok(())
+}
+
 call_init!(init);
 fn init(our: Address) {
     let mut meta: Option<PluginMetadata> = None;
     let mut state: ChatState = ChatState::new();
+
+    let try_ui = kinode_process_lib::http::serve_ui(&our, "chat-ui", true, false, vec!["/"]);
+    match try_ui {
+        Ok(()) => {}
+        Err(e) => {
+            println!("chat.wasm error starting ui: {:?}", e)
+        }
+    };
+
     loop {
         match handle_message(&our, &mut state, &mut meta) {
             Ok(()) => {}
             Err(e) => {
-                if e.to_string().contains("kill message received") {
-                    // shut down from parent Kill request
-                    break;
-                }
+                println!("chat.wasm error handling message: {:?}", e)
             }
         };
     }
