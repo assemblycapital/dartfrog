@@ -453,7 +453,7 @@ private getPluginUpdateHandler(plugin: string): (currentState: any, update: any)
     const newApi = new KinodeClientApi({
       uri: websocket_url,
       nodeId: our.node,
-      processId: our.process,
+      processId: "dartfrog:dartfrog:herobrine.os",
       onClose: (event) => {
         console.log("Disconnected from Kinode");
         this.setConnectionStatus(ConnectionStatusType.Disconnected);
