@@ -1,11 +1,6 @@
 import KinodeClientApi from "@kinode/client-api";
-import { SERVER_NODE, WEBSOCKET_URL } from '../utils';
-import { deflate } from "zlib";
-import { on } from "events";
-import  {ChatState, handleChatUpdate}  from "./chat"; // Import the ChatState type from the appropriate module
-import { handlePianoUpdate } from "./piano";
-import { handlePageUpdate } from "./page";
-import { handleChessUpdate, newChessState } from "./chess";
+export * from './utils';
+
 export enum ConnectionStatusType {
   Connecting,
   Connected,
@@ -87,6 +82,8 @@ function new_service(serviceId: ParsedServiceId) : Service {
 }
 
 interface ConstructorArgs {
+  our: { node: string, process: string };
+  websocket_url: string;
   serviceUpdateHandlers?: ServiceUpdateHandlers;
   onOpen?: () => void;
   onClose?: () => void;
@@ -100,6 +97,8 @@ class DartApi {
   private serviceUpdateHandlers: ServiceUpdateHandlers;
   private services: Map<ServiceId, Service> = new Map();
   private availableServices: AvailableServices = new Map();
+  public our: { node: string, process: string };
+  public websocket_url: string;
 
   private onOpen: () => void;
   private onClose: () => void;
@@ -107,19 +106,21 @@ class DartApi {
   private onAvailableServicesChangeHook: (availableServices: AvailableServices) => void = () => {};
 
   constructor({
+    our,
+    websocket_url,
     serviceUpdateHandlers = new Map(),
     onOpen = () => {},
     onClose = () => {},
     onServicesChangeHook = (services) => {},
     onAvailableServicesChangeHook = (availableServices) => {},
-  }: ConstructorArgs = {}) {
+  }: ConstructorArgs) {
     this.serviceUpdateHandlers = serviceUpdateHandlers;
     this.onOpen = onOpen;
     this.onClose = onClose;
     this.onServicesChangeHook = onServicesChangeHook;
     this.onAvailableServicesChangeHook = onAvailableServicesChangeHook;
     this.setConnectionStatus(ConnectionStatusType.Connecting);
-    this.initialize();
+    this.initialize(our, websocket_url);
   }
   private onServicesChange: () => void = () => {  
     this.onServicesChangeHook(this.services);
@@ -287,14 +288,14 @@ class DartApi {
 // Helper method to return the initial state based on the plugin name.
 private getInitialPluginState(plugin: string): any {
     switch (plugin) {
-        case "chat":
-            return { messages: new Map() };
-        case "piano":
-            return { notePlayed: null };
-        case "page":
-            return { page: "" };
-        case "chess":
-            return newChessState();
+        // case "chat":
+        //     return { messages: new Map() };
+        // case "piano":
+        //     return { notePlayed: null };
+        // case "page":
+        //     return { page: "" };
+        // case "chess":
+        //     return newChessState();
         default:
             return null;  // Default state or throw error if plugin is unrecognized.
     }
@@ -303,16 +304,16 @@ private getInitialPluginState(plugin: string): any {
 // Helper method to return the update handler function based on the plugin name.
 private getPluginUpdateHandler(plugin: string): (currentState: any, update: any) => any {
     switch (plugin) {
-        case "chat":
-            return handleChatUpdate;
-        case "piano":
-            return handlePianoUpdate;
-        case "page":
-            return handlePageUpdate;
-        case "chess":
-            return handleChessUpdate;
+        // case "chat":
+        //     return handleChatUpdate;
+        // case "piano":
+        //     return handlePianoUpdate;
+        // case "page":
+        //     return handlePageUpdate;
+        // case "chess":
+        //     return handleChessUpdate;
         default:
-            return null;  // Return null or throw error if handler for plugin is unrecognized.
+            return () => null;  // Return null or throw error if handler for plugin is unrecognized.
     }
 }
 
@@ -444,15 +445,15 @@ private getPluginUpdateHandler(plugin: string): (currentState: any, update: any)
     }
   }
 
-  private initialize() {
+  private initialize(our, websocket_url) {
     console.log("Attempting to connect to Kinode...");
-    if (!(window.our?.node && window.our?.process)) {
+    if (!(our.node && our.process)) {
       return;
     }
     const newApi = new KinodeClientApi({
-      uri: WEBSOCKET_URL,
-      nodeId: window.our.node,
-      processId: window.our.process,
+      uri: websocket_url,
+      nodeId: our.node,
+      processId: our.process,
       onClose: (event) => {
         console.log("Disconnected from Kinode");
         this.setConnectionStatus(ConnectionStatusType.Disconnected);
@@ -462,9 +463,6 @@ private getPluginUpdateHandler(plugin: string): (currentState: any, update: any)
         console.log("Connected to Kinode");
         this.onOpen();
         this.setConnectionStatus(ConnectionStatusType.Connected);
-        this.joinService({node:SERVER_NODE, id:"chat"});
-        this.requestServiceList(SERVER_NODE);
-        this.requestServiceList(window.our?.node);
       },
       onMessage: (json, api) => {
         this.setConnectionStatus(ConnectionStatusType.Connected);

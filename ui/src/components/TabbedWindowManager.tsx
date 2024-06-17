@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ServiceId, Service, parseServiceId, AvailableServices } from '../dartclientlib';
+import { ServiceId, Service, parseServiceId, AvailableServices } from '@dartfrog/puddle';
 import ServiceTab from './ServiceTab';
 import useDartStore from '../store/dart';
 import './TabbedWindowManager.css';

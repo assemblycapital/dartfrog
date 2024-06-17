@@ -2,11 +2,10 @@ import "./App.css";
 import Footer from "./components/Footer";
 import ControlHeader from "./components/ControlHeader";
 import { useEffect, useRef, useState } from "react";
-import { ConnectionStatusType } from "./types/types";
 import ServerBox from "./components/FullServicesView";
 import { WEBSOCKET_URL, } from './utils';
 import KinodeClientApi from "@kinode/client-api";
-import DartApi from "./dartclientlib/";
+import DartApi from "@dartfrog/puddle";
 import useDartStore from "./store/dart";
 import FullServicesView from "./components/FullServicesView";
 import BrowserBox from "./components/BrowserBox";
@@ -19,6 +18,8 @@ function App() {
 
   useEffect(() => {
     const api = new DartApi({
+      our: window.our,
+      websocket_url: WEBSOCKET_URL,
       serviceUpdateHandlers: new Map(),
       onOpen: () => {
         setIsClientConnected(true);

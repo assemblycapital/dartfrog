@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import useDartStore from "../store/dart";
-import { ConnectionStatusType } from "../dartclientlib";
 
 // type ControlHeaderProps = {
 //   nodeConnected: boolean;

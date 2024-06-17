@@ -1,13 +1,12 @@
 import DisplayUserActivity from "./DisplayUserActivity";
 import ChatBox from "./ChatBox";
 import ChatHeader from "./ChatHeader";
-import { Service, ServiceConnectionStatusType, ServiceId, ServiceMetadata, makeServiceId } from "../dartclientlib";
+import { Service, ServiceConnectionStatusType, ServiceId, ServiceMetadata, makeServiceId } from "@dartfrog/puddle";
 import ChatInput from "./ChatInput";
 import useDartStore from "../store/dart";
 import { useEffect, useState } from "react";
 import Spinner from "./Spinner";
 import { stringifyServiceConnectionStatus } from "./FullServicesView";
-import { ChatMessageHistory } from "../types/types";
 import Piano from "./Piano/Piano";
 import ServiceConnectedDisplay from "./ServiceConnectedDisplay";
 

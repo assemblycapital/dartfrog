@@ -1,11 +1,10 @@
 import DisplayUserActivity from "../DisplayUserActivity";
 import ChatBox from "../ChatBox";
 import ChatHeader from "../ChatHeader";
-import { ConnectionStatusType, ServerStatus } from "../../types/types";
 import { useCallback, useEffect, useState } from "react";
 import Spinner from "../Spinner";
 import useDartStore from "../../store/dart";
-import { AvailableServices, ParsedServiceId, Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "../../dartclientlib";
+import { AvailableServices, ParsedServiceId, Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "@dartfrog/puddle";
 import './NewTab.css'
 import { createSecretKey } from "crypto";
 import CreateService from "./CreateService";
