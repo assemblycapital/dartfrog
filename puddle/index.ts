@@ -393,6 +393,27 @@ private getPluginUpdateHandler(plugin: string): (currentState: any, update: any)
     this.api.send({ data:wrapper });
   }
 
+  pokeService(parsedServiceId: ParsedServiceId, data: any) {
+    const request =  { "SendToService": 
+      [
+        { "node": parsedServiceId.node, "id": parsedServiceId.id },
+        data,
+      ]
+    }
+     this.sendRequest(request);
+  }
+
+  pokePlugin(serviceId: ServiceId, plugin: string, innerPluginRequest: any) {
+    const wrap = {
+      "PluginRequest": [
+        plugin,
+        JSON.stringify(innerPluginRequest)
+      ]
+    }
+    let parsedServiceId = parseServiceId(serviceId);
+    this.pokeService(parsedServiceId, wrap);
+  }
+
   sendCreateServiceRequest(serviceId: ParsedServiceId, plugins: Array<String>) {
     if (!this.api) { return; }
     const wrapper = {

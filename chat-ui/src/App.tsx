@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import "./App.css";
 import DartApi, { parseServiceId } from "@dartfrog/puddle";
@@ -8,6 +8,8 @@ function App() {
   const location = useLocation();
 
   const [service, setService] = useState<string | null>(null);
+
+  const [api, setApi] = useState<DartApi | null>(null);
 
   useEffect(() => {
 
@@ -35,7 +37,6 @@ function App() {
 
     serviceUpdateHandlers.set(service, serviceUpdateHandler);
 
-
     const api = new DartApi({
       our: window.our,
       websocket_url: WEBSOCKET_URL,
@@ -43,6 +44,7 @@ function App() {
       onOpen: () => {
         console.log("connected in chat-ui")
         api.joinService(parseServiceId(service));
+        setApi(api);
       },
       onClose: () => {
       },
@@ -54,6 +56,18 @@ function App() {
     });
   }, [service]);
 
+  
+  const sendChat = useCallback(
+    (text) => {
+      let innerPluginRequest = 
+          {
+          "SendMessage": 
+            text
+          }
+      api.pokePlugin(service, "chat:dartfrog:herobrine.os", innerPluginRequest);
+    }, [api]);
+
+
   return (
     <div style={{
       width: "100%",
@@ -61,14 +75,10 @@ function App() {
       flexDirection: "column",
       gap: "0.4rem",
     }}>
-      <div>
-        todo chat ui
-        <div>
-
-        {"service: "}
-        {service && service}
-        </div>
-      </div>
+    
+      <button onClick={() => {
+        sendChat("dummy chat")
+      }}>dummy chat</button>
     </div>
   );
 }
