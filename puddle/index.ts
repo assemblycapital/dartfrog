@@ -53,12 +53,12 @@ export interface ServiceMetadata {
   plugins: Array<string>;
 }
 
-
 export type Services = Map<ServiceId, Service>;
 
 export const makeServiceId = (node: string, id: string) => {
   return `${id}.${node}`;
 }
+
 export const parseServiceId = (serviceId: string) => {
   const split = serviceId.split('.');
   let tlz = split.slice(-1)[0];
@@ -69,7 +69,6 @@ export const parseServiceId = (serviceId: string) => {
 }
 
 export type AvailableServices = Map<string, Array<ParsedServiceId>>
-
 
 function new_service(serviceId: ParsedServiceId) : Service {
   return {
@@ -145,6 +144,7 @@ class DartApi {
         console.error('Failed to parse JSON:', error);
         return;
     }
+    console.log("Received message", parsedJson)
 
     if (parsedJson.FromClient) {
         this.handleClientUpdate(parsedJson.FromClient);
@@ -217,6 +217,7 @@ class DartApi {
           for (const plugin of service.metadata.plugins) {
               if (service.pluginStates[plugin] === undefined){
                 // initialize plugins
+                console.log("Initializing plugin", plugin)
                 service.pluginStates[plugin] = {
                     exists: true,
                     state: this.getInitialPluginState(plugin)
@@ -460,7 +461,7 @@ private getPluginUpdateHandler(plugin: string): (currentState: any, update: any)
         this.onClose();
       },
       onOpen: (event, api) => {
-        console.log("Connected to Kinode");
+        console.log("Connected to Kinode !!!!");
         this.onOpen();
         this.setConnectionStatus(ConnectionStatusType.Connected);
       },

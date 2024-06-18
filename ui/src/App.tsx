@@ -2,18 +2,14 @@ import "./App.css";
 import Footer from "./components/Footer";
 import ControlHeader from "./components/ControlHeader";
 import { useEffect, useRef, useState } from "react";
-import ServerBox from "./components/FullServicesView";
 import { WEBSOCKET_URL, } from './utils';
-import KinodeClientApi from "@kinode/client-api";
 import DartApi from "@dartfrog/puddle";
 import useDartStore from "./store/dart";
-import FullServicesView from "./components/FullServicesView";
 import BrowserBox from "./components/BrowserBox";
-import { availableParallelism } from "os";
 
 function App() {
 
-  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, setAvailableServices, availableServices} = useDartStore();
+  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, setAvailableServices, requestServiceList, availableServices} = useDartStore();
 
 
   useEffect(() => {
@@ -23,14 +19,17 @@ function App() {
       serviceUpdateHandlers: new Map(),
       onOpen: () => {
         setIsClientConnected(true);
+        requestServiceList(window.our.node);
       },
       onClose: () => {
         setIsClientConnected(false);
       },
       onServicesChangeHook: (services) => {
+        console.log("servicesChange", availableServices);
         setServices(services);
       },
       onAvailableServicesChangeHook: (availableServices) => {
+        console.log("availableServices", availableServices);
         setAvailableServices(availableServices);
       }
     });

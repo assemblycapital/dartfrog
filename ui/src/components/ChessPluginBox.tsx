@@ -1,10 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Chess } from 'chess.js';
-import { ServiceId, parseServiceId } from '../dartclientlib';
+import { ServiceId, parseServiceId } from '@dartfrog/puddle';
 import useDartStore from '../store/dart';
-import { ChessState } from '../dartclientlib/chess';
 import Chessboard from 'chessboardjsx';
 import './ChessPluginBox.css'; // Import the CSS file for styling
+
+
+type ChessState = {
+  game:any
+}
 
 interface ChessPluginBoxProps {
   serviceId: ServiceId;
@@ -116,7 +120,7 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
             >
               chess game lobby
             </div>
-            <p>Queued White Player: {chessState.queuedWhite || "None"}</p>
+            {/* <p>Queued White Player: {chessState.queuedWhite || "None"}</p>
             <p>Queued Black Player: {chessState.queuedBlack || "None"}</p>
             <div
               style={{
@@ -139,7 +143,7 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
               >
                 Queue as Black
               </button>
-            </div>
+            </div> */}
         </div>
       )}
     </div>

@@ -1,14 +1,22 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ChatMessage, ChatMessageHistory } from '../types/types';
-import { computeColorForName } from '../utils';
 import ChatInput from './ChatInput';
-import { Service, ServiceId, makeServiceId } from '../dartclientlib/';
+import { Service, ServiceId, makeServiceId, computeColorForName } from '@dartfrog/puddle';
 
 import useDartStore from "../store/dart";
-import { ChatState } from '../dartclientlib/chat';
 import Spinner from './Spinner';
 import ChatHeader from './ChatHeader';
 
+type ChatState = {
+  messages: Map<number, ChatMessage>;
+
+}
+type ChatMessage = {
+  id: number;
+  from: string;
+  msg: string;
+  time: number;
+
+}
 interface ChatBoxProps {
   serviceId: ServiceId;
   chatState: ChatState;

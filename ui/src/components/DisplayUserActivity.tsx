@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { computeColorForName} from '../utils';
-import { ServiceId, ServiceMetadata } from '../dartclientlib';
+import { ServiceId, ServiceMetadata, computeColorForName } from '@dartfrog/puddle';
 import useDartStore from '../store/dart';
 
 interface DisplayUserActivityProps {

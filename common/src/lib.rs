@@ -206,11 +206,10 @@ pub fn get_server_address(node_id: &str) -> Address {
     Address::from_str(&s).unwrap()
 }
 
-const PACKAGE_NAME : &str = "dartfrog:herobrine.os";
-pub fn get_plugin_address(plugin_name: &str, node_id: &str, service_name: &str) -> Address {
-    let s =
-        format!("{}@df-plugin-{}-{}:{}", node_id, plugin_name, service_name, PACKAGE_NAME);
-    Address::from_str(&s).unwrap()
+// const PACKAGE_NAME : &str = "dartfrog:herobrine.os";
+pub fn get_plugin_address(plugin_name: &str, node_id: &str) -> Address {
+    let full_process_name = format!("{}@{}", node_id, plugin_name);
+    Address::from_str(&full_process_name).unwrap()
 }
 
 

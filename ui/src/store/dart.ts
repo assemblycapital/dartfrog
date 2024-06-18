@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId, parseServiceId } from '../dartclientlib';
-import { ChatMessageHistory } from '../types/types';
+import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId, parseServiceId } from '@dartfrog/puddle';
 
 export interface DartStore {
   api: DartApi | null,

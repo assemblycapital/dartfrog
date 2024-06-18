@@ -1,7 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { ServiceId, parseServiceId } from '../dartclientlib';
+import { ServiceId, parseServiceId } from '@dartfrog/puddle';
 import useDartStore from '../store/dart';
-import { PageState } from '../dartclientlib/page';
+
+type PageState = {
+  page: string;
+};
 
 interface PagePluginBoxProps {
   serviceId: ServiceId;

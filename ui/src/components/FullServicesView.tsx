@@ -2,11 +2,10 @@ import DisplayUserActivity from "./DisplayUserActivity";
 
 import ChatBox from "./ChatBox";
 import ChatHeader from "./ChatHeader";
-import { ConnectionStatusType, ServerStatus } from "../types/types";
 import { useEffect } from "react";
 import Spinner from "./Spinner";
 import useDartStore from "../store/dart";
-import { ServiceConnectionStatus, ServiceConnectionStatusType } from "../dartclientlib";
+import { ServiceConnectionStatus, ServiceConnectionStatusType } from "@dartfrog/puddle";
 
 export function stringifyServiceConnectionStatus(status: ServiceConnectionStatusType): string {
   switch (status) {

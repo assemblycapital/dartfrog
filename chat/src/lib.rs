@@ -92,12 +92,21 @@ fn handle_message(our: &Address, state: &mut ChatState, meta: &mut Option<Plugin
 
     let body = message.body();
     let source = message.source();
-    println!("chat received message");
+
+
+    println!("chat received message, source: {:?}", source);
+
+    if source.node != our.node {
+        return Ok(());
+    }
+
+
     Ok(())
 }
 
 call_init!(init);
 fn init(our: Address) {
+    println!("init chat");
     let mut meta: Option<PluginMetadata> = None;
     let mut state: ChatState = ChatState::new();
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ServiceId } from '../dartclientlib';
+import { ServiceId } from '@dartfrog/puddle';
 
 interface ChatHeaderProps {
   serviceId: ServiceId;

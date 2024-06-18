@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { maybeReplaceWithImage, } from '../utils';
 import useDartStore from '../store/dart';
-import { parseServiceId } from '../dartclientlib';
+import { parseServiceId } from '@dartfrog/puddle';
 
 interface ChatInputProps {
   serviceId: string;
@@ -21,7 +20,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ serviceId }) => {
       if (!chatMessageInputText) return;
 
       // Create a message object
-      let text = maybeReplaceWithImage(chatMessageInputText);
+      // let text = maybeReplaceWithImage(chatMessageInputText);
+      let text = chatMessageInputText;
       const innerPluginRequest = {
           "SendMessage": 
             text

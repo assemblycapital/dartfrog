@@ -22,23 +22,35 @@ const ServiceConnectedDisplay = ({ serviceId, service }) => {
       return <div>{`${pluginName} plugin not available or not initialized`}</div>;
     }
 
-    switch (pluginName) {
-      case 'chat':
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
-            <ChatHeader serviceId={serviceId} />
-            <ChatBox serviceId={serviceId} chatState={service.pluginStates.chat.state} />
-          </div>
-        );
-      case 'piano':
-        return <Piano serviceId={serviceId} pianoState={service.pluginStates.piano.state} />;
-      case 'page':
-        return <PagePluginBox serviceId={serviceId} pageState={service.pluginStates.page.state} />;
-      case 'chess':
-        return <ChessPluginBox serviceId={serviceId} chessState={service.pluginStates.chess.state} />;
-      default:
-        return <div>{`${pluginName} plugin not available`}</div>;
-    }
+    return (
+      <div>
+        <div>
+          {pluginName}
+        </div>
+        <iframe 
+          src={`/${pluginName}`} 
+          style={{ width: '100%', height: '100%' }} 
+          title={pluginName}
+        />
+      </div>
+    )
+    // switch (pluginName) {
+    //   case 'chat':
+    //     return (
+    //       <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
+    //         <ChatHeader serviceId={serviceId} />
+    //         <ChatBox serviceId={serviceId} chatState={service.pluginStates.chat.state} />
+    //       </div>
+    //     );
+    //   case 'piano':
+    //     return <Piano serviceId={serviceId} pianoState={service.pluginStates.piano.state} />;
+    //   case 'page':
+    //     return <PagePluginBox serviceId={serviceId} pageState={service.pluginStates.page.state} />;
+    //   case 'chess':
+    //     return <ChessPluginBox serviceId={serviceId} chessState={service.pluginStates.chess.state} />;
+    //   default:
+    //     return <div>{`${pluginName} plugin not available`}</div>;
+    // }
   };
 
   return (

@@ -3,9 +3,8 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Howl } from 'howler';
 import PianoKey from './PianoKey';
 import './Piano.css';
-import { ServiceId, parseServiceId } from '../../dartclientlib';
+import { ServiceId, parseServiceId } from '@dartfrog/puddle';
 import useDartStore from '../../store/dart';
-import { PianoState } from '../../dartclientlib/piano';
 
 const PIANO_NOTES_FOLDER = 'assets/piano_notes';
 
@@ -29,6 +28,13 @@ const notes = [
   { note: 'C#5', isSharp: true, fileName: 'c-5.mp3', key: '[' },
   { note: 'D5', isSharp: false, fileName: 'd5.mp3', key: "'" },
 ];
+
+type PianoState = {
+  notePlayed: {
+    note: string | null;
+    timestamp: number;
+  } | null;
+}
 
 interface PianoProps {
   serviceId: ServiceId;
