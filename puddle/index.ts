@@ -128,6 +128,10 @@ class DartApi {
     this.onAvailableServicesChangeHook(this.availableServices);
   }
 
+  public registerServiceUpdateHandler(serviceId: ServiceId, handler: ServiceUpdateHandler) {
+    this.serviceUpdateHandlers.set(serviceId, handler);
+  }
+
   private setConnectionStatus(status: ConnectionStatusType) {
     this.connectionStatus = {status:status, timestamp:Date.now()};
   }
@@ -206,6 +210,12 @@ class DartApi {
         if (!service) {
           console.log("Service not found", serviceId);
           return;
+        }
+
+        // call serviceUpdateHandler if it exists
+        const serviceUpdateHandler = this.serviceUpdateHandlers.get(serviceId);
+        if (serviceUpdateHandler) {
+            serviceUpdateHandler(response);
         }
         
         service.connectionStatus = {status:ServiceConnectionStatusType.Connected, timestamp:Date.now()};
@@ -461,7 +471,7 @@ private getPluginUpdateHandler(plugin: string): (currentState: any, update: any)
         this.onClose();
       },
       onOpen: (event, api) => {
-        console.log("Connected to Kinode !!!!");
+        console.log("Connected to Kinode");
         this.onOpen();
         this.setConnectionStatus(ConnectionStatusType.Connected);
       },

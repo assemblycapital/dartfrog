@@ -40,6 +40,15 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                 let mut service = new_service(service_id.clone());
                 for plugin in plugins {
                     service.metadata.plugins.insert(plugin.clone());
+
+                    let plugin_address = get_plugin_address(plugin.as_str(), our.node());
+                    // TODO vfs for plugin metadata sharing
+                    let plugin_metadata = PluginMetadata {
+                        plugin_name: plugin.clone(),
+                        drive_path: "todo".to_string(),
+                        service: service.clone(),
+                    };
+                    poke_plugin(&plugin_address, &PluginMessage::Input(service_id.id.clone(), PluginInput::Init(plugin_metadata)))?;
                 }
                 state.server.services.insert(service_id.id.clone(), service.clone());
                 // TODO read_service??? for restoring state
@@ -57,7 +66,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                 }
                 for plugin in service.metadata.plugins.clone() {
                     let address = get_plugin_address(&plugin, our.node.as_str());
-                    poke_plugin(&address, &PluginInput::Kill)?;
+                    poke_plugin(&address, &PluginMessage::Input(service_id.id.clone(), PluginInput::Kill))?;
                 }
                 state.server.services.remove(&service_id.id.clone());
             }
@@ -97,11 +106,11 @@ fn write_service(drive_path: String, service: &Service) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn poke_plugins(plugins: &HashSet<String>, poke: PluginInput, our: &Address) -> anyhow::Result<()> {
-    for plugin in plugins {
+fn poke_plugins(service:&Service, poke: PluginInput, our: &Address) -> anyhow::Result<()> {
+    for plugin in service.metadata.plugins.clone() {
 
-        let address = get_plugin_address(plugin, our.node.as_str());
-        poke_plugin(&address, &poke)?;
+        let address = get_plugin_address(plugin.as_str(), our.node.as_str());
+        poke_plugin(&address, &PluginMessage::Input(service.id.id.clone(), poke.clone()))?;
     }
     Ok(())
 }
@@ -115,9 +124,12 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
         match req {
             ServiceRequest::PluginOutput(plugin_name, plugin_out) => {
                 if service.metadata.plugins.contains(&plugin_name) {
+
+                    println!("plugin output: {:?} {:?}", plugin_name, plugin_out);
                     let plugin_address = get_plugin_address(&plugin_name, our.node.as_str());
                     if source != plugin_address {
                         // no spoofing
+                        println!("spoofing attempt: {:?} {:?}", source, plugin_address);
                         return Ok(());
                     }
 
@@ -138,7 +150,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
             ServiceRequest::PluginRequest(plugin_name, plugin_req) => {
                 if service.metadata.plugins.contains(&plugin_name) {
                     let plugin_address = get_plugin_address(&plugin_name, our.node.as_str());
-                    poke_plugin(&plugin_address, &PluginInput::ClientRequest(source.node.clone(), plugin_req))?;
+                    poke_plugin(&plugin_address, &PluginMessage::Input(service.id.id.clone(), PluginInput::ClientRequest(source.node.clone(), plugin_req)))?;
                 }
             }
             ServiceRequest::Subscribe => {
@@ -153,7 +165,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                         .as_secs(),
                 });
                 write_service(state.server.drive_path.clone(), service)?;
-                poke_plugins(&service.metadata.plugins, PluginInput::ClientJoined(source.node.clone()), our)?;
+                poke_plugins(&service, PluginInput::ClientJoined(source.node.clone()), our)?;
                 let ack = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::SubscribeAck);
                 let meta = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
                 update_client(ack, source.node.clone())?;
@@ -165,7 +177,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                     return Ok(());
                 }
                 service.metadata.subscribers.remove(&source.node.clone());
-                poke_plugins(&service.metadata.plugins, PluginInput::ClientExited(source.node.clone()), our)?;
+                poke_plugins(&service, PluginInput::ClientExited(source.node.clone()), our)?;
                 write_service(state.server.drive_path.clone(), service)?;
                 let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
                 update_subscribers(meta, service.metadata.subscribers.clone())?;
@@ -205,7 +217,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                     if to_kick.contains(user) {
                         let update: ConsumerUpdate = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::Kick);
                         update_client(update, user.clone())?;
-                        poke_plugins(&service.metadata.plugins, PluginInput::ClientExited(source.node.clone()), our)?;
+                        poke_plugins(&service, PluginInput::ClientExited(source.node.clone()), our)?;
                     }
                 }
                 service.metadata.subscribers.retain(|x| !to_kick.contains(x));
@@ -239,7 +251,7 @@ fn update_subscribers(update: ConsumerUpdate, subscribers: HashSet<String>) -> a
 }
 
 fn handle_client_update(_our: &Address, state: &mut DartState, source: Address, upd: ClientUpdate) -> anyhow::Result<()> {
-    // println!("client update: {:?}", upd);
+    println!("client update: {:?}", upd);
     match upd {
         ClientUpdate::ConsumerUpdate(consumer_update) => {
             // possibly intercept the update first
@@ -668,7 +680,7 @@ fn poke_server(address:&Address, req: ServerRequest) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn poke_plugin(address:&Address, poke: &PluginInput) -> anyhow::Result<()> {
+fn poke_plugin(address:&Address, poke: &PluginMessage) -> anyhow::Result<()> {
     println!("poking plugin");
     Request::to(address)
         .body(serde_json::to_vec(poke)?)

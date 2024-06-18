@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import "./App.css";
-import DartApi from "@dartfrog/puddle";
+import DartApi, { parseServiceId } from "@dartfrog/puddle";
 import { WEBSOCKET_URL } from "./utils";
 
 function App() {
   const location = useLocation();
 
-  const [service, setService] = useState<String | null>(null);
+  const [service, setService] = useState<string | null>(null);
 
   useEffect(() => {
 
@@ -23,12 +23,26 @@ function App() {
   }, [location.search])
 
   useEffect(() => {
+    if (!service) {
+      return;
+    }
+
+    let serviceUpdateHandlers = new Map();
+
+    let serviceUpdateHandler = (update) =>{
+      console.log("chat-ui service update", update)
+    }
+
+    serviceUpdateHandlers.set(service, serviceUpdateHandler);
+
+
     const api = new DartApi({
       our: window.our,
       websocket_url: WEBSOCKET_URL,
-      serviceUpdateHandlers: new Map(),
+      serviceUpdateHandlers: serviceUpdateHandlers,
       onOpen: () => {
-        console.log("connected")
+        console.log("connected in chat-ui")
+        api.joinService(parseServiceId(service));
       },
       onClose: () => {
       },
@@ -38,7 +52,7 @@ function App() {
       onAvailableServicesChangeHook: (availableServices) => {
       }
     });
-  }, []);
+  }, [service]);
 
   return (
     <div style={{

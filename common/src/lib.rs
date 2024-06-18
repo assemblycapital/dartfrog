@@ -32,6 +32,23 @@ pub struct Service {
     pub metadata: ServiceMetadata,
     pub last_sent_presence: u64,
 }
+impl Service {
+    pub fn new() -> Service {
+        Service {
+            id: ServiceId {
+                node: String::from(""),
+                id: String::from(""),
+            },
+            metadata: ServiceMetadata {
+                subscribers: HashSet::new(),
+                user_presence: HashMap::new(),
+                plugins: HashSet::new(),
+            },
+            last_sent_presence: 0,
+        }
+    }
+
+}
 
 impl Hash for Service {
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -213,14 +230,23 @@ pub fn get_plugin_address(plugin_name: &str, node_id: &str) -> Address {
 }
 
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PluginMetadata {
     pub plugin_name: String,
     pub drive_path: String,
     pub service: Service,
 }
+impl PluginMetadata {
+    pub fn new() -> PluginMetadata {
+        PluginMetadata {
+            plugin_name: String::from(""),
+            drive_path: String::from(""),
+            service: Service::new(),
+        }
+    }
+}
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PluginInput {
     Init(PluginMetadata),
     Kill,
@@ -236,6 +262,12 @@ pub enum PluginOutput {
     ShuttingDown
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum PluginMessage {
+    Input(String, PluginInput),
+    Output(String, PluginOutput)
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub enum DartMessage {
     ServerRequest(ServerRequest),
@@ -243,13 +275,12 @@ pub enum DartMessage {
     ClientUpdate(ClientUpdate),
 }
 
-
 // plugin library, probably should be in a separate file
 pub trait PluginState {
     fn new() -> Self;
-    fn handle_request(&mut self, from: String, req: String, meta: &PluginMetadata, our: &Address) -> anyhow::Result<()>;
-    fn handle_join(&mut self, from: String, meta: &PluginMetadata, our: &Address) -> anyhow::Result<()>;
-    fn handle_exit(&mut self, from: String, meta: &PluginMetadata, our: &Address) -> anyhow::Result<()>;
+    fn handle_request(&mut self, from: String, req: String, our: &Address) -> anyhow::Result<()>;
+    fn handle_join(&mut self, from: String, our: &Address) -> anyhow::Result<()>;
+    fn handle_exit(&mut self, from: String, our: &Address) -> anyhow::Result<()>;
 }
 
 pub fn read_service(drive_path: &String, service_id: &ServiceId) -> anyhow::Result<Service> {
@@ -276,6 +307,8 @@ pub fn update_client(our: &Address, to: String, update: impl Serialize, meta: &P
     let address = get_server_address(&our.node);
     let dart_message = 
         DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginOutput(meta.plugin_name.clone(), PluginOutput::UpdateClient(to, update))));
+
+    println!("updating client");
     let _ = Request::to(address)
         .body(serde_json::to_vec(&dart_message).unwrap())
         .send()?;
