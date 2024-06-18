@@ -19,6 +19,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
   const [service, setService] = useState<Service | null>(null);
 
   useEffect(() => {
+    if (!(services instanceof Map)) return;
     const gotService = services.get(serviceId);
     if (gotService) {
       setService({ ...gotService });

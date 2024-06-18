@@ -6,10 +6,11 @@ import { WEBSOCKET_URL, } from './utils';
 import DartApi from "@dartfrog/puddle";
 import useDartStore from "./store/dart";
 import BrowserBox from "./components/BrowserBox";
+import TabbedWindowManager from "./components/TabbedWindowManager";
 
 function App() {
 
-  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, setAvailableServices, requestServiceList, availableServices} = useDartStore();
+  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, services, setAvailableServices, requestServiceList, availableServices} = useDartStore();
 
 
   useEffect(() => {
@@ -20,12 +21,13 @@ function App() {
       onOpen: () => {
         setIsClientConnected(true);
         requestServiceList(window.our.node);
+        setServices(new Map());
       },
       onClose: () => {
         setIsClientConnected(false);
       },
       onServicesChangeHook: (services) => {
-        console.log("servicesChange", availableServices);
+        console.log("servicesChange", services);
         setServices(services);
       },
       onAvailableServicesChangeHook: (availableServices) => {
@@ -49,24 +51,6 @@ function App() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
-  
-  // useEffect(() => {
-  //   // when the user presses a key a-z, focus #chat-input
-  //   const handleKeyDown = (event: KeyboardEvent) => {
-  //     if (event.key.match(/[a-z]/i)) {
-  //       const chatInput = document.getElementById('chat-input');
-  //       if (chatInput) {
-  //         chatInput.focus();
-  //       }
-  //     }
-  //   };
-
-  //   document.addEventListener('keydown', handleKeyDown);
-
-  //   return () => {
-  //     document.removeEventListener('keydown', handleKeyDown);
-  //   };
-  // }, []);
 
   return (
     <div style={{
@@ -77,7 +61,7 @@ function App() {
     }}>
       <ControlHeader />
 
-      <BrowserBox />
+      <TabbedWindowManager services={services} />
       {/* <FullServicesView /> */}
 
       <Footer />

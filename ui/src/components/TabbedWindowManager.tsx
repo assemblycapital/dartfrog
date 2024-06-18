@@ -7,34 +7,35 @@ import { PlusIcon, XIcon } from './icons/Icons';
 import NewTab from './NewTab/NewTab';
 import { join } from 'path';
 import { HUB_NODE } from '../utils';
+import Spinner from './Spinner';
 
 interface Tab {
   serviceId: ServiceId | null;
 }
 
 interface TabbedWindowManagerProps {
+  services: Map<ServiceId, Service>;
 }
 
-const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({}) => {
+const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({services}) => {
   const [tabs, setTabs] = useState<Tab[]>([
     { serviceId: "chat."+HUB_NODE},
-    // { serviceId: "chat."+window.our.node},
     { serviceId: null },
   ]);
 
   const [activeTabIndex, setActiveTabIndex] = useState<number>(0);
   const [currentTabService, setCurrentTabService] = useState<Service | null>(null);
-  const { services, exitService, joinService } = useDartStore();
+  const { exitService, joinService } = useDartStore();
 
   useEffect(() => {
+    if (!(services instanceof Map)) return;
+
     tabs.forEach(tab => {
       if (tab && tab.serviceId) {
+        // this line causes a crash
         const service = services.get(tab.serviceId);
         if (!service) {
           joinService(parseServiceId(tab.serviceId));
-        } else {
-          // Optionally update some state or cache with the service details
-          // This step depends on what you need to do with the service once it's confirmed to be joined
         }
       }
     });

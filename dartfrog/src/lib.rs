@@ -101,7 +101,7 @@ fn poke_plugins(plugins: &HashSet<String>, poke: PluginInput, our: &Address) -> 
     for plugin in plugins {
 
         let address = get_plugin_address(plugin, our.node.as_str());
-        poke_plugin(&address, &poke);
+        poke_plugin(&address, &poke)?;
     }
     Ok(())
 }

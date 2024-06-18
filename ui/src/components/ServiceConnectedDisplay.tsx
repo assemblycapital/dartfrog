@@ -12,45 +12,33 @@ const ServiceConnectedDisplay = ({ serviceId, service }) => {
 
   useEffect(() => {
     const activePlugins = service.metadata.plugins.filter(
-      plugin => service.pluginStates[plugin] && service.pluginStates[plugin].exists && service.pluginStates[plugin].state
+      plugin => service.pluginStates[plugin] && service.pluginStates[plugin].exists
     );
     setPlugins(activePlugins);
   }, [service, serviceId]);
 
   const renderPlugin = (pluginName) => {
-    if (!service.pluginStates[pluginName] || !service.pluginStates[pluginName].state) {
+    if (!service.pluginStates[pluginName] || !service.pluginStates[pluginName]) {
       return <div>{`${pluginName} plugin not available or not initialized`}</div>;
     }
 
     return (
-      <div>
+      <div
+        style={{
+          fontSize: '0.8rem',
+          color: '#ffffff88'
+        }}
+      >
         <div>
           {pluginName}
         </div>
         <iframe 
           src={`/${pluginName}`} 
-          style={{ width: '100%', height: '100%' }} 
+          style={{ border: "none", width: '100%', height: '100%' }} 
           title={pluginName}
         />
       </div>
     )
-    // switch (pluginName) {
-    //   case 'chat':
-    //     return (
-    //       <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
-    //         <ChatHeader serviceId={serviceId} />
-    //         <ChatBox serviceId={serviceId} chatState={service.pluginStates.chat.state} />
-    //       </div>
-    //     );
-    //   case 'piano':
-    //     return <Piano serviceId={serviceId} pianoState={service.pluginStates.piano.state} />;
-    //   case 'page':
-    //     return <PagePluginBox serviceId={serviceId} pageState={service.pluginStates.page.state} />;
-    //   case 'chess':
-    //     return <ChessPluginBox serviceId={serviceId} chessState={service.pluginStates.chess.state} />;
-    //   default:
-    //     return <div>{`${pluginName} plugin not available`}</div>;
-    // }
   };
 
   return (
