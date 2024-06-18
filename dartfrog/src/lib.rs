@@ -125,7 +125,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
             ServiceRequest::PluginOutput(plugin_name, plugin_out) => {
                 if service.metadata.plugins.contains(&plugin_name) {
 
-                    println!("plugin output: {:?} {:?}", plugin_name, plugin_out);
+                    // println!("plugin output: {:?} {:?}", plugin_name, plugin_out);
                     let plugin_address = get_plugin_address(&plugin_name, our.node.as_str());
                     if source != plugin_address {
                         // no spoofing
@@ -251,7 +251,7 @@ fn update_subscribers(update: ConsumerUpdate, subscribers: HashSet<String>) -> a
 }
 
 fn handle_client_update(_our: &Address, state: &mut DartState, source: Address, upd: ClientUpdate) -> anyhow::Result<()> {
-    println!("client update: {:?}", upd);
+    // println!("client update: {:?}", upd);
     match upd {
         ClientUpdate::ConsumerUpdate(consumer_update) => {
             // possibly intercept the update first
@@ -681,7 +681,7 @@ fn poke_server(address:&Address, req: ServerRequest) -> anyhow::Result<()> {
 }
 
 fn poke_plugin(address:&Address, poke: &PluginMessage) -> anyhow::Result<()> {
-    println!("poking plugin");
+    // println!("poking plugin");
     Request::to(address)
         .body(serde_json::to_vec(poke)?)
         .send()?;

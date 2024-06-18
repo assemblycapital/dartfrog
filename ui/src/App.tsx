@@ -27,11 +27,11 @@ function App() {
         setIsClientConnected(false);
       },
       onServicesChangeHook: (services) => {
-        console.log("servicesChange", services);
+        // console.log("servicesChange", services);
         setServices(services);
       },
       onAvailableServicesChangeHook: (availableServices) => {
-        console.log("availableServices", availableServices);
+        // console.log("availableServices", availableServices);
         setAvailableServices(availableServices);
       }
     });

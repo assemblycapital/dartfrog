@@ -1,5 +1,4 @@
 import React, { useCallback, useState } from 'react';
-import useDartStore from '../store/dart';
 import { parseServiceId } from '@dartfrog/puddle';
 
 interface ChatInputProps {
@@ -9,7 +8,6 @@ interface ChatInputProps {
 const ChatInput: React.FC<ChatInputProps> = ({ serviceId }) => {
   const [chatMessageInputText, setChatMessageInputText] = useState('');
 
-  const { pokeService } = useDartStore();
   const handleInputChange = (event) => {
     setChatMessageInputText(event.target.value);
   };
@@ -18,26 +16,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ serviceId }) => {
     async (event) => {
       event.preventDefault();
       if (!chatMessageInputText) return;
-
-      // Create a message object
-      // let text = maybeReplaceWithImage(chatMessageInputText);
-      let text = chatMessageInputText;
-      const innerPluginRequest = {
-          "SendMessage": 
-            text
-          }
-      const data = {
-            "PluginRequest": [
-              "chat",
-              JSON.stringify(innerPluginRequest)
-        ]
-      }
-      // sendPoke(data);
-      setChatMessageInputText("");
-
-      let parsedServiceId = parseServiceId(serviceId);
-
-      pokeService(parsedServiceId, data);
+      console.log("todo send chat")
     },
     [chatMessageInputText]
   );

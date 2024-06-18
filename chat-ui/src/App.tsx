@@ -3,39 +3,39 @@ import { useLocation } from "react-router-dom";
 import "./App.css";
 import DartApi, { parseServiceId } from "@dartfrog/puddle";
 import { WEBSOCKET_URL } from "./utils";
+import useChatStore, { PLUGIN_NAME } from "./store/chat";
+import ChatBox from "./components/ChatBox";
 
 function App() {
   const location = useLocation();
 
-  const [service, setService] = useState<string | null>(null);
-
-  const [api, setApi] = useState<DartApi | null>(null);
+  const {api, setApi, serviceId, setServiceId, setChatState, chatState} = useChatStore();
 
   useEffect(() => {
 
     const searchParams = new URLSearchParams(location.search);
-    const service = searchParams.get("service");
+    const paramService = searchParams.get("service");
 
-    if (service) {
-      setService(service);
+    if (paramService) {
+      setServiceId(paramService);
     } else {
-      setService(null);
+      setServiceId(null);
     }
 
   }, [location.search])
 
   useEffect(() => {
-    if (!service) {
+    if (!serviceId) {
       return;
     }
 
     let serviceUpdateHandlers = new Map();
 
     let serviceUpdateHandler = (update) =>{
-      console.log("chat-ui service update", update)
+        handleUpdate(update);
     }
 
-    serviceUpdateHandlers.set(service, serviceUpdateHandler);
+    serviceUpdateHandlers.set(serviceId, serviceUpdateHandler);
 
     const api = new DartApi({
       our: window.our,
@@ -43,18 +43,52 @@ function App() {
       serviceUpdateHandlers: serviceUpdateHandlers,
       onOpen: () => {
         console.log("connected in chat-ui")
-        api.joinService(parseServiceId(service));
+        api.joinService(parseServiceId(serviceId));
         setApi(api);
       },
       onClose: () => {
       },
       onServicesChangeHook: (services) => {
-        console.log("got services", services)
+        // console.log("got services", services)
       },
       onAvailableServicesChangeHook: (availableServices) => {
       }
     });
-  }, [service]);
+  }, [serviceId]);
+
+
+  const handleUpdate = useCallback(
+    (update) => {
+      // console.log("chat-ui service update", update)
+
+      if (!update["PluginUpdate"]) return;
+      let [plugin, inner] = update["PluginUpdate"];
+
+      if (plugin !== PLUGIN_NAME) return;
+
+      let pluginUpdate = JSON.parse(inner);
+
+      if (pluginUpdate["Message"]) {
+
+        console.log("got message", pluginUpdate["Message"])
+        // let message = pluginUpdate["Message"];
+        // let newMessages = new Map(chatState.messages);
+        // newMessages.set(message["id"], message);
+
+        // setChatState({ messages: newMessages });
+
+      } else if (pluginUpdate["FullMessageHistory"]) {
+
+        let messages = new Map();
+        for (let msg of pluginUpdate["FullMessageHistory"]) {
+          messages.set(msg["id"], msg);
+        }
+
+        setChatState({ messages: messages });
+
+      }
+      
+    }, [api, chatState]);
 
   
   const sendChat = useCallback(
@@ -64,7 +98,7 @@ function App() {
           "SendMessage": 
             text
           }
-      api.pokePlugin(service, "chat:dartfrog:herobrine.os", innerPluginRequest);
+      api.pokePlugin(serviceId, "chat:dartfrog:herobrine.os", innerPluginRequest);
     }, [api]);
 
 
@@ -75,10 +109,8 @@ function App() {
       flexDirection: "column",
       gap: "0.4rem",
     }}>
+      <ChatBox serviceId={serviceId} chatState={chatState} />
     
-      <button onClick={() => {
-        sendChat("dummy chat")
-      }}>dummy chat</button>
     </div>
   );
 }

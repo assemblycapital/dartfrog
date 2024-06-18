@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ChatInput from './ChatInput';
 import { Service, ServiceId, makeServiceId, computeColorForName } from '@dartfrog/puddle';
 
-import useDartStore from "../store/dart";
-import Spinner from './Spinner';
+// import Spinner from './Spinner';
 import ChatHeader from './ChatHeader';
+import useChatStore from '../store/chat';
 
 type ChatState = {
   messages: Map<number, ChatMessage>;
@@ -28,7 +28,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
   const chatInputRef = useRef<HTMLDivElement | null>(null);  // Reference for ChatInput
   const isResizing = useRef(false);
 
-  const { nameColors, addNameColor } = useDartStore();
+  const { nameColors, addNameColor } = useChatStore();
   const [chatMessageList, setChatMessageList] = useState<Array<ChatMessage>>([]);
   const [containerHeight, setContainerHeight] = useState(400);
 
@@ -46,7 +46,11 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
   );
 
   useEffect(() => {
-    // if (chatState.messages.size === 0) return;
+    if (chatState.messages.size === 0) return;
+    if (!(chatState.messages instanceof Map)) {
+      return;
+    }
+
     const sortedMessages = Array.from(chatState.messages.values()).sort((a, b) => a.id - b.id);
     setChatMessageList(sortedMessages);
   }, [serviceId, chatState.messages]);
@@ -173,7 +177,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
       <div ref={chatInputRef}>
         <ChatInput serviceId={serviceId} />
       </div>
-      <div
+      {/* <div
         style={{
           height: '8px',
           background: '#333',
@@ -181,7 +185,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
           width: '100%',
         }}
         onMouseDown={startResizing}
-      />
+      /> */}
     </div>
   );
 };

@@ -148,7 +148,6 @@ class DartApi {
         console.error('Failed to parse JSON:', error);
         return;
     }
-    console.log("Received message", parsedJson)
 
     if (parsedJson.FromClient) {
         this.handleClientUpdate(parsedJson.FromClient);
