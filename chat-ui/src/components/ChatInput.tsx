@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { parseServiceId } from '@dartfrog/puddle';
+import useChatStore, { PLUGIN_NAME } from '../store/chat';
 
 interface ChatInputProps {
   serviceId: string;
@@ -7,6 +8,7 @@ interface ChatInputProps {
 
 const ChatInput: React.FC<ChatInputProps> = ({ serviceId }) => {
   const [chatMessageInputText, setChatMessageInputText] = useState('');
+  const {api} = useChatStore();
 
   const handleInputChange = (event) => {
     setChatMessageInputText(event.target.value);
@@ -16,7 +18,12 @@ const ChatInput: React.FC<ChatInputProps> = ({ serviceId }) => {
     async (event) => {
       event.preventDefault();
       if (!chatMessageInputText) return;
-      console.log("todo send chat")
+      const innerPluginRequest = {
+        SendMessage: chatMessageInputText,
+      };
+      api.pokePlugin(serviceId, PLUGIN_NAME, innerPluginRequest);
+
+      setChatMessageInputText('');
     },
     [chatMessageInputText]
   );

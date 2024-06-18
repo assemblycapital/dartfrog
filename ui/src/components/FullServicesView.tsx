@@ -1,7 +1,5 @@
 import DisplayUserActivity from "./DisplayUserActivity";
 
-import ChatBox from "./ChatBox";
-import ChatHeader from "./ChatHeader";
 import { useEffect } from "react";
 import Spinner from "./Spinner";
 import useDartStore from "../store/dart";

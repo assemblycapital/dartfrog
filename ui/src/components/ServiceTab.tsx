@@ -1,8 +1,5 @@
 import DisplayUserActivity from "./DisplayUserActivity";
-import ChatBox from "./ChatBox";
-import ChatHeader from "./ChatHeader";
 import { Service, ServiceConnectionStatusType, ServiceId, ServiceMetadata, makeServiceId } from "@dartfrog/puddle";
-import ChatInput from "./ChatInput";
 import useDartStore from "../store/dart";
 import { useEffect, useState } from "react";
 import Spinner from "./Spinner";
@@ -32,7 +29,8 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
   return (
     <div
       style={{
-        minHeight: "400px",
+        // minHeight: "400px",
+        height: "100%",
         padding: "4px",
       }}
     >
@@ -41,6 +39,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
           display: "flex",
           flexDirection: "column",
           gap: "0.3rem",
+          height: "100%",
         }}
       >
         {!service ? (
@@ -55,9 +54,9 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
             <Spinner />
           </div>
         ) : (
-          <div>
+          <>
             {!(service.connectionStatus.status === ServiceConnectionStatusType.Connected) ? (
-              <div>
+              <>
               {(service.connectionStatus.status === ServiceConnectionStatusType.Connecting) ? (
                     <div
                       style={{
@@ -74,11 +73,11 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
                     {stringifyServiceConnectionStatus(service.connectionStatus.status)}
                   </div>
                   )}
-                  </div>
+                  </>
                   ) : (
                     <ServiceConnectedDisplay serviceId={serviceId} service={service} />
                 )}
-              </div>
+              </>
           )}
       </div>
     </div>

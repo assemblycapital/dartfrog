@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import ChatHeader from './ChatHeader';
-import ChatBox from './ChatBox';
 import Piano from './Piano/Piano';
 import DisplayUserActivity from './DisplayUserActivity';
 import PagePluginBox from './PagePluginBox';
@@ -23,30 +21,27 @@ const ServiceConnectedDisplay = ({ serviceId, service }) => {
     }
 
     return (
-      <div
-        style={{
-          fontSize: '0.8rem',
-          color: '#ffffff88'
-        }}
-      >
-        <div>
-          {pluginName}
-        </div>
         <iframe 
           src={`/${pluginName}?service=${serviceId}`} 
-          style={{ border: "none", width: '100%', height: '100%' }} 
+          // style={{ border: "none", width: '100%', height: '100%' }} 
           title={pluginName}
         />
-      </div>
     )
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.3rem' }}>
-      <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: '0.8rem', height: '100%' }}>
+    <div
+      className="service-column"
+      >
+
+      <div
+        className="service-row"
+        >
         {plugins.length === 0 && <div>No plugins available</div>}
         {plugins.length === 1 && (
-          <div style={{ flex: 1, display: 'flex', height: '100%' }}>
+          <div
+            className="plugin-wrapper"
+            > 
             {renderPlugin(plugins[0])}
           </div>
         )}

@@ -9,7 +9,7 @@ import ChatBox from "./components/ChatBox";
 function App() {
   const location = useLocation();
 
-  const {api, setApi, serviceId, setServiceId, setChatState, chatState} = useChatStore();
+  const {api, setApi, serviceId, setServiceId, setChatState, chatState, addChatMessage} = useChatStore();
 
   useEffect(() => {
 
@@ -60,36 +60,37 @@ function App() {
   const handleUpdate = useCallback(
     (update) => {
       // console.log("chat-ui service update", update)
-
+  
       if (!update["PluginUpdate"]) return;
       let [plugin, inner] = update["PluginUpdate"];
-
+  
       if (plugin !== PLUGIN_NAME) return;
-
+  
       let pluginUpdate = JSON.parse(inner);
-
+  
       if (pluginUpdate["Message"]) {
+        console.log("got message", pluginUpdate["Message"]);
+        const message = pluginUpdate["Message"];
+        addChatMessage(message);
 
-        console.log("got message", pluginUpdate["Message"])
-        // let message = pluginUpdate["Message"];
-        // let newMessages = new Map(chatState.messages);
-        // newMessages.set(message["id"], message);
-
-        // setChatState({ messages: newMessages });
-
+  
       } else if (pluginUpdate["FullMessageHistory"]) {
-
-        let messages = new Map();
+        let newMessages = new Map();
         for (let msg of pluginUpdate["FullMessageHistory"]) {
-          messages.set(msg["id"], msg);
+          newMessages.set(msg.id, {
+            id: msg.id,
+            from: msg.from,
+            msg: msg.msg,
+            time: msg.time,
+          });
         }
-
-        setChatState({ messages: messages });
-
+  
+        // Updating the state for full message history
+        setChatState({ messages: newMessages });
       }
       
-    }, [api, chatState]);
-
+    }, [setChatState]); // Assuming setChatState is imported from your Zustand store
+   
   
   const sendChat = useCallback(
     (text) => {

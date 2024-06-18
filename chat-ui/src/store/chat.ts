@@ -25,6 +25,7 @@ export interface ChatStore {
   //
   chatState: ChatState,
   setChatState: (chatState: ChatState) => void
+  addChatMessage: (message: ChatMessage) => void
   // 
   sendChat: (text: string) => void
   // 
@@ -45,6 +46,12 @@ const useChatStore = create<ChatStore>()(
       // 
       chatState: { messages: new Map() },
       setChatState: (chatState) => {  set({ chatState: chatState }) },
+      addChatMessage: (message) => {
+        const { chatState } = get();
+        const newMessages = new Map(chatState.messages);
+        newMessages.set(message.id, message);
+        set({ chatState: { messages: newMessages } });
+      },
       // 
       sendChat: (text) => {
         const { api, serviceId } = get();

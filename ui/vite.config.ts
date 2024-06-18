@@ -7,6 +7,7 @@ comment out the following 2 lines:
 */
 import manifest from '../pkg/manifest.json'
 import metadata from '../metadata.json'
+import path from 'path';
 
 /*
 IMPORTANT:
@@ -22,6 +23,11 @@ console.log('process.env.VITE_NODE_URL', process.env.VITE_NODE_URL, PROXY_URL);
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {  // Add resolve configuration
+    alias: {
+      '@puddle': path.resolve(__dirname, '../puddle')  // Alias for "puddle" workspace
+    }
+  },
   base: BASE_URL,
   build: {
     rollupOptions: {
