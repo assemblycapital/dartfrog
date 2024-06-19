@@ -111,12 +111,6 @@ pub struct SyncService {
 }
 
 #[derive(Hash, Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
-pub struct ConsumerId {
-    pub client_node: String,
-    pub ws_channel_id: u32,
-}
-
-#[derive(Hash, Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct ServiceId {
     pub node: String,
     pub id: String,
@@ -146,12 +140,6 @@ pub fn new_client_state() -> ClientState {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ChannelId {
-    pub service_id: ServiceId,
-    pub consumer_id: ConsumerId,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ServerRequest {
     ServiceRequest(ServiceId, ServiceRequest),
     CreateService(ServiceId, Vec<String>), // service id, plugins
@@ -168,11 +156,12 @@ pub enum ServiceRequest {
     AddPlugin(String),
     RemovePlugin(String),
     PluginRequest(String, String), // plugin name, untyped request string JSON
-    PluginOutput(String, PluginOutput) // plugin name, pluginOutput
+    PluginOutput(String, PluginServiceOutput) // plugin name, pluginOutput
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ClientUpdate {
     ConsumerUpdate(ConsumerUpdate),
+    FromPlugin(PluginConsumerOutput),
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ConsumerUpdate {
@@ -197,7 +186,7 @@ pub enum ConsumerServiceUpdate {
     SubscribeAck,
     ServiceMetadata(ServiceMetadata),
     Kick,
-    // TODO better way to encode the plugin update than as a json string
+    // TODO better way to encode the plugin update than as a json string?
     PluginUpdate(String, String), // plugin_name, update 
 }
 #[derive(Debug, Serialize, Deserialize)]
@@ -218,8 +207,12 @@ pub enum ConsumerRequest {
 pub const PROCESS_NAME : &str = "dartfrog:dartfrog:herobrine.os";
 
 pub fn get_server_address(node_id: &str) -> Address {
+    get_process_address(node_id, PROCESS_NAME)
+}
+
+pub fn get_process_address(node_id: &str, process: &str) -> Address {
     let s =
-        format!("{}@{}", node_id, PROCESS_NAME);
+        format!("{}@{}", node_id, process);
     Address::from_str(&s).unwrap()
 }
 
@@ -247,7 +240,7 @@ impl PluginMetadata {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum PluginInput {
+pub enum PluginServiceInput {
     Init(PluginMetadata),
     Kill,
     ClientJoined(String), // node name
@@ -256,16 +249,35 @@ pub enum PluginInput {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum PluginOutput {
+pub enum PluginServiceOutput {
     UpdateSubscribers(String), // untyped update string JSON
     UpdateClient(String, String), // node name, untyped update string JSON
     ShuttingDown
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum PluginConsumerOutput {
+    UpdateClient(ServiceId, String), // service id, untyped update string JSON
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum PluginConsumerInput {
+    ServiceUpdate(String), // untyped update string JSON
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PluginMessage {
-    Input(String, PluginInput),
-    Output(String, PluginOutput)
+    ServiceInput(String, PluginServiceInput), // service name, _
+    ConsumerInput(ServiceId, PluginConsumerInput),
+}
+
+pub fn plugin_consumer_output(service_id: &ServiceId, update: &String, our: &Address) {
+    let server = get_server_address(&our.node);
+    let update = DartMessage::ClientUpdate(ClientUpdate::FromPlugin(PluginConsumerOutput::UpdateClient(service_id.clone(), update.clone())));
+    let _ = Request::to(server)
+        .body(serde_json::to_vec(&update).unwrap())
+        .send();
+    // println!("sent update to service: {:?}", service_id);
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -306,7 +318,7 @@ pub fn update_client(our: &Address, to: String, update: impl Serialize, meta: &P
     let update = serde_json::to_string(&update).unwrap();
     let address = get_server_address(&our.node);
     let dart_message = 
-        DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginOutput(meta.plugin_name.clone(), PluginOutput::UpdateClient(to, update))));
+        DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginOutput(meta.plugin_name.clone(), PluginServiceOutput::UpdateClient(to, update))));
 
     println!("updating client");
     let _ = Request::to(address)
@@ -319,7 +331,7 @@ pub fn update_subscribers(our: &Address, update: impl Serialize, meta: &PluginMe
     let update = serde_json::to_string(&update).unwrap();
     let address = get_server_address(&our.node);
     let dart_message = 
-        DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginOutput(meta.plugin_name.clone(), PluginOutput::UpdateSubscribers(update))));
+        DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginOutput(meta.plugin_name.clone(), PluginServiceOutput::UpdateSubscribers(update))));
     let _ = Request::to(address)
         .body(serde_json::to_vec(&dart_message).unwrap())
         .send()?;

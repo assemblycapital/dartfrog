@@ -11,31 +11,6 @@ function App() {
 
   const {api, setApi, serviceId, setServiceId, setChatState, chatState, addChatMessage} = useChatStore();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   useEffect(() => {
 
     const searchParams = new URLSearchParams(location.search);
@@ -84,7 +59,7 @@ function App() {
 
   const handleUpdate = useCallback(
     (update) => {
-      // console.log("chat-ui service update", update)
+      console.log("chat-ui service update", update)
   
       if (!update["PluginUpdate"]) return;
       let [plugin, inner] = update["PluginUpdate"];

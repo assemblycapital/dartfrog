@@ -1,5 +1,5 @@
 use std::{collections::HashMap, time::{SystemTime, UNIX_EPOCH}};
-use common::{get_server_address, update_client, update_subscribers, PluginInput, PluginMessage, PluginMetadata, PluginState};
+use common::{get_server_address, update_client, update_subscribers, plugin_consumer_output, PluginConsumerInput, PluginMessage, PluginMetadata, PluginServiceInput, PluginState};
 use kinode_process_lib::{await_message, call_init, println, Address};
 use serde::{Deserialize, Serialize};
 
@@ -108,7 +108,7 @@ fn handle_message(our: &Address, state: &mut ChatStates) -> anyhow::Result<()> {
     let body = message.body();
     let source = message.source();
 
-    println!("chat received message");
+    // println!("chat received message");
 
     if source != &get_server_address(our.node()) {
         println!("chat received message from unknown source: {:?}", source);
@@ -120,19 +120,27 @@ fn handle_message(our: &Address, state: &mut ChatStates) -> anyhow::Result<()> {
     }
     
     match serde_json::from_slice(body)? {
-        PluginMessage::Input(service_id, poke) => {
+        PluginMessage::ConsumerInput(service_id, poke) => {
+            match poke {
+                PluginConsumerInput::ServiceUpdate(update) => {
+                    // println!("chat message: sid: {:?}, poke: {:?}", service_id, update);
+                    plugin_consumer_output(&service_id, &update, our);
+                }
+            }
+        }
+        PluginMessage::ServiceInput(service_id, poke) => {
 
-            println!("chat message: sid: {:?}, poke: {:?}", service_id, poke);
+            // println!("chat message: sid: {:?}, poke: {:?}", service_id, poke);
 
             if let Some(chat_state) = state.states.get_mut(&service_id) {
                 match poke {
-                    PluginInput::ClientJoined(node) => {
+                    PluginServiceInput::ClientJoined(node) => {
                         chat_state.handle_join(node, our)?;
                     }
-                    PluginInput::ClientExited(node) => {
+                    PluginServiceInput::ClientExited(node) => {
                         chat_state.handle_exit(node, our)?;
                     }
-                    PluginInput::ClientRequest(node, req) => {
+                    PluginServiceInput::ClientRequest(node, req) => {
                         chat_state.handle_request(node, req, our)?;
 
                     }
@@ -141,7 +149,7 @@ fn handle_message(our: &Address, state: &mut ChatStates) -> anyhow::Result<()> {
                 }
             } else {
                 match poke {
-                    PluginInput::Init(meta) => {
+                    PluginServiceInput::Init(meta) => {
                         let mut new_chat_state = ChatState::new();
                         new_chat_state.metadata = meta;
 

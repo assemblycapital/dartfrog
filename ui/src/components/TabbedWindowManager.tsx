@@ -29,16 +29,15 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({services}) => 
 
   useEffect(() => {
     if (!(services instanceof Map)) return;
-
     tabs.forEach(tab => {
       if (tab && tab.serviceId) {
-        // this line causes a crash
         const service = services.get(tab.serviceId);
         if (!service) {
           joinService(parseServiceId(tab.serviceId));
         }
       }
     });
+
   }, [tabs, services]);
 
   const addTab = useCallback(() => {

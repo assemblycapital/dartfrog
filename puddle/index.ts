@@ -263,6 +263,7 @@ class DartApi {
         // Initialize the plugin state based on the plugin type.
         service.pluginStates[plugin] = {
             exists: true,
+            // TODO this should be removed
             state: this.getInitialPluginState(plugin)
         };
     }
