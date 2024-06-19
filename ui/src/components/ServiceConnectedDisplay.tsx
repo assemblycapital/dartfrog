@@ -22,7 +22,7 @@ const ServiceConnectedDisplay = ({ serviceId, service }) => {
 
     return (
         <iframe 
-          src={`/${pluginName}?service=${serviceId}`} 
+          src={`/${pluginName}/?service=${serviceId}`} 
           // style={{ border: "none", width: '100%', height: '100%' }} 
           title={pluginName}
         />

@@ -12,7 +12,6 @@ function App() {
 
   const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, services, setAvailableServices, requestServiceList, availableServices} = useDartStore();
 
-
   useEffect(() => {
     const api = new DartApi({
       our: window.our,

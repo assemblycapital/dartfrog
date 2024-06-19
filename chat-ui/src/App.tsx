@@ -11,6 +11,31 @@ function App() {
 
   const {api, setApi, serviceId, setServiceId, setChatState, chatState, addChatMessage} = useChatStore();
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   useEffect(() => {
 
     const searchParams = new URLSearchParams(location.search);

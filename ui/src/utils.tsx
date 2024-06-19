@@ -1,5 +1,11 @@
 
-export const BASE_URL = import.meta.env.BASE_URL;
+
+export const IS_FAKE = true;
+export const HUB_NODE = IS_FAKE ? "fake.dev" : "waterhouse.os";
+export const PROCESS_NAME = "dartfrog:dartfrog:herobrine.os";
+
+export const BASE_URL = `/${PROCESS_NAME}/`;
+
 if (window.our) window.our.process = BASE_URL?.replace("/", "");
 
 export const PROXY_TARGET = `${(import.meta.env.VITE_NODE_URL || "http://localhost:8080")}${BASE_URL}`;
@@ -8,7 +14,3 @@ export const PROXY_TARGET = `${(import.meta.env.VITE_NODE_URL || "http://localho
 export const WEBSOCKET_URL = import.meta.env.DEV
   ? `${PROXY_TARGET.replace('http', 'ws')}`
   : undefined;
-
-export const IS_FAKE = true;
-export const HUB_NODE = IS_FAKE ? "fake.dev" : "waterhouse.os";
-export const PROCESS_NAME = "dartfrog:dartfrog:herobrine.os";

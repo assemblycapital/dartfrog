@@ -469,17 +469,18 @@ private getPluginUpdateHandler(plugin: string): (currentState: any, update: any)
     const request =  { "RequestServiceList": serverNode }
     this.sendRequest(request);
   }
-
   requestAllInServiceList() {
-    for (let [serverNode, _] of this.availableServices) {
+    for (let serverNode of Array.from(this.availableServices.keys())) {
       this.requestServiceList(serverNode);
     }
   }
-
   private initialize(our, websocket_url) {
     console.log("Attempting to connect to Kinode...");
     if (!(our.node && our.process)) {
+      console.log("No node or process name provided");
       return;
+    } else {
+      console.log("Node and process name provided", our.node, our.process, websocket_url);
     }
     const newApi = new KinodeClientApi({
       uri: websocket_url,
