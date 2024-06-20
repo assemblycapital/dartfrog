@@ -38,7 +38,7 @@ const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, pageState }) =
       ]
     };
     let parsedServiceId = parseServiceId(serviceId);
-    pokeService(parsedServiceId, data);
+    // pokeService(parsedServiceId, data);
     setEditMode(false);  // Exit edit mode after save
   }, [editableText, pokeService, serviceId]);
 

@@ -116,7 +116,7 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
     }
 
     let parsedServiceId = parseServiceId(serviceId);
-    pokeService(parsedServiceId, data);
+    // pokeService(parsedServiceId, data);
   }, [pokeService]);
 
   return (

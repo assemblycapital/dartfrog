@@ -40,7 +40,7 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
   const sendChessRequest = useCallback((req) => {
     let request = { PluginRequest: ["chess", JSON.stringify(req)] };
     let parsedServiceId = parseServiceId(serviceId);
-    pokeService(parsedServiceId, request);
+    // pokeService(parsedServiceId, request);
   }, [pokeService, serviceId]);
 
   const onDrop = useCallback((drop) => {

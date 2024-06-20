@@ -16,7 +16,6 @@ function App() {
     const api = new DartApi({
       our: window.our,
       websocket_url: WEBSOCKET_URL,
-      serviceUpdateHandlers: new Map(),
       onOpen: () => {
         setIsClientConnected(true);
         requestServiceList(window.our.node);

@@ -48,7 +48,6 @@ const useChatStore = create<ChatStore>()(
       setChatState: (chatState) => {  set({ chatState: chatState }) },
       addChatMessage: (message) => {
         const { chatState } = get();
-        // console.log("TODO addChatMessage", message);
         const newMessages = new Map(chatState.messages);
         newMessages.set(message.id, message);
         set({ chatState: { messages: newMessages } });

@@ -11,9 +11,9 @@ export type ConnectionStatus = {
   status: ConnectionStatusType,
   timestamp: number
 }
-export type ServiceUpdateHandler = (json: string | Blob) => void;
+export type PluginUpdateHandler = (json: string | Blob, service: Service) => void;
 
-export type ServiceUpdateHandlers = Map<ServiceId, ServiceUpdateHandler>;
+export type PluginUpdateHandlers = Map<PluginId, PluginUpdateHandler>;
 
 export enum ServiceConnectionStatusType {
   Connecting,
@@ -33,15 +33,13 @@ export type ParsedServiceId = {
   id: string
 }
 export type ServiceId = string;
+export type PluginId = string;
 
 export type Service = {
   serviceId: ParsedServiceId,
   connectionStatus: ServiceConnectionStatus,
   metadata: ServiceMetadata,
   heartbeatIntervalId?: NodeJS.Timeout,
-  pluginStates: { [key: string]:
-    { exists: boolean, state: any }
-  },
 }
 export interface Presence {
   time: number;
@@ -75,15 +73,14 @@ function new_service(serviceId: ParsedServiceId) : Service {
     serviceId: serviceId,
     metadata: {subscribers: [], user_presence: {}, plugins: []},
     connectionStatus: {status:ServiceConnectionStatusType.Connecting, timestamp:Date.now()},
-    pluginStates: {
-    },
   }
 }
 
 interface ConstructorArgs {
   our: { node: string, process: string };
   websocket_url: string;
-  serviceUpdateHandlers?: ServiceUpdateHandlers;
+  pluginUpdateHandlers?: PluginUpdateHandlers;
+  pluginUpdateHandler?: {plugin: string, serviceId: ServiceId, handler: PluginUpdateHandler}
   onOpen?: () => void;
   onClose?: () => void;
   onServicesChangeHook?: (services: Services) => void;
@@ -93,7 +90,7 @@ interface ConstructorArgs {
 class DartApi {
   private api: KinodeClientApi | null = null;
   public connectionStatus: ConnectionStatus;
-  private serviceUpdateHandlers: ServiceUpdateHandlers;
+  private pluginUpdateHandlers: PluginUpdateHandlers;
   private services: Map<ServiceId, Service> = new Map();
   private availableServices: AvailableServices = new Map();
   public our: { node: string, process: string };
@@ -107,13 +104,17 @@ class DartApi {
   constructor({
     our,
     websocket_url,
-    serviceUpdateHandlers = new Map(),
+    pluginUpdateHandlers = new Map(),
+    pluginUpdateHandler,
     onOpen = () => {},
     onClose = () => {},
     onServicesChangeHook = (services) => {},
     onAvailableServicesChangeHook = (availableServices) => {},
   }: ConstructorArgs) {
-    this.serviceUpdateHandlers = serviceUpdateHandlers;
+    this.pluginUpdateHandlers = pluginUpdateHandlers;
+    if (pluginUpdateHandler) {
+      this.registerPluginUpdateHandler(pluginUpdateHandler.serviceId, pluginUpdateHandler.plugin, pluginUpdateHandler.handler);
+    }
     this.onOpen = onOpen;
     this.onClose = onClose;
     this.onServicesChangeHook = onServicesChangeHook;
@@ -128,8 +129,12 @@ class DartApi {
     this.onAvailableServicesChangeHook(this.availableServices);
   }
 
-  public registerServiceUpdateHandler(serviceId: ServiceId, handler: ServiceUpdateHandler) {
-    this.serviceUpdateHandlers.set(serviceId, handler);
+  public make_plugin_id(serviceId: ServiceId, plugin: string) {
+    return `${plugin}.${serviceId}`;
+  }
+  public registerPluginUpdateHandler(serviceId: ServiceId, plugin: string, handler: PluginUpdateHandler) {
+    let pluginId = this.make_plugin_id(serviceId, plugin);
+    this.pluginUpdateHandlers.set(pluginId, handler);
   }
 
   private setConnectionStatus(status: ConnectionStatusType) {
@@ -210,12 +215,6 @@ class DartApi {
           console.log("Service not found", serviceId);
           return;
         }
-
-        // call serviceUpdateHandler if it exists
-        const serviceUpdateHandler = this.serviceUpdateHandlers.get(serviceId);
-        if (serviceUpdateHandler) {
-            serviceUpdateHandler(response);
-        }
         
         service.connectionStatus = {status:ServiceConnectionStatusType.Connected, timestamp:Date.now()};
         if (response === "SubscribeAck") {
@@ -223,16 +222,6 @@ class DartApi {
           this.onServicesChange();
         } else if (response.ServiceMetadata) {
           service.metadata = response.ServiceMetadata;
-          for (const plugin of service.metadata.plugins) {
-              if (service.pluginStates[plugin] === undefined){
-                // initialize plugins
-                console.log("Initializing plugin", plugin)
-                service.pluginStates[plugin] = {
-                    exists: true,
-                    state: this.getInitialPluginState(plugin)
-                };
-              }
-          }
           this.services.set(serviceId, service);
           for (let user of Object.keys(response.ServiceMetadata.user_presence)) {
             if (!this.availableServices.has(user)) {
@@ -250,83 +239,21 @@ class DartApi {
           this.onServicesChange();
         } else if (response.PluginUpdate) {
           const [plugin_name, update] = response.PluginUpdate;
-          this.handlePluginUpdate(plugin_name, update, serviceId, service);
+          // call pluginUpdateHandler if it exists
+          let pluginId = this.make_plugin_id(serviceId, plugin_name);
+          const pluginUpdateHandler = this.pluginUpdateHandlers.get(pluginId);
+          if (pluginUpdateHandler) {
+              let parsedUpdate = JSON.parse(update);
+              pluginUpdateHandler(parsedUpdate, service);
+          } else {
+            // console.warn("no plugin update handler for", pluginId);
+          }
         } else {
           console.warn('Unknown service message format:', message);
         }
     }
   }
 
-  handlePluginUpdate(plugin: string, update: any, serviceId: ServiceId, service: Service) {
-    // Ensure the plugin exists in the service, with a default state if not present.
-    if (!service.pluginStates[plugin]) {
-        // Initialize the plugin state based on the plugin type.
-        service.pluginStates[plugin] = {
-            exists: true,
-            // TODO this should be removed
-            state: this.getInitialPluginState(plugin)
-        };
-    }
-
-    // Retrieve the update handler for the plugin.
-    const updateHandler = this.getPluginUpdateHandler(plugin);
-    if (!updateHandler) {
-        console.warn('Update handler not found for plugin:', plugin);
-        return;
-    }
-
-    // Update the state using the specific plugin's update handler.
-    const currentState = service.pluginStates[plugin].state;
-    const newState = updateHandler(currentState, update);
-
-    // Update the service with the new state.
-    const newService = {
-      ...service, // Copy all properties of the existing service
-      pluginStates: {
-          ...service.pluginStates, // Copy all existing plugin states
-          [plugin]: { // Update only the specific plugin's state
-              ...service.pluginStates[plugin], // Copy the existing plugin's properties
-              state: newState // Set the new state
-          }
-      }
-    };
-
-    // Replace the old service with the new one in the services map.
-    this.services.set(serviceId, newService);
-    this.onServicesChange();
-}
-
-// Helper method to return the initial state based on the plugin name.
-private getInitialPluginState(plugin: string): any {
-    switch (plugin) {
-        // case "chat":
-        //     return { messages: new Map() };
-        // case "piano":
-        //     return { notePlayed: null };
-        // case "page":
-        //     return { page: "" };
-        // case "chess":
-        //     return newChessState();
-        default:
-            return null;  // Default state or throw error if plugin is unrecognized.
-    }
-}
-
-// Helper method to return the update handler function based on the plugin name.
-private getPluginUpdateHandler(plugin: string): (currentState: any, update: any) => any {
-    switch (plugin) {
-        // case "chat":
-        //     return handleChatUpdate;
-        // case "piano":
-        //     return handlePianoUpdate;
-        // case "page":
-        //     return handlePageUpdate;
-        // case "chess":
-        //     return handleChessUpdate;
-        default:
-            return () => null;  // Return null or throw error if handler for plugin is unrecognized.
-    }
-}
 
 
   startPresenceHeartbeat(serviceId: ServiceId) {
@@ -439,7 +366,11 @@ private getPluginUpdateHandler(plugin: string): (currentState: any, update: any)
     this.api.send({ data:wrapper });
   }
 
-  joinService(serviceId: ParsedServiceId) {
+  public joinService(serviceId: ServiceId) {
+    let parsedServiceId = parseServiceId(serviceId);
+    this._joinService(parsedServiceId);
+  }
+  public _joinService(serviceId: ParsedServiceId) {
     const request =  { "JoinService": { "node": serviceId.node, "id": serviceId.id } }
     let rawServiceId = makeServiceId(serviceId.node, serviceId.id);
     if (this.services.has(rawServiceId)) {
@@ -453,7 +384,11 @@ private getPluginUpdateHandler(plugin: string): (currentState: any, update: any)
     this.startPresenceHeartbeat(rawServiceId);
   }
 
-  exitService(parsedServiceId: ParsedServiceId) {
+  public exitService(serviceId: ServiceId) {
+    let parsedServiceId = parseServiceId(serviceId);
+    this._exitService(parsedServiceId);
+  }
+  public _exitService(parsedServiceId: ParsedServiceId) {
     let serviceId = makeServiceId(parsedServiceId.node, parsedServiceId.id);
     if (!this.services.has(serviceId)) {
       console.log("Service not found", serviceId);
@@ -476,12 +411,9 @@ private getPluginUpdateHandler(plugin: string): (currentState: any, update: any)
     }
   }
   private initialize(our, websocket_url) {
-    console.log("Attempting to connect to Kinode...");
+    // console.log("Attempting to connect to Kinode...");
     if (!(our.node && our.process)) {
-      console.log("No node or process name provided");
       return;
-    } else {
-      console.log("Node and process name provided", our.node, our.process, websocket_url);
     }
     const newApi = new KinodeClientApi({
       uri: websocket_url,
@@ -493,7 +425,7 @@ private getPluginUpdateHandler(plugin: string): (currentState: any, update: any)
         this.onClose();
       },
       onOpen: (event, api) => {
-        console.log("Connected to Kinode");
+        // console.log("Connected to Kinode");
         this.onOpen();
         this.setConnectionStatus(ConnectionStatusType.Connected);
       },

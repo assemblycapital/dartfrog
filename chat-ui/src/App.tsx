@@ -12,7 +12,6 @@ function App() {
   const {api, setApi, serviceId, setServiceId, setChatState, chatState, addChatMessage} = useChatStore();
 
   useEffect(() => {
-
     const searchParams = new URLSearchParams(location.search);
     const paramService = searchParams.get("service");
 
@@ -29,51 +28,32 @@ function App() {
       return;
     }
 
-    let serviceUpdateHandlers = new Map();
-
-    let serviceUpdateHandler = (update) =>{
-        handleUpdate(update);
-    }
-
-    serviceUpdateHandlers.set(serviceId, serviceUpdateHandler);
-
     const api = new DartApi({
       our: window.our,
       websocket_url: WEBSOCKET_URL,
-      serviceUpdateHandlers: serviceUpdateHandlers,
+      pluginUpdateHandler: {
+          plugin:PLUGIN_NAME,
+          serviceId,
+          handler:(pluginUpdate, service) => {
+            handleUpdate(pluginUpdate, service);
+          }
+        },
       onOpen: () => {
-        console.log("connected in chat-ui")
-        api.joinService(parseServiceId(serviceId));
+        api.joinService(serviceId);
         setApi(api);
       },
       onClose: () => {
       },
-      onServicesChangeHook: (services) => {
-        // console.log("got services", services)
-      },
-      onAvailableServicesChangeHook: (availableServices) => {
-      }
     });
   }, [serviceId]);
 
-
   const handleUpdate = useCallback(
-    (update) => {
-      console.log("chat-ui service update", update)
-  
-      if (!update["PluginUpdate"]) return;
-      let [plugin, inner] = update["PluginUpdate"];
-  
-      if (plugin !== PLUGIN_NAME) return;
-  
-      let pluginUpdate = JSON.parse(inner);
+    (pluginUpdate, service) => {
   
       if (pluginUpdate["Message"]) {
-        console.log("got message", pluginUpdate["Message"]);
         const message = pluginUpdate["Message"];
         addChatMessage(message);
 
-  
       } else if (pluginUpdate["FullMessageHistory"]) {
         let newMessages = new Map();
         for (let msg of pluginUpdate["FullMessageHistory"]) {
@@ -88,21 +68,8 @@ function App() {
         // Updating the state for full message history
         setChatState({ messages: newMessages });
       }
-      
-    }, [setChatState]); // Assuming setChatState is imported from your Zustand store
+    }, [chatState]); // Assuming setChatState is imported from your Zustand store
    
-  
-  const sendChat = useCallback(
-    (text) => {
-      let innerPluginRequest = 
-          {
-          "SendMessage": 
-            text
-          }
-      api.pokePlugin(serviceId, "chat:dartfrog:herobrine.os", innerPluginRequest);
-    }, [api]);
-
-
   return (
     <div style={{
       width: "100%",

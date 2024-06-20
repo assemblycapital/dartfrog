@@ -9,17 +9,11 @@ const ServiceConnectedDisplay = ({ serviceId, service }) => {
   const [plugins, setPlugins] = useState([]);
 
   useEffect(() => {
-    const activePlugins = service.metadata.plugins.filter(
-      plugin => service.pluginStates[plugin] && service.pluginStates[plugin].exists
-    );
+    const activePlugins = service.metadata.plugins;
     setPlugins(activePlugins);
   }, [service, serviceId]);
 
   const renderPlugin = (pluginName) => {
-    if (!service.pluginStates[pluginName] || !service.pluginStates[pluginName]) {
-      return <div>{`${pluginName} plugin not available or not initialized`}</div>;
-    }
-
     return (
         <iframe 
           src={`/${pluginName}/?service=${serviceId}`} 
@@ -29,6 +23,7 @@ const ServiceConnectedDisplay = ({ serviceId, service }) => {
     )
   };
 
+  const CHAT_PLUGIN = "chat:dartfrog:herobrine.os";
   return (
     <div
       className="service-column"
@@ -50,12 +45,12 @@ const ServiceConnectedDisplay = ({ serviceId, service }) => {
             <div 
               className="plugin-wrapper"
             >
-              {renderPlugin(plugins.find(plugin => plugin !== 'chat') || plugins[0])}
+              {renderPlugin(plugins.find(plugin => plugin !== CHAT_PLUGIN) || plugins[0])}
             </div>
             <div 
               className="plugin-wrapper"
             >
-              {renderPlugin('chat')}
+              {renderPlugin(CHAT_PLUGIN)}
             </div>
           </>
         )}

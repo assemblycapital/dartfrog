@@ -33,7 +33,7 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({services}) => 
       if (tab && tab.serviceId) {
         const service = services.get(tab.serviceId);
         if (!service) {
-          joinService(parseServiceId(tab.serviceId));
+          joinService(tab.serviceId);
         }
       }
     });
@@ -107,10 +107,9 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({services}) => 
                     // Exit service if there is one
                     if (tab.serviceId) {
                       // also check that no other tabs are using this service
-                      let parsedServiceId = parseServiceId(tab.serviceId);
                       const isServiceUsedByOtherTabs = tabs.some((t, i) => i !== index && t.serviceId === tab.serviceId);
                       if (!isServiceUsedByOtherTabs) {
-                        exitService(parsedServiceId);
+                        exitService(tab.serviceId);
                       } 
                     }
                     closeTab(index);

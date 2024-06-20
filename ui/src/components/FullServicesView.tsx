@@ -3,7 +3,7 @@ import DisplayUserActivity from "./DisplayUserActivity";
 import { useEffect } from "react";
 import Spinner from "./Spinner";
 import useDartStore from "../store/dart";
-import { ServiceConnectionStatus, ServiceConnectionStatusType } from "@dartfrog/puddle";
+import { ServiceConnectionStatus, ServiceConnectionStatusType, makeServiceId } from "@dartfrog/puddle";
 
 export function stringifyServiceConnectionStatus(status: ServiceConnectionStatusType): string {
   switch (status) {
@@ -97,7 +97,7 @@ function FullServicesView() {
                   {services.has(serverNode+":"+service.id) ? "connected" : 
                     <button
                       onClick={() => {
-                          joinService(service);
+                          joinService(serverNode+":"+service.id);
                         }
                       }
                     >
@@ -183,7 +183,7 @@ function FullServicesView() {
           <div>
             <button
               onClick={() => {
-                exitService(service.serviceId);
+                exitService(makeServiceId(service.serviceId.node, service.serviceId.id));
               }}
               >
                 disconnect
