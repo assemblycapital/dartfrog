@@ -343,6 +343,7 @@ class DartApi {
 
   sendCreateServiceRequest(serviceId: ParsedServiceId, plugins: Array<String>) {
     if (!this.api) { return; }
+    // console.log("Sending create service request", serviceId, plugins)
     const wrapper = {
       "ServerRequest": {
         "CreateService": [

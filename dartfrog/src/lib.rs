@@ -25,7 +25,14 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
     // println!("server request: {:?}", req);
     match req {
         ServerRequest::ServiceRequest(service_id, service_request) => {
-            handle_service_request(our, state, source, service_id, service_request)?;
+            match handle_service_request(our, state, source, service_id, service_request) {
+                Ok(_) => {
+                    // println!("service request handled");
+                }
+                Err(e) => {
+                    println!("error handling service request: {:?}", e);
+                }
+            }
         }
         ServerRequest::CreateService(service_id, plugins) => {
             if source.node != our.node {
@@ -35,21 +42,28 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                 return Ok(());
             }
             if let Some(_service) = state.server.services.get(&service_id.id) {
+                // println!("exists");
                 // already exists
             } else {
+                // println!("do it");
                 let mut service = new_service(service_id.clone());
                 for plugin in plugins {
-                    service.metadata.plugins.insert(plugin.clone());
-
-                    let plugin_address = get_plugin_address(plugin.as_str(), our.node());
-                    // TODO vfs for plugin metadata sharing
-                    let plugin_metadata = PluginMetadata {
-                        plugin_name: plugin.clone(),
-                        drive_path: "todo".to_string(),
-                        service: service.clone(),
-                    };
-                    poke_plugin(&plugin_address, &PluginMessage::ServiceInput(service_id.clone(), PluginServiceInput::Init(plugin_metadata)))?;
+                    match get_plugin_address(&plugin, our.node.as_str()) {
+                      Ok(plugin_address) => {
+                            // TODO vfs for plugin metadata sharing
+                            service.metadata.plugins.insert(plugin.clone());
+                            let plugin_metadata = PluginMetadata {
+                                plugin_name: plugin.clone(),
+                                drive_path: "todo".to_string(),
+                                service: service.clone(),
+                            };
+                            poke_plugin(&plugin_address, &PluginMessage::ServiceInput(service_id.clone(), PluginServiceInput::Init(plugin_metadata)))?;
+                        }
+                        Err(e) => {
+                        }
+                    }
                 }
+
                 state.server.services.insert(service_id.id.clone(), service.clone());
                 // TODO read_service??? for restoring state
                 write_service(state.server.drive_path.clone(), &service)?;
@@ -65,8 +79,9 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                     update_client(update, subscriber)?;
                 }
                 for plugin in service.metadata.plugins.clone() {
-                    let address = get_plugin_address(&plugin, our.node.as_str());
-                    poke_plugin(&address, &PluginMessage::ServiceInput(service_id.clone(), PluginServiceInput::Kill))?;
+                    if let Ok(plugin_address) = get_plugin_address(&plugin, our.node.as_str()) {
+                        poke_plugin(&plugin_address, &PluginMessage::ServiceInput(service_id.clone(), PluginServiceInput::Kill))?;
+                    }
                 }
                 state.server.services.remove(&service_id.id.clone());
             }
@@ -96,8 +111,21 @@ fn write_service(drive_path: String, service: &Service) -> anyhow::Result<()> {
         Ok(mut file) => {
             let metadata = serde_json::to_string(&service)?;
             let bytes = metadata.as_bytes();
-            file.set_len(bytes.len() as u64)?;
-            file.write_all(metadata.as_bytes())?;
+            match file.set_len(bytes.len() as u64) {
+                Ok(_) => {
+                    match file.write_all(metadata.as_bytes()) {
+                        Ok(_) => {
+                            // println!("wrote service metadata");
+                        }
+                        Err(e) => {
+                            println!("error writing service metadata: {:?}", e);
+                        }
+                    }
+                }
+                Err(e) => {
+                    println!("error writing service metadata: {:?}", e);
+                }
+            }
         }
         Err(e) => {
             println!("error writing service metadata: {:?}", e);
@@ -109,8 +137,9 @@ fn write_service(drive_path: String, service: &Service) -> anyhow::Result<()> {
 fn poke_plugins(service:&Service, poke: PluginServiceInput, our: &Address) -> anyhow::Result<()> {
     for plugin in service.metadata.plugins.clone() {
 
-        let address = get_plugin_address(plugin.as_str(), our.node.as_str());
-        poke_plugin(&address, &PluginMessage::ServiceInput(service.id.clone(), poke.clone()))?;
+        if let Ok(plugin_address) = get_plugin_address(&plugin, our.node.as_str()) {
+            poke_plugin(&plugin_address, &PluginMessage::ServiceInput(service.id.clone(), poke.clone()))?;
+        }
     }
     Ok(())
 }
@@ -125,32 +154,33 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
             ServiceRequest::PluginOutput(plugin_name, plugin_out) => {
                 if service.metadata.plugins.contains(&plugin_name) {
 
-                    // println!("plugin output: {:?} {:?}", plugin_name, plugin_out);
-                    let plugin_address = get_plugin_address(&plugin_name, our.node.as_str());
-                    if source != plugin_address {
-                        // no spoofing
-                        println!("spoofing attempt: {:?} {:?}", source, plugin_address);
-                        return Ok(());
-                    }
+                    if let Ok(plugin_address) = get_plugin_address(&plugin_name, our.node.as_str()) {
+                        if source != plugin_address {
+                            // no spoofing
+                            println!("spoofing attempt: {:?} {:?}", source, plugin_address);
+                            return Ok(());
+                        }
 
-                    match plugin_out {
-                        PluginServiceOutput::UpdateSubscribers(update) => {
-                            let wrap_update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::PluginUpdate(plugin_name, update));
-                            update_subscribers(wrap_update, service.metadata.subscribers.clone())?;
-                        }
-                        PluginServiceOutput::UpdateClient(to, update) => {
-                            let wrap_update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::PluginUpdate(plugin_name, update));
-                            update_client(wrap_update, to)?;
-                        }
-                        _ => {
+                        match plugin_out {
+                            PluginServiceOutput::UpdateSubscribers(update) => {
+                                let wrap_update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::PluginUpdate(plugin_name, update));
+                                update_subscribers(wrap_update, service.metadata.subscribers.clone())?;
+                            }
+                            PluginServiceOutput::UpdateClient(to, update) => {
+                                let wrap_update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::PluginUpdate(plugin_name, update));
+                                update_client(wrap_update, to)?;
+                            }
+                            _ => {
+                            }
                         }
                     }
                 }
             }
             ServiceRequest::PluginRequest(plugin_name, plugin_req) => {
                 if service.metadata.plugins.contains(&plugin_name) {
-                    let plugin_address = get_plugin_address(&plugin_name, our.node.as_str());
-                    poke_plugin(&plugin_address, &PluginMessage::ServiceInput(service.id.clone(), PluginServiceInput::ClientRequest(source.node.clone(), plugin_req)))?;
+                    if let Ok(plugin_address) = get_plugin_address(&plugin_name, our.node.as_str()) {
+                        poke_plugin(&plugin_address, &PluginMessage::ServiceInput(service.id.clone(), PluginServiceInput::ClientRequest(source.node.clone(), plugin_req)))?;
+                    }
                 }
             }
             ServiceRequest::Subscribe => {
@@ -536,7 +566,14 @@ fn handle_http_server_request(
 
             match serde_json::from_slice(&blob.bytes)? {
                 DartMessage::ServerRequest(s_req) => {
-                    handle_server_request(our, state, source.clone(), s_req)?;
+                    match handle_server_request(our, state, source.clone(), s_req) {
+                        Ok(_) => {
+                            // println!("server request handled");
+                        }
+                        Err(e) => {
+                            println!("error handling server request: {:?}", e);
+                        }
+                    }
                 }
                 DartMessage::ClientRequest(c_req) => {
                     match c_req {
@@ -587,7 +624,14 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
         match serde_json::from_slice(body)? {
             DartMessage::ServerRequest(s_req) => {
                 // println!("server request: {:?}", message);
-                handle_server_request(our, state, source.clone(), s_req)?;
+                match handle_server_request(our, state, source.clone(), s_req) {
+                    Ok(_) => {
+                        // println!("server request handled");
+                    }
+                    Err(e) => {
+                        println!("error handling server request: {:?}", e);
+                    }
+                }
             }
             DartMessage::ClientRequest(c_req) => {
                 if our.node != source.node {

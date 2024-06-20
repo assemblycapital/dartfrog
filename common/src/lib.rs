@@ -6,7 +6,7 @@ use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use std::hash::{Hash, Hasher};
-use kinode_process_lib::{Address, Request, println};
+use kinode_process_lib::{println, Address, ProcessId, Request};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Hash)]
 pub struct Presence {
@@ -217,11 +217,66 @@ pub fn get_process_address(node_id: &str, process: &str) -> Address {
 }
 
 // const PACKAGE_NAME : &str = "dartfrog:herobrine.os";
-pub fn get_plugin_address(plugin_name: &str, node_id: &str) -> Address {
+pub fn get_plugin_address(plugin_name: &str, node_id: &str) -> anyhow::Result<Address, anyhow::Error> {
+    // println!("getting plugin address for plugin: {:?}, node: {:?}", plugin_name, node_id);
     let full_process_name = format!("{}@{}", node_id, plugin_name);
-    Address::from_str(&full_process_name).unwrap()
+    // println!("constructed full process name: {:?}", full_process_name);
+
+    match address_from_string(&full_process_name) {
+        Ok(address) => {
+            // println!("successfully parsed address: {:?}", address);
+            Ok(address)
+        },
+        Err(e) => {
+            // println!("error parsing address from string '{}': {}", full_process_name, e);
+            Err(anyhow::anyhow!("error getting plugin address: {}", e))
+        }
+    }
 }
 
+// TODO for some reason Address::from_str panics instead of returning error
+fn address_from_string(input: &str) -> anyhow::Result<Address> {
+    // split string on '@' and ensure there is exactly one '@'
+    let parts: Vec<&str> = input.split('@').collect();
+    if parts.len() < 2 {
+        return Err(anyhow::anyhow!("missing node id"));
+    } else if parts.len() > 2 {
+        return Err(anyhow::anyhow!("too many ats"));
+    }
+    let node = parts[0].to_string();
+    if node.is_empty() {
+        return Err(anyhow::anyhow!("missing node id"));
+    }
+
+    // split the rest on ':' and ensure there are exactly three ':'
+    let segments: Vec<&str> = parts[1].split(':').collect();
+    if segments.len() < 3 {
+        return Err(anyhow::anyhow!("missing field"));
+    } else if segments.len() > 3 {
+        return Err(anyhow::anyhow!("too many colons"));
+    }
+    let process_name = segments[0].to_string();
+    if process_name.is_empty() {
+        return Err(anyhow::anyhow!("missing field"));
+    }
+    let package_name = segments[1].to_string();
+    if package_name.is_empty() {
+        return Err(anyhow::anyhow!("missing field"));
+    }
+    let publisher_node = segments[2].to_string();
+    if publisher_node.is_empty() {
+        return Err(anyhow::anyhow!("missing field"));
+    }
+
+    Ok(Address {
+        node,
+        process: ProcessId {
+            process_name,
+            package_name,
+            publisher_node,
+        },
+    })
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PluginMetadata {
