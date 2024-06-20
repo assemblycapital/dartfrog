@@ -127,7 +127,8 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
       onBlur={() => setIsFocused(false)}
       ref={pianoRef}
       style={{
-        margin: "0 auto",
+        height: "100%",
+        width: "100%",
       }}
     >
       <div

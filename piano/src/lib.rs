@@ -78,7 +78,7 @@ impl PluginServiceState for PianoService {
 
     fn handle_request(&mut self, from: String, req: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
 
-        println!("piano service received request: {:?}", req);
+        // println!("piano service received request: {:?}", req);
         let Ok(request) = serde_json::from_str::<PianoRequest>(&req) else {
             println!("error parsing request: {:?}", req);
             return Ok(());
