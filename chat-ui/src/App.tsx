@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import "./App.css";
 import DartApi, { parseServiceId } from "@dartfrog/puddle";
-import { WEBSOCKET_URL } from "./utils";
+import { WEBSOCKET_URL, maybePlaySoundEffect } from "./utils";
 import useChatStore, { PLUGIN_NAME } from "./store/chat";
 import ChatBox from "./components/ChatBox";
 import ChatInput from "./components/ChatInput";
@@ -36,6 +36,7 @@ function App() {
           handler:(pluginUpdate, service) => {
             if (pluginUpdate["Message"]) {
               const message = pluginUpdate["Message"];
+              maybePlaySoundEffect(message.msg, false);
               addChatMessage(message);
 
             } else if (pluginUpdate["FullMessageHistory"]) {

@@ -94,7 +94,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
             alt="chat image"
             style={{
               height: "100%",
-              maxHeight: "12vh",
+              maxHeight: "9rem",
               objectFit: "cover",
               maxWidth: "100%",
             }}

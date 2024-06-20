@@ -87,8 +87,12 @@ textarea, input[type="text"] {
   padding: 3px;
   resize: none;
   margin-right:10px;
+  transition: background-color 0.25s;
 }
 
+textarea:hover {
+  background-color: #1d1d1d;
+}
 textarea:focus {
   background-color: #1b1b1b;
   outline:none;

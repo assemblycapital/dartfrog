@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { parseServiceId } from '@dartfrog/puddle';
 import useChatStore, { PLUGIN_NAME } from '../store/chat';
+import { maybeReplaceWithImage } from '../utils';
 
 interface ChatInputProps {
   serviceId: string;
@@ -18,8 +19,9 @@ const ChatInput: React.FC<ChatInputProps> = ({ serviceId }) => {
     async (event) => {
       event.preventDefault();
       if (!chatMessageInputText) return;
+      let text = maybeReplaceWithImage(chatMessageInputText);
       const innerPluginRequest = {
-        SendMessage: chatMessageInputText,
+        SendMessage: text,
       };
       api.pokePlugin(serviceId, PLUGIN_NAME, innerPluginRequest);
 

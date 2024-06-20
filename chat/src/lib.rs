@@ -142,6 +142,14 @@ impl PluginServiceState for ChatService {
         // println!("chat service received request: {:?}", request);
         match request {
             ChatRequest::SendMessage(msg) => {
+                const MAX_CHAT_MESSAGE_LENGTH: usize = 2048;
+                let msg = if msg.len() > MAX_CHAT_MESSAGE_LENGTH {
+                    // println!("chat message too long, slicing to max length: {:?}", msg);
+                    msg[..MAX_CHAT_MESSAGE_LENGTH].to_string()
+                } else {
+                    msg
+                };
+
                 let chat_msg = ChatMessage {
                     id: self.last_message_id,
                     time: get_now(),
