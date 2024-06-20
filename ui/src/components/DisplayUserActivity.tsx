@@ -71,7 +71,6 @@ const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({ serviceId, me
   return (
     <div style={{color: '#ffffff77', fontSize: '0.8rem', cursor: 'default',
       userSelect: "none",
-      marginTop: '0.5rem',
     }}>
       <div>
         <span style={{fontSize: '0.8rem'}}>{groupedUsers.online.length} online: </span>

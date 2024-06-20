@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Piano from './Piano/Piano';
 import DisplayUserActivity from './DisplayUserActivity';
+import ServiceConnectedRow from './ServiceConnectedRow';
 import PagePluginBox from './PagePluginBox';
 import "./ServiceConnectedDisplay.css"
 import ChessPluginBox from './ChessPluginBox';
@@ -16,18 +17,6 @@ const ServiceConnectedDisplay = ({ serviceId, service }) => {
     setPlugins(activePlugins);
   }, [service, serviceId]);
 
-  const renderPlugin = (pluginName) => {
-    return (
-        <iframe 
-          src={`/${pluginName}/?service=${serviceId}`} 
-          // style={{ border: "none", width: '100%', height: '100%' }} 
-          title={pluginName}
-        />
-    )
-  };
-
-  const CHAT_PLUGIN = "chat:dartfrog:herobrine.os";
-
   const startResizing = (e) => {
     e.preventDefault();
     isResizing.current = true;
@@ -41,7 +30,8 @@ const ServiceConnectedDisplay = ({ serviceId, service }) => {
     if (isResizing.current && containerRef.current) {
       const containerTop = containerRef.current.getBoundingClientRect().top;
       let newHeight = e.clientY - containerTop;
-      if (newHeight < 100) newHeight = 100; // Ensure minimum height
+      const minHeight = 200;
+      if (newHeight < minHeight) newHeight = minHeight;
       setHeight(newHeight);
     }
   };
@@ -63,33 +53,12 @@ const ServiceConnectedDisplay = ({ serviceId, service }) => {
         className="service-column"
         style={{ height: `${height}px` }}
         >
-        {plugins.length === 0 && <div>No plugins available</div>}
-        {plugins.length === 1 && (
-          <div
-            className="plugin-wrapper"
-            > 
-            {renderPlugin(plugins[0])}
-          </div>
-        )}
-        {plugins.length === 2 && (
-          <>
-            <div 
-              className="plugin-wrapper"
-            >
-              {renderPlugin(plugins.find(plugin => plugin !== CHAT_PLUGIN) || plugins[0])}
-            </div>
-            <div 
-              className="plugin-wrapper"
-            >
-              {renderPlugin(CHAT_PLUGIN)}
-            </div>
-          </>
-        )}
-        {plugins.length > 2 && <div>Support for more than two plugins is not available</div>}
+       
+        <ServiceConnectedRow serviceId={serviceId} service={service} plugins={plugins} />
         <div
           style={{
             height: '8px',
-            background: '#333',
+            background: '#1f1f1f',
             cursor: 'row-resize',
             width: '100%',
           }}

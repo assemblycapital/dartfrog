@@ -135,7 +135,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
         style={{
           overflowY: "scroll",
           overflowX: "hidden",
-          backgroundColor: "#202020",
           boxSizing: "border-box",
           alignContent: "flex-end",
           position: 'relative',

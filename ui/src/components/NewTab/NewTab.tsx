@@ -51,11 +51,6 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
     setOtherServices(other);
   }, [availableServices]);
 
-  if (!(availableServices instanceof Map)) {
-    // this is pretty dumb
-    // but if i dont do it, everything explodes :)
-    return <Spinner />
-  }
   // 
   const [inputJoinServiceName, setInputJoinServiceName] = useState('');
   const [isJoinServiceNameInputValid, setIsJoinServiceNameInputValid] = useState(true);
@@ -75,6 +70,12 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
       setTabService(makeServiceId(inputJoinServiceHostNode, inputJoinServiceName));
     }
   }, [inputJoinServiceName, inputJoinServiceHostNode]);
+
+  if (!(availableServices instanceof Map)) {
+    // this is pretty dumb
+    // but if i dont do it, everything explodes :)
+    return <Spinner />
+  }
 
   return (
     <div
