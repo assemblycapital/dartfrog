@@ -183,7 +183,7 @@ pub enum ConsumerClientUpdate {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ConsumerServiceUpdate {
-    SubscribeAck,
+    SubscribeAck(ServiceMetadata),
     ServiceMetadata(ServiceMetadata),
     Kick,
     // TODO better way to encode the plugin update than as a json string?
@@ -263,11 +263,13 @@ pub enum PluginConsumerOutput {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PluginConsumerInput {
     ServiceUpdate(String), // untyped update string JSON
+    ConsumerJoined,
+    ConsumerExited,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PluginMessage {
-    ServiceInput(String, PluginServiceInput), // service name, _
+    ServiceInput(ServiceId, PluginServiceInput), // service id, _
     ConsumerInput(ServiceId, PluginConsumerInput),
 }
 

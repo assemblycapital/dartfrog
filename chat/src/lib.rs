@@ -1,5 +1,5 @@
 use std::{collections::HashMap, time::{SystemTime, UNIX_EPOCH}};
-use common::{get_server_address, update_client, update_subscribers, plugin_consumer_output, PluginConsumerInput, PluginMessage, PluginMetadata, PluginServiceInput, PluginState};
+use common::{get_server_address, plugin_consumer_output, update_client, update_subscribers, PluginConsumerInput, PluginMessage, PluginMetadata, PluginServiceInput, PluginState, ServiceId};
 use kinode_process_lib::{await_message, call_init, println, Address};
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +8,7 @@ wit_bindgen::generate!({
     world: "process-v0",
 });
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatMessage {
     pub id: u64,
     pub time: u64,
@@ -16,7 +16,7 @@ pub struct ChatMessage {
     pub msg: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ChatUpdate {
     Message(ChatMessage),
     FullMessageHistory(Vec<ChatMessage>),
@@ -36,12 +36,14 @@ pub struct ChatState {
 
 #[derive(Debug, Clone)]
 pub struct ChatStates {
-    pub states: HashMap<String, ChatState>,
+    pub services: HashMap<ServiceId, ChatState>,
+    pub clients: HashMap<ServiceId, ChatState>,
 }
 impl ChatStates {
     pub fn new() -> Self {
         ChatStates {
-            states: HashMap::new(),
+            services: HashMap::new(),
+            clients: HashMap::new(),
         }
     }
 }
@@ -68,7 +70,7 @@ impl PluginState for ChatState {
 
     fn handle_join(&mut self, from: String, our: &Address) -> anyhow::Result<()> {
         let chat_history = ChatUpdate::FullMessageHistory(self.messages.clone());
-        println!("chat sending initial state");
+        println!("chat sending initial state from service");
         update_client(our, from, chat_history, &self.metadata)?;
         Ok(())
     }
@@ -121,10 +123,43 @@ fn handle_message(our: &Address, state: &mut ChatStates) -> anyhow::Result<()> {
     
     match serde_json::from_slice(body)? {
         PluginMessage::ConsumerInput(service_id, poke) => {
+            let chat_state = state.clients.entry(service_id.clone()).or_insert_with(ChatState::new);
             match poke {
                 PluginConsumerInput::ServiceUpdate(update) => {
                     // println!("chat message: sid: {:?}, poke: {:?}", service_id, update);
-                    plugin_consumer_output(&service_id, &update, our);
+                    // send to frontend
+                    let parsed_update = serde_json::from_str::<ChatUpdate>(&update);
+                    match parsed_update {   
+                        Ok(parsed_update) => {
+                            match parsed_update {
+                                ChatUpdate::Message(msg) => {
+                                    chat_state.messages.push(msg);
+                                }
+                                ChatUpdate::FullMessageHistory(history) => {
+                                    chat_state.messages = history;
+                                }
+                            }
+                            plugin_consumer_output(&service_id, &update, our);
+                        }
+                        Err(e) => {
+                            println!("error parsing update: {:?}", e);
+                        }
+                    }
+                }
+                PluginConsumerInput::ConsumerJoined => {
+                    println!("consumer joined chat!");
+                    let chat_history = serde_json::to_string(&ChatUpdate::FullMessageHistory(chat_state.messages.clone()));
+                    match chat_history {
+                        Ok(chat_history) => {
+                            println!("chat sending initial state from consumer");
+                            plugin_consumer_output(&service_id, &chat_history, our);
+                        }
+                        Err(e) => {
+                            println!("error encoding chat history: {:?}", e);
+                        }
+                    }
+                }
+                PluginConsumerInput::ConsumerExited => {
                 }
             }
         }
@@ -132,7 +167,7 @@ fn handle_message(our: &Address, state: &mut ChatStates) -> anyhow::Result<()> {
 
             // println!("chat message: sid: {:?}, poke: {:?}", service_id, poke);
 
-            if let Some(chat_state) = state.states.get_mut(&service_id) {
+            if let Some(chat_state) = state.services.get_mut(&service_id) {
                 match poke {
                     PluginServiceInput::ClientJoined(node) => {
                         chat_state.handle_join(node, our)?;
@@ -153,7 +188,7 @@ fn handle_message(our: &Address, state: &mut ChatStates) -> anyhow::Result<()> {
                         let mut new_chat_state = ChatState::new();
                         new_chat_state.metadata = meta;
 
-                        state.states.insert(service_id.clone(), new_chat_state);
+                        state.services.insert(service_id.clone(), new_chat_state);
                     }
                     _ => {
                         println!("message for unknown service: {:?}", service_id);
