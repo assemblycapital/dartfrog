@@ -46,15 +46,6 @@ ul {
   margin: 0;
 }
 
-button {
-  border: none;
-  border-radius: 4px;
-  padding-top: 2px 10px;
-  background-color: #00000022;
-  color: #ffffff66;
-  cursor: pointer;
-  transition: background-color 0.25s;
-}
 select {
   width: 5rem;
   height: 27px;
@@ -75,20 +66,32 @@ label {
   font-size: 0.9rem;
 }
 
+button {
+  border: none;
+  border-radius: 4px;
+  padding-top: 2px 10px;
+  background-color: #333;
+  color: #999;
+  cursor: pointer;
+  transition: background-color 0.25s;
+}
+
 button:hover {
-  background-color: #00000055;
+  background-color: #444;
 }
 
 textarea, input[type="text"] {
-  background-color: #00000022;
-  border-color: #ffffff11;
+  background-color: #222;
+  border: 2px solid #333;
+  resize: none;
+  /* border-color: #; */
   margin-right:10px;
 }
 
 input[type="text"] {
   padding: 4px 8px;
   /* border-radius: 4px; */
-  border: 2px solid #ffffff11;
+  border: 2px solid #555;
 }
 
 input[type="text"].invalid {

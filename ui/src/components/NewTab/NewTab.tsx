@@ -31,6 +31,11 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
     let me = window.our?.node;
     let mine = []
     let other = []
+   
+    if (!(availableServices instanceof Map)) {
+      return;
+    }
+
     for (let [serverNode, aServices] of availableServices) {
       if (serverNode === me) {
         for (let a of aServices) {

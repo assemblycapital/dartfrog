@@ -1,21 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ChatInput from './ChatInput';
 import { Service, ServiceId, makeServiceId, computeColorForName } from '@dartfrog/puddle';
-
-// import Spinner from './Spinner';
 import ChatHeader from './ChatHeader';
 import useChatStore from '../store/chat';
 
 type ChatState = {
   messages: Map<number, ChatMessage>;
-
 }
 type ChatMessage = {
   id: number;
   from: string;
   msg: string;
   time: number;
-
 }
 interface ChatBoxProps {
   serviceId: ServiceId;
@@ -24,13 +20,30 @@ interface ChatBoxProps {
 
 const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const chatInputRef = useRef<HTMLDivElement | null>(null);  // Reference for ChatInput
-  const isResizing = useRef(false);
-
+  const pageBottomRef = useRef<HTMLDivElement | null>(null);
+  const chatInputRef = useRef<HTMLDivElement | null>(null);
+  const [inputHeight, setInputHeight] = useState(0);
   const { nameColors, addNameColor } = useChatStore();
   const [chatMessageList, setChatMessageList] = useState<Array<ChatMessage>>([]);
-  const [containerHeight, setContainerHeight] = useState(400);
+
+  useEffect(() => {
+    const updateInputHeight = () => {
+      if (chatInputRef.current) {
+        setInputHeight(chatInputRef.current.offsetHeight + 6);
+      }
+    };
+    updateInputHeight(); // Update on mount
+  }, []);
+
+  useEffect(() => {
+    // Precompute name colors for all messages
+    chatMessageList.forEach(message => {
+      if (!nameColors[message.from]) {
+        const color = computeColorForName(message.from);
+        addNameColor(message.from, color);
+      }
+    });
+  }, [chatMessageList, nameColors, addNameColor]);
 
   const getNameColor = useCallback(
     (name: string) => {
@@ -85,7 +98,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
               objectFit: "cover",
               maxWidth: "100%",
             }}
-            onLoad={() => scrollDownChat()}
+            onLoad={scrollDownChat} // Use onLoad event to trigger scrollDownChat
           />
         );
       } else if (linkRegex.test(message)) {
@@ -110,49 +123,23 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
     [scrollDownChat]
   );
 
-  const startResizing = (e: React.MouseEvent) => {
-    isResizing.current = true;
-    window.addEventListener('mousemove', resize);
-    window.addEventListener('mouseup', stopResizing);
-  };
-
-  const resize = (e: MouseEvent) => {
-    if (isResizing.current && containerRef.current) {
-      const containerTop = containerRef.current.getBoundingClientRect().top;
-      const chatInputHeight = chatInputRef.current ? chatInputRef.current.offsetHeight : 0;
-
-      // Dynamically calculate gap size in pixels
-      const style = window.getComputedStyle(containerRef.current);
-      const gap = parseFloat(style.gap) || 0;
-
-      // Consider the gap in the height calculation
-      const newHeight = e.clientY - containerTop - chatInputHeight - 2 * gap; // gap above and below ChatInput
-
-      if (newHeight > 100) { // Minimum height check
-        setContainerHeight(newHeight);
-      }
-    }
-  };
-
-  
-
-  const stopResizing = () => {
-    isResizing.current = false;
-    window.removeEventListener('mousemove', resize);
-    window.removeEventListener('mouseup', stopResizing);
-  };
-
   return (
-    <div ref={containerRef} style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+    <>
       <div
         style={{
-          height: `${containerHeight}px`,
+          height: `calc(100vh - ${inputHeight}px)`,
+          paddingBottom: `${inputHeight}px`,
+        }}
+      >
+      <div
+        style={{
           overflowY: "scroll",
           overflowX: "hidden",
           backgroundColor: "#202020",
           boxSizing: "border-box",
           alignContent: "flex-end",
           position: 'relative',
+          height: '100%',
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "5px", backgroundColor: "#242424" }}>
@@ -162,7 +149,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
                 <div style={{ color: "#ffffff77", fontSize: "0.8rem", display: "inline-block", marginRight: "5px", cursor: "default" }}>
                   <span>{formatTimestamp(message.time)}</span>
                 </div>
-                <div style={{ color: getNameColor(message.from), display: "inline-block", marginRight: "5px", cursor: "default" }}>
+                <div style={{ color: nameColors[message.from] || '#000', display: "inline-block", marginRight: "5px", cursor: "default" }}>
                   <span>{message.from}:</span>
                 </div>
               </div>
@@ -171,22 +158,14 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
               </span>
             </div>
           ))}
-          <div id="messages-end-ref" ref={messagesEndRef} style={{ display: "inline" }} />
         </div>
+        <div id="messages-end-ref" ref={messagesEndRef} style={{ display: "inline" }} />
       </div>
-      <div ref={chatInputRef}>
+      </div>
+      <div className="chat-input-container" ref={chatInputRef}>
         <ChatInput serviceId={serviceId} />
       </div>
-      {/* <div
-        style={{
-          height: '8px',
-          background: '#333',
-          cursor: 'row-resize',
-          width: '100%',
-        }}
-        onMouseDown={startResizing}
-      /> */}
-    </div>
+    </>
   );
 };
 

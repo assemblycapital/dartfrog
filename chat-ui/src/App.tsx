@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import "./App.css";
 import DartApi, { parseServiceId } from "@dartfrog/puddle";
 import { WEBSOCKET_URL } from "./utils";
 import useChatStore, { PLUGIN_NAME } from "./store/chat";
 import ChatBox from "./components/ChatBox";
+import ChatInput from "./components/ChatInput";
 
 function App() {
   const location = useLocation();
-
   const {api, setApi, serviceId, setServiceId, setChatState, chatState, addChatMessage} = useChatStore();
 
   useEffect(() => {
@@ -61,21 +61,16 @@ function App() {
       onClose: () => {
       },
     });
+
   }, [serviceId]);
+
 
   if (!(chatState.messages instanceof Map)) {
     return <div>Loading...</div>;
   }
 
   return (
-    <div style={{
-      width: "100%",
-      display: "flex",
-      flexDirection: "column",
-      gap: "0.4rem",
-    }}>
-      <ChatBox serviceId={serviceId} chatState={chatState} />
-    </div>
+    <ChatBox serviceId={serviceId} chatState={chatState} />
   );
 }
 
