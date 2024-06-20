@@ -1,14 +1,12 @@
 import { useCallback, useState } from "react";
 import { validateServiceName } from "./NewTab";
 import useDartStore from "../../store/dart";
-import Spinner from "../Spinner";
 
 const CreateService: React.FC = () => {
   const [inputCreateServiceName, setInputCreateServiceName] = useState('');
   const [isCreateInputValid, setIsCreateInputValid] = useState(true);
   const [selectedPlugin, setSelectedPlugin] = useState('text-chat');
   const [selectedPermission, setSelectedPermission] = useState('public');
-  const [spinner, setSpinner] = useState(false);
 
   const { requestServiceList, createService } = useDartStore();
 
@@ -26,25 +24,25 @@ const CreateService: React.FC = () => {
     setSelectedPermission(e.target.value);
   };
 
+  const CHAT_PLUGIN = "chat:dartfrog:herobrine.os";
+  const PIANO_PLUGIN = "piano:dartfrog:herobrine.os";
+  const PAGE_PLUGIN = "page:dartfrog:herobrine.os";
+  const CHESS_PLUGIN = "chess:dartfrog:herobrine.os";
+
   const handleInputCreateClick = useCallback(() => {
     if (isCreateInputValid && inputCreateServiceName !== '') {
       let serviceId = `${inputCreateServiceName}.${window.our?.node}`;
       if (selectedPlugin === 'text-chat') {
-        createService(serviceId, ["chat"]);
+        createService(serviceId, [CHAT_PLUGIN]);
       } else if (selectedPlugin === 'piano') {
-        createService(serviceId, ["chat", "piano"]);
+        createService(serviceId, [CHAT_PLUGIN, PIANO_PLUGIN]);
       } else if (selectedPlugin === 'page') {
-        createService(serviceId, ["chat", "page"]);
+        createService(serviceId, [CHAT_PLUGIN, PAGE_PLUGIN]);
       } else if (selectedPlugin === 'chess') {
-        createService(serviceId, ["chat", "chess"]);
+        createService(serviceId, [CHAT_PLUGIN, CHESS_PLUGIN]);
       }
       setInputCreateServiceName('');
       requestServiceList(window.our?.node);
-      setSpinner(true);
-  
-      setTimeout(() => {
-        setSpinner(false);
-      }, 1500);
     }
   }, [inputCreateServiceName, selectedPlugin, selectedPermission, isCreateInputValid]);
   
@@ -98,7 +96,6 @@ const CreateService: React.FC = () => {
           create
         </button>
       </div>
-      {spinner && <Spinner />}
     </div>
   )
 }

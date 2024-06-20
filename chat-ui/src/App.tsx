@@ -27,7 +27,6 @@ function App() {
     if (!serviceId) {
       return;
     }
-
     const api = new DartApi({
       our: window.our,
       websocket_url: WEBSOCKET_URL,
@@ -35,41 +34,39 @@ function App() {
           plugin:PLUGIN_NAME,
           serviceId,
           handler:(pluginUpdate, service) => {
-            handleUpdate(pluginUpdate, service);
+            if (pluginUpdate["Message"]) {
+              const message = pluginUpdate["Message"];
+              addChatMessage(message);
+
+            } else if (pluginUpdate["FullMessageHistory"]) {
+              let newMessages = new Map();
+              for (let msg of pluginUpdate["FullMessageHistory"]) {
+                newMessages.set(msg.id, {
+                  id: msg.id,
+                  from: msg.from,
+                  msg: msg.msg,
+                  time: msg.time,
+                });
+              }
+        
+              setChatState({ messages: newMessages });
+            }
           }
         },
       onOpen: () => {
         api.joinService(serviceId);
         setApi(api);
+        setChatState({ messages: new Map()});
       },
       onClose: () => {
       },
     });
   }, [serviceId]);
 
-  const handleUpdate = useCallback(
-    (pluginUpdate, service) => {
-  
-      if (pluginUpdate["Message"]) {
-        const message = pluginUpdate["Message"];
-        addChatMessage(message);
+  if (!(chatState.messages instanceof Map)) {
+    return <div>Loading...</div>;
+  }
 
-      } else if (pluginUpdate["FullMessageHistory"]) {
-        let newMessages = new Map();
-        for (let msg of pluginUpdate["FullMessageHistory"]) {
-          newMessages.set(msg.id, {
-            id: msg.id,
-            from: msg.from,
-            msg: msg.msg,
-            time: msg.time,
-          });
-        }
-  
-        // Updating the state for full message history
-        setChatState({ messages: newMessages });
-      }
-    }, [chatState]); // Assuming setChatState is imported from your Zustand store
-   
   return (
     <div style={{
       width: "100%",
@@ -78,7 +75,6 @@ function App() {
       gap: "0.4rem",
     }}>
       <ChatBox serviceId={serviceId} chatState={chatState} />
-    
     </div>
   );
 }
