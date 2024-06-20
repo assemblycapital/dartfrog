@@ -4,7 +4,7 @@ import { Howl } from 'howler';
 import PianoKey from './PianoKey';
 import './Piano.css';
 import { ServiceId, parseServiceId } from '@dartfrog/puddle';
-import useDartStore from '../../store/dart';
+import usePianoStore from '../../store/piano';
 
 const PIANO_NOTES_FOLDER = 'assets/piano_notes';
 
@@ -29,9 +29,10 @@ const notes = [
   { note: 'D5', isSharp: false, fileName: 'd5.mp3', key: "'" },
 ];
 
-type PianoState = {
+export type PianoState = {
   notePlayed: {
-    note: string | null;
+    note: string;
+    player: string;
     timestamp: number;
   } | null;
 }
@@ -41,26 +42,23 @@ interface PianoProps {
   pianoState: PianoState;
 }
 const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
-  const { pokeService } = useDartStore();
+  const {sendPlayNote} = usePianoStore();
   const [sounds, setSounds] = useState<{ [key: string]: Howl }>({});
   const [pressedKeys, setPressedKeys] = useState<{ [key: string]: boolean }>({});
   const [isFocused, setIsFocused] = useState(false);
   const pianoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // console.log("Piano.tsx state changed", pianoState)
     if (pianoState == null) return;
     if( pianoState.notePlayed === null) return;
     let now = Date.now();
     let elapsed = now - pianoState.notePlayed.timestamp;
     if (elapsed > 1000) return;
     if (pianoState.notePlayed.note === null) return;
-    let sound = sounds[pianoState.notePlayed.note]
+    let sound = sounds[pianoState.notePlayed.note];
     if (!sound) {
-      // console.log("Sound not found for note", pianoState.notePlayed.note)
       return
     }
-    // console.log("Playing sound", pianoState.notePlayed.note)
     sound.play();
   }, [pianoState, sounds])
 
@@ -104,20 +102,8 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
   }, [isFocused, sounds, pressedKeys]);
 
   const handlePlayNote = useCallback((note: string) => {
-    const innerPluginRequest = {
-        "PlayNote": 
-          note
-        }
-    const data = {
-          "PluginRequest": [
-            "piano",
-            JSON.stringify(innerPluginRequest)
-      ]
-    }
-
-    let parsedServiceId = parseServiceId(serviceId);
-    // pokeService(parsedServiceId, data);
-  }, [pokeService]);
+    sendPlayNote(note);
+  }, [sendPlayNote]);
 
   return (
     <div

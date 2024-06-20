@@ -4,7 +4,7 @@ import useDartStore from "../store/dart";
 import { useEffect, useState } from "react";
 import Spinner from "./Spinner";
 import { stringifyServiceConnectionStatus } from "./FullServicesView";
-import Piano from "./Piano/Piano";
+import Piano from "../../../piano-ui/src/components/Piano/Piano";
 import ServiceConnectedDisplay from "./ServiceConnectedDisplay";
 
 interface ServiceTabProps {

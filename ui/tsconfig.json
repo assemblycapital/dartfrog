@@ -24,7 +24,7 @@
     "../pkg/manifest.json",
     "../pkg/metadata.json",
     "../puddle/**/*.ts"
-  ],
+, "../piano-ui/src/components/Piano"  ],
   "references": [
     { "path": "./tsconfig.node.json" }
   ]

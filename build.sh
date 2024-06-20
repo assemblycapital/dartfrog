@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./chat-build.sh && kit bs
+./chat-build.sh && ./piano-build.sh && kit bs

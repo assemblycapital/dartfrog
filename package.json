@@ -3,6 +3,7 @@
   "workspaces": [
     "ui",
     "chat-ui",
+    "piano-ui",
     "puddle"
   ],
   "dependencies": {

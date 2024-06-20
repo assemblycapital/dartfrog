@@ -31,10 +31,10 @@ const PluginIFrame: React.FC<PluginIFrameProps> = ({serviceId, service, plugin})
     return <div>
       <div>
 
-      Plugin not found...
+      {plugin} ui not found...
       </div>
       <div>
-        You may need to install <a href="/main:app_store:sys/app-details/{fullPackageName}">{fullPackageName}</a> from the app store.
+        You may need to install <a href={`/main:app_store:sys/app-details/${fullPackageName}`}>{fullPackageName}</a> from the app store.
       </div>
       </div>;
   }

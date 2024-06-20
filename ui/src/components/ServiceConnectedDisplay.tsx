@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Piano from './Piano/Piano';
+import Piano from '../../../piano-ui/src/components/Piano/Piano';
 import DisplayUserActivity from './DisplayUserActivity';
 import ServiceConnectedRow from './ServiceConnectedRow';
 import PagePluginBox from './PagePluginBox';
