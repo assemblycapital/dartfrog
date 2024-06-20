@@ -254,6 +254,7 @@ fn update_subscribers(update: ConsumerUpdate, subscribers: HashSet<String>) -> a
     Ok(())
 }
 
+
 fn handle_client_update(our: &Address, state: &mut DartState, source: Address, upd: ClientUpdate) -> anyhow::Result<()> {
     // println!("client update: {:?}", upd);
     match upd {
@@ -264,11 +265,10 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: Address, u
             }
             match plugin_update {
                 PluginConsumerOutput::UpdateClient(service_id, update) => {
-                    if let Some(plugin) = source.to_string().split('@').nth(1) {
+                    if let Ok(plugin) = get_plugin_name_from_address(&source) {
                         println!("client plugin update: {:?} {:?}", service_id, plugin);
                         update_all_consumers_with_service_plugin(state, update, &service_id, &plugin.to_string());
                     }
-                    
                 }
             }
 
