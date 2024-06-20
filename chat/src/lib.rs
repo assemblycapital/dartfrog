@@ -83,7 +83,7 @@ impl PluginClientState for ChatClient {
         let chat_history = serde_json::to_string(&ChatUpdate::FullMessageHistory(self.messages.clone()));
         match chat_history {
             Ok(chat_history) => {
-                println!("chat sending initial state from consumer");
+                // println!("chat sending initial state from consumer");
                 send_to_frontend(&metadata.service.id, &chat_history, our);
             }
             Err(e) => {
@@ -93,7 +93,7 @@ impl PluginClientState for ChatClient {
         Ok(())
     }
     fn handle_update(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
-        println!("chat client received update: {:?}", update);
+        // println!("chat client received update: {:?}", update);
         let parsed_update = serde_json::from_str::<ChatUpdate>(&update);
         match parsed_update {   
             Ok(parsed_update) => {
@@ -129,7 +129,7 @@ impl PluginServiceState for ChatService {
 
     fn handle_subscribe(&mut self, subscriber_node: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
         let chat_history = ChatUpdate::FullMessageHistory(self.messages.clone());
-        println!("chat sending initial state from service");
+        // println!("chat sending initial state from service");
         update_client(our, subscriber_node, chat_history, metadata)?;
         Ok(())
     }
@@ -139,7 +139,7 @@ impl PluginServiceState for ChatService {
             println!("error parsing request: {:?}", req);
             return Ok(());
         };
-        println!("chat service received request: {:?}", request);
+        // println!("chat service received request: {:?}", request);
         match request {
             ChatRequest::SendMessage(msg) => {
                 let chat_msg = ChatMessage {
@@ -157,7 +157,7 @@ impl PluginServiceState for ChatService {
                 self.last_message_id += 1;
                 self.messages.push(chat_msg.clone());
                 let chat_upd = ChatUpdate::Message(chat_msg.clone());
-                println!("chat service sending update to subscribers");
+                // println!("chat service sending update to subscribers");
                 match update_subscribers(our, chat_upd, metadata) {
                     Ok(()) => {}
                     Err(e) => {

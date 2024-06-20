@@ -299,7 +299,7 @@ where
             if let Some(service) = state.services.get_mut(&service_id) {
                 match service_input {
                     PluginServiceInput::Init(meta) => {
-                        println!("reinitializing service with metadata: {:?}", meta);
+                        // println!("reinitializing service with metadata: {:?}", meta);
                         service.metadata = meta;
                     }
                     PluginServiceInput::ClientJoined(client_id) => {
@@ -326,7 +326,7 @@ where
             } else {
                 match service_input {
                     PluginServiceInput::Init(meta) => {
-                        println!("initializing plugin with metadata: {:?}", meta);
+                        // println!("initializing plugin with metadata: {:?}", meta);
                         let service = PluginServiceStateWrapper {
                             metadata: meta,
                             state: T::new(),
@@ -341,7 +341,7 @@ where
         }
         PluginMessage::ConsumerInput(service_id, consumer_input) => {
             // service.state.handle_consumer_update(consumer_input, our, &service.metadata);
-            println!("handle_plugin_update: consumer input");
+            // println!("handle_plugin_update: consumer input");
             if let Some(client) = state.clients.get_mut(&service_id) {
                 match consumer_input {
                     PluginConsumerInput::ServiceUpdate(update) => {
@@ -462,7 +462,7 @@ pub fn update_client(our: &Address, to: String, update: impl Serialize, meta: &P
     let dart_message = 
         DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginOutput(meta.plugin_name.clone(), PluginServiceOutput::UpdateClient(to, update))));
 
-    println!("updating client");
+    // println!("updating client");
     let _ = Request::to(address)
         .body(serde_json::to_vec(&dart_message).unwrap())
         .send()?;
@@ -470,10 +470,10 @@ pub fn update_client(our: &Address, to: String, update: impl Serialize, meta: &P
 }
 
 pub fn update_subscribers(our: &Address, update: impl Serialize, meta: &PluginMetadata) -> anyhow::Result<()> {
-    println!("update_subscribers");
+    // println!("update_subscribers");
     let update = serde_json::to_string(&update).unwrap();
     let address = get_server_address(&our.node);
-    println!("updating subscribers {:?}", meta.service.id);
+    // println!("updating subscribers {:?}", meta.service.id);
     let dart_message = 
         DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginOutput(meta.plugin_name.clone(), PluginServiceOutput::UpdateSubscribers(update))));
     let _ = Request::to(address)

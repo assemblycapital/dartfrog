@@ -266,7 +266,7 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: Address, u
             match plugin_update {
                 PluginConsumerOutput::UpdateClient(service_id, update) => {
                     if let Ok(plugin) = get_plugin_name_from_address(&source) {
-                        println!("client plugin update: {:?} {:?}", service_id, plugin);
+                        // println!("client plugin update: {:?} {:?}", service_id, plugin);
                         update_all_consumers_with_service_plugin(state, update, &service_id, &plugin.to_string());
                     }
                 }
