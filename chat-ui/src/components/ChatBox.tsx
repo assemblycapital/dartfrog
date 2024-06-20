@@ -45,19 +45,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
     });
   }, [chatMessageList, nameColors, addNameColor]);
 
-  const getNameColor = useCallback(
-    (name: string) => {
-      let color = nameColors[name];
-      if (color) {
-        return color;
-      }
-      color = computeColorForName(name);
-      addNameColor(name, color);
-      return color;
-    },
-    [nameColors, addNameColor]
-  );
-
   useEffect(() => {
     if (chatState.messages.size === 0) return;
     if (!(chatState.messages instanceof Map)) {

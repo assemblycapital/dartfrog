@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Howl } from 'howler';
 import PianoKey from './PianoKey';
 import './Piano.css';
-import { ServiceId, parseServiceId } from '@dartfrog/puddle';
+import { ServiceId, computeColorForName, parseServiceId } from '@dartfrog/puddle';
 import usePianoStore from '../../store/piano';
 
 const PIANO_NOTES_FOLDER = 'assets/piano_notes';
@@ -41,10 +41,11 @@ interface PianoProps {
   serviceId: ServiceId;
   pianoState: PianoState;
 }
+
 const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
-  const {sendPlayNote} = usePianoStore();
+  const {sendPlayNote, nameColors, addNameColor } = usePianoStore();
   const [sounds, setSounds] = useState<{ [key: string]: Howl }>({});
-  const [pressedKeys, setPressedKeys] = useState<{ [key: string]: boolean }>({});
+  const [pressedKeys, setPressedKeys] = useState<{ [key: string]: string | null}>({});
   const [isFocused, setIsFocused] = useState(false);
   const pianoRef = useRef<HTMLDivElement>(null);
 
@@ -59,7 +60,21 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
     if (!sound) {
       return
     }
+
+    let from = pianoState.notePlayed.player;
+    let color;
+    if (!nameColors[from]) {
+      color = computeColorForName(from);
+      addNameColor(from, color);
+    } else {
+      color = nameColors[from];
+    }
     sound.play();
+    setPressedKeys(prev => ({ ...prev, [pianoState.notePlayed.note]: color}));
+    // TODO: remove the color after 1 second
+    setTimeout(() => {
+      setPressedKeys(prev => ({ ...prev, [pianoState.notePlayed.note]: null}));
+    }, 200);
   }, [pianoState, sounds])
 
   useEffect(() => {
@@ -78,7 +93,6 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
         const note = notes.find(n => n.key === event.key);
         if (note && sounds[note.note] && !pressedKeys[note.note]) {
           handlePlayNote(note.note);
-          setPressedKeys(prev => ({ ...prev, [note.note]: true }));
         }
       }
     };
@@ -87,7 +101,7 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
       if (isFocused) {
         const note = notes.find(n => n.key === event.key);
         if (note) {
-          setPressedKeys(prev => ({ ...prev, [note.note]: false }));
+          setPressedKeys(prev => ({ ...prev, [note.note]: null}));
         }
       }
     };
@@ -113,12 +127,17 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
       onBlur={() => setIsFocused(false)}
       ref={pianoRef}
       style={{
-        alignContent: "center",
-        alignItems: "center",
-        justifyContent: "center",
-        justifyItems: "center",
+        margin: "0 auto",
       }}
     >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          flexWrap: "wrap",
+          justifyContent: "center",
+        }}
+      >
       {notes.map((note) => (
         <PianoKey 
           key={note.note} 
@@ -129,9 +148,10 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
             handlePlayNote(note.note);
             }
           }
-          isPressed={!!pressedKeys[note.note]}
+          pressedColor={pressedKeys[note.note]}
         />
       ))}
+      </div>
     </div>
   );
 };

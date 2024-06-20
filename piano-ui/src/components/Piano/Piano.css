@@ -1,9 +1,8 @@
 .piano {
-  min-height:300px;
-  align-items: center;
-  align-content: center;
-  justify-content: center;
-  justify-items: center;
+  justify-content: center; /* Centers items horizontally */
+  align-items: center; /* Centers items vertically */
+  align-content: center; /* Aligns multiple lines in the flex container */
+  min-height: 300px;
 }
 .piano-key {
   align-items: center;
@@ -26,9 +25,6 @@
   border: 1px solid black;
   color: black;
 }
-.piano-key.natural:hover {
-  background-color: #ffffffcc;
-}
 
 .piano-key.sharp {
   background-color: black;
@@ -40,20 +36,30 @@
   z-index: 1;
   position: relative;
 }
-.piano-key.sharp:hover {
-  background-color: #444444;
-}
 
 .piano-key {
   background-color: white; /* Replace with your default color */
   transition: background-color 0.3s ease-out; /* Smooth transition when releasing */
 }
 
-.piano-key.sharp.pressed-input{
-  background-color: #444; /* Any color you prefer for the pressed state */
+.piano-key.pressed-red {
+  background-color: #cc4444; /* Any color you prefer for the pressed state */
   transition: none; /* No transition when pressing */
 }
-.piano-key.natural.pressed-input{
-  background-color: #ffffffcc; /* Any color you prefer for the pressed state */
+
+.piano-key.pressed-green {
+  background-color: #339933; /* Any color you prefer for the pressed state */
+  transition: none; /* No transition when pressing */
+}
+.piano-key.pressed-blue {
+  background-color: #4682B4; /* Any color you prefer for the pressed state */
+  transition: none; /* No transition when pressing */
+}
+.piano-key.pressed-orange {
+  background-color: #cc7a00; /* Any color you prefer for the pressed state */
+  transition: none; /* No transition when pressing */
+}
+.piano-key.pressed-purple{
+  background-color: #a36bdb; /* Any color you prefer for the pressed state */
   transition: none; /* No transition when pressing */
 }
