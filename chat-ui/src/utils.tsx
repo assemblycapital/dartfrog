@@ -27,7 +27,20 @@ export const soundEffectCommands = {
 }
 
 
-export const maybePlaySoundEffect = (msg: string, muteSoundEffects: boolean) => {
+export const maybePlayTTS = (msg: string) => {
+  const mute = sessionStorage.getItem("mute") === "true";
+  if (!mute) {
+    const commandPrefix = "/tts ";
+    if (msg.startsWith(commandPrefix)) {
+      const textToSpeak = msg.slice(commandPrefix.length);
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+}
+export const maybePlaySoundEffect = (msg: string) => {
+  // check for mute in session storage
+  const muteSoundEffects = sessionStorage.getItem("mute") === "true";
   if (muteSoundEffects) {
     return;
   }

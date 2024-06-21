@@ -195,13 +195,13 @@ class DartApi {
               this.onServicesChange();
 
           } else if (response.ServiceList) {
-              console.log('Service List:', address, response.ServiceList);
+              // console.log('Service List:', address, response.ServiceList);
               // Add your logic to handle the ServiceList response here
               // for (let serviceId of Array.from(response.ServiceList.keys())) {
 
               // }
               let newServices = new Map()
-              console.log(response.ServiceList)
+              // console.log(response.ServiceList)
               let serviceIds = Object.keys(response.ServiceList);
               for (let serviceId of serviceIds) {
                 newServices.set(serviceId, response.ServiceList[serviceId]);
