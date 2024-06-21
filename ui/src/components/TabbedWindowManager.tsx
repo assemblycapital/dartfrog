@@ -40,9 +40,9 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({services}) => 
 
   }, [tabs, services]);
 
-  const addTab = useCallback(() => {
+  const addTab = useCallback((maybeServiceId: ServiceId | null) => {
     setTabs(prevTabs => {
-      const newTabs = [...prevTabs, { serviceId: null }];
+      const newTabs = [...prevTabs, { serviceId: maybeServiceId }];
       setActiveTabIndex(newTabs.length - 1);  // Set the active tab index to the new tab
       return newTabs;
     });
@@ -130,7 +130,7 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({services}) => 
           </div>
           </div>
         ))}
-        <button onClick={addTab}
+        <button onClick={() =>addTab(null)}
           className="add-tab-button"
         >
           <PlusIcon />
@@ -161,7 +161,7 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({services}) => 
                 alignItems: 'center',
                 height: '40px', // Adjust this value as needed
               }}
-              onClick={addTab}
+              onClick={() => addTab(null)}
             >
               create a new tab
             </button>
@@ -178,6 +178,7 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({services}) => 
                 <ServiceTab
                   serviceId={tabs[activeTabIndex].serviceId}
                   services={services}
+                  addTab={addTab}
                 />
             )}
           </div>

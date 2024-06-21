@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Piano from '../../../piano-ui/src/components/Piano/Piano';
 import DisplayUserActivity from './DisplayUserActivity';
 import ServiceConnectedRow from './ServiceConnectedRow';
 import PagePluginBox from './PagePluginBox';
 import "./ServiceConnectedDisplay.css"
 import ChessPluginBox from './ChessPluginBox';
 
-const ServiceConnectedDisplay = ({ serviceId, service }) => {
+
+const ServiceConnectedDisplay = ({ serviceId, service, addTab }) => {
   const [plugins, setPlugins] = useState([]);
   const [height, setHeight] = useState(500); // Default height in pixels
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -54,7 +54,7 @@ const ServiceConnectedDisplay = ({ serviceId, service }) => {
         style={{ height: `${height}px` }}
         >
        
-        <ServiceConnectedRow serviceId={serviceId} service={service} plugins={plugins} />
+        <ServiceConnectedRow serviceId={serviceId} service={service} plugins={plugins} addTab={addTab} />
         <div
           style={{
             height: '8px',

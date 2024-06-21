@@ -4,15 +4,15 @@ import useDartStore from "../store/dart";
 import { useEffect, useState } from "react";
 import Spinner from "./Spinner";
 import { stringifyServiceConnectionStatus } from "./FullServicesView";
-import Piano from "../../../piano-ui/src/components/Piano/Piano";
 import ServiceConnectedDisplay from "./ServiceConnectedDisplay";
 
 interface ServiceTabProps {
   serviceId: ServiceId;
   services: Map<ServiceId, Service>;
+  addTab: (serviceId: ServiceId | null) => void;
 }
 
-const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
+const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services, addTab }) => {
   const [service, setService] = useState<Service | null>(null);
 
   useEffect(() => {
@@ -75,7 +75,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services }) => {
                   )}
                   </>
                   ) : (
-                    <ServiceConnectedDisplay serviceId={serviceId} service={service} />
+                    <ServiceConnectedDisplay serviceId={serviceId} service={service} addTab={addTab} />
                 )}
               </>
           )}

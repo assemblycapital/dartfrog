@@ -6,9 +6,10 @@ interface ServiceConnectedRowProps {
     serviceId: ServiceId,
     service: Service,
     plugins: string[]
+    addTab: (serviceId: ServiceId | null) => void;
 }
 
-const ServiceConnectedRow: React.FC<ServiceConnectedRowProps> = ({serviceId, service, plugins}) => {
+  const ServiceConnectedRow: React.FC<ServiceConnectedRowProps> = ({serviceId, service, plugins, addTab}) => {
   const CHAT_PLUGIN = "chat:dartfrog:herobrine.os";
   
     return (
@@ -29,6 +30,7 @@ const ServiceConnectedRow: React.FC<ServiceConnectedRowProps> = ({serviceId, ser
                   service={service}
                   serviceId={serviceId}
                   plugin={plugins[0]}
+                  addTab={addTab}
                 />
               </div>
             )}
@@ -42,7 +44,8 @@ const ServiceConnectedRow: React.FC<ServiceConnectedRowProps> = ({serviceId, ser
                   service={service}
                   serviceId={serviceId}
                   plugin={plugins.find(plugin => plugin !== CHAT_PLUGIN) || plugins[0]}
-                />
+                  addTab={addTab}
+                  />
                 </div>
                 <div 
                   className="plugin-wrapper"
@@ -51,6 +54,7 @@ const ServiceConnectedRow: React.FC<ServiceConnectedRowProps> = ({serviceId, ser
                   service={service}
                   serviceId={serviceId}
                   plugin={CHAT_PLUGIN}
+                  addTab={addTab}
                 />
                 </div>
               </>
