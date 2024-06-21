@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ServiceId, parseServiceId } from '@dartfrog/puddle';
+import { ServiceId, computeColorForName, parseServiceId } from '@dartfrog/puddle';
 import useChessStore, { ChessState } from '../store/chess';
 import ChessQueue from './ChessQueue';
 import ChessGame from './ChessGame';
@@ -10,7 +10,7 @@ interface ChessPluginBoxProps {
 }
 
 const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }) => {
-  const { sendChessRequest } = useChessStore();
+  const { sendChessRequest, nameColors, addNameColor } = useChessStore();
 
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -20,6 +20,31 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
       setIsAdmin(true);
     }
   }, [serviceId]);
+
+  useEffect(() => {
+    // Precompute name colors for all messages
+    let players = Array<string>();
+
+    if (chessState.queuedWhite) {
+      players.push(chessState.queuedWhite);
+    }
+    if (chessState.queuedBlack) {
+      players.push(chessState.queuedBlack);
+    }
+    if (chessState.game) {
+      players.push(chessState.game.white);
+      players.push(chessState.game.black);
+    }
+
+    for (let player of players) {
+      if (!nameColors[player]) {
+        const color = computeColorForName(player);
+        addNameColor(player, color);
+      }
+    };
+
+  }, [chessState, nameColors, addNameColor]);
+
   return (
     <div
       style={{

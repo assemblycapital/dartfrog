@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Chessboard from 'chessboardjsx';
 import { Chess } from 'chess.js';
-import { ChessState } from '../store/chess';
+import useChessStore, { ChessState } from '../store/chess';
 import './ChessPluginBox.css';
 import { parseServiceId } from '@dartfrog/puddle';
 
@@ -22,6 +22,7 @@ const ChessGame: React.FC<ChessGameProps> = ({ chessState, sendChessRequest, ser
   const [isTopPlayerTurn, setIsTopPlayerTurn] = useState(false);
   const [orientation, setOrientation] = useState<'white' | 'black'>('white');
 
+  const { nameColors } = useChessStore();
 
   useEffect(() => {
     setOrientation(myRole === 'black' ? 'black' : 'white');
@@ -99,7 +100,13 @@ const ChessGame: React.FC<ChessGameProps> = ({ chessState, sendChessRequest, ser
     <div className="chess-container">
       <div>
         <div className="player-info">
-          <div>{topPlayer}</div>
+          <div
+            style={{
+              color: nameColors[topPlayer],
+            }}
+          >
+            {topPlayer}
+          </div>
           <div>{isTopPlayerTurn && ' to move'}</div>
         </div>
         <Chessboard
@@ -109,7 +116,13 @@ const ChessGame: React.FC<ChessGameProps> = ({ chessState, sendChessRequest, ser
           orientation={myRole === 'black' ? 'black' : 'white'}
         />
         <div className="player-info">
-          <div>{bottomPlayer}</div>
+          <div
+            style={{
+              color: nameColors[bottomPlayer],
+            }}
+          >
+            {bottomPlayer}
+          </div>
           <div>{!isTopPlayerTurn && ' to move'}</div>
         </div>
       </div>

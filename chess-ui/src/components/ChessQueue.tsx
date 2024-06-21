@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChessState } from '../store/chess';
+import useChessStore, { ChessState } from '../store/chess';
 import './ChessPluginBox.css';
 
 interface ChessQueueProps {
@@ -9,6 +9,8 @@ interface ChessQueueProps {
 }
 
 const ChessQueue: React.FC<ChessQueueProps> = ({ chessState, sendChessRequest, serviceId }) => {
+
+  const { nameColors } = useChessStore();
   return (
     <div
       style={{
@@ -59,7 +61,11 @@ const ChessQueue: React.FC<ChessQueueProps> = ({ chessState, sendChessRequest, s
             <div
               className='queue-button-disabled'
             >
-              <span>
+              <span
+                style={{
+                  color: nameColors[chessState.queuedWhite],
+                }}
+              >
                 {chessState.queuedWhite}
               </span>
             </div>
@@ -96,7 +102,11 @@ const ChessQueue: React.FC<ChessQueueProps> = ({ chessState, sendChessRequest, s
             <div
               className='queue-button-disabled'
             >
-              <span>
+              <span
+                style={{
+                  color: nameColors[chessState.queuedBlack],
+                }}
+              >
                 {chessState.queuedBlack}
               </span>
             </div>
