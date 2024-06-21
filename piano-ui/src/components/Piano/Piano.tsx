@@ -46,6 +46,7 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
   const {sendPlayNote, nameColors, addNameColor } = usePianoStore();
   const [sounds, setSounds] = useState<{ [key: string]: Howl }>({});
   const [pressedKeys, setPressedKeys] = useState<{ [key: string]: string | null}>({});
+  const [userPressedKeys, setUserPressedKeys] = useState<{ [key: string]: boolean}>({});
   const pianoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -89,15 +90,16 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
         const note = notes.find(n => n.key === event.key);
-        if (note && sounds[note.note] && !pressedKeys[note.note]) {
+        if (note && sounds[note.note] && !userPressedKeys[note.note]) {
           handlePlayNote(note.note);
+          setUserPressedKeys(prev => ({ ...prev, [note.note]: true})); // Mark the key as pressed
         }
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
         const note = notes.find(n => n.key === event.key);
         if (note) {
-          setPressedKeys(prev => ({ ...prev, [note.note]: null}));
+          setUserPressedKeys(prev => ({ ...prev, [note.note]: false})); // Mark the key as pressed
         }
     };
 
@@ -108,7 +110,7 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [sounds, pressedKeys]);
+  }, [sounds, userPressedKeys]);
 
   const handlePlayNote = useCallback((note: string) => {
     sendPlayNote(note);
