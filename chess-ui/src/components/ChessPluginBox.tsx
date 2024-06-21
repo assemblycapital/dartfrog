@@ -1,14 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Chess } from 'chess.js';
 import { ServiceId, parseServiceId } from '@dartfrog/puddle';
-import useDartStore from '../store/dart';
 import Chessboard from 'chessboardjsx';
 import './ChessPluginBox.css'; // Import the CSS file for styling
+import useChessStore, { ChessState } from '../store/chess';
 
 
-type ChessState = {
-  game:any
-}
 
 interface ChessPluginBoxProps {
   serviceId: ServiceId;
@@ -16,10 +13,11 @@ interface ChessPluginBoxProps {
 }
 
 const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }) => {
-  const { pokeService } = useDartStore();
   const [chess] = useState(new Chess());
   const [gameFen, setGameFen] = useState(chess.fen());
   const [canPlayerMove, setCanPlayerMove] = useState(false);
+
+  const { sendChessRequest } = useChessStore();
 
   useEffect(() => {
     if (!chessState.game) return;
@@ -36,12 +34,6 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
     let canMove = getCanPlayerMove();
     setCanPlayerMove(canMove);
   }, [chessState, chess]);
-
-  const sendChessRequest = useCallback((req) => {
-    let request = { PluginRequest: ["chess", JSON.stringify(req)] };
-    let parsedServiceId = parseServiceId(serviceId);
-    // pokeService(parsedServiceId, request);
-  }, [pokeService, serviceId]);
 
   const onDrop = useCallback((drop) => {
     let res = isMoveValid(drop, chess);
@@ -120,7 +112,7 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
             >
               chess game lobby
             </div>
-            {/* <p>Queued White Player: {chessState.queuedWhite || "None"}</p>
+            <p>Queued White Player: {chessState.queuedWhite || "None"}</p>
             <p>Queued Black Player: {chessState.queuedBlack || "None"}</p>
             <div
               style={{
@@ -143,7 +135,7 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
               >
                 Queue as Black
               </button>
-            </div> */}
+            </div>
         </div>
       )}
     </div>

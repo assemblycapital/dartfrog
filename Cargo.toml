@@ -5,6 +5,7 @@ members = [
     "chat",
     "piano",
     "page",
+    "chess",
     "common",
 ]
 

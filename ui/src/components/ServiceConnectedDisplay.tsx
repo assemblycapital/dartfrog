@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import DisplayUserActivity from './DisplayUserActivity';
 import ServiceConnectedRow from './ServiceConnectedRow';
 import "./ServiceConnectedDisplay.css"
-import ChessPluginBox from './ChessPluginBox';
+import ChessPluginBox from '../../../chess-ui/src/components/ChessPluginBox';
 
 
 const ServiceConnectedDisplay = ({ serviceId, service, addTab }) => {
