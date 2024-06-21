@@ -754,7 +754,7 @@ fn init(our: Address) {
 
     let mut plugins = Vec::new();
     plugins.push("chat:dartfrog:herobrine.os".to_string());
-    plugins.push("piano:dartfrog:herobrine.os".to_string());
+    plugins.push("page:dartfrog:herobrine.os".to_string());
     poke_server(&our, ServerRequest::CreateService(ServiceId {
         node: our.node.clone(),
         id: "chat".to_string()

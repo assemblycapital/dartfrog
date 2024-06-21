@@ -35,5 +35,17 @@
         ],
         "grant_capabilities": [],
         "public": true
+    },
+    {
+        "process_name": "page",
+        "process_wasm_path": "/page.wasm",
+        "on_exit": "Restart",
+        "request_networking": true,
+        "request_capabilities": [
+            "http_server:distro:sys",
+            "vfs:distro:sys"
+        ],
+        "grant_capabilities": [],
+        "public": true
     }
 ]

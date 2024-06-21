@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import DisplayUserActivity from './DisplayUserActivity';
 import ServiceConnectedRow from './ServiceConnectedRow';
-import PagePluginBox from './PagePluginBox';
 import "./ServiceConnectedDisplay.css"
 import ChessPluginBox from './ChessPluginBox';
 

@@ -69,7 +69,7 @@ const PluginIFrame: React.FC<PluginIFrameProps> = ({serviceId, service, plugin, 
     let fullPackageName = `${packageName}:${node}`;
     return (
       <div>
-        <div>{plugin} ui not found...</div>
+        <div>{plugin} not found...</div>
         <div>
           You may need to install <a href={`/main:app_store:sys/app-details/${fullPackageName}`}>{fullPackageName}</a> from the app store.
         </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { ServiceId, parseServiceId } from '@dartfrog/puddle';
-import useDartStore from '../store/dart';
+import usePageStore from '../store/page';
 
 type PageState = {
   page: string;
@@ -8,14 +8,14 @@ type PageState = {
 
 interface PagePluginBoxProps {
   serviceId: ServiceId;
-  pageState: PageState;
+  page: string;
 }
 
-const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, pageState }) => {
-  const { pokeService } = useDartStore();
+const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, page }) => {
   const [isAuthor, setIsAuthor] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [editableText, setEditableText] = useState(pageState.page);
+  const [editableText, setEditableText] = useState(page);
+  const {sendPageEdit} = usePageStore();
 
   useEffect(() => {
     const parsedServiceId = parseServiceId(serviceId);
@@ -24,27 +24,17 @@ const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, pageState }) =
 
   useEffect(() => {
     // Update the editableText only when pageState.page changes
-    setEditableText(pageState.page);
-  }, [pageState.page]);
+    setEditableText(page);
+  }, [page]);
 
   const handleSave = useCallback(() => {
-    const innerPluginRequest = {
-      "Write": editableText
-    };
-    const data = {
-      "PluginRequest": [
-        "page",
-        JSON.stringify(innerPluginRequest)
-      ]
-    };
-    let parsedServiceId = parseServiceId(serviceId);
-    // pokeService(parsedServiceId, data);
+    sendPageEdit(editableText);
     setEditMode(false);  // Exit edit mode after save
-  }, [editableText, pokeService, serviceId]);
+  }, [editableText, serviceId]);
 
   const iframeView = (
     <iframe
-      srcDoc={pageState.page}
+      srcDoc={page}
       style={{ width: '100%', height: '100%', border: 'none' }}
       sandbox=""
     />
@@ -54,7 +44,9 @@ const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, pageState }) =
     return (
       <div
         style={{
-          height: '500px',
+          // height: '500px',
+          height: '100%',
+          width: '100%',
         }}
       >
         {editMode ? (
@@ -64,6 +56,7 @@ const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, pageState }) =
               flexDirection: 'column',
               gap: "2px",
               height: '100%',
+              width: '100%',
             }}
             >
             <textarea
