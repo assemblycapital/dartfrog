@@ -8,6 +8,7 @@ import NewTab from './NewTab/NewTab';
 import { join } from 'path';
 import { HUB_NODE } from '../utils';
 import Spinner from './Spinner';
+import TabTop from './TabTop';
 
 interface Tab {
   serviceId: ServiceId | null;
@@ -83,43 +84,15 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({services}) => 
               userSelect: 'none'
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-              }}>
-              <div
-                className={`tab ${activeTabIndex === index ? 'active' : 'inactive'}`}
-                onClick={() => setActiveTabIndex(index)}
-              >
-                <div
-                  style={{
-                    flexGrow: 1,
-                    alignContent: 'center',
-                    marginLeft: '8px',
-                  }}
-                >
-                  {tab.serviceId ? tab.serviceId : 'new tab'}
-                </div>
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Exit service if there is one
-                    if (tab.serviceId) {
-                      // also check that no other tabs are using this service
-                      const isServiceUsedByOtherTabs = tabs.some((t, i) => i !== index && t.serviceId === tab.serviceId);
-                      if (!isServiceUsedByOtherTabs) {
-                        exitService(tab.serviceId);
-                      } 
-                    }
-                    closeTab(index);
-                  }}
-                  className="close-tab-button"
-                >
-                  <XIcon />
-                </div>
-              </div>
-            </div>
+            <TabTop
+              tab={tab}
+              index={index}
+              activeTabIndex={activeTabIndex}
+              setActiveTabIndex={setActiveTabIndex}
+              closeTab={closeTab}
+              tabs={tabs}
+              exitService={exitService}
+            />
             <div style={{
               display: "flex",
               flexDirection: "column",
@@ -127,7 +100,7 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({services}) => 
               }}
             >
               <div className="vertical-line"></div>
-          </div>
+            </div>
           </div>
         ))}
         <button onClick={() =>addTab(null)}
