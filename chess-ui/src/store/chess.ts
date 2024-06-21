@@ -48,10 +48,6 @@ export function handleChessUpdate(chessState: ChessState | null, update: any): C
                 isWhiteTurn: updateGame.is_white_turn,
                 moves: updateGame.moves
             }
-            if (newChessGame.moves.length > (chessState.game?.moves.length || 0)) {
-                const sound = new Audio('/chess:dartfrog:herobrine.os/assets/chess-move.mp3');
-                sound.play();
-            }
         }
 
         let newChessState = {

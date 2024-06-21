@@ -25,22 +25,29 @@ const ChessGame: React.FC<ChessGameProps> = ({ chessState, sendChessRequest, ser
   const { nameColors } = useChessStore();
 
   useEffect(() => {
-    setOrientation(myRole === 'black' ? 'black' : 'white');
-  }, [myRole]);
-  
-  useEffect(() => {
     if (orientation === 'white') {
       setIsTopPlayerTurn(!chessState.game.isWhiteTurn);
     } else {
       setIsTopPlayerTurn(chessState.game.isWhiteTurn);
     }
-  }, [chessState]);
+  }, [chessState, orientation]);
 
-  const makeNewChess = (moves: string[]) => {
+  const makeNewChess = (moves: string[], playSound: boolean = false) => {
     let newChess = new Chess();
     for (let move of moves) {
       try {
-        newChess.move(move);
+        let result = newChess.move(move);
+        if (playSound) {
+          if (move === moves[moves.length - 1]) {
+            if (result.captured) {
+              const sound = new Audio('/chess:dartfrog:herobrine.os/assets/chess-capture.mp3');
+              sound.play();
+            } else {
+              const sound = new Audio('/chess:dartfrog:herobrine.os/assets/chess-move.mp3');
+              sound.play();
+            }
+          }
+        }
       } catch (error) {
         return null;
       }
@@ -50,7 +57,7 @@ const ChessGame: React.FC<ChessGameProps> = ({ chessState, sendChessRequest, ser
 
   useEffect(() => {
     if (!chessState.game) return;
-    let newChess = makeNewChess(chessState.game.moves);
+    let newChess = makeNewChess(chessState.game.moves, true);
     if (newChess) {
       setGameFen(newChess.fen());
       setChess(newChess);
@@ -58,12 +65,13 @@ const ChessGame: React.FC<ChessGameProps> = ({ chessState, sendChessRequest, ser
     setCanPlayerMove(getCanPlayerMove());
     if (window.our?.node === chessState.game.white) {
       setMyRole('white');
-      setTopPlayer(chessState.game.white);
-      setBottomPlayer(chessState.game.black);
+      setTopPlayer(chessState.game.black);
+      setBottomPlayer(chessState.game.white);
     } else if (window.our?.node === chessState.game.black) {
       setMyRole('black');
       setTopPlayer(chessState.game.white);
       setBottomPlayer(chessState.game.black);
+      setOrientation("black");
     } else {
       setMyRole('spectator');
       setTopPlayer(chessState.game.black);
@@ -79,7 +87,11 @@ const ChessGame: React.FC<ChessGameProps> = ({ chessState, sendChessRequest, ser
   }, [chessState]);
 
   const onDrop = useCallback((drop) => {
-    if (!canPlayerMove) return;
+    if (!canPlayerMove) {
+      const sound = new Audio('/chess:dartfrog:herobrine.os/assets/chess-invalid-move.mp3');
+      sound.play();
+      return;
+    }
     const { sourceSquare, targetSquare } = drop;
     const move = { from: sourceSquare, to: targetSquare, promotion: 'q' }; // Assume queen promotion for simplicity
     let tempChess = makeNewChess(chessState.game.moves);
