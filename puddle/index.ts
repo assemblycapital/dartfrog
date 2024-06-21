@@ -66,7 +66,8 @@ export const parseServiceId = (serviceId: string) => {
   return { node, id };
 }
 
-export type AvailableServices = Map<string, Array<ParsedServiceId>>
+export type PerNodeAvailableServices = Map<string, AvailableServices>  // node, available services
+export type AvailableServices = Map<string, ServiceMetadata> // serviceId, metadata
 
 function new_service(serviceId: ParsedServiceId) : Service {
   return {
@@ -84,7 +85,7 @@ interface ConstructorArgs {
   onOpen?: () => void;
   onClose?: () => void;
   onServicesChangeHook?: (services: Services) => void;
-  onAvailableServicesChangeHook?: (availableServices: AvailableServices) => void;
+  onAvailableServicesChangeHook?: (availableServices: PerNodeAvailableServices) => void;
 }
 
 class DartApi {
@@ -92,14 +93,14 @@ class DartApi {
   public connectionStatus: ConnectionStatus;
   private pluginUpdateHandlers: PluginUpdateHandlers;
   private services: Map<ServiceId, Service> = new Map();
-  private availableServices: AvailableServices = new Map();
+  private availableServices: PerNodeAvailableServices = new Map();
   public our: { node: string, process: string };
   public websocket_url: string;
 
   private onOpen: () => void;
   private onClose: () => void;
   private onServicesChangeHook: (services: Services) => void = () => {};
-  private onAvailableServicesChangeHook: (availableServices: AvailableServices) => void = () => {};
+  private onAvailableServicesChangeHook: (availableServices: PerNodeAvailableServices) => void = () => {};
   private reconnectIntervalId?: NodeJS.Timeout;
 
   constructor({
@@ -122,6 +123,7 @@ class DartApi {
     this.onAvailableServicesChangeHook = onAvailableServicesChangeHook;
     this.setConnectionStatus(ConnectionStatusType.Connecting);
     this.initialize(our, websocket_url);
+    this.onAvailableServicesChange();
   }
   private onServicesChange: () => void = () => {  
     this.onServicesChangeHook(this.services);
@@ -193,9 +195,21 @@ class DartApi {
               this.onServicesChange();
 
           } else if (response.ServiceList) {
-              // console.log('Service List:', address, response.ServiceList);
+              console.log('Service List:', address, response.ServiceList);
               // Add your logic to handle the ServiceList response here
-              this.availableServices.set(address, response.ServiceList);
+              // for (let serviceId of Array.from(response.ServiceList.keys())) {
+
+              // }
+              let newServices = new Map()
+              console.log(response.ServiceList)
+              let serviceIds = Object.keys(response.ServiceList);
+              for (let serviceId of serviceIds) {
+                newServices.set(serviceId, response.ServiceList[serviceId]);
+              }
+              // for (let serviceId of Array.from(response.ServiceList.keys())) {
+              //   newServices.set(serviceId, response.ServiceList.get(serviceId));
+              // }
+              this.availableServices.set(address, newServices);
               this.onAvailableServicesChange();
           } else {
               console.warn('Unknown server response:', response);
@@ -227,7 +241,6 @@ class DartApi {
           for (let user of Object.keys(response.ServiceMetadata.user_presence)) {
             if (!this.availableServices.has(user)) {
               this.requestServiceList(user);
-              this.availableServices.set(user, []);
               this.onAvailableServicesChange();
             }
           }

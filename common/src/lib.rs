@@ -173,7 +173,7 @@ pub enum ConsumerUpdate {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ConsumerServerUpdate {
     NoSuchService(String),
-    ServiceList(Vec<ServiceId>),
+    ServiceList(HashMap<String, ServiceMetadata>), // serviceid as string
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -232,6 +232,9 @@ pub fn get_plugin_address(plugin_name: &str, node_id: &str) -> anyhow::Result<Ad
             Err(anyhow::anyhow!("error getting plugin address: {}", e))
         }
     }
+}
+pub fn get_service_id_string(service_id: &ServiceId) -> String {
+    format!("{}.{}", service_id.id, service_id.node)
 }
 
 // TODO for some reason Address::from_str panics instead of returning error

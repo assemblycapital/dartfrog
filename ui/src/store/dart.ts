@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId, parseServiceId } from '@dartfrog/puddle';
+import DartApi, { AvailableServices, ParsedServiceId, PerNodeAvailableServices, Service, ServiceId, parseServiceId } from '@dartfrog/puddle';
 
 export interface DartStore {
   api: DartApi | null,
@@ -22,8 +22,8 @@ export interface DartStore {
   deleteService: (serviceId: ServiceId) => void
   requestServiceList: (serviceId: ServiceId) => void
   requestAllServiceList: () => void
-  availableServices: AvailableServices
-  setAvailableServices: (availableServices: AvailableServices) => void
+  availableServices: PerNodeAvailableServices
+  setAvailableServices: (availableServices: PerNodeAvailableServices) => void
   // 
   // chat stuff here until its properly abstracted later
   nameColors: Map<string, string>

@@ -88,9 +88,13 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
 
         }
         ServerRequest::RequestServiceList => {
-            let services: Vec<ServiceId> = state.server.services.keys().map(|x| ServiceId {
-                node: our.node.clone(),
-                id: x.clone()
+
+            let services: HashMap<String, ServiceMetadata> = state.server.services.iter().map(|(id, service)| {
+                let service_id = ServiceId {
+                    node: our.node.clone(),
+                    id: id.clone()
+                };
+                (get_service_id_string(&service_id), service.metadata.clone())
             }).collect();
             let update = ConsumerUpdate::FromServer(our.node.clone(), ConsumerServerUpdate::ServiceList(services));
             update_client(update, source.node.clone())?;
