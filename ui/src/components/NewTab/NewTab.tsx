@@ -111,9 +111,8 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
       <div
         style={{
           display: "flex",
-          // flexWrap: "wrap", // Enable wrapping of child elements
           flexDirection: "column",
-          justifyContent: "space-evenly", // Distribute space evenly around items
+          justifyContent: "space-evenly",
           overflowY: "scroll",
           maxHeight: "200px",
         }}
@@ -124,15 +123,13 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
           style={{
             display: "flex",
             flexDirection: "row",
-            flex: "1 1 1 1 1", // Flex basis of 200px, adjust as needed
-            justifyContent: "space-evenly", // Distribute space evenly around items
+            justifyContent: "space-between",
           }}
         >
           <a
             style={{
               cursor: "pointer",
-              // width: "100%",
-              // height: "100%",
+              flex: "1",
             }}
             onClick={() => {
               setTabService(serviceId);
@@ -140,14 +137,14 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
           >
             join
           </a>
-          <div>{serviceId}</div>
-          <div>
+          <div style={{ flex: "3" }}>{serviceId}</div>
+          <div style={{ flex: "2" }}>
             {getPluginText(serviceDetails.plugins)}
           </div>
-          <div>
+          <div style={{ flex: "2" }}>
             {getRecencyText(serviceDetails.user_presence, serviceDetails.subscribers)}
           </div>
-          <div>{serviceDetails.subscribers.length}{' online'}</div>
+          <div style={{ flex: "1" }}>{serviceDetails.subscribers.length}{' online'}</div>
         </div>
       ))}
       </div>
