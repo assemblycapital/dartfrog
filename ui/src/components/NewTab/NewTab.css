@@ -8,10 +8,20 @@ button {
   color: #757575;
   display: flex;
   flex-direction: row;
-  padding: 0.1rem 0.5rem;
   cursor: default;
   user-select: none;
+  gap: 0.5rem;
+  align-items: center;
 }
+.service-list-header-refresh {
+  cursor: pointer;
+  transition: background-color 0.25s;
+}
+.service-list-header-refresh:hover {
+  transition: background-color 0.25s;
+  background-color: #181818;
+}
+
 .join-button {
   padding: 0.5rem 0;
   color: #646cff;

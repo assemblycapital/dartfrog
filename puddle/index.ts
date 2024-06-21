@@ -472,4 +472,20 @@ class DartApi {
   }
 }
 
+export function stringifyServiceConnectionStatus(status: ServiceConnectionStatusType): string {
+  switch (status) {
+    case ServiceConnectionStatusType.Connecting:
+      return "Connecting";
+    case ServiceConnectionStatusType.Connected:
+      return "Connected";
+    case ServiceConnectionStatusType.Disconnected:
+      return "Disconnected";
+    case ServiceConnectionStatusType.ServiceDoesNotExist:
+      return "ServiceDoesNotExist";
+    case ServiceConnectionStatusType.Kicked:
+      return "Kicked";
+    default:
+      return "Unknown Status";
+  }
+}
 export default DartApi;

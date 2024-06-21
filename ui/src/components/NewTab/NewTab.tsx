@@ -44,9 +44,6 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
     // but if i dont do it, everything explodes :)
     return <Spinner />
   }
-  useEffect(() => {
-    console.log("availableServices", availableServices);
-  }, [availableServices]);
 
   // Flatten the Map of Maps structure into an array of objects
   const flattenedServices = Array.from(availableServices.entries()).flatMap(([node, services]) =>
@@ -130,10 +127,27 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
           className="service-list-header"
           style={{
         }}>
+          <div
+
+            style={{
+              cursor: "pointer",
+            }}
+            className="service-list-header-refresh"
+            onClick={() => {
+              requestAllServiceList();
+            }}
+            >
           <span
             style={{
-              padding: "0 1rem",
+              fontSize: "1.2rem",
+              marginBottom: "0.2rem",
+              padding: "0 0.5rem",
             }}
+          >
+            ⟳
+          </span>
+          </div>
+          <span
           >
             service list:
           </span>
