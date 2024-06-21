@@ -209,7 +209,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
         </div>
       </div>
 
-      <CreateService />
+      <CreateService setTabService={setTabService}/>
       <div>
         <div
           style={{
