@@ -110,8 +110,10 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
     >
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "auto auto auto auto auto",
+          display: "flex",
+          // flexWrap: "wrap", // Enable wrapping of child elements
+          flexDirection: "column",
+          justifyContent: "space-evenly", // Distribute space evenly around items
           overflowY: "scroll",
           maxHeight: "200px",
         }}
@@ -119,27 +121,31 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
       {sortedServices.map(({ node, serviceId, serviceDetails }) => (
         <div key={`${node}-${serviceId}`}
           className="service-list-item"
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            flex: "1 1 1 1 1", // Flex basis of 200px, adjust as needed
+            justifyContent: "space-evenly", // Distribute space evenly around items
+          }}
         >
-          <div>
-            <a
-              style={{
-                cursor: "pointer",
-                width: "100%",
-                height: "100%",
-              }}
-              onClick={() => {
-                setTabService(serviceId);
-              }}
-            >
-              join
-            </a>
-          </ div>
+          <a
+            style={{
+              cursor: "pointer",
+              // width: "100%",
+              // height: "100%",
+            }}
+            onClick={() => {
+              setTabService(serviceId);
+            }}
+          >
+            join
+          </a>
           <div>{serviceId}</div>
           <div>
             {getPluginText(serviceDetails.plugins)}
           </div>
           <div>
-              {getRecencyText(serviceDetails.user_presence, serviceDetails.subscribers)}
+            {getRecencyText(serviceDetails.user_presence, serviceDetails.subscribers)}
           </div>
           <div>{serviceDetails.subscribers.length}{' online'}</div>
         </div>

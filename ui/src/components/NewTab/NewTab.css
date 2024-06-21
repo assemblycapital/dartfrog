@@ -1,14 +1,14 @@
-
 button {
   width: 5rem;
   height:27px
 }
 
 .service-list-item {
-  display: contents;
+  /* display: contents; */
   border-bottom: 1px solid #ffffff11;
   gap: 1rem;
   align-items: center;
+  border-bottom: 1px solid #494949; /* Add this line to include a border around each grid row */
 }
 .service-list-item:hover {
   background-color: #ffffff11;
