@@ -48,6 +48,34 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
     console.log("availableServices", availableServices);
   }, [availableServices]);
 
+  // Flatten the Map of Maps structure into an array of objects
+  const flattenedServices = Array.from(availableServices.entries()).flatMap(([node, services]) =>
+    Array.from(services.entries()).map(([serviceId, serviceDetails]) => ({
+      node,
+      serviceId,
+      serviceDetails
+    }))
+  );
+
+  // Sort the flattened array by the number of subscribers
+  const sortedServices = flattenedServices.sort((a, b) => b.serviceDetails.subscribers.length - a.serviceDetails.subscribers.length);
+
+  const knownPlugins = {
+    "chat:dartfrog:herobrine.os": "chat",
+    "piano:dartfrog:herobrine.os": "piano",
+    "page:dartfrog:herobrine.os": "page",
+    "chess:dartfrog:herobrine.os": "chess",
+  }
+  function getPluginText(plugins: string[]) {
+    let asNames = plugins.map((plugin) => knownPlugins[plugin] || plugin);
+    // if it contains nulls, then it's not a known plugin
+    if (asNames.includes(null)) {
+      return "custom"
+    }
+    // filter out "chat"
+    return asNames.filter((name) => name !== "chat").join(', ');
+  }
+
   return (
     <div
       style={{
@@ -58,37 +86,51 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
         display: "flex",
         flexDirection: "column",
         gap: "0.8rem",
+        margin: "0.8rem 0rem",
       }}
     >
-      todo
-      {Array.from(availableServices.keys()).map((node) => {
-        const services = availableServices.get(node);
-        console.log(node, services); // Log the node and its services map
-
-        return (
-          <div key={node}>
-            {node}
-            {services instanceof Map && services.size > 0 ? (
-              Array.from(services.keys()).map((serviceId) => (
-                <div key={serviceId}>
-                  <div>
-                  {serviceId}
-                  </div>
-                  <div>
-                    {JSON.stringify(services.get(serviceId))}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div>No services available for this node.</div>
-            )}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.2rem",
+          overflowY: "scroll",
+          maxHeight: "200px",
+        }}
+      >
+      {sortedServices.map(({ node, serviceId, serviceDetails }) => (
+        <div key={`${node}-${serviceId}`}
+          className="service-list-item"
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            borderBottom: "1px solid #ffffff11",
+            gap: "1rem",
+            alignItems: "center",
+          }}
+        >
+          <a
+            style={{
+              cursor: "pointer",
+              padding: "0.2rem 0.4rem",
+            }}
+            onClick={() => {
+              setTabService(serviceId);
+            }}
+          >
+            join
+          </a>
+          <div>{serviceId}</div>
+          <div>
+            {getPluginText(serviceDetails.plugins)}
           </div>
-        );
-      })}
+          <div>{serviceDetails.subscribers.length}{' online'}</div>
+        </div>
+      ))}
+      </div>
 
       <CreateService />
     </div>
-
   )
   // return (
   //   <div
@@ -246,6 +288,4 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
   // );
 }
 
-
 export default NewTab;
-

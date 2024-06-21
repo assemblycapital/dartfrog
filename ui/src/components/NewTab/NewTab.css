@@ -3,3 +3,7 @@ button {
   width: 5rem;
   height:27px
 }
+
+.service-list-item:hover {
+  background-color: #ffffff11;
+}
