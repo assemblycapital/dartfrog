@@ -92,17 +92,37 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
         return (
           <span>
             <a
-              href={message}
               style={{
                 textDecoration: "underline",
                 cursor: "pointer",
                 fontSize: "1rem",
+              }}
+              onClick={() => {
+                window.parent.postMessage({type: 'open-http-url', url:message}, '*');
               }}
             >
               {message}
             </a>
           </span>
         );
+      } else if (dfLinkRegex.test(message)) {
+        return (
+          <span>
+            <a
+              style={{
+                textDecoration: "underline",
+                cursor: "pointer",
+                fontSize: "1rem",
+              }}
+              onClick={() => {
+                window.parent.postMessage({type: 'open-df-service', url:message}, '*');
+              }}
+            >
+              {message}
+            </a>
+          </span>
+        );
+
       } else {
         return <span>{message}</span>;
       }
@@ -118,6 +138,17 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
           paddingBottom: `${inputHeight}px`,
         }}
       >
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100,
+        }}
+      >
+        <ChatHeader serviceId={serviceId} />
+      </div>
       <div
         style={{
           overflowY: "scroll",
@@ -156,6 +187,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
 };
 
 export default React.memo(ChatBox);
+
+const dfLinkRegex = /^df:\/\/[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\.([a-zA-Z0-9]+\.)+[a-zA-Z]+$/;
+// const dfLinkRegex = /^df:\/\/[a-zA-z0-9]+-[a-zA-z0-9]+\.([a-zA-z0-9]+\.)+[a-zA-z]+$/;
+// 
 
 const linkRegex = /^https?:\/\/\S+$/i;
 const imageRegex = /^https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp)$/i;

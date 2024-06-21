@@ -13,15 +13,18 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ serviceId }) => {
     justifyContent: "space-between",
     alignItems: "center",
     fontSize: "0.8rem",
+    backgroundColor: "#242424",
   };
 
   const menuStyle: React.CSSProperties = {
-    display: menuOpen ? "flex" : "none", // Control display with menuOpen state
+    display: menuOpen ? "flex" : "none",
+    height: menuOpen ? "auto" : "0",
     flexDirection: "column" as "column",
     padding: "10px",
     color: "#ffffff44",
     fontSize: "0.8rem",
     transition: "height 0.3s ease",
+    backgroundColor: "#242424",
   };
 
   return (
