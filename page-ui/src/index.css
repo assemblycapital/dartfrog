@@ -72,8 +72,9 @@ button {
   background-color: #1f1f1f;
   color: #999;
   cursor: pointer;
+  padding: 4px 8px;
   transition: background-color 0.25s;
-  border: 1px solid #333;
+  /* border: 1px solid #333; */
 }
 
 button:hover {

@@ -100,6 +100,7 @@ class DartApi {
   private onClose: () => void;
   private onServicesChangeHook: (services: Services) => void = () => {};
   private onAvailableServicesChangeHook: (availableServices: AvailableServices) => void = () => {};
+  private reconnectIntervalId?: NodeJS.Timeout;
 
   constructor({
     our,
@@ -252,7 +253,7 @@ class DartApi {
           console.warn('Unknown service message format:', message);
         }
     }
-  }
+}
 
 
 
@@ -424,11 +425,19 @@ class DartApi {
         console.log("Disconnected from Kinode");
         this.setConnectionStatus(ConnectionStatusType.Disconnected);
         this.onClose();
+        // Set a timeout to attempt reconnection
+        setTimeout(() => {
+          this.initialize(our, websocket_url);
+        }, 5000); // Retry every 5 seconds
       },
       onOpen: (event, api) => {
         // console.log("Connected to Kinode");
         this.onOpen();
         this.setConnectionStatus(ConnectionStatusType.Connected);
+        if (this.reconnectIntervalId) {
+          clearInterval(this.reconnectIntervalId);
+          this.reconnectIntervalId = undefined;
+        }
       },
       onMessage: (json, api) => {
         this.setConnectionStatus(ConnectionStatusType.Connected);
@@ -440,6 +449,13 @@ class DartApi {
     });
 
     this.api = newApi;
+    if (this.connectionStatus.status !== ConnectionStatusType.Connected) {
+      this.reconnectIntervalId = setInterval(() => {
+        if (this.connectionStatus.status !== ConnectionStatusType.Connected) {
+          this.initialize(our, websocket_url);
+        }
+      }, 5000);
+    }
   }
 }
 
