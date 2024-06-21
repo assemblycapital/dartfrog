@@ -57,9 +57,18 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
     }))
   );
 
-  // Sort the flattened array by the number of subscribers
-  const sortedServices = flattenedServices.sort((a, b) => b.serviceDetails.subscribers.length - a.serviceDetails.subscribers.length);
-
+  // Sort the flattened array by the number of subscribers, and for those with zero subscribers, sort by recency
+  const sortedServices = flattenedServices.sort((a, b) => {
+    const subDiff = b.serviceDetails.subscribers.length - a.serviceDetails.subscribers.length;
+    if (subDiff !== 0) return subDiff;
+    const aMaxTime = Object.values(a.serviceDetails.user_presence).reduce((max, p) => {
+      return Math.max(max, p.time);
+    }, 0);
+    const bMaxTime = Object.values(b.serviceDetails.user_presence).reduce((max, p) => {
+      return Math.max(max, p.time);
+    }, 0);
+    return bMaxTime - aMaxTime;
+  });
   const knownPlugins = {
     "chat:dartfrog:herobrine.os": "chat",
     "piano:dartfrog:herobrine.os": "piano",
@@ -92,8 +101,8 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
     }
     if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)} hr ago`;
-    // if its older than 2yrs, say its new
-    if (diff > 7307200000) return `new`;
+    // if its older than 2yrs, say its old
+    if (diff > 7307200000) return `old`;
     return `${Math.floor(diff / 86400000)} days ago`;
   }
 
@@ -118,18 +127,16 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
         }}
       >
         <div
+          className="service-list-header"
           style={{
-            display: "flex",
-          flexDirection: "row",
-          justifyContent: "space-between",
-          padding: "0.5rem 0",
-          borderBottom: "1px solid #494949"
         }}>
-          <div style={{ flex: "2",  }}></div>
-          <div style={{ flex: "3",  }}>Service</div>
-          <div style={{ flex: "4", }}>Apps</div>
-          <div style={{ flex: "1",  }}></div>
-          <div style={{ flex: "1",  }}></div>
+          <span
+            style={{
+              padding: "0 1rem",
+            }}
+          >
+            service list:
+          </span>
         </div>
 
         <div

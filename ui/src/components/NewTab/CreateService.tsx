@@ -51,10 +51,15 @@ const CreateService: React.FC = () => {
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: "0.3rem",
+        // gap: "0.3rem",
       }}
     >
-      <div style={{ cursor: "default", userSelect: "none" }}>
+      <div style={{
+        cursor: "default",
+        userSelect: "none",
+        marginBottom: "0.8rem",
+
+      }}>
         create a new service:
       </div>
       <div>

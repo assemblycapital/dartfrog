@@ -3,7 +3,17 @@ button {
   height:27px
 }
 
+.service-list-header {
+  background-color: #1f1f1f;
+  color: #757575;
+  display: flex;
+  flex-direction: row;
+  padding: 0.1rem 0.5rem;
+  cursor: default;
+  user-select: none;
+}
 .join-button {
+  padding: 0.5rem 0;
   color: #646cff;
   transition: background-color 0.2s;
 }
@@ -12,6 +22,7 @@ button {
   transition: background-color 0.2s;
 }
 .delete-button {
+  padding: 0.5rem 0;
   color: #d65353;
   transition: background-color 0.2s;
 }
@@ -27,7 +38,6 @@ button {
   align-items: center;
   border-bottom: 1px solid #494949; /* Add this line to include a border around each grid row */
   transition: background-color 0.2s;
-  padding: 0.5rem 0;
 }
 .service-list-item:hover {
   background-color: #ffffff11;
