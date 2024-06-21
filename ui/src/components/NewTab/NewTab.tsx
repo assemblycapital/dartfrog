@@ -92,6 +92,8 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
     }
     if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)} hr ago`;
+    // if its older than 2yrs, say its new
+    if (diff > 7307200000) return `new`;
     return `${Math.floor(diff / 86400000)} days ago`;
   }
 
@@ -104,7 +106,7 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
         fontSize: "0.8rem",
         display: "flex",
         flexDirection: "column",
-        gap: "0.8rem",
+        gap: "1.5rem",
         margin: "0.8rem 0rem",
       }}
     >
@@ -113,43 +115,127 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-evenly",
-          overflowY: "scroll",
-          maxHeight: "200px",
         }}
       >
-      {sortedServices.map(({ node, serviceId, serviceDetails }) => (
-        <div key={`${node}-${serviceId}`}
-          className="service-list-item"
+        <div
           style={{
             display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          padding: "0.5rem 0",
+          borderBottom: "1px solid #494949"
+        }}>
+          <div style={{ flex: "2",  }}></div>
+          <div style={{ flex: "3",  }}>Service</div>
+          <div style={{ flex: "4", }}>Apps</div>
+          <div style={{ flex: "1",  }}></div>
+          <div style={{ flex: "1",  }}></div>
+        </div>
+
+        <div
+          style={{
+          overflowY: "scroll",
+          maxHeight: "250px",
+
           }}
         >
-          <a
+
+        {sortedServices.map(({ node, serviceId, serviceDetails }) => (
+          <div key={`${node}-${serviceId}`}
+            className="service-list-item"
             style={{
-              cursor: "pointer",
-              flex: "1",
-            }}
-            onClick={() => {
-              setTabService(serviceId);
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between",
             }}
           >
-            join
-          </a>
-          <div style={{ flex: "3" }}>{serviceId}</div>
-          <div style={{ flex: "2" }}>
-            {getPluginText(serviceDetails.plugins)}
+            <div
+              style={{
+                flex: "2",
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                gap: "0.2rem",
+              }}
+            >
+              <div
+                style={{
+                  cursor: "pointer",
+                  flex: "1",
+                  textAlign: "center",
+                }}
+                className="join-button"
+                onClick={() => {
+                  setTabService(serviceId);
+                }}
+              >
+                join
+              </div>
+              {node === window.our?.node && (
+                <div
+                  style={{
+                  cursor: "pointer",
+                  flex: "1",
+                  textAlign: "center",
+                }}
+                className="delete-button"
+                onClick={() => {
+                  deleteService(serviceId);
+                  requestServiceList(window.our?.node);
+                }}
+              >
+                  delete
+                </div>
+              )}
+            </div>
+
+            <div style={{ flex: "3" }}>{serviceId}</div>
+            <div style={{ flex: "4" }}>
+              {getPluginText(serviceDetails.plugins)}
+            </div>
+            <div style={{ flex: "1" }}>
+              {getRecencyText(serviceDetails.user_presence, serviceDetails.subscribers)}
+            </div>
+            <div style={{ flex: "1" }}>{serviceDetails.subscribers.length}{' online'}</div>
           </div>
-          <div style={{ flex: "2" }}>
-            {getRecencyText(serviceDetails.user_presence, serviceDetails.subscribers)}
-          </div>
-          <div style={{ flex: "1" }}>{serviceDetails.subscribers.length}{' online'}</div>
+        ))}
         </div>
-      ))}
       </div>
 
       <CreateService />
+      <div>
+        <div
+          style={{
+            marginBottom: "0.8rem",
+            cursor: "default",
+            userSelect: "none",
+          }}
+        >
+          join service by id:
+        </div>
+        <input type="text" placeholder="service-name" 
+          value={inputJoinServiceName}
+          onChange={handleJoinServiceNameInputChange}
+          className={`${isJoinServiceNameInputValid ? '' : 'invalid'}`}
+        />
+        <input type="text" placeholder="template.os"
+          value={inputJoinServiceHostNode}
+          onChange={(e) => setInputJoinServiceHostNode(e.target.value)}
+          />
+        <button
+          style={{
+            cursor: "pointer",
+          }}
+          onClick={() => {
+            // alert("coming soon");
+            handleInputJoinClick();
+          }}
+        >
+          join
+        </button>
+      </div>
+
+
     </div>
   )
   // return (
