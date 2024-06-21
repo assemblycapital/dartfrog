@@ -4,6 +4,15 @@ button {
   height:27px
 }
 
+.service-list-item {
+  display: contents;
+  border-bottom: 1px solid #ffffff11;
+  gap: 1rem;
+  align-items: center;
+}
 .service-list-item:hover {
   background-color: #ffffff11;
+}
+.service-list-item *{
+  padding: 0.2rem 1rem;
 }

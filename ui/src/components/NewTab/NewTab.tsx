@@ -2,7 +2,7 @@ import DisplayUserActivity from "../DisplayUserActivity";
 import { useCallback, useEffect, useState } from "react";
 import Spinner from "../Spinner";
 import useDartStore from "../../store/dart";
-import { AvailableServices, ParsedServiceId, Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "@dartfrog/puddle";
+import { AvailableServices, ParsedServiceId, Presence, Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "@dartfrog/puddle";
 import './NewTab.css'
 import { createSecretKey } from "crypto";
 import CreateService from "./CreateService";
@@ -76,6 +76,25 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
     return asNames.filter((name) => name !== "chat").join(', ');
   }
 
+  function getRecencyText(presence: { [key: string]: Presence }, subscribers) {
+    const now = new Date();
+    const time = Object.values(presence).reduce((max, p) => {
+      return Math.max(max, p.time);
+    }, 0);
+    const diff = now.getTime() - time*1000;
+
+    // if less than 5min, say now
+    // if less than 1h, say x min ago
+    // if less than 1d, say x hr ago
+    // else say x days ago
+    if (subscribers.length > 0) {
+      return `now`;
+    }
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} hr ago`;
+    return `${Math.floor(diff / 86400000)} days ago`;
+  }
+
   return (
     <div
       style={{
@@ -91,9 +110,8 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
     >
       <div
         style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.2rem",
+          display: "grid",
+          gridTemplateColumns: "auto auto auto auto auto",
           overflowY: "scroll",
           maxHeight: "200px",
         }}
@@ -101,28 +119,27 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
       {sortedServices.map(({ node, serviceId, serviceDetails }) => (
         <div key={`${node}-${serviceId}`}
           className="service-list-item"
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            borderBottom: "1px solid #ffffff11",
-            gap: "1rem",
-            alignItems: "center",
-          }}
         >
-          <a
-            style={{
-              cursor: "pointer",
-              padding: "0.2rem 0.4rem",
-            }}
-            onClick={() => {
-              setTabService(serviceId);
-            }}
-          >
-            join
-          </a>
+          <div>
+            <a
+              style={{
+                cursor: "pointer",
+                width: "100%",
+                height: "100%",
+              }}
+              onClick={() => {
+                setTabService(serviceId);
+              }}
+            >
+              join
+            </a>
+          </ div>
           <div>{serviceId}</div>
           <div>
             {getPluginText(serviceDetails.plugins)}
+          </div>
+          <div>
+              {getRecencyText(serviceDetails.user_presence, serviceDetails.subscribers)}
           </div>
           <div>{serviceDetails.subscribers.length}{' online'}</div>
         </div>
