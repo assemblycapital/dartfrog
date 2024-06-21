@@ -74,7 +74,6 @@ button {
   cursor: pointer;
   transition: background-color 0.25s;
   border: 1px solid #333;
-  border-left: 0px;
 }
 
 button:hover {

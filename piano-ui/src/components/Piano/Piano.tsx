@@ -46,7 +46,6 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
   const {sendPlayNote, nameColors, addNameColor } = usePianoStore();
   const [sounds, setSounds] = useState<{ [key: string]: Howl }>({});
   const [pressedKeys, setPressedKeys] = useState<{ [key: string]: string | null}>({});
-  const [isFocused, setIsFocused] = useState(false);
   const pianoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -89,21 +88,17 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (isFocused) {
         const note = notes.find(n => n.key === event.key);
         if (note && sounds[note.note] && !pressedKeys[note.note]) {
           handlePlayNote(note.note);
         }
-      }
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
-      if (isFocused) {
         const note = notes.find(n => n.key === event.key);
         if (note) {
           setPressedKeys(prev => ({ ...prev, [note.note]: null}));
         }
-      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -113,7 +108,7 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isFocused, sounds, pressedKeys]);
+  }, [sounds, pressedKeys]);
 
   const handlePlayNote = useCallback((note: string) => {
     sendPlayNote(note);
@@ -123,8 +118,6 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
     <div
       className="piano"
       tabIndex={0}
-      onFocus={() => setIsFocused(true)}
-      onBlur={() => setIsFocused(false)}
       ref={pianoRef}
       style={{
         height: "100%",
