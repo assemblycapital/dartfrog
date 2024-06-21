@@ -18,12 +18,13 @@ pub enum ChessRequest {
     Queue(ChessColor),
     UnQueue(ChessColor),
     Move(String),
-    ResetGame,
+    Reset,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ChessUpdate {
     ChessState(ChessService),
+    GameStart, // just an event for sfx
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -84,11 +85,15 @@ impl PluginServiceState for ChessService {
                     ChessColor::White => {
                         if self.queued_white.is_none() {
                             self.queued_white = Some(from.clone());
+                            let update = ChessUpdate::ChessState(self.clone());
+                            update_subscribers(our, update, metadata)?;
                         }
                     },
                     ChessColor::Black => {
                         if self.queued_black.is_none() {
                             self.queued_black = Some(from.clone());
+                            let update = ChessUpdate::ChessState(self.clone());
+                            update_subscribers(our, update, metadata)?;
                         }
                     },
                 }
@@ -97,12 +102,25 @@ impl PluginServiceState for ChessService {
                     self.game = Some(new_game(self.queued_white.clone().unwrap(), self.queued_black.clone().unwrap()));
                     self.queued_black = None;
                     self.queued_white = None;
+
+                    let update = ChessUpdate::GameStart;
+                    update_subscribers(our, update, metadata)?;
                 }
+                let state_update = ChessUpdate::ChessState(self.clone());
+                update_subscribers(our, state_update, metadata)?;
             }
             ChessRequest::UnQueue(color) => {
                 match color {
-                    ChessColor::White => if self.queued_white == Some(from.clone()) { self.queued_white = None },
-                    ChessColor::Black => if self.queued_black == Some(from.clone()) { self.queued_black = None },
+                    ChessColor::White => if self.queued_white == Some(from.clone()) {
+                        self.queued_white = None;
+                        let state_update = ChessUpdate::ChessState(self.clone());
+                        update_subscribers(our, state_update, metadata)?;
+                    },
+                    ChessColor::Black => if self.queued_black == Some(from.clone()) {
+                        self.queued_black = None;
+                        let state_update = ChessUpdate::ChessState(self.clone());
+                        update_subscribers(our, state_update, metadata)?;
+                    },
                 }
             }
             ChessRequest::Move(move_string) => {
@@ -116,14 +134,20 @@ impl PluginServiceState for ChessService {
                     game.moves.push(move_string);
                     game.is_white_turn = !game.is_white_turn;
                 }
+                let state_update = ChessUpdate::ChessState(self.clone());
+                update_subscribers(our, state_update, metadata)?;
             }
-            ChessRequest::ResetGame => {
-                self.game = None;
+            ChessRequest::Reset => {
+                if from == our.node() {
+                    self.game = None;
+                    self.queued_white = None;
+                    self.queued_black = None;
+                }
+                let state_update = ChessUpdate::ChessState(self.clone());
+                update_subscribers(our, state_update, metadata)?;
             }
         }
 
-        let state_update = ChessUpdate::ChessState(self.clone());
-        update_subscribers(our, state_update, metadata)?;
         Ok(())
     }
 }
@@ -169,9 +193,12 @@ impl PluginClientState for ChessClient {
             ChessUpdate::ChessState(new_state) => {
                 // Assuming `self.game` holds the current game state
                 self.service = Some(new_state);
+                send_to_frontend(&metadata.service.id, &update, our);
+            }
+            ChessUpdate::GameStart => {
+                send_to_frontend(&metadata.service.id, &update, our);
             }
         }
-        send_to_frontend(&metadata.service.id, &update, our);
         Ok(())
     }
 }
@@ -218,6 +245,14 @@ call_init!(init);
 fn init(our: Address) {
     println!("init chess service");
     let mut state: AppState = AppState::new();
+
+    let try_ui = kinode_process_lib::http::serve_ui(&our, "chess-ui", true, false, vec!["/"]);
+    match try_ui {
+        Ok(()) => {}
+        Err(e) => {
+            println!("page error starting ui: {:?}", e)
+        }
+    };
 
     loop {
         match handle_message(&our, &mut state) {

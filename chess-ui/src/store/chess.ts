@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId, parseServiceId } from '@dartfrog/puddle';
+import { Howl } from 'howler';
 
 export const PLUGIN_NAME = "chess:dartfrog:herobrine.os";
 
@@ -47,6 +48,10 @@ export function handleChessUpdate(chessState: ChessState | null, update: any): C
                 isWhiteTurn: updateGame.is_white_turn,
                 moves: updateGame.moves
             }
+            if (newChessGame.moves.length > (chessState.game?.moves.length || 0)) {
+                const sound = new Audio('/chess:dartfrog:herobrine.os/assets/chess-move.mp3');
+                sound.play();
+            }
         }
 
         let newChessState = {
@@ -55,7 +60,11 @@ export function handleChessUpdate(chessState: ChessState | null, update: any): C
             queuedBlack: update.ChessState.queued_black
         }
         return { ...newChessState };
+    } else if (update === 'GameStart') {
+        const sound = new Audio('/chess:dartfrog:herobrine.os/assets/chess-game-started.mp3');
+        sound.play();
 
+        return chessState;
     } else {
         console.log('Unknown chess update', update);
     }
