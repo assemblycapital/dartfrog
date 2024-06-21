@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import useDartStore from "../store/dart";
+import { IconMailUnread } from "./icons/Icons";
 
 // type ControlHeaderProps = {
 //   nodeConnected: boolean;
@@ -61,8 +62,21 @@ const ControlHeader = () => {
             >
               {window.our.node}
             </span>
-          {' '} {isClientConnected ? 'connected': 'connecting...'}
+          {isClientConnected ? '': ' connecting...'}
           </span>
+        </div>
+        <div
+          style={{
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => {
+            alert('DMs and service invites coming soon');
+          }}
+        >
+          <IconMailUnread size={'1.5em'}/>
         </div>
 
       </div>

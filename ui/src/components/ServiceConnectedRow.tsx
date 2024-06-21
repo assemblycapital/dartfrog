@@ -57,11 +57,11 @@ const ServiceConnectedRow: React.FC<ServiceConnectedRowProps> = ({serviceId, ser
   };
 
   let flexDirection: React.CSSProperties['flexDirection'] = "row";
-  if (plugins.length === 2) {
-    const nonChatPlugin = plugins.find(plugin => plugin !== CHAT_PLUGIN) || plugins[0];
-    const isPianoPlugin = nonChatPlugin === PIANO_PLUGIN;
-    flexDirection = isPianoPlugin ? "column" : "row";
-  }
+  // if (plugins.length === 2) {
+  //   const nonChatPlugin = plugins.find(plugin => plugin !== CHAT_PLUGIN) || plugins[0];
+  //   const isPianoPlugin = nonChatPlugin === PIANO_PLUGIN;
+  //   flexDirection = isPianoPlugin ? "column" : "row";
+  // }
   return (
     <div
       style={{
