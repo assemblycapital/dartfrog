@@ -35,7 +35,6 @@ const PluginIFrame: React.FC<PluginIFrameProps> = ({serviceId, service, plugin, 
           sessionStorage.setItem(dialogKey, 'true'); // Set flag in session storage
           if (confirmed) {
             let serviceId = event.data.url.slice(5, event.data.url.length);
-            console.log("TODO actually open the service", serviceId);
             addTab(serviceId);
           }
           setTimeout(() => {
