@@ -47,7 +47,7 @@ const DisplayUserActivity = () => {
           }}
         >
           For help, contact a.cow on Discord.
-          If you're having trouble, you may need to update your app version.
+          If you're having trouble, you may need to update your app version or uninstall and reinstall the app.
         </span>
       </div>
     </div>

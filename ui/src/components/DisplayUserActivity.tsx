@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { computeColorForName} from '../utils';
-import { ServiceId, ServiceMetadata } from '../dartclientlib';
+import { ServiceId, ServiceMetadata, computeColorForName } from '@dartfrog/puddle';
 import useDartStore from '../store/dart';
 
 interface DisplayUserActivityProps {
@@ -72,7 +71,6 @@ const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({ serviceId, me
   return (
     <div style={{color: '#ffffff77', fontSize: '0.8rem', cursor: 'default',
       userSelect: "none",
-      marginTop: '0.5rem',
     }}>
       <div>
         <span style={{fontSize: '0.8rem'}}>{groupedUsers.online.length} online: </span>

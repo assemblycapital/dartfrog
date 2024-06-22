@@ -1,5 +1,55 @@
-
 button {
   width: 5rem;
   height:27px
+}
+
+.service-list-header {
+  background-color: #1f1f1f;
+  color: #757575;
+  display: flex;
+  flex-direction: row;
+  cursor: default;
+  user-select: none;
+  gap: 0.5rem;
+  align-items: center;
+}
+.service-list-header-refresh {
+  cursor: pointer;
+  transition: background-color 0.25s;
+}
+.service-list-header-refresh:hover {
+  transition: background-color 0.25s;
+  background-color: #181818;
+}
+
+.join-button {
+  padding: 0.5rem 0;
+  color: #646cff;
+  transition: background-color 0.2s;
+}
+.join-button:hover {
+  background-color: #3c3f66;
+  transition: background-color 0.2s;
+}
+.delete-button {
+  padding: 0.5rem 0;
+  color: #d65353;
+  transition: background-color 0.2s;
+}
+.delete-button:hover {
+  background-color: #5b3535;
+  transition: background-color 0.2s;
+}
+
+.service-list-item {
+  /* display: contents; */
+  border-bottom: 1px solid #ffffff11;
+  gap: 1rem;
+  align-items: center;
+  border-bottom: 1px solid #494949; /* Add this line to include a border around each grid row */
+  transition: background-color 0.2s;
+}
+.service-list-item:hover {
+  background-color: #ffffff11;
+  transition: background-color 0.2s;
 }

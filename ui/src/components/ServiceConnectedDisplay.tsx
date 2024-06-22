@@ -1,70 +1,68 @@
-import React, { useEffect, useState } from 'react';
-import ChatHeader from './ChatHeader';
-import ChatBox from './ChatBox';
-import Piano from './Piano/Piano';
+import React, { useEffect, useRef, useState } from 'react';
 import DisplayUserActivity from './DisplayUserActivity';
-import PagePluginBox from './PagePluginBox';
+import ServiceConnectedRow from './ServiceConnectedRow';
 import "./ServiceConnectedDisplay.css"
-import ChessPluginBox from './ChessPluginBox';
+import ChessPluginBox from '../../../chess-ui/src/components/ChessPluginBox';
 
-const ServiceConnectedDisplay = ({ serviceId, service }) => {
+
+const ServiceConnectedDisplay = ({ serviceId, service, addTab }) => {
   const [plugins, setPlugins] = useState([]);
+  const [height, setHeight] = useState(500); // Default height in pixels
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const isResizing = useRef(false);
 
   useEffect(() => {
-    const activePlugins = service.metadata.plugins.filter(
-      plugin => service.pluginStates[plugin] && service.pluginStates[plugin].exists && service.pluginStates[plugin].state
-    );
+    const activePlugins = service.metadata.plugins;
     setPlugins(activePlugins);
   }, [service, serviceId]);
 
-  const renderPlugin = (pluginName) => {
-    if (!service.pluginStates[pluginName] || !service.pluginStates[pluginName].state) {
-      return <div>{`${pluginName} plugin not available or not initialized`}</div>;
-    }
+  const startResizing = (e) => {
+    e.preventDefault();
+    isResizing.current = true;
+    document.addEventListener('mousemove', resize);
+    document.addEventListener('mouseup', stopResizing);
+    // Disable pointer events on all iframes
+    document.querySelectorAll('iframe').forEach(iframe => iframe.style.pointerEvents = 'none');
+  };
 
-    switch (pluginName) {
-      case 'chat':
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
-            <ChatHeader serviceId={serviceId} />
-            <ChatBox serviceId={serviceId} chatState={service.pluginStates.chat.state} />
-          </div>
-        );
-      case 'piano':
-        return <Piano serviceId={serviceId} pianoState={service.pluginStates.piano.state} />;
-      case 'page':
-        return <PagePluginBox serviceId={serviceId} pageState={service.pluginStates.page.state} />;
-      case 'chess':
-        return <ChessPluginBox serviceId={serviceId} chessState={service.pluginStates.chess.state} />;
-      default:
-        return <div>{`${pluginName} plugin not available`}</div>;
+  const resize = (e) => {
+    if (isResizing.current && containerRef.current) {
+      const containerTop = containerRef.current.getBoundingClientRect().top;
+      let newHeight = e.clientY - containerTop;
+      const minHeight = 200;
+      if (newHeight < minHeight) newHeight = minHeight;
+      setHeight(newHeight);
     }
   };
 
+  const stopResizing = () => {
+    isResizing.current = false;
+    document.removeEventListener('mousemove', resize);
+    document.removeEventListener('mouseup', stopResizing);
+    // Re-enable pointer events on all iframes
+    document.querySelectorAll('iframe').forEach(iframe => iframe.style.pointerEvents = '');
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.3rem' }}>
-      <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: '0.8rem', height: '100%' }}>
-        {plugins.length === 0 && <div>No plugins available</div>}
-        {plugins.length === 1 && (
-          <div style={{ flex: 1, display: 'flex', height: '100%' }}>
-            {renderPlugin(plugins[0])}
-          </div>
-        )}
-        {plugins.length === 2 && (
-          <>
-            <div 
-              className="plugin-wrapper"
-            >
-              {renderPlugin(plugins.find(plugin => plugin !== 'chat') || plugins[0])}
-            </div>
-            <div 
-              className="plugin-wrapper"
-            >
-              {renderPlugin('chat')}
-            </div>
-          </>
-        )}
-        {plugins.length > 2 && <div>Support for more than two plugins is not available</div>}
+    <div
+      className="service-column"
+      >
+      <div
+        ref={containerRef}
+        className="service-column"
+        style={{ height: `${height}px` }}
+        >
+       
+        <ServiceConnectedRow serviceId={serviceId} service={service} plugins={plugins} addTab={addTab} />
+        <div
+          style={{
+            height: '8px',
+            background: '#1f1f1f',
+            cursor: 'row-resize',
+            width: '100%',
+          }}
+          onMouseDown={startResizing}
+        />
       </div>
 
       <DisplayUserActivity serviceId={serviceId} metadata={service.metadata} />

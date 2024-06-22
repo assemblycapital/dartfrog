@@ -14,7 +14,6 @@ use kinode_process_lib::{http, await_message, call_init, println, Address, Reque
     },
     our_capabilities,
     spawn,
-    
 };
 
 wit_bindgen::generate!({
@@ -22,60 +21,18 @@ wit_bindgen::generate!({
     world: "process-v0",
 });
 
-fn start_plugin_process(name:String, service:&Service, our:&Address, drive_path:String) {
-    // kill it if it already exists
-    let plugin_address = get_plugin_address(&name, our.node.as_str(), &service.id.id);
-
-    match wrap_spawn_plugin(our, name.clone(), service.clone()) {
-        Ok(_spawned_process_id) => {
-            // kill "after" spawning to get capabilities :p
-            // this is a workaround because on_exit doesn't work as intended in current version
-            let _ = Request::to(&plugin_address)
-                .body(serde_json::to_vec(&PluginInput::Kill).unwrap())
-                .send_and_await_response(1).unwrap();
-
-            match wrap_spawn_plugin(our, name.clone(), service.clone()) {
-                // initialize it
-                Ok(_spawned_process_id) => {
-                    poke_plugin(&plugin_address, PluginInput::Init(PluginMetadata {
-                        plugin_name: name.clone(),
-                        drive_path: drive_path,
-                        service: service.clone()
-                    })).unwrap();
-                }
-                Err(e) => {
-                    println!("couldn't spawn, {:?}", e)
-                }
-            }
-        }
-        Err(e) => {
-            println!("couldn't spawn, {:?}", e)
-        }
-    };
-}
-
-fn wrap_spawn_plugin(our: &Address, plugin_name: String, service: Service) -> Result<kinode_process_lib::ProcessId, kinode_process_lib::SpawnError> {
-    spawn(
-        // name of the child process
-        Some(&format!("df-plugin-{}-{}", plugin_name, service.id.id)),
-        // path to find the compiled Wasm file for the child process
-        &format!("{}/pkg/{}.wasm", our.package_id(), plugin_name),
-        // what to do when this process crashes/panics/finishes
-        kinode_process_lib::OnExit::None,
-        // capabilities to pass onto the child
-        // TODO only grant drive read access
-        our_capabilities(),
-        vec![],
-        // this process will not be public
-        false,
-    )
-}
-
 fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
     // println!("server request: {:?}", req);
     match req {
         ServerRequest::ServiceRequest(service_id, service_request) => {
-            handle_service_request(our, state, source, service_id, service_request)?;
+            match handle_service_request(our, state, source, service_id, service_request) {
+                Ok(_) => {
+                    // println!("service request handled");
+                }
+                Err(e) => {
+                    println!("error handling service request: {:?}", e);
+                }
+            }
         }
         ServerRequest::CreateService(service_id, plugins) => {
             if source.node != our.node {
@@ -85,13 +42,28 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                 return Ok(());
             }
             if let Some(_service) = state.server.services.get(&service_id.id) {
+                // println!("exists");
                 // already exists
             } else {
+                // println!("do it");
                 let mut service = new_service(service_id.clone());
                 for plugin in plugins {
-                    service.metadata.plugins.insert(plugin.clone());
-                    start_plugin_process(plugin, &service, our, state.server.drive_path.clone())
+                    match get_plugin_address(&plugin, our.node.as_str()) {
+                      Ok(plugin_address) => {
+                            // TODO vfs for plugin metadata sharing
+                            service.metadata.plugins.insert(plugin.clone());
+                            let plugin_metadata = PluginMetadata {
+                                plugin_name: plugin.clone(),
+                                drive_path: "todo".to_string(),
+                                service: service.clone(),
+                            };
+                            poke_plugin(&plugin_address, &PluginMessage::ServiceInput(service_id.clone(), PluginServiceInput::Init(plugin_metadata)))?;
+                        }
+                        Err(e) => {
+                        }
+                    }
                 }
+
                 state.server.services.insert(service_id.id.clone(), service.clone());
                 // TODO read_service??? for restoring state
                 write_service(state.server.drive_path.clone(), &service)?;
@@ -107,17 +79,22 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                     update_client(update, subscriber)?;
                 }
                 for plugin in service.metadata.plugins.clone() {
-                    let address = get_plugin_address(&plugin, our.node.as_str(), &service_id.id);
-                    poke_plugin(&address, PluginInput::Kill)?;
+                    if let Ok(plugin_address) = get_plugin_address(&plugin, our.node.as_str()) {
+                        poke_plugin(&plugin_address, &PluginMessage::ServiceInput(service_id.clone(), PluginServiceInput::Kill))?;
+                    }
                 }
                 state.server.services.remove(&service_id.id.clone());
             }
 
         }
         ServerRequest::RequestServiceList => {
-            let services: Vec<ServiceId> = state.server.services.keys().map(|x| ServiceId {
-                node: our.node.clone(),
-                id: x.clone()
+
+            let services: HashMap<String, ServiceMetadata> = state.server.services.iter().map(|(id, service)| {
+                let service_id = ServiceId {
+                    node: our.node.clone(),
+                    id: id.clone()
+                };
+                (get_service_id_string(&service_id), service.metadata.clone())
             }).collect();
             let update = ConsumerUpdate::FromServer(our.node.clone(), ConsumerServerUpdate::ServiceList(services));
             update_client(update, source.node.clone())?;
@@ -138,8 +115,21 @@ fn write_service(drive_path: String, service: &Service) -> anyhow::Result<()> {
         Ok(mut file) => {
             let metadata = serde_json::to_string(&service)?;
             let bytes = metadata.as_bytes();
-            file.set_len(bytes.len() as u64)?;
-            file.write_all(metadata.as_bytes())?;
+            match file.set_len(bytes.len() as u64) {
+                Ok(_) => {
+                    match file.write_all(metadata.as_bytes()) {
+                        Ok(_) => {
+                            // println!("wrote service metadata");
+                        }
+                        Err(e) => {
+                            println!("error writing service metadata: {:?}", e);
+                        }
+                    }
+                }
+                Err(e) => {
+                    println!("error writing service metadata: {:?}", e);
+                }
+            }
         }
         Err(e) => {
             println!("error writing service metadata: {:?}", e);
@@ -148,13 +138,12 @@ fn write_service(drive_path: String, service: &Service) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn poke_plugins(plugins: &HashSet<String>, poke: PluginInput, service_name: &String, our: &Address) -> anyhow::Result<()> {
-    for plugin in plugins {
-        let address = get_plugin_address(plugin, our.node.as_str(), service_name);
-        // println!("poking plugin: {:?}", address);
-        Request::to(address)
-            .body(serde_json::to_vec(&poke)?)
-            .send()?;
+fn poke_plugins(service:&Service, poke: PluginServiceInput, our: &Address) -> anyhow::Result<()> {
+    for plugin in service.metadata.plugins.clone() {
+
+        if let Ok(plugin_address) = get_plugin_address(&plugin, our.node.as_str()) {
+            poke_plugin(&plugin_address, &PluginMessage::ServiceInput(service.id.clone(), poke.clone()))?;
+        }
     }
     Ok(())
 }
@@ -168,35 +157,41 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
         match req {
             ServiceRequest::PluginOutput(plugin_name, plugin_out) => {
                 if service.metadata.plugins.contains(&plugin_name) {
-                    let plugin_address = get_plugin_address(&plugin_name, our.node.as_str(), &service_id.id);
-                    if source != plugin_address {
-                        // no spoofing
-                        return Ok(());
-                    }
 
-                    match plugin_out {
-                        PluginOutput::UpdateSubscribers(update) => {
-                            let wrap_update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::PluginUpdate(plugin_name, update));
-                            update_subscribers(wrap_update, service.metadata.subscribers.clone())?;
+                    if let Ok(plugin_address) = get_plugin_address(&plugin_name, our.node.as_str()) {
+                        if source != plugin_address {
+                            // no spoofing
+                            println!("spoofing attempt: {:?} {:?}", source, plugin_address);
+                            return Ok(());
                         }
-                        PluginOutput::UpdateClient(to, update) => {
-                            let wrap_update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::PluginUpdate(plugin_name, update));
-                            update_client(wrap_update, to)?;
-                        }
-                        _ => {
+
+                        match plugin_out {
+                            PluginServiceOutput::UpdateSubscribers(update) => {
+                                let wrap_update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::PluginUpdate(plugin_name, update));
+                                update_subscribers(wrap_update, service.metadata.subscribers.clone())?;
+                            }
+                            PluginServiceOutput::UpdateClient(to, update) => {
+                                let wrap_update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::PluginUpdate(plugin_name, update));
+                                update_client(wrap_update, to)?;
+                            }
+                            _ => {
+                            }
                         }
                     }
                 }
             }
             ServiceRequest::PluginRequest(plugin_name, plugin_req) => {
                 if service.metadata.plugins.contains(&plugin_name) {
-                    let plugin_address = get_plugin_address(&plugin_name, our.node.as_str(), &service_id.id);
-                    poke_plugin(&plugin_address, PluginInput::ClientRequest(source.node.clone(), plugin_req))?;
+                    if let Ok(plugin_address) = get_plugin_address(&plugin_name, our.node.as_str()) {
+                        poke_plugin(&plugin_address, &PluginMessage::ServiceInput(service.id.clone(), PluginServiceInput::ClientRequest(source.node.clone(), plugin_req)))?;
+                    }
                 }
             }
             ServiceRequest::Subscribe => {
+                let mut subscriber_is_new = false;
                 if !service.metadata.subscribers.contains(&source.node.clone()) {
-                    // already subscribed, continue anyways
+                    // subscriber is new, notify plugins
+                    subscriber_is_new = true;
                 }
                 service.metadata.subscribers.insert(source.node.clone());
                 service.metadata.user_presence.insert(source.node.clone(), Presence {
@@ -206,11 +201,13 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                         .as_secs(),
                 });
                 write_service(state.server.drive_path.clone(), service)?;
-                poke_plugins(&service.metadata.plugins, PluginInput::ClientJoined(source.node.clone()), &service.id.id, our)?;
-                let ack = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::SubscribeAck);
-                let meta = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
+                if subscriber_is_new {
+                    poke_plugins(&service, PluginServiceInput::ClientJoined(source.node.clone()), our)?;
+                    let meta = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
+                    update_subscribers(meta, service.metadata.subscribers.clone())?;
+                }
+                let ack = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::SubscribeAck(service.metadata.clone()));
                 update_client(ack, source.node.clone())?;
-                update_subscribers(meta, service.metadata.subscribers.clone())?;
             }
             ServiceRequest::Unsubscribe => {
                 if !service.metadata.subscribers.contains(&source.node.clone()) {
@@ -218,7 +215,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                     return Ok(());
                 }
                 service.metadata.subscribers.remove(&source.node.clone());
-                poke_plugins(&service.metadata.plugins, PluginInput::ClientExited(source.node.clone()), &service.id.id, our)?;
+                poke_plugins(&service, PluginServiceInput::ClientExited(source.node.clone()), our)?;
                 write_service(state.server.drive_path.clone(), service)?;
                 let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
                 update_subscribers(meta, service.metadata.subscribers.clone())?;
@@ -258,7 +255,7 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                     if to_kick.contains(user) {
                         let update: ConsumerUpdate = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::Kick);
                         update_client(update, user.clone())?;
-                        poke_plugins(&service.metadata.plugins, PluginInput::ClientExited(source.node.clone()), &service.id.id, our)?;
+                        poke_plugins(&service, PluginServiceInput::ClientExited(source.node.clone()), our)?;
                     }
                 }
                 service.metadata.subscribers.retain(|x| !to_kick.contains(x));
@@ -291,9 +288,25 @@ fn update_subscribers(update: ConsumerUpdate, subscribers: HashSet<String>) -> a
     Ok(())
 }
 
-fn handle_client_update(_our: &Address, state: &mut DartState, source: Address, upd: ClientUpdate) -> anyhow::Result<()> {
+
+fn handle_client_update(our: &Address, state: &mut DartState, source: Address, upd: ClientUpdate) -> anyhow::Result<()> {
     // println!("client update: {:?}", upd);
     match upd {
+        ClientUpdate::FromPlugin(plugin_update) => {
+            // handle the request
+            if source.node != our.node {
+                return Ok(());
+            }
+            match plugin_update {
+                PluginConsumerOutput::UpdateClient(service_id, update) => {
+                    if let Ok(plugin) = get_plugin_name_from_address(&source) {
+                        // println!("client plugin update: {:?} {:?}", service_id, plugin);
+                        update_all_consumers_with_service_plugin(state, update, &service_id, &plugin.to_string());
+                    }
+                }
+            }
+
+        }
         ClientUpdate::ConsumerUpdate(consumer_update) => {
             // possibly intercept the update first
             // TODO filter out lying updates
@@ -320,6 +333,7 @@ fn handle_client_update(_our: &Address, state: &mut DartState, source: Address, 
                         node: service_node.clone(),
                         id: service_name.clone()
                     };
+                    let mut sent_to_plugin = false;
                     for (_consumer_id, consumer) in state.client.consumers.iter_mut() {
                         if !consumer.services.contains_key(&service_id) {
                             continue;
@@ -340,13 +354,38 @@ fn handle_client_update(_our: &Address, state: &mut DartState, source: Address, 
                                 );
                                 update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
                             }
-                            ConsumerServiceUpdate::PluginUpdate(ref plugin, ref _upd) => {
+                            ConsumerServiceUpdate::PluginUpdate(ref plugin, ref upd) => {
+                                if sent_to_plugin {
+                                    // don't duplicate updates
+                                    continue;
+                                }
                                 let service = consumer.services.get_mut(&service_id).unwrap();
                                 if service.metadata.plugins.contains(plugin) {
-                                    update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
+                                    sent_to_plugin = true;
+                                    let update = PluginConsumerInput::ServiceUpdate(upd.clone());
+                                    update_consumer_plugin(plugin, &update, &service_id, our)?;
                                 }
                             }
-                            _ => {
+                            ConsumerServiceUpdate::SubscribeAck(ref metadata) => {
+                                let service = consumer.services.get_mut(&service_id).unwrap();
+                                service.metadata = metadata.clone();
+                                service.connection = ConnectionStatus::Connected(
+                                    SystemTime::now()
+                                        .duration_since(UNIX_EPOCH)
+                                        .unwrap()
+                                        .as_secs(),
+                                );
+                                let metadata_update = ConsumerUpdate::FromService(service.id.node.clone(), service.id.id.clone(), ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
+                                update_consumer(consumer.ws_channel_id, metadata_update)?;
+                                if sent_to_plugin {
+                                    // don't duplicate updates
+                                    continue;
+                                }
+                                sent_to_plugin = true;
+                                let update = PluginConsumerInput::ConsumerJoined;
+                                for plugin in service.metadata.plugins.iter() {
+                                    update_consumer_plugin(plugin, &update, &service_id, our)?;
+                                }
                             }
                         }
                     }
@@ -357,14 +396,6 @@ fn handle_client_update(_our: &Address, state: &mut DartState, source: Address, 
         }
     }
     Ok(())
-}
-
-
-fn get_client_id(our: &Address, consumer: &Consumer) -> ConsumerId {
-    ConsumerId {
-        client_node: our.node.clone(),
-        ws_channel_id: consumer.ws_channel_id,
-    }
 }
 
 fn handle_client_request(our: &Address, state: &mut DartState, _source: Address, req: ClientRequest) -> anyhow::Result<()> {
@@ -424,7 +455,6 @@ fn handle_client_request(our: &Address, state: &mut DartState, _source: Address,
                     } else {
                         consumer.services.insert(sid.clone(), new_sync_service(sid.clone()));
 
-                        let _consumer_id = get_client_id(our, consumer);
                         let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::Subscribe);
                         let address = get_server_address(sid.clone().node.as_str());
                         poke_server(&address, s_req)?;
@@ -540,7 +570,14 @@ fn handle_http_server_request(
 
             match serde_json::from_slice(&blob.bytes)? {
                 DartMessage::ServerRequest(s_req) => {
-                    handle_server_request(our, state, source.clone(), s_req)?;
+                    match handle_server_request(our, state, source.clone(), s_req) {
+                        Ok(_) => {
+                            // println!("server request handled");
+                        }
+                        Err(e) => {
+                            println!("error handling server request: {:?}", e);
+                        }
+                    }
                 }
                 DartMessage::ClientRequest(c_req) => {
                     match c_req {
@@ -591,7 +628,14 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
         match serde_json::from_slice(body)? {
             DartMessage::ServerRequest(s_req) => {
                 // println!("server request: {:?}", message);
-                handle_server_request(our, state, source.clone(), s_req)?;
+                match handle_server_request(our, state, source.clone(), s_req) {
+                    Ok(_) => {
+                        // println!("server request handled");
+                    }
+                    Err(e) => {
+                        println!("error handling server request: {:?}", e);
+                    }
+                }
             }
             DartMessage::ClientRequest(c_req) => {
                 if our.node != source.node {
@@ -610,6 +654,17 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
     }
 }
 
+fn update_all_consumers_with_service_plugin (state: &DartState, update: String, service_id: &ServiceId, plugin: &String) {
+    for (_id, consumer) in state.client.consumers.iter() {
+        if let Some(service) = consumer.services.get(service_id) {
+            if service.metadata.plugins.contains(plugin) {
+                let update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::PluginUpdate(plugin.clone(), update.clone()));
+                update_consumer(consumer.ws_channel_id, update.clone()).unwrap();
+            }
+        }
+    }
+}
+
 fn update_all_consumers (state: &DartState, update: ConsumerUpdate) {
     for (_id, consumer) in state.client.consumers.iter() {
         update_consumer(consumer.ws_channel_id, update.clone()).unwrap();
@@ -622,10 +677,6 @@ fn update_consumer (
     update: ConsumerUpdate,
 ) -> anyhow::Result<()> {
 
-    // if !(state.client.consumers.contains_key(&websocket_id)) {
-    //     return Ok(());
-    // }
-
     let blob = LazyLoadBlob {
         mime: Some("application/json".to_string()),
         bytes: serde_json::json!(update)
@@ -634,12 +685,28 @@ fn update_consumer (
         .to_vec(),
     };
 
-    // Send a WebSocket message to the http server in order to update the UI
     send_ws_push(
         websocket_id,
         WsMessageType::Text,
         blob,
     );
+    Ok(())
+}
+
+fn update_consumer_plugin (
+    plugin: &String,
+    update: &PluginConsumerInput,
+    service_id: &ServiceId,
+    our: &Address,
+) -> anyhow::Result<()> {
+    let address = get_process_address(our.node.as_str(), plugin.as_str());
+
+    let update = PluginMessage::ConsumerInput(service_id.clone(), update.clone());
+
+    Request::to(address)
+        .body(serde_json::to_vec(&update)?)
+        .send()?;
+
     Ok(())
 }
 
@@ -660,8 +727,8 @@ fn init(our: Address) {
     // Serve the index.html and other UI files found in pkg/ui at the root path.
     http::serve_ui(&our, "ui", true, false, vec!["/"]).unwrap();
 
-    // Allow HTTP requests to be made to /api; they will be handled dynamically.
-    http::bind_http_path("/api", true, false).unwrap();
+    // // Allow HTTP requests to be made to /api; they will be handled dynamically.
+    // http::bind_http_path("/api", true, false).unwrap();
 
     // Allow websockets to be opened at / (our process ID will be prepended).
     http::bind_ws_path("/", true, false).unwrap();
@@ -689,13 +756,13 @@ fn init(our: Address) {
     let drive_path: String = create_drive(our.package_id(), "dartfrog", None).unwrap();
     state.server.drive_path = drive_path;
 
-    let mut plugins = Vec::new();
-    plugins.push("chat".to_string());
-    poke_server(&our, ServerRequest::CreateService(ServiceId {
-        node: our.node.clone(),
-        id: "chat".to_string()
-    }, plugins)).unwrap();
-
+    // let mut plugins = Vec::new();
+    // plugins.push("chat:dartfrog:herobrine.os".to_string());
+    // plugins.push("piano:dartfrog:herobrine.os".to_string());
+    // poke_server(&our, ServerRequest::CreateService(ServiceId {
+    //     node: our.node.clone(),
+    //     id: "chat".to_string()
+    // }, plugins)).unwrap();
 
     loop {
         match handle_message(&our, &mut state) {
@@ -722,9 +789,10 @@ fn poke_server(address:&Address, req: ServerRequest) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn poke_plugin(address:&Address, poke: PluginInput) -> anyhow::Result<()> {
+fn poke_plugin(address:&Address, poke: &PluginMessage) -> anyhow::Result<()> {
+    // println!("poking plugin");
     Request::to(address)
-        .body(serde_json::to_vec(&poke)?)
+        .body(serde_json::to_vec(poke)?)
         .send()?;
     Ok(())
 }

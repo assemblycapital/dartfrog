@@ -1,0 +1,50 @@
+.chess-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #ffffff88;
+  font-size: 0.8rem;
+}
+
+.chessboard {
+  margin-bottom: 20px;
+}
+
+.player-info {
+  display: flex;
+  flex-direction: row;
+  gap: 0.3rem;
+  padding: 6px 2px;
+}
+
+.game-info {
+  text-align: center;
+  padding: 10px;
+  border-radius: 5px;
+  /* width: 320px; */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.game-info p {
+  margin: 5px 0;
+}
+
+.queue-button {
+  width: 100px;
+  background-color: #1f1f1f;
+  padding: 9px;
+  display: flex;            /* Aligns child elements using the Flexbox layout */
+  align-items: center;      /* Centers the text vertically */
+  justify-content: center;  /* Centers the text horizontally */
+  text-align: center;       /* Ensures the text is centered if it wraps */
+  cursor: pointer;
+  transition: background-color 0.5s;
+}
+
+.queue-button:hover {
+  background-color: #181818;
+  transition: background-color 0.5s;
+}
+

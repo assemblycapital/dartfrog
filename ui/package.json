@@ -1,5 +1,5 @@
 {
-  "name": "ui-template",
+  "name": "df-ui",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -33,6 +33,6 @@
     "eslint-plugin-react-refresh": "^0.4.5",
     "http-proxy-middleware": "^2.0.6",
     "typescript": "^5.2.2",
-    "vite": "^5.0.8"
+    "vite": "^5.3.1"
   }
 }

@@ -7,6 +7,7 @@ pkg/ui
 */wasi_snapshot_preview1.wasm
 */wit/
 */process_env
+node_modules
 
 # Junk
 .DS_Store

@@ -6,7 +6,7 @@ use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use std::hash::{Hash, Hasher};
-use kinode_process_lib::{await_message, Address, Request};
+use kinode_process_lib::{println, Address, ProcessId, Request};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Hash)]
 pub struct Presence {
@@ -31,6 +31,23 @@ pub struct Service {
     pub id: ServiceId,
     pub metadata: ServiceMetadata,
     pub last_sent_presence: u64,
+}
+impl Service {
+    pub fn new() -> Service {
+        Service {
+            id: ServiceId {
+                node: String::from(""),
+                id: String::from(""),
+            },
+            metadata: ServiceMetadata {
+                subscribers: HashSet::new(),
+                user_presence: HashMap::new(),
+                plugins: HashSet::new(),
+            },
+            last_sent_presence: 0,
+        }
+    }
+
 }
 
 impl Hash for Service {
@@ -94,12 +111,6 @@ pub struct SyncService {
 }
 
 #[derive(Hash, Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
-pub struct ConsumerId {
-    pub client_node: String,
-    pub ws_channel_id: u32,
-}
-
-#[derive(Hash, Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct ServiceId {
     pub node: String,
     pub id: String,
@@ -129,12 +140,6 @@ pub fn new_client_state() -> ClientState {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ChannelId {
-    pub service_id: ServiceId,
-    pub consumer_id: ConsumerId,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ServerRequest {
     ServiceRequest(ServiceId, ServiceRequest),
     CreateService(ServiceId, Vec<String>), // service id, plugins
@@ -151,11 +156,12 @@ pub enum ServiceRequest {
     AddPlugin(String),
     RemovePlugin(String),
     PluginRequest(String, String), // plugin name, untyped request string JSON
-    PluginOutput(String, PluginOutput) // plugin name, pluginOutput
+    PluginOutput(String, PluginServiceOutput) // plugin name, pluginOutput
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ClientUpdate {
     ConsumerUpdate(ConsumerUpdate),
+    FromPlugin(PluginConsumerOutput),
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ConsumerUpdate {
@@ -167,7 +173,7 @@ pub enum ConsumerUpdate {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ConsumerServerUpdate {
     NoSuchService(String),
-    ServiceList(Vec<ServiceId>),
+    ServiceList(HashMap<String, ServiceMetadata>), // serviceid as string
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -177,10 +183,10 @@ pub enum ConsumerClientUpdate {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ConsumerServiceUpdate {
-    SubscribeAck,
+    SubscribeAck(ServiceMetadata),
     ServiceMetadata(ServiceMetadata),
     Kick,
-    // TODO better way to encode the plugin update than as a json string
+    // TODO better way to encode the plugin update than as a json string?
     PluginUpdate(String, String), // plugin_name, update 
 }
 #[derive(Debug, Serialize, Deserialize)]
@@ -201,28 +207,98 @@ pub enum ConsumerRequest {
 pub const PROCESS_NAME : &str = "dartfrog:dartfrog:herobrine.os";
 
 pub fn get_server_address(node_id: &str) -> Address {
+    get_process_address(node_id, PROCESS_NAME)
+}
+
+pub fn get_process_address(node_id: &str, process: &str) -> Address {
     let s =
-        format!("{}@{}", node_id, PROCESS_NAME);
+        format!("{}@{}", node_id, process);
     Address::from_str(&s).unwrap()
 }
 
-const PACKAGE_NAME : &str = "dartfrog:herobrine.os";
-pub fn get_plugin_address(plugin_name: &str, node_id: &str, service_name: &str) -> Address {
-    let s =
-        format!("{}@df-plugin-{}-{}:{}", node_id, plugin_name, service_name, PACKAGE_NAME);
-    Address::from_str(&s).unwrap()
+// const PACKAGE_NAME : &str = "dartfrog:herobrine.os";
+pub fn get_plugin_address(plugin_name: &str, node_id: &str) -> anyhow::Result<Address, anyhow::Error> {
+    // println!("getting plugin address for plugin: {:?}, node: {:?}", plugin_name, node_id);
+    let full_process_name = format!("{}@{}", node_id, plugin_name);
+    // println!("constructed full process name: {:?}", full_process_name);
+
+    match address_from_string(&full_process_name) {
+        Ok(address) => {
+            // println!("successfully parsed address: {:?}", address);
+            Ok(address)
+        },
+        Err(e) => {
+            // println!("error parsing address from string '{}': {}", full_process_name, e);
+            Err(anyhow::anyhow!("error getting plugin address: {}", e))
+        }
+    }
+}
+pub fn get_service_id_string(service_id: &ServiceId) -> String {
+    format!("{}.{}", service_id.id, service_id.node)
 }
 
+// TODO for some reason Address::from_str panics instead of returning error
+fn address_from_string(input: &str) -> anyhow::Result<Address> {
+    // split string on '@' and ensure there is exactly one '@'
+    let parts: Vec<&str> = input.split('@').collect();
+    if parts.len() < 2 {
+        return Err(anyhow::anyhow!("missing node id"));
+    } else if parts.len() > 2 {
+        return Err(anyhow::anyhow!("too many ats"));
+    }
+    let node = parts[0].to_string();
+    if node.is_empty() {
+        return Err(anyhow::anyhow!("missing node id"));
+    }
 
-#[derive(Debug, Serialize, Deserialize)]
+    // split the rest on ':' and ensure there are exactly three ':'
+    let segments: Vec<&str> = parts[1].split(':').collect();
+    if segments.len() < 3 {
+        return Err(anyhow::anyhow!("missing field"));
+    } else if segments.len() > 3 {
+        return Err(anyhow::anyhow!("too many colons"));
+    }
+    let process_name = segments[0].to_string();
+    if process_name.is_empty() {
+        return Err(anyhow::anyhow!("missing field"));
+    }
+    let package_name = segments[1].to_string();
+    if package_name.is_empty() {
+        return Err(anyhow::anyhow!("missing field"));
+    }
+    let publisher_node = segments[2].to_string();
+    if publisher_node.is_empty() {
+        return Err(anyhow::anyhow!("missing field"));
+    }
+
+    Ok(Address {
+        node,
+        process: ProcessId {
+            process_name,
+            package_name,
+            publisher_node,
+        },
+    })
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PluginMetadata {
     pub plugin_name: String,
     pub drive_path: String,
     pub service: Service,
 }
+impl PluginMetadata {
+    pub fn new() -> PluginMetadata {
+        PluginMetadata {
+            plugin_name: String::from(""),
+            drive_path: String::from(""),
+            service: Service::new(),
+        }
+    }
+}
 
-#[derive(Debug, Serialize, Deserialize)]
-pub enum PluginInput {
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum PluginServiceInput {
     Init(PluginMetadata),
     Kill,
     ClientJoined(String), // node name
@@ -231,10 +307,37 @@ pub enum PluginInput {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum PluginOutput {
+pub enum PluginServiceOutput {
     UpdateSubscribers(String), // untyped update string JSON
     UpdateClient(String, String), // node name, untyped update string JSON
     ShuttingDown
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum PluginConsumerOutput {
+    UpdateClient(ServiceId, String), // service id, untyped update string JSON
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum PluginConsumerInput {
+    ServiceUpdate(String), // untyped update string JSON
+    ConsumerJoined,
+    ConsumerExited,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum PluginMessage {
+    ServiceInput(ServiceId, PluginServiceInput), // service id, _
+    ConsumerInput(ServiceId, PluginConsumerInput),
+}
+
+pub fn send_to_frontend(service_id: &ServiceId, update: &String, our: &Address) {
+    let server = get_server_address(&our.node);
+    let update = DartMessage::ClientUpdate(ClientUpdate::FromPlugin(PluginConsumerOutput::UpdateClient(service_id.clone(), update.clone())));
+    let _ = Request::to(server)
+        .body(serde_json::to_vec(&update).unwrap())
+        .send();
+    // println!("sent update to service: {:?}", service_id);
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -244,13 +347,152 @@ pub enum DartMessage {
     ClientUpdate(ClientUpdate),
 }
 
+pub fn handle_plugin_update<T, U>(update: PluginMessage, state: &mut PluginState<T, U>, our: &Address) -> anyhow::Result<()>
+where
+    T: PluginServiceState,
+    U: PluginClientState,
+{
+    match update {
+        PluginMessage::ServiceInput(service_id, service_input) => {
+            if let Some(service) = state.services.get_mut(&service_id) {
+                match service_input {
+                    PluginServiceInput::Init(meta) => {
+                        // println!("reinitializing service with metadata: {:?}", meta);
+                        service.metadata = meta;
+                    }
+                    PluginServiceInput::ClientJoined(client_id) => {
+                        if let Err(e) = service.state.handle_subscribe(client_id, our, &service.metadata) {
+                            println!("Error handling subscribe: {}", e);
+                        }
+                    }
+                    PluginServiceInput::ClientExited(client_id) => {
+                        if let Err(e) = service.state.handle_unsubscribe(client_id, our, &service.metadata) {
+                            println!("Error handling unsubscribe: {}", e);
+                        }
+                    }
+                    PluginServiceInput::ClientRequest(client_id, request) => {
+                        if let Err(e) = service.state.handle_request(client_id, request, our, &service.metadata) {
+                            println!("Error handling client request: {}", e);
+                        }
+                    }
+                    PluginServiceInput::Kill => {
+                        // Remove the service from the active service list
+                        // state.services.remove(&service_id);
+                        // println!("Service {} has been killed", service_id.id);
+                    }
+                }
+            } else {
+                match service_input {
+                    PluginServiceInput::Init(meta) => {
+                        // println!("initializing plugin with metadata: {:?}", meta);
+                        let service = PluginServiceStateWrapper {
+                            metadata: meta,
+                            state: T::new(),
+                        };
+                        state.services.insert(service_id, service);
+                    }
+                    _ => {
+
+                    }
+                }
+            }
+        }
+        PluginMessage::ConsumerInput(service_id, consumer_input) => {
+            // service.state.handle_consumer_update(consumer_input, our, &service.metadata);
+            // println!("handle_plugin_update: consumer input");
+            if let Some(client) = state.clients.get_mut(&service_id) {
+                match consumer_input {
+                    PluginConsumerInput::ServiceUpdate(update) => {
+                        if let Err(e) = client.state.handle_update(update, our, &client.metadata) {
+                            println!("Error handling service update: {}", e);
+                        }
+                    }
+                    PluginConsumerInput::ConsumerJoined => {
+                        if let Err(e) = client.state.handle_new_frontend(our, &client.metadata) {
+                            println!("Error handling new frontend: {}", e);
+                        }
+                    }
+                    PluginConsumerInput::ConsumerExited => {
+                        // TODO
+                    }
+                }
+            } else {
+                match consumer_input {
+                    PluginConsumerInput::ConsumerJoined => {
+                        let mut metadata = PluginMetadata::new();
+                        metadata.service = Service::new();
+                        metadata.service.id = service_id.clone();
+                        let plugin_name = get_plugin_name_from_address(&our).unwrap();
+                        metadata.plugin_name = plugin_name;
+                        let client = PluginClientStateWrapper {
+                            metadata: metadata,
+                            state: U::new(),
+                        };
+                        state.clients.insert(service_id, client);
+                    }
+                    _ => {
+
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+pub fn get_plugin_name_from_address(address: &Address) -> anyhow::Result<String> {
+    if let Some(plugin_name) = address.to_string().split('@').nth(1) {
+        return Ok(plugin_name.to_string());
+    }
+    Err(anyhow::anyhow!("invalid address: {}", address.node))
+}
+
+
+#[derive(Debug, Clone)]
+pub struct PluginState<T, U> 
+where
+    T: PluginServiceState,
+    U: PluginClientState,
+{
+    pub services: HashMap<ServiceId, PluginServiceStateWrapper<T>>,
+    pub clients: HashMap<ServiceId, PluginClientStateWrapper<U>>,
+}
+
+impl<T: PluginServiceState, U: PluginClientState> PluginState<T, U> {
+    pub fn new() -> Self {
+        PluginState {
+            services: HashMap::new(),
+            clients: HashMap::new(),
+        }
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct PluginServiceStateWrapper<T: PluginServiceState> {
+    pub metadata: PluginMetadata,
+    pub state: T,
+}
 
 // plugin library, probably should be in a separate file
-pub trait PluginState {
+pub trait PluginServiceState: std::fmt::Debug {
     fn new() -> Self;
-    fn handle_request(&mut self, from: String, req: String, meta: &PluginMetadata, our: &Address) -> anyhow::Result<()>;
-    fn handle_join(&mut self, from: String, meta: &PluginMetadata, our: &Address) -> anyhow::Result<()>;
-    fn handle_exit(&mut self, from: String, meta: &PluginMetadata, our: &Address) -> anyhow::Result<()>;
+    fn handle_request(&mut self, from: String, req: String, our: &Address, meta: &PluginMetadata) -> anyhow::Result<()>;
+    fn handle_subscribe(&mut self, from: String, our: &Address, meta: &PluginMetadata) -> anyhow::Result<()>;
+    fn handle_unsubscribe(&mut self, from: String, our: &Address, meta: &PluginMetadata) -> anyhow::Result<()>;
+}
+
+#[derive(Debug, Clone)]
+pub struct PluginClientStateWrapper<T: PluginClientState> {
+    pub metadata: PluginMetadata,
+    pub state: T,
+}
+
+pub trait PluginClientState: std::fmt::Debug {
+    fn new() -> Self;
+    fn handle_update(&mut self, upd: String, our: &Address, meta: &PluginMetadata) -> anyhow::Result<()>;
+    fn handle_new_frontend(&mut self, our: &Address, meta: &PluginMetadata) -> anyhow::Result<()>;
 }
 
 pub fn read_service(drive_path: &String, service_id: &ServiceId) -> anyhow::Result<Service> {
@@ -272,69 +514,13 @@ pub fn read_service(drive_path: &String, service_id: &ServiceId) -> anyhow::Resu
     }
 }
 
-pub fn handle_message<S: PluginState>(our: &Address, state: &mut S, meta: &mut Option<PluginMetadata>) -> anyhow::Result<()> {
-    let message = await_message()?;
-
-    let body = message.body();
-    let source = message.source();
-    if !message.is_request() {
-        println!("unexpected response");
-        return Ok(());
-    }
-    if message.source().node != our.node {
-        println!("unexpected source: {:?}", source);
-        return Ok(());
-    }
-    if meta.is_none() {
-        match serde_json::from_slice(body)? {
-            PluginInput::Kill => {
-                return Err(anyhow::anyhow!("kill message received"));
-            }
-
-            PluginInput::Init(init) => {
-                *meta = Some(init);
-            }
-            _ => {}
-        }
-    }
-
-    if let Some(meta) = meta {
-        match read_service(&meta.drive_path, &meta.service.id) {
-            Ok(service) => {
-                meta.service = service;
-            }
-            Err(e) => {
-                println!("error reading service: {:?}", e);
-            }
-        }
-
-        match serde_json::from_slice(body)? {
-            PluginInput::Kill => {
-                return Err(anyhow::anyhow!("kill message received"));
-            }
-            PluginInput::ClientRequest(from, req) => {
-                state.handle_request(from, req, meta, our)?;
-            }
-            PluginInput::ClientJoined(from) => {
-                // Initialize or handle client join as needed
-                state.handle_join(from, meta, our)?;
-            }
-            PluginInput::ClientExited(from) => {
-                // Handle client exit as needed
-                state.handle_exit(from, meta, our)?;
-            }
-            _ => {}
-        }
-    }
-
-    Ok(())
-}
-
 pub fn update_client(our: &Address, to: String, update: impl Serialize, meta: &PluginMetadata) -> anyhow::Result<()> {
     let update = serde_json::to_string(&update).unwrap();
     let address = get_server_address(&our.node);
     let dart_message = 
-        DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginOutput(meta.plugin_name.clone(), PluginOutput::UpdateClient(to, update))));
+        DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginOutput(meta.plugin_name.clone(), PluginServiceOutput::UpdateClient(to, update))));
+
+    // println!("updating client");
     let _ = Request::to(address)
         .body(serde_json::to_vec(&dart_message).unwrap())
         .send()?;
@@ -342,10 +528,12 @@ pub fn update_client(our: &Address, to: String, update: impl Serialize, meta: &P
 }
 
 pub fn update_subscribers(our: &Address, update: impl Serialize, meta: &PluginMetadata) -> anyhow::Result<()> {
+    // println!("update_subscribers");
     let update = serde_json::to_string(&update).unwrap();
     let address = get_server_address(&our.node);
+    // println!("updating subscribers {:?}", meta.service.id);
     let dart_message = 
-        DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginOutput(meta.plugin_name.clone(), PluginOutput::UpdateSubscribers(update))));
+        DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginOutput(meta.plugin_name.clone(), PluginServiceOutput::UpdateSubscribers(update))));
     let _ = Request::to(address)
         .body(serde_json::to_vec(&dart_message).unwrap())
         .send()?;

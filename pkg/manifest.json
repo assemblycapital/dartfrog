@@ -2,11 +2,59 @@
     {
         "process_name": "dartfrog",
         "process_wasm_path": "/dartfrog.wasm",
-        "on_exit": {"Requests": []},
+        "on_exit": "Restart",
         "request_networking": true,
         "request_capabilities": [
             "http_server:distro:sys",
             "homepage:homepage:sys",
+            "vfs:distro:sys"
+        ],
+        "grant_capabilities": [],
+        "public": true
+    },
+    {
+        "process_name": "chat",
+        "process_wasm_path": "/chat.wasm",
+        "on_exit": "Restart",
+        "request_networking": true,
+        "request_capabilities": [
+            "http_server:distro:sys",
+            "vfs:distro:sys"
+        ],
+        "grant_capabilities": [],
+        "public": true
+    },
+    {
+        "process_name": "piano",
+        "process_wasm_path": "/piano.wasm",
+        "on_exit": "Restart",
+        "request_networking": true,
+        "request_capabilities": [
+            "http_server:distro:sys",
+            "vfs:distro:sys"
+        ],
+        "grant_capabilities": [],
+        "public": true
+    },
+    {
+        "process_name": "page",
+        "process_wasm_path": "/page.wasm",
+        "on_exit": "Restart",
+        "request_networking": true,
+        "request_capabilities": [
+            "http_server:distro:sys",
+            "vfs:distro:sys"
+        ],
+        "grant_capabilities": [],
+        "public": true
+    },
+    {
+        "process_name": "chess",
+        "process_wasm_path": "/chess.wasm",
+        "on_exit": "Restart",
+        "request_networking": true,
+        "request_capabilities": [
+            "http_server:distro:sys",
             "vfs:distro:sys"
         ],
         "grant_capabilities": [],

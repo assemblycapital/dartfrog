@@ -2,34 +2,34 @@ import "./App.css";
 import Footer from "./components/Footer";
 import ControlHeader from "./components/ControlHeader";
 import { useEffect, useRef, useState } from "react";
-import { ConnectionStatusType } from "./types/types";
-import ServerBox from "./components/FullServicesView";
 import { WEBSOCKET_URL, } from './utils';
-import KinodeClientApi from "@kinode/client-api";
-import DartApi from "./dartclientlib/";
+import DartApi from "@dartfrog/puddle";
 import useDartStore from "./store/dart";
-import FullServicesView from "./components/FullServicesView";
 import BrowserBox from "./components/BrowserBox";
-import { availableParallelism } from "os";
+import TabbedWindowManager from "./components/TabbedWindowManager";
 
 function App() {
 
-  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, setAvailableServices, availableServices} = useDartStore();
-
+  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, services, setAvailableServices, requestServiceList, availableServices} = useDartStore();
 
   useEffect(() => {
     const api = new DartApi({
-      serviceUpdateHandlers: new Map(),
+      our: window.our,
+      websocket_url: WEBSOCKET_URL,
       onOpen: () => {
         setIsClientConnected(true);
+        requestServiceList(window.our.node);
+        setServices(new Map());
       },
       onClose: () => {
         setIsClientConnected(false);
       },
       onServicesChangeHook: (services) => {
+        // console.log("servicesChange", services);
         setServices(services);
       },
       onAvailableServicesChangeHook: (availableServices) => {
+        // console.log("availableServices", availableServices);
         setAvailableServices(availableServices);
       }
     });
@@ -49,24 +49,6 @@ function App() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
-  
-  // useEffect(() => {
-  //   // when the user presses a key a-z, focus #chat-input
-  //   const handleKeyDown = (event: KeyboardEvent) => {
-  //     if (event.key.match(/[a-z]/i)) {
-  //       const chatInput = document.getElementById('chat-input');
-  //       if (chatInput) {
-  //         chatInput.focus();
-  //       }
-  //     }
-  //   };
-
-  //   document.addEventListener('keydown', handleKeyDown);
-
-  //   return () => {
-  //     document.removeEventListener('keydown', handleKeyDown);
-  //   };
-  // }, []);
 
   return (
     <div style={{
@@ -77,7 +59,7 @@ function App() {
     }}>
       <ControlHeader />
 
-      <BrowserBox />
+      <TabbedWindowManager services={services} />
       {/* <FullServicesView /> */}
 
       <Footer />

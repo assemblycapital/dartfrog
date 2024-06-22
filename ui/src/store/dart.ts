@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId, parseServiceId } from '../dartclientlib';
-import { ChatMessageHistory } from '../types/types';
+import DartApi, { AvailableServices, ParsedServiceId, PerNodeAvailableServices, Service, ServiceId, parseServiceId } from '@dartfrog/puddle';
 
 export interface DartStore {
   api: DartApi | null,
@@ -16,15 +15,15 @@ export interface DartStore {
   setIsClientConnected: (isClientConnected: boolean) => void
   services: Map<ServiceId, Service>
   setServices: (services: Map<ServiceId, Service>) => void
-  exitService: (serviceId: ParsedServiceId) => void
-  joinService: (serviceId: ParsedServiceId) => void
-  pokeService: (parsedServiceId: ParsedServiceId, data:any) => void
+  exitService: (serviceId: ServiceId) => void
+  joinService: (serviceId: ServiceId) => void
+  pokeService: (parsedServiceId: ServiceId, data:any) => void
   createService: (serviceId: ServiceId, plugins: Array<String>) => void
   deleteService: (serviceId: ServiceId) => void
   requestServiceList: (serviceId: ServiceId) => void
   requestAllServiceList: () => void
-  availableServices: AvailableServices
-  setAvailableServices: (availableServices: AvailableServices) => void
+  availableServices: PerNodeAvailableServices
+  setAvailableServices: (availableServices: PerNodeAvailableServices) => void
   // 
   // chat stuff here until its properly abstracted later
   nameColors: Map<string, string>
@@ -59,23 +58,24 @@ const useDartStore = create<DartStore>()(
       setServices: (services) => {
         set({ services: new Map(services) })
       },
-      exitService: (serviceId: ParsedServiceId) => {
+      exitService: (serviceId: ServiceId) => {
         const { api } = get();
         if (!api) { return; }
 
         api.exitService(serviceId);
       },
-      joinService: (serviceId: ParsedServiceId) => {
+      joinService: (serviceId: ServiceId) => {
         const { api } = get();
         if (!api) { return; }
 
         api.joinService(serviceId);
       },
-      pokeService: (parsedServiceId: ParsedServiceId, data:any) => {
+      pokeService: (serviceId: ServiceId, data:any) => {
         const { api } = get();
         if (!api) { return; }
 
         // console.log('pokeService', parsedServiceId, data)
+        let parsedServiceId = parseServiceId(serviceId);
 
         const request =  { "SendToService": 
         [

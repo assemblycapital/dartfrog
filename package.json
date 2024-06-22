@@ -1,0 +1,17 @@
+{
+  "name": "df-ui-workspace",
+  "workspaces": [
+    "ui",
+    "chat-ui",
+    "piano-ui",
+    "page-ui",
+    "chess-ui",
+    "puddle"
+  ],
+  "dependencies": {
+    "@kinode/client-api": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.3"
+  }
+}

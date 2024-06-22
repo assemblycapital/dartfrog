@@ -1,0 +1,19 @@
+#root {
+  /* max-width: 1280px; */
+  margin: 0 auto;
+  /* padding: 0.8rem 2rem; */
+  width: 100%;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.chat-input-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
