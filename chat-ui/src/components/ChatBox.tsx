@@ -2,17 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ChatInput from './ChatInput';
 import { Service, ServiceId, makeServiceId, computeColorForName } from '@dartfrog/puddle';
 import ChatHeader from './ChatHeader';
-import useChatStore from '../store/chat';
+import useChatStore, { ChatState, ChatMessage} from '../store/chat';
 
-type ChatState = {
-  messages: Map<number, ChatMessage>;
-}
-type ChatMessage = {
-  id: number;
-  from: string;
-  msg: string;
-  time: number;
-}
 interface ChatBoxProps {
   serviceId: ServiceId;
   chatState: ChatState;
@@ -55,18 +46,24 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
     setChatMessageList(sortedMessages);
   }, [serviceId, chatState.messages]);
 
+  const scrollDownChat = useCallback(() => {
+    if (messagesEndRef.current) {
+      let behavior = "auto";
+      if (chatState.lastUpdateType === "message") {
+        behavior = "smooth";
+      }
+      messagesEndRef.current.scrollIntoView({ behavior: behavior as ScrollBehavior, block: 'nearest', inline: 'start' });
+    }
+  }, [messagesEndRef, chatState.lastUpdateType]);
+
   useEffect(() => {
+    // add a slight delay... I dont remember why
     const timer = setTimeout(() => {
       scrollDownChat();
     }, 100);
     return () => clearTimeout(timer);
-  }, []);
+  }, [chatMessageList, scrollDownChat]);
 
-  const scrollDownChat = useCallback(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: 'nearest', inline: 'start' });
-    }
-  }, [messagesEndRef]);
 
   useEffect(() => {
     scrollDownChat();
@@ -133,6 +130,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
   return (
     <>
       <div
+        className="chat-container"
         style={{
           height: `calc(100vh - ${inputHeight}px)`,
           paddingBottom: `${inputHeight}px`,
@@ -157,6 +155,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
           alignContent: "flex-end",
           position: 'relative',
           height: '100%',
+          paddingTop: `${inputHeight}px`,
+          paddingRight: `18px`,
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "5px", backgroundColor: "#242424" }}>
@@ -189,8 +189,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
 export default React.memo(ChatBox);
 
 const dfLinkRegex = /^df:\/\/[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\.([a-zA-Z0-9]+\.)+[a-zA-Z]+$/;
-// const dfLinkRegex = /^df:\/\/[a-zA-z0-9]+-[a-zA-z0-9]+\.([a-zA-z0-9]+\.)+[a-zA-z]+$/;
-// 
 
 const linkRegex = /^https?:\/\/\S+$/i;
 const imageRegex = /^https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp)$/i;

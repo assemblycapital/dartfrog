@@ -51,14 +51,14 @@ function App() {
                 });
               }
         
-              setChatState({ messages: newMessages });
+              setChatState({ messages: newMessages, lastUpdateType: "history" });
             }
           }
         },
       onOpen: () => {
         api.joinService(serviceId);
         setApi(api);
-        setChatState({ messages: new Map()});
+        setChatState({ messages: new Map(), lastUpdateType: "history" });
       },
       onClose: () => {
       },

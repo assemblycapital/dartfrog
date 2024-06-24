@@ -4,11 +4,12 @@ import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId, parseS
 export const PLUGIN_NAME = "chat:dartfrog:herobrine.os";
 
 
-type ChatState = {
+export type ChatState = {
   messages: Map<number, ChatMessage>;
+  lastUpdateType: "history" | "message";
 
 }
-type ChatMessage = {
+export type ChatMessage = {
   id: number;
   from: string;
   msg: string;
@@ -41,13 +42,13 @@ const useChatStore = create<ChatStore>((set, get) => ({
   api: null,
   setApi: (api) => set({ api }),
   // 
-  chatState: { messages: new Map() },
+  chatState: { messages: new Map(), lastUpdateType: "history" },
   setChatState: (chatState) => {  set({ chatState: chatState }) },
   addChatMessage: (message) => {
     const { chatState } = get();
     const newMessages = new Map(chatState.messages);
     newMessages.set(message.id, message);
-    set({ chatState: { messages: newMessages } });
+    set({ chatState: { messages: newMessages, lastUpdateType: "message" } });
   },
   // 
   sendChat: (text) => {

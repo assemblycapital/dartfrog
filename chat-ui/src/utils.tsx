@@ -12,10 +12,6 @@ export const WEBSOCKET_URL = import.meta.env.DEV
   ? `${PROXY_TARGET.replace('http', 'ws')}`
   : undefined;
 
-// export const IS_FAKE = true;
-// export const SERVER_NODE = IS_FAKE ? "fake.dev" : "waterhouse.os";
-// export const PROCESS_NAME = "dartfrog:dartfrog:herobrine.os";
-
 export const soundEffectCommands = {
   '/fart': 'assets/wet.mp3',
   '/no': 'assets/hell-naw-dog.mp3',
