@@ -251,8 +251,8 @@ class DartApi {
           // TODO?
           // this.services.delete(serviceId);
           this.onServicesChange();
-        } else if (response.PluginUpdate) {
-          const [plugin_name, update] = response.PluginUpdate;
+        } else if (response.MessageFromPluginClient) {
+          const [plugin_name, update] = response.MessageFromPluginClient;
           // call pluginUpdateHandler if it exists
           let pluginId = this.make_plugin_id(serviceId, plugin_name);
           const pluginUpdateHandler = this.pluginUpdateHandlers.get(pluginId);
@@ -261,6 +261,16 @@ class DartApi {
               pluginUpdateHandler(parsedUpdate, service);
           } else {
             // console.warn("no plugin update handler for", pluginId);
+          }
+        } else if (response.MessageFromPluginService) {
+          const [plugin_name, update] = response.MessageFromPluginService;
+          // call pluginUpdateHandler if it exists
+          let pluginId = this.make_plugin_id(serviceId, plugin_name);
+          const pluginUpdateHandler = this.pluginUpdateHandlers.get(pluginId);
+          if (pluginUpdateHandler) {
+              let parsedUpdate = JSON.parse(update);
+              pluginUpdateHandler(parsedUpdate, service);
+          } else {
           }
         } else {
           console.warn('Unknown service message format:', message);

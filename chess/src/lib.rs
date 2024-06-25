@@ -173,7 +173,7 @@ impl PluginClientState for ChessClient {
                     println!("error serializing update: {:?}", e);
                     e
                 })?;
-                send_to_frontend(&metadata.service.id, &upd_str, our);
+                send_to_frontend(&upd_str, metadata, our)?;
             }
             None => {
                 println!("chess service not initialized");
@@ -182,7 +182,11 @@ impl PluginClientState for ChessClient {
         Ok(())
     }
 
-    fn handle_update(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
+    fn handle_frontend_message(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    fn handle_service_message(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
         // Assuming updates are serialized `ChessUpdate`
         let upd = serde_json::from_str::<ChessUpdate>(&update).map_err(|e| {
             println!("error parsing update: {:?}", update);
@@ -193,10 +197,10 @@ impl PluginClientState for ChessClient {
             ChessUpdate::ChessState(new_state) => {
                 // Assuming `self.game` holds the current game state
                 self.service = Some(new_state);
-                send_to_frontend(&metadata.service.id, &update, our);
+                send_to_frontend(&update, metadata, our)?;
             }
             ChessUpdate::GameStart => {
-                send_to_frontend(&metadata.service.id, &update, our);
+                send_to_frontend(&update, metadata, our)?;
             }
         }
         Ok(())

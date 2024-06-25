@@ -56,8 +56,11 @@ impl PluginClientState for PianoClient {
     fn handle_new_frontend(&mut self, _our: &Address, _metadata: &PluginMetadata) -> anyhow::Result<()> {
         Ok(())
     }
-    fn handle_update(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
-        send_to_frontend(&metadata.service.id, &update, our);
+    fn handle_frontend_message(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn handle_service_message(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
+        send_to_frontend(&update, metadata, our)?;
         Ok(())
     }
 }

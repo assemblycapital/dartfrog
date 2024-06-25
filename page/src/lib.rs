@@ -62,10 +62,13 @@ impl PluginClientState for PageClient {
             println!("error serializing update: {:?}", upd);
             return Ok(());
         };
-        send_to_frontend(&metadata.service.id, &upd_str, our);
+        send_to_frontend(&upd_str, metadata, our)?;
         Ok(())
     }
-    fn handle_update(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
+    fn handle_frontend_message(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn handle_service_message(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
         // TODO cache page
         let Ok(upd) = serde_json::from_str::<PageUpdate>(&update) else {
             println!("error parsing request: {:?}", update);
@@ -76,7 +79,7 @@ impl PluginClientState for PageClient {
                 self.page = new_page.clone();
             }
         }
-        send_to_frontend(&metadata.service.id, &update, our);
+        send_to_frontend(&update, metadata, our)?;
         Ok(())
     }
 }
