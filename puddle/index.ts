@@ -11,7 +11,9 @@ export type ConnectionStatus = {
   status: ConnectionStatusType,
   timestamp: number
 }
-export type PluginUpdateHandler = (json: string | Blob, service: Service) => void;
+
+export type PluginUpdateSource = "client" | "service";
+export type PluginUpdateHandler = (json: string | Blob, service: Service, source: PluginUpdateSource) => void;
 
 export type PluginUpdateHandlers = Map<PluginId, PluginUpdateHandler>;
 
@@ -258,18 +260,18 @@ class DartApi {
           const pluginUpdateHandler = this.pluginUpdateHandlers.get(pluginId);
           if (pluginUpdateHandler) {
               let parsedUpdate = JSON.parse(update);
-              pluginUpdateHandler(parsedUpdate, service);
+              pluginUpdateHandler(parsedUpdate, service, "client");
           } else {
             // console.warn("no plugin update handler for", pluginId);
           }
-        } else if (response.MessageFromPluginService) {
-          const [plugin_name, update] = response.MessageFromPluginService;
+        } else if (response.MessageFromPluginServiceToFrontend) {
+          const [plugin_name, update] = response.MessageFromPluginServiceToFrontend;
           // call pluginUpdateHandler if it exists
           let pluginId = this.make_plugin_id(serviceId, plugin_name);
           const pluginUpdateHandler = this.pluginUpdateHandlers.get(pluginId);
           if (pluginUpdateHandler) {
               let parsedUpdate = JSON.parse(update);
-              pluginUpdateHandler(parsedUpdate, service);
+              pluginUpdateHandler(parsedUpdate, service, "service");
           } else {
           }
         } else {
@@ -354,7 +356,7 @@ class DartApi {
      this.sendRequest(request);
   }
 
-  pokePlugin(serviceId: ServiceId, plugin: string, innerPluginRequest: any) {
+  pokePluginService(serviceId: ServiceId, plugin: string, innerPluginRequest: any) {
     const wrap = {
       "PluginRequest": [
         plugin,
@@ -363,6 +365,18 @@ class DartApi {
     }
     let parsedServiceId = parseServiceId(serviceId);
     this.pokeService(parsedServiceId, wrap);
+  }
+
+  pokePluginClient(serviceId: ServiceId, plugin: string, innerPluginRequest: any) {
+    let parsedServiceId = parseServiceId(serviceId);
+    const request =  { "SendToPluginClient": 
+      [
+        { "node": parsedServiceId.node, "id": parsedServiceId.id },
+        plugin,
+        JSON.stringify(innerPluginRequest)
+      ]
+    }
+    this.sendRequest(request);
   }
 
   sendCreateServiceRequest(serviceId: ParsedServiceId, plugins: Array<String>) {

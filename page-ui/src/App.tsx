@@ -32,7 +32,7 @@ function App() {
       pluginUpdateHandler: {
           plugin:PLUGIN_NAME,
           serviceId,
-          handler:(pluginUpdate, service) => {
+          handler:(pluginUpdate, service, source) => {
             // console.log("page pluginUpdate", pluginUpdate);
             if (pluginUpdate["Page"]) {
               setPage(pluginUpdate["Page"]);

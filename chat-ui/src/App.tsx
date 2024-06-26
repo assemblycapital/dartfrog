@@ -33,7 +33,7 @@ function App() {
       pluginUpdateHandler: {
           plugin:PLUGIN_NAME,
           serviceId,
-          handler:(pluginUpdate, service) => {
+          handler:(pluginUpdate, service, source) => {
             if (pluginUpdate["Message"]) {
               const message = pluginUpdate["Message"];
               maybePlaySoundEffect(message.msg);

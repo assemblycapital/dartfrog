@@ -1,4 +1,4 @@
-use common::{get_server_address, handle_plugin_update, send_to_frontend, update_subscribers, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState};
+use common::{get_server_address, handle_plugin_update, send_to_frontend, update_subscriber_clients, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState};
 use kinode_process_lib::{await_message, call_init, println, Address};
 use serde::{Deserialize, Serialize};
 
@@ -66,7 +66,7 @@ impl PluginServiceState for ChessService {
 
     fn handle_subscribe(&mut self, _subscriber_node: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
         let update = ChessUpdate::ChessState(self.clone());
-        update_subscribers(our, update, metadata)?;
+        update_subscriber_clients(our, update, metadata)?;
         Ok(())
     }
 
@@ -86,14 +86,14 @@ impl PluginServiceState for ChessService {
                         if self.queued_white.is_none() {
                             self.queued_white = Some(from.clone());
                             let update = ChessUpdate::ChessState(self.clone());
-                            update_subscribers(our, update, metadata)?;
+                            update_subscriber_clients(our, update, metadata)?;
                         }
                     },
                     ChessColor::Black => {
                         if self.queued_black.is_none() {
                             self.queued_black = Some(from.clone());
                             let update = ChessUpdate::ChessState(self.clone());
-                            update_subscribers(our, update, metadata)?;
+                            update_subscriber_clients(our, update, metadata)?;
                         }
                     },
                 }
@@ -104,22 +104,22 @@ impl PluginServiceState for ChessService {
                     self.queued_white = None;
 
                     let update = ChessUpdate::GameStart;
-                    update_subscribers(our, update, metadata)?;
+                    update_subscriber_clients(our, update, metadata)?;
                 }
                 let state_update = ChessUpdate::ChessState(self.clone());
-                update_subscribers(our, state_update, metadata)?;
+                update_subscriber_clients(our, state_update, metadata)?;
             }
             ChessRequest::UnQueue(color) => {
                 match color {
                     ChessColor::White => if self.queued_white == Some(from.clone()) {
                         self.queued_white = None;
                         let state_update = ChessUpdate::ChessState(self.clone());
-                        update_subscribers(our, state_update, metadata)?;
+                        update_subscriber_clients(our, state_update, metadata)?;
                     },
                     ChessColor::Black => if self.queued_black == Some(from.clone()) {
                         self.queued_black = None;
                         let state_update = ChessUpdate::ChessState(self.clone());
-                        update_subscribers(our, state_update, metadata)?;
+                        update_subscriber_clients(our, state_update, metadata)?;
                     },
                 }
             }
@@ -135,7 +135,7 @@ impl PluginServiceState for ChessService {
                     game.is_white_turn = !game.is_white_turn;
                 }
                 let state_update = ChessUpdate::ChessState(self.clone());
-                update_subscribers(our, state_update, metadata)?;
+                update_subscriber_clients(our, state_update, metadata)?;
             }
             ChessRequest::Reset => {
                 if from == our.node() {
@@ -144,7 +144,7 @@ impl PluginServiceState for ChessService {
                     self.queued_black = None;
                 }
                 let state_update = ChessUpdate::ChessState(self.clone());
-                update_subscribers(our, state_update, metadata)?;
+                update_subscriber_clients(our, state_update, metadata)?;
             }
         }
 
@@ -182,7 +182,7 @@ impl PluginClientState for ChessClient {
         Ok(())
     }
 
-    fn handle_frontend_message(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
+    fn   handle_frontend_message(&mut self, _update: String, _our: &Address, _metadata: &PluginMetadata) -> anyhow::Result<()> {
         Ok(())
     }
 
@@ -228,7 +228,7 @@ fn handle_message(our: &Address, state: &mut AppState) -> anyhow::Result<()> {
     let source = message.source();
 
     if source != &get_server_address(our.node()) {
-        println!("page received message from unknown source: {:?}", source);
+        println!("chess received message from unknown source: {:?}", source);
         return Ok(());
     }
 
@@ -238,7 +238,7 @@ fn handle_message(our: &Address, state: &mut AppState) -> anyhow::Result<()> {
     
     if let Ok(plugin_message) = serde_json::from_slice::<PluginMessage>(&body) {
         if let Err(e) = handle_plugin_update(plugin_message, &mut state.plugin, our) {
-            println!("page error handling plugin update: {:?}", e);
+            println!("chess error handling plugin update: {:?}", e);
         }
     }
     Ok(())
@@ -247,14 +247,14 @@ fn handle_message(our: &Address, state: &mut AppState) -> anyhow::Result<()> {
 
 call_init!(init);
 fn init(our: Address) {
-    println!("init chess service");
+    println!("init chess");
     let mut state: AppState = AppState::new();
 
     let try_ui = kinode_process_lib::http::serve_ui(&our, "chess-ui", true, false, vec!["/"]);
     match try_ui {
         Ok(()) => {}
         Err(e) => {
-            println!("page error starting ui: {:?}", e)
+            println!("chess error starting ui: {:?}", e)
         }
     };
 

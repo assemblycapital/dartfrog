@@ -32,7 +32,7 @@ function App() {
       pluginUpdateHandler: {
           plugin:PLUGIN_NAME,
           serviceId,
-          handler:(pluginUpdate, service) => {
+          handler:(pluginUpdate, service, source) => {
             let newChessState = handleChessUpdate(chessState, pluginUpdate);
             setChessState(newChessState);
           }

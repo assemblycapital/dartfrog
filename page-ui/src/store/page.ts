@@ -42,7 +42,7 @@ const usePageStore = create<PageStore>((set, get) => ({
       "EditPage": 
         text
       }
-    api.pokePlugin(serviceId, PLUGIN_NAME, innerPluginRequest);
+    api.pokePluginService(serviceId, PLUGIN_NAME, innerPluginRequest);
   },
   // 
   nameColors: new Map<string, string>(),

@@ -99,7 +99,7 @@ const useChessStore = create<ChessStore>((set, get) => ({
     const { api, serviceId } = get();
     if (!api) { return; }
     if (!serviceId) { return; }
-    api.pokePlugin(serviceId, PLUGIN_NAME, req);
+    api.pokePluginService(serviceId, PLUGIN_NAME, req);
   },
   // 
   nameColors: new Map<string, string>(),

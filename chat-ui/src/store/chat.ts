@@ -60,7 +60,7 @@ const useChatStore = create<ChatStore>((set, get) => ({
       "SendMessage": 
         text
       }
-    api.pokePlugin(serviceId, PLUGIN_NAME, innerPluginRequest);
+    api.pokePluginService(serviceId, PLUGIN_NAME, innerPluginRequest);
   },
   // 
   nameColors: new Map<string, string>(),

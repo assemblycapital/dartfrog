@@ -9,22 +9,18 @@ interface ChatInputProps {
 
 const ChatInput: React.FC<ChatInputProps> = ({ serviceId }) => {
   const [chatMessageInputText, setChatMessageInputText] = useState('');
-  const {api} = useChatStore();
+  const {sendChat} = useChatStore();
 
   const handleInputChange = (event) => {
     setChatMessageInputText(event.target.value);
   };
 
-  const sendChat = useCallback(
+  const sendChatCallback = useCallback(
     async (event) => {
       event.preventDefault();
       if (!chatMessageInputText) return;
       let text = maybeReplaceWithImage(chatMessageInputText);
-      const innerPluginRequest = {
-        SendMessage: text,
-      };
-      api.pokePlugin(serviceId, PLUGIN_NAME, innerPluginRequest);
-
+      sendChat(text);
       setChatMessageInputText('');
     },
     [chatMessageInputText]
@@ -45,12 +41,12 @@ const ChatInput: React.FC<ChatInputProps> = ({ serviceId }) => {
         onKeyDown={(event) => {
           if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
-            sendChat(event);
+            sendChatCallback(event);
           }
         }}
       />
       <div>
-      <button style={{ cursor: 'pointer', height: '100%' }} onClick={sendChat}>
+      <button style={{ cursor: 'pointer', height: '100%' }} onClick={sendChatCallback}>
         Send
       </button>
       </div>

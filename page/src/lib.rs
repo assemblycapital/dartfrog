@@ -1,4 +1,4 @@
-use common::{get_server_address, handle_plugin_update, send_to_frontend, update_subscribers, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState};
+use common::{get_server_address, handle_plugin_update, send_to_frontend, update_subscriber_clients, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState};
 use constants::DEFAULT_PAGE;
 use kinode_process_lib::{await_message, call_init, println, Address};
 use serde::{Deserialize, Serialize};
@@ -65,7 +65,7 @@ impl PluginClientState for PageClient {
         send_to_frontend(&upd_str, metadata, our)?;
         Ok(())
     }
-    fn handle_frontend_message(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
+    fn handle_frontend_message(&mut self, _update: String, _our: &Address, _metadata: &PluginMetadata) -> anyhow::Result<()> {
         Ok(())
     }
     fn handle_service_message(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
@@ -96,7 +96,7 @@ impl PluginServiceState for PageService {
 
     fn handle_subscribe(&mut self, _subscriber_node: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
         let upd = PageUpdate::Page(self.page.clone());
-        match update_subscribers(our, upd, metadata) {
+        match update_subscriber_clients(our, upd, metadata) {
             Ok(()) => {}
             Err(e) => {
                 println!("error sending update to subscribers: {:?}", e);
@@ -120,7 +120,7 @@ impl PluginServiceState for PageService {
                 self.page = new_page.clone();
                 let upd = PageUpdate::Page(new_page);
 
-                match update_subscribers(our, upd, metadata) {
+                match update_subscriber_clients(our, upd, metadata) {
                     Ok(()) => {}
                     Err(e) => {
                         println!("error sending update to subscribers: {:?}", e);

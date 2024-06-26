@@ -1,4 +1,4 @@
-use common::{get_server_address, handle_plugin_update, send_to_frontend, update_subscribers, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState};
+use common::{get_server_address, handle_plugin_update, send_to_frontend, update_subscribers, DefaultPluginClientState, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState};
 use kinode_process_lib::{await_message, call_init, println, Address};
 use serde::{Deserialize, Serialize};
 
@@ -23,11 +23,6 @@ pub struct PianoService {
     pub todo: String,
 }
 
-#[derive(Debug, Clone)]
-pub struct PianoClient {
-    pub todo: String,
-}
-
 pub fn new_piano_service() -> PianoService {
     PianoService {
         todo: String::new(),
@@ -36,34 +31,17 @@ pub fn new_piano_service() -> PianoService {
 
 #[derive(Debug, Clone)]
 pub struct AppState {
-    pub plugin: PluginState<PianoService, PianoClient>,
+    pub plugin: PluginState<PianoService, DefaultPluginClientState>,
 }
 
 impl AppState {
     pub fn new() -> Self {
         AppState {
-            plugin: PluginState::<PianoService, PianoClient>::new(),
+            plugin: PluginState::<PianoService, DefaultPluginClientState>::new(),
         }
     }
 }
 
-impl PluginClientState for PianoClient {
-    fn new() -> Self {
-        PianoClient {
-            todo: String::new(),
-        }
-    }
-    fn handle_new_frontend(&mut self, _our: &Address, _metadata: &PluginMetadata) -> anyhow::Result<()> {
-        Ok(())
-    }
-    fn handle_frontend_message(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
-        Ok(())
-    }
-    fn handle_service_message(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
-        send_to_frontend(&update, metadata, our)?;
-        Ok(())
-    }
-}
 impl PluginServiceState for PianoService {
 
     fn new() -> Self {

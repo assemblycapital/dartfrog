@@ -36,7 +36,7 @@ const usePianoStore = create<PianoStore>((set, get) => ({
       "PlayNote": 
         text
       }
-    api.pokePlugin(serviceId, PLUGIN_NAME, innerPluginRequest);
+    api.pokePluginService(serviceId, PLUGIN_NAME, innerPluginRequest);
   },
   // 
   nameColors: new Map<string, string>(),
