@@ -69,7 +69,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
             }
             if let Some(service) = state.server.services.get(&service_id.id) {
                 for subscriber in service.metadata.subscribers.clone() {
-                    let update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::Kick);
+                    let update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::ServiceDeleted);
                     update_client_consumer(update, subscriber)?;
                 }
                 for plugin in service.metadata.plugins.clone() {
@@ -290,6 +290,10 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: &Address, 
                             continue;
                         }
                         match inner {
+                            ConsumerServiceUpdate::ServiceDeleted => {
+                                consumer.services.remove(&service_id);
+                                update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
+                            }
                             ConsumerServiceUpdate::Kick => {
                                 consumer.services.remove(&service_id);
                                 update_consumer(consumer.ws_channel_id, consumer_update.clone())?;

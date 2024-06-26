@@ -176,6 +176,7 @@ pub enum ConsumerServerUpdate {
 pub enum ConsumerServiceUpdate {
     SubscribeAck(ServiceMetadata),
     ServiceMetadata(ServiceMetadata),
+    ServiceDeleted,
     Kick,
     // TODO better way to encode the plugin update than as a json string?
     MessageFromPluginServiceToClient(String, String), // plugin_name, update 

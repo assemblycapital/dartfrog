@@ -68,9 +68,46 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services, addTab }) 
                       <Spinner />
                     </div>
                   ) : (
-                  <div>
-                    {stringifyServiceConnectionStatus(service.connectionStatus.status)}
-                  </div>
+                  <>
+                  {(service.connectionStatus.status === ServiceConnectionStatusType.Kicked) ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        height: "400px",
+                      }}
+                    >
+                      You were kicked from the service...
+                    </div>
+                  ) : (
+                    <>
+                    {(service.connectionStatus.status===ServiceConnectionStatusType.ServiceDoesNotExist) ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          height: "400px",
+                        }}
+                      >
+                        Service does not exist...
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          height: "400px",
+                        }}
+                      >
+                        Disconnected
+                      </div>
+                      )}
+                      </>
+                    )}
+                  </>
                   )}
                   </>
                   ) : (

@@ -187,7 +187,6 @@ class DartApi {
           // console.log('Server Response:', response);
 
           if (response.NoSuchService) {
-              // console.log('No such service:', response.NoSuchService);
               // Add your logic to handle the NoSuchService response here
               let serviceId : ServiceId = makeServiceId(address, response.NoSuchService);
               let service = this.services.get(serviceId);
@@ -247,7 +246,14 @@ class DartApi {
             }
           }
           this.onServicesChange();
+        } else if (response === 'ServiceDeleted') {
+          service.connectionStatus = {status:ServiceConnectionStatusType.Kicked, timestamp:Date.now()};
+          this.cancelPresenceHeartbeat(serviceId);
+          // TODO?
+          // this.services.delete(serviceId);
+          this.onServicesChange();
         } else if (response === 'Kick') {
+          console.log("Kicked", serviceId);
           service.connectionStatus = {status:ServiceConnectionStatusType.Kicked, timestamp:Date.now()};
           this.cancelPresenceHeartbeat(serviceId);
           // TODO?
