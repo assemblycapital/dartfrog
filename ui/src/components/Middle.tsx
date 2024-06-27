@@ -11,17 +11,6 @@ interface MiddleProps {
 const Middle: React.FC<MiddleProps> = ({ }) => {
 
   const { services, isSidebarOpen } = useDartStore();
-  const renderBrowser = useCallback(() => {
-    return (
-      <TabbedWindowManager services={services} />
-    );
-  }, [services]);
-
-  const gutterStyle = (dimension: "width" | "height", gutterSize: number, index: number) => ({
-    cursor: 'col-resize',
-    height: '100%',
-    width: '2px',
-  });
 
   return (
     <div style={{ height: '100%',
@@ -29,17 +18,34 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
       maxHeight: '100%',
       overflowY: 'hidden',
       boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
     }}>
 
       <Split
-        sizes={isSidebarOpen ? [70, 30] : [100, 0]} // Adjust sizes based on isSidebarOpen
-        minSize={isSidebarOpen ? 60 : 0}
+        sizes={isSidebarOpen ? [80, 20] : [100, 0]} // Adjust sizes based on isSidebarOpen
+        minSize={isSidebarOpen ? [60, 60] : [0, 0]} // Ensure minimum size for sidebar
         direction="horizontal"
-        style={{ display: 'flex', width: '100%', height: '100%'}}
+        gutterSize={10} // Adjust gutter size for better resizing
+        style={{
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'row',
+          // width: '100%',
+          // height: '100%'
+        }}
       >
-        {renderBrowser()}
+        <div>
+
+        <TabbedWindowManager services={services} />
+        </div>
+
         {isSidebarOpen ? (
-          <Sidebar />
+            <div>
+  
+            <Sidebar />
+            </div>
+
         ) : (
           <div></div>
         )}

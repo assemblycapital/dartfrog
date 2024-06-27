@@ -57,6 +57,7 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) =
 
       <Split
         sizes={[80,20]}
+        minSize={[80, 30]}
         direction="vertical"
         style={{
           flexGrow: 1,
@@ -65,9 +66,15 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) =
           height: '100%',
         }}
       >
-        <TabbedWindowStack />
+        <div>
+
+          <TabbedWindowStack />
+        </div>
       
-        <Footer />
+        <div>
+
+          <Footer />
+        </div>
       </Split>
     </div>
   );

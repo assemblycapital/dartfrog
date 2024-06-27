@@ -1,0 +1,12 @@
+.sidebar-container {
+  transition: width 0.3s ease;
+  overflow: hidden;
+}
+
+.sidebar-container.closed {
+  width: 0;
+}
+
+.sidebar-container.open {
+  width: 20%; /* Adjust this value to match the open state width */
+}

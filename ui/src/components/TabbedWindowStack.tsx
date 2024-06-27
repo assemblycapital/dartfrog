@@ -11,7 +11,7 @@ const TabbedWindowStack: React.FC<TabbedWindowStackProps> = ({ }) => {
   const { tabs, activeTabIndex, services, setTabs, setActiveTabIndex, addTab, closeTab, setFromNewTab, joinService, exitService } = useDartStore();
 
   return (
-    <div style={{ overflowY: 'auto', boxSizing: 'border-box', position: 'relative' }}>
+    <div style={{ overflowY: 'auto', boxSizing: 'border-box', position: 'relative', height: '100%' }}>
       {tabs.length === 0 ? (
         <div
           style={{
@@ -53,6 +53,7 @@ const TabbedWindowStack: React.FC<TabbedWindowStackProps> = ({ }) => {
               height: '100%',
               zIndex: index === activeTabIndex ? 5 : 1,
               backgroundColor: '#242424',
+              display: index === activeTabIndex ? 'inline-block' : 'none',
             }}
           >
             <TabbedWindow tab={tab} />
