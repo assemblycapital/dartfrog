@@ -273,7 +273,7 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: &Address, 
                 ConsumerUpdate::FromService(service_node, service_name, inner) => {
                     // handle the request
 
-                    if service_node != source.node {
+                    if service_node != source.node && our.node != source.node {
                         // no spoofing
                         return Ok(());
                     }

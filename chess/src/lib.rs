@@ -182,7 +182,7 @@ impl PluginClientState for ChessClient {
         Ok(())
     }
 
-    fn   handle_frontend_message(&mut self, _update: String, _our: &Address, _metadata: &PluginMetadata) -> anyhow::Result<()> {
+    fn handle_frontend_message(&mut self, _update: String, _our: &Address, _metadata: &PluginMetadata) -> anyhow::Result<()> {
         Ok(())
     }
 
