@@ -7,6 +7,9 @@ import { PlusIcon } from './icons/Icons';
 import NewTab from './NewTab/NewTab';
 import { HUB_NODE } from '../utils';
 import TabTop from './TabTop';
+import TabTops from './TabTops';
+import Split from 'react-split';
+import Footer from './Footer';
 
 interface TabbedWindowManagerProps {
   services: Map<ServiceId, Service>;
@@ -30,75 +33,44 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) =
   return (
     <div
       style={{
-        flex: 1,
+        flexGrow: 1,
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         maxHeight: '100%',
-        overflowY: 'hidden',
-        boxSizing: 'border-box',
+        // border: "1px solid yellow",
+        // padding: "1rem",
+        overflowY: 'hidden', // Ensure no overflow on the main container
       }}
     >
+     
+      {/* this is the topbar of constant size */}
       <div style={{
-        display: 'flex',
-        flexDirection: 'row',
-        // borderBottom: '2px solid #ffffff22',
-        backgroundColor: '#1f1f1f',
-        overflowX: "hidden",
-        overflowY: "hidden",
+        height: "26px",
+        display: "block",
+        flexShrink: 0, // Ensure this div does not shrink
       }}>
-        {tabs.map((tab, index) => (
-          <div key={index}
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignContent: 'center',
-              alignItems: 'center',
-              userSelect: 'none'
-            }}
-          >
-            <TabTop
-              tab={tab}
-              index={index}
-              activeTabIndex={activeTabIndex}
-              setActiveTabIndex={setActiveTabIndex}
-              closeTab={closeTab}
-              tabs={tabs}
-              exitService={exitService}
-            />
-            <div style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              }}
-            >
-              <div className="vertical-line"></div>
-            </div>
-          </div>
-        ))}
-        <div onClick={() => addTab(null)}
-          className="add-tab-button"
-        >
-          <PlusIcon />
-        </div>
+        <TabTops />
       </div>
 
-      <div
+      <Split
+        sizes={[80,20]}
+        direction="vertical"
         style={{
           flexGrow: 1,
-          boxSizing: 'border-box',
-          maxHeight: '100%',
+          display: 'flex',
+          flexDirection: 'column',
           height: '100%',
-          overflowY: 'scroll',
         }}
       >
-        <div style={{
-          height: '100%',
-          maxHeight: '100%',
-          boxSizing: 'border-box',
-          overflowY: 'scroll',
-          }}>
+
+
+      {/* this is the scrollable area */}
+      <div style={{
+        overflowY: 'auto',
+        boxSizing: 'border-box',
+      }}>
+
         {tabs.length === 0 ? (
           <div
             style={{
@@ -133,8 +105,10 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) =
             style={{
               height: '100%',
               maxHeight: '100%',
+              minHeight: '100%',
               boxSizing: 'border-box',
-              overflowY: 'scroll',
+              // border: "1px solid blue",
+              // padding: "2px",
             }}
           >
             {!tabs[activeTabIndex].serviceId ? (
@@ -152,8 +126,9 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) =
             )}
           </div>
         )}
-        </div>
       </div>
+      <Footer />
+      </Split>
     </div>
   );
 };

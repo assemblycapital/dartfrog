@@ -149,7 +149,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
       </div>
       <div
         style={{
-          overflowY: "scroll",
+          overflowY: "auto",
           overflowX: "hidden",
           boxSizing: "border-box",
           alignContent: "flex-end",

@@ -71,7 +71,6 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
       style={{
         display: "flex",
         flexDirection: "column",
-        // gap: "0.3rem",
       }}
     >
       <div style={{
@@ -84,7 +83,6 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
       </div>
       <div
         style={{
-          marginBottom: "0.8rem",
         }}
       >
           <div className="service-create-shortcut"

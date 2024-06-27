@@ -60,21 +60,21 @@ function App() {
       overflowY: 'hidden',
       display: 'flex',
       flexDirection: 'column',
-      padding: '20px', // Add padding
-      boxSizing: 'border-box' // Ensure padding doesn't affect overall size
+      padding: '20px',
     }}>
-      <div>
+      <div
+        style={{
+          flexShrink: 0,
+        }}
+      >
         <ControlHeader />
       </div>
       <div
         style={{
           flexGrow: 1,
-          height: '100%',
-          maxHeight: '100%',
-          boxSizing: 'border-box',
         }}
       >
-        <Middle />
+          <Middle />
       </div>
     </div>
   );

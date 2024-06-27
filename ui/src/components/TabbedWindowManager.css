@@ -2,13 +2,14 @@
   color: #ffffff66;
   background-color: #44444400;
   border: none;
-  padding:3px;
   cursor: pointer;
-  height: 20px;
-  width: 20px;
-  min-width: 20px;
+  height: 100%;
+  width: 26px;
   text-align:center;
   transition: background-color 0.25s;
+}
+.add-tab-button-svg {
+  padding: 5px;
 }
 .add-tab-button:hover {
   background-color: #44444499;
@@ -19,13 +20,15 @@
   background-color: #44444400;
   border: none;
   margin-left: 12px;
-  padding:3px;
+  /* padding:3px; */
   cursor: pointer;
-  height: 20px;
-  width: 20px;
-  min-width: 20px;
   text-align:center;
+  height: 100%;
+  width: 26px;
   transition: background-color 0.25s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .tab.active .close-tab-button:hover {
   background-color: #88888855;
@@ -34,6 +37,8 @@
   background-color: #323232;
 }
 .close-tab-button-svg {
+  height: 70%;
+  width: 70%;
   visibility: hidden;
   opacity: 0;
   transition: visibility 0.25s, opacity 0.25s;

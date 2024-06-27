@@ -20,3 +20,21 @@
 .gutter.gutter-horizontal:hover {
   cursor: col-resize;
 }
+.gutter.gutter-vertical {
+  cursor: row-resize;
+  background-color: transparent;
+  height: 10px !important;
+  position: relative;
+}
+.gutter.gutter-vertical::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #333;
+  height: 1px;
+  width: 100%;
+}
+.gutter.gutter-vertical:hover {
+  cursor: row-resize;
+}
