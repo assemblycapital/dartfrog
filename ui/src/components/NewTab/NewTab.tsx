@@ -19,8 +19,6 @@ interface NewTabProps {
 }
 
 const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
-  // const { requestAllServiceList, requestServiceList, availableServices, deleteService} = useDartStore();
-  // 
   const [inputJoinServiceName, setInputJoinServiceName] = useState('');
   const [isJoinServiceNameInputValid, setIsJoinServiceNameInputValid] = useState(true);
   const [inputJoinServiceHostNode, setInputJoinServiceHostNode] = useState('');
@@ -47,7 +45,6 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
         height: "100%",
         maxHeight: "100%",
         boxSizing: "border-box",
-        color: "#ffffffcc",
         fontSize: "0.8rem",
         display: "flex",
         flexDirection: "column",

@@ -138,12 +138,15 @@ const useDartStore = create<DartStore>()(
         set({ nameColors: nameColors })
       },
       tabs: [
-        { serviceId: "hub." + HUB_NODE },
+        // { serviceId: "hub." + HUB_NODE },
         { serviceId: null },
       ],
       activeTabIndex: 0,
       setTabs: (tabs) => set({ tabs }),
-      setActiveTabIndex: (index) => set({ activeTabIndex: index }),
+      setActiveTabIndex: (index) => {
+        set({ activeTabIndex: index })
+        // set({ activeTabServiceId: get().tabs[index].serviceId })
+      },
       addTab: (maybeServiceId) => set((state) => {
         const newTabs = [...state.tabs, { serviceId: maybeServiceId }];
         return { tabs: newTabs, activeTabIndex: newTabs.length - 1 };

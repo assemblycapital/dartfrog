@@ -1,5 +1,41 @@
+import { useEffect, useState } from "react";
+import { AssemblyCapitalLogo } from "./icons/Icons";
+import { Service, ServiceId } from "@dartfrog/puddle/index";
+import useDartStore from "../store/dart";
+import DisplayUserActivity from "./DisplayUserActivity";
 
-const DisplayUserActivity = () => {
+const Footer = () => {
+
+  const { services, tabs, activeTabIndex } = useDartStore();
+  const [serviceId, setServiceId] = useState<ServiceId | null>(null);
+  const [service, setService] = useState<Service | null>(null);
+
+  useEffect(() => {
+    let tab = tabs[activeTabIndex];
+    if (tab) {
+      setServiceId(tab.serviceId);
+    }
+  }, [tabs, activeTabIndex]);
+
+  useEffect(() => {
+    if (!(services instanceof Map)) return;
+    const gotService = services.get(serviceId);
+    if (gotService) {
+      setService({ ...gotService });
+      // console.log("service updated in servicetab")
+    } else {
+      setService(null);
+    }
+  }, [services, serviceId]);
+
+  if (serviceId !== null && service !== null) {
+    return (
+      <>
+        <DisplayUserActivity serviceId={serviceId} metadata={service?.metadata}/>
+      </>
+    )
+  }
+
   return (
     <div
       style={{
@@ -26,19 +62,10 @@ const DisplayUserActivity = () => {
         style={{
           display: "inline-block",
           alignContent: "flex-end",
+          opacity: "0.2",
         }}
       >
-        <svg style={{
-            width: "32",
-            height: "32",
-            fill: "none",
-            opacity: "0.2",
-          }}
-          viewBox="0 0 388 194"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path d="M194 0H97V97H0V194H97V97H194H291V194H388V97H291V0H194Z" fill="white" />
-        </svg>
+        <AssemblyCapitalLogo width="24" height="24" color="white"/>
       </div>
 
         <span
@@ -54,4 +81,4 @@ const DisplayUserActivity = () => {
 
   );
 }
-export default DisplayUserActivity;
+export default Footer;

@@ -2,6 +2,23 @@ import React from 'react';
 
 type IconProps = React.SVGProps<SVGSVGElement>;
 
+
+export const AssemblyCapitalLogo = ({ width = '32', height = '32', color = 'white' }) => {
+  return (
+    <svg
+      style={{
+        width: width,
+        height: height,
+        fill: "none",
+        }}
+      viewBox="0 0 388 194"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M194 0H97V97H0V194H97V97H194H291V194H388V97H291V0H194Z" fill={color} />
+    </svg>
+  );
+}
+
 export const HamburgerIcon = ({ width = '24', height = '24', color = 'black' }) => (
   <svg
     width={width}

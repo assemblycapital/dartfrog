@@ -120,6 +120,7 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
           flexDirection: "column",
           gap: "0.3rem",
           color: "#ffffff66",
+          marginTop: "0.8rem",
         }}
       >
         <div>
