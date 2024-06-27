@@ -7,23 +7,12 @@ import ServiceConnectedDisplay from "./ServiceConnectedDisplay";
 
 interface ServiceTabProps {
   serviceId: ServiceId;
-  services: Map<ServiceId, Service>;
   addTab: (serviceId: ServiceId | null) => void;
 }
 
-const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services, addTab }) => {
-  const [service, setService] = useState<Service | null>(null);
-
-  useEffect(() => {
-    if (!(services instanceof Map)) return;
-    const gotService = services.get(serviceId);
-    if (gotService) {
-      setService({ ...gotService });
-      // console.log("service updated in servicetab")
-    } else {
-      setService(null);
-    }
-  }, [services, serviceId]);
+const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, addTab }) => {
+  const {services} = useDartStore();
+  const service = services.get(serviceId);
 
   return (
     <div
@@ -52,7 +41,8 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services, addTab }) 
               height: "100%",
             }}
           >
-            <Spinner />
+              no service
+              <Spinner />
           </div>
         ) : (
           <>
@@ -67,6 +57,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services, addTab }) 
                         height: "100%",
                       }}
                     >
+                      connecting...
                       <Spinner />
                     </div>
                   ) : (

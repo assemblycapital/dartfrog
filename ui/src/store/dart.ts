@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import DartApi, { AvailableServices, ParsedServiceId, PerNodeAvailableServices, Service, ServiceId, parseServiceId } from '@dartfrog/puddle';
 import { HUB_NODE } from '../utils';
 
-interface Tab {
+export interface Tab {
   serviceId: ServiceId | null;
 }
 

@@ -10,6 +10,8 @@ import TabTop from './TabTop';
 import TabTops from './TabTops';
 import Split from 'react-split';
 import Footer from './Footer';
+import TabbedWindow from './TabbedWindowStack';
+import TabbedWindowStack from './TabbedWindowStack';
 
 interface TabbedWindowManagerProps {
   services: Map<ServiceId, Service>;
@@ -63,71 +65,9 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) =
           height: '100%',
         }}
       >
-
-
-      {/* this is the scrollable area */}
-      <div style={{
-        overflowY: 'auto',
-        boxSizing: 'border-box',
-      }}>
-
-        {tabs.length === 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '100%',
-              color: '#ffffff55',
-            }}
-          >
-            <button
-              style={{
-                padding: '8px',
-                border: '1px solid #ffffff55',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                width: '200px',
-                textAlign: 'center',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '40px',
-              }}
-              onClick={() => addTab(null)}
-            >
-              create a new tab
-            </button>
-          </div>
-        ) : (
-          <div
-            style={{
-              height: '100%',
-              maxHeight: '100%',
-              minHeight: '100%',
-              boxSizing: 'border-box',
-              // border: "1px solid blue",
-              // padding: "2px",
-            }}
-          >
-            {!tabs[activeTabIndex].serviceId ? (
-                <NewTab 
-                  setTabService={(serviceId: ServiceId) => {
-                    setFromNewTab(serviceId);
-                  }}
-                />
-            ):(
-                <ServiceTab
-                  serviceId={tabs[activeTabIndex].serviceId}
-                  services={services}
-                  addTab={addTab}
-                />
-            )}
-          </div>
-        )}
-      </div>
-      <Footer />
+        <TabbedWindowStack />
+      
+        <Footer />
       </Split>
     </div>
   );
