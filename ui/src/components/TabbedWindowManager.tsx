@@ -33,12 +33,17 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) =
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
+        height: '100%',
+        maxHeight: '100%',
+        overflowY: 'hidden',
+        boxSizing: 'border-box',
       }}
     >
       <div style={{
         display: 'flex',
         flexDirection: 'row',
-        borderBottom: '2px solid #ffffff22',
+        // borderBottom: '2px solid #ffffff22',
+        backgroundColor: '#1f1f1f',
         overflowX: "hidden",
         overflowY: "hidden",
       }}>
@@ -79,7 +84,21 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) =
         </div>
       </div>
 
-      <div>
+      <div
+        style={{
+          flexGrow: 1,
+          boxSizing: 'border-box',
+          maxHeight: '100%',
+          height: '100%',
+          overflowY: 'scroll',
+        }}
+      >
+        <div style={{
+          height: '100%',
+          maxHeight: '100%',
+          boxSizing: 'border-box',
+          overflowY: 'scroll',
+          }}>
         {tabs.length === 0 ? (
           <div
             style={{
@@ -87,7 +106,7 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) =
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-              height: '400px',
+              height: '100%',
               color: '#ffffff55',
             }}
           >
@@ -110,7 +129,14 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) =
             </button>
           </div>
         ) : (
-          <div>
+          <div
+            style={{
+              height: '100%',
+              maxHeight: '100%',
+              boxSizing: 'border-box',
+              overflowY: 'scroll',
+            }}
+          >
             {!tabs[activeTabIndex].serviceId ? (
                 <NewTab 
                   setTabService={(serviceId: ServiceId) => {
@@ -126,6 +152,7 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) =
             )}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

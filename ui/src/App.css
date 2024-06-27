@@ -13,8 +13,8 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #393939;
-  width: 2px;
+  background-color: #333;
+  width: 1px;
   height: 100%;
 }
 .gutter.gutter-horizontal:hover {

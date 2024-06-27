@@ -14,7 +14,7 @@
   background-color: #44444499;
 }
 
-.close-tab-button{
+.close-tab-button {
   color: #ffffff66;
   background-color: #44444400;
   border: none;
@@ -27,8 +27,21 @@
   text-align:center;
   transition: background-color 0.25s;
 }
-.close-tab-button:hover {
+.tab.active .close-tab-button:hover {
   background-color: #88888855;
+}
+.tab.inactive .close-tab-button:hover {
+  background-color: #323232;
+}
+.close-tab-button-svg {
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0.25s, opacity 0.25s;
+}
+.close-tab-button:hover .close-tab-button-svg,
+.tab.active .close-tab-button-svg {
+  visibility: visible;
+  opacity: 1;
 }
 
 .tab {
@@ -55,6 +68,7 @@
 
 .tab.inactive {
   background-color: #00000000;
+  color: #757575;
 }
 .vertical-line {
   height: 100%;

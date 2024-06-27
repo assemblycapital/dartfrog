@@ -12,7 +12,8 @@ import Middle from "./components/Middle";
 
 function App() {
 
-  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, services, setAvailableServices, requestServiceList, availableServices, sidebar} = useDartStore();
+  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, services, setAvailableServices, requestServiceList, availableServices, } = useDartStore();
+
 
   useEffect(() => {
     const api = new DartApi({
@@ -55,6 +56,8 @@ function App() {
   return (
     <div style={{
       height: '100vh',
+      maxHeight: '100vh',
+      overflowY: 'hidden',
       display: 'flex',
       flexDirection: 'column',
       padding: '20px', // Add padding
@@ -66,6 +69,9 @@ function App() {
       <div
         style={{
           flexGrow: 1,
+          height: '100%',
+          maxHeight: '100%',
+          boxSizing: 'border-box',
         }}
       >
         <Middle />

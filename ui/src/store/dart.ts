@@ -34,8 +34,8 @@ export interface DartStore {
   nameColors: Map<string, string>
   addNameColor: (name:string, color:string) => void
   // 
-  sidebar: 'messages' | 'profile' | 'home' | null
-  setSidebar: (sidebar: 'messages' | 'profile' | 'home' | null) => void
+  isSidebarOpen: boolean
+  setIsSidebarOpen: (isSidebarOpen: boolean) => void
   tabs: Tab[];
   activeTabIndex: number;
   setTabs: (tabs: Tab[]) => void;
@@ -137,10 +137,6 @@ const useDartStore = create<DartStore>()(
         nameColors[name] = color;
         set({ nameColors: nameColors })
       },
-      sidebar: null,
-      setSidebar: (sidebar) => {
-        set({ sidebar: sidebar })
-      },
       tabs: [
         { serviceId: "hub." + HUB_NODE },
         { serviceId: null },
@@ -164,6 +160,8 @@ const useDartStore = create<DartStore>()(
         updatedTabs[state.activeTabIndex] = { ...updatedTabs[state.activeTabIndex], serviceId };
         return { tabs: updatedTabs };
       }),
+      isSidebarOpen: false,
+      setIsSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
       get,
       set,
     }),

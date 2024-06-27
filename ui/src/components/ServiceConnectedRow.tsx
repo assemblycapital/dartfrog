@@ -1,6 +1,7 @@
 import React from 'react';
 import { ServiceId, Service } from '@dartfrog/puddle';
 import PluginIFrame from './PluginIFrame';
+import Split from 'react-split';
 
 interface ServiceConnectedRowProps {
     serviceId: ServiceId,
@@ -33,22 +34,29 @@ const ServiceConnectedRow: React.FC<ServiceConnectedRowProps> = ({serviceId, ser
       const nonChatPlugin = plugins.find(plugin => plugin !== CHAT_PLUGIN) || plugins[0];
       return (
           <>
-          <div className="plugin-wrapper">
-            <PluginIFrame
-              service={service}
-              serviceId={serviceId}
-              plugin={nonChatPlugin}
-              addTab={addTab}
-            />
-          </div>
-          <div className="plugin-wrapper">
-            <PluginIFrame
-              service={service}
-              serviceId={serviceId}
-              plugin={CHAT_PLUGIN}
-              addTab={addTab}
-            />
-          </div>
+          <Split
+            sizes={[50, 50]}
+            minSize={60}
+            direction="horizontal"
+            style={{ display: 'flex', width: '100%', height: '100%'}}
+          >
+            <div className="plugin-wrapper">
+              <PluginIFrame
+                service={service}
+                serviceId={serviceId}
+                plugin={nonChatPlugin}
+                addTab={addTab}
+              />
+            </div>
+            <div className="plugin-wrapper">
+              <PluginIFrame
+                service={service}
+                serviceId={serviceId}
+                plugin={CHAT_PLUGIN}
+                addTab={addTab}
+              />
+            </div>
+      </Split>
         </>
       );
     } else {

@@ -28,9 +28,9 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services, addTab }) 
   return (
     <div
       style={{
-        // minHeight: "400px",
         height: "100%",
-        padding: "4px",
+        maxHeight: "100%",
+        boxSizing: "border-box",
       }}
     >
       <div
@@ -39,6 +39,8 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services, addTab }) 
           flexDirection: "column",
           gap: "0.3rem",
           height: "100%",
+          padding: "4px",
+          boxSizing: "border-box",
         }}
       >
         {!service ? (
@@ -47,7 +49,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services, addTab }) 
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              height: "400px",
+              height: "100%",
             }}
           >
             <Spinner />
@@ -62,7 +64,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services, addTab }) 
                         display: "flex",
                         justifyContent: "center",
                         alignItems: "center",
-                        height: "400px",
+                        height: "100%",
                       }}
                     >
                       <Spinner />
@@ -75,7 +77,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services, addTab }) 
                         display: "flex",
                         justifyContent: "center",
                         alignItems: "center",
-                        height: "400px",
+                        height: "100%",
                       }}
                     >
                       You were kicked from {serviceId}
@@ -88,7 +90,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services, addTab }) 
                           display: "flex",
                           justifyContent: "center",
                           alignItems: "center",
-                          height: "400px",
+                          height: "100%",
                         }}
                       >
                         {serviceId} does not exist...
@@ -99,7 +101,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services, addTab }) 
                           display: "flex",
                           justifyContent: "center",
                           alignItems: "center",
-                          height: "400px",
+                          height: "100%",
                         }}
                       >
                         Disconnected

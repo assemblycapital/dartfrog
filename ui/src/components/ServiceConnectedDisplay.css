@@ -3,6 +3,7 @@
   flex-direction: column;
   align-items: stretch;
   /* min-height: 200px; */
+  height: 100%;
   gap: 0.8rem;
   width: 100%;
   height: 100%;
@@ -29,16 +30,17 @@
 }
 
 .plugin-wrapper {
-  flex: 1; /* Take up all available space */
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%; /* Ensure full width */
-  height: 100%; /* Ensure full height */
+  max-width: 100%; /* Ensure full width */
+  width: 100%;
+  overflow: hidden;
 }
 
 .plugin-wrapper iframe {
-  width: 100%; /* Ensure full width */
-  height: 100%; /* Ensure full height */
+  width: 100%;
+  max-width: 100%; /* Ensure full width */
   border: none;
+  height: 100%;
 }

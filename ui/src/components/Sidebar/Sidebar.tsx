@@ -9,7 +9,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ }) => {
-  const { sidebar, setSidebar, nameColors, addNameColor} = useDartStore();
+  const { isSidebarOpen, setIsSidebarOpen, nameColors, addNameColor} = useDartStore();
 
   const [myNameColor, setMyNameColor] = useState<string>('');
   useEffect(() => {
@@ -24,7 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
   }, [nameColors]);
 
   return (
-    <div className={`sidebar ${sidebar ? 'open' : 'closed'}`}>
+    <div className={`sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
       <div
         className={`profile`}
       >

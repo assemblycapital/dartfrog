@@ -106,27 +106,33 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
   return (
     <div
       style={{
-        minHeight: "400px",
-        padding: "4px",
+        // height: "100%",
+        // maxHeight: "100%",
+        boxSizing: "border-box",
+        // overflowY: "scroll",
         color: "#ffffffcc",
         fontSize: "0.8rem",
         display: "flex",
         flexDirection: "column",
         gap: "1.5rem",
-        margin: "0.8rem 0rem",
       }}
     >
       <div
         style={{
+          marginTop: "0.8rem",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-evenly",
+          boxSizing: "border-box",
+          // maxHeight: "100%",
         }}
       >
         <div
           className="service-list-header"
           style={{
-        }}>
+            boxSizing: "border-box",
+          }}
+        >
           <div
 
             style={{
@@ -262,3 +268,4 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
 }
 
 export default NewTab;
+

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import useDartStore from "../store/dart";
-import { IconMail, IconMailUnread } from "./icons/Icons";
+import { HamburgerIcon, IconMail, IconMailUnread } from "./icons/Icons";
 import "./ControlHeader.css";
 
 interface ControlHeaderProps {
@@ -8,7 +8,7 @@ interface ControlHeaderProps {
 }
 
 const ControlHeader: React.FC<ControlHeaderProps> = ({ }) => {
-  const { api, isClientConnected, sidebar, setSidebar } = useDartStore();
+  const { api, isClientConnected, isSidebarOpen, setIsSidebarOpen } = useDartStore();
   return (
     <div className="control-header">
       <div className="control-header-left">
@@ -17,35 +17,21 @@ const ControlHeader: React.FC<ControlHeaderProps> = ({ }) => {
         </a>
       </div>
       <div className="control-header-right">
-        <div className={`user-profile control-header-button ${sidebar === 'profile' ? 'active' : ''}`}
-          onClick={() => {
-            if (sidebar === 'profile') {
-              setSidebar(null);
-            } else {
-              setSidebar('profile');
-            }
-          }}
-        >
-          <span className="username">
-            {window.our.node}
-          </span>
-          {isClientConnected &&
-            <span className="connection-status">
-              {isClientConnected ? '' : ' connecting...'}
+        {!isClientConnected && <div className="connection-status">connecting...</div>}
+          <div className={`sidebar-toggle control-header-button ${isSidebarOpen ? 'active' : ''}`}
+            onClick={() => {
+              if (isSidebarOpen) {
+                setIsSidebarOpen(false);
+              } else {
+                setIsSidebarOpen(true);
+              }
+            }}
+          >
+            <span className="username">
+              {window.our.node}
             </span>
-          }
-        </div>
-        {/* <div className={`icon-mail control-header-button ${sidebar === 'messages' ? 'active' : ''}`}
-          onClick={() => {
-            if (sidebar === 'messages') {
-              setSidebar(null);
-            } else {
-              setSidebar('messages');
-            }
-          }}
-        >
-          <IconMail size={'1.5em'} />
-        </div> */}
+            <HamburgerIcon height='1em' width='1em' color='#b4b4b4'/>
+          </div>
       </div>
     </div>
   );

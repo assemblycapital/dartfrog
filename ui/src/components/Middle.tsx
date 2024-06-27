@@ -10,33 +10,13 @@ interface MiddleProps {
 
 const Middle: React.FC<MiddleProps> = ({ }) => {
 
-  const { services, sidebar } = useDartStore();
+  const { services, isSidebarOpen } = useDartStore();
   const renderBrowser = useCallback(() => {
     return (
-      <div style={{ height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
-        <div
-          style={{
-            flexGrow:1,
-            height: '100%',
-          }}
-        >
-          <TabbedWindowManager services={services} />
-        </div>
-        <div
-          style={{
-            flexShrink: 0,
-          }}
-        >
-          <Footer />
-
-        </div>
-      </div>
+      <TabbedWindowManager services={services} />
     );
   }, [services]);
-  if (sidebar === null) {
+    if (!isSidebarOpen) {
     return renderBrowser();
   }
 
@@ -50,16 +30,19 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
   return (
     <div style={{ height: '100%',
       flexGrow: 1,
+      maxHeight: '100%',
+      overflowY: 'hidden',
+      boxSizing: 'border-box',
     }}>
       <Split
       sizes={[60, 40]}
       minSize={60}
       direction="horizontal"
-      style={{ display: 'flex', width: '100%', height: '100%'}}
+      style={{ display: 'flex', width: '100%', height: '100%', boxSizing: 'border-box'}}
     >
       {renderBrowser()}
-      {sidebar && (
-        <div style={{ height: '100%' }}>
+      {isSidebarOpen && (
+        <div style={{ height: '100%', boxSizing: 'border-box'}}>
           <Sidebar />
         </div>
       )}
