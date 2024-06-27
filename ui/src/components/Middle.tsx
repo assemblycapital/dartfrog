@@ -16,10 +16,6 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
       <TabbedWindowManager services={services} />
     );
   }, [services]);
-    if (!isSidebarOpen) {
-    return renderBrowser();
-  }
-
 
   const gutterStyle = (dimension: "width" | "height", gutterSize: number, index: number) => ({
     cursor: 'col-resize',
@@ -34,19 +30,20 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
       overflowY: 'hidden',
       boxSizing: 'border-box',
     }}>
+
       <Split
-      sizes={[60, 40]}
-      minSize={60}
-      direction="horizontal"
-      style={{ display: 'flex', width: '100%', height: '100%', boxSizing: 'border-box'}}
-    >
-      {renderBrowser()}
-      {isSidebarOpen && (
-        <div style={{ height: '100%', boxSizing: 'border-box'}}>
+        sizes={isSidebarOpen ? [70, 30] : [100, 0]} // Adjust sizes based on isSidebarOpen
+        minSize={isSidebarOpen ? 60 : 0}
+        direction="horizontal"
+        style={{ display: 'flex', width: '100%', height: '100%'}}
+      >
+        {renderBrowser()}
+        {isSidebarOpen ? (
           <Sidebar />
-        </div>
-      )}
-    </Split>
+        ) : (
+          <div></div>
+        )}
+      </Split>
     </div>
   );
 };
