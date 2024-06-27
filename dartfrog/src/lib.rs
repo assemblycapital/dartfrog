@@ -12,8 +12,6 @@ use kinode_process_lib::{http, await_message, call_init, println, Address, Reque
         send_ws_push, HttpServerRequest,
         WsMessageType,
     },
-    our_capabilities,
-    spawn,
 };
 
 wit_bindgen::generate!({
@@ -53,7 +51,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                             };
                             poke_plugin(&plugin_address, &PluginMessage::ServiceInput(service.clone(), PluginServiceInput::Init(plugin_metadata)))?;
                         }
-                        Err(e) => {
+                        Err(_e) => {
                         }
                     }
                 }
@@ -330,7 +328,7 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: &Address, 
                                     poke_plugin_client(plugin, &update, &service.service, our)?;
                                 }
                             }
-                            ConsumerServiceUpdate::MessageFromPluginServiceToFrontend(ref plugin, ref upd) => {
+                            ConsumerServiceUpdate::MessageFromPluginServiceToFrontend(ref plugin, ref _upd) => {
                                 // authenticate the plugin
                                 let Ok(expected_source ) = get_plugin_address(plugin, service_id.node.as_str()) else {
                                     return Ok(());
@@ -346,7 +344,7 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: &Address, 
                                     update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
                                 }
                             }
-                            ConsumerServiceUpdate::MessageFromPluginClient(ref plugin, ref upd) => {
+                            ConsumerServiceUpdate::MessageFromPluginClient(ref plugin, ref _upd) => {
                                 // authenticate the plugin
                                 let Ok(expected_source ) = get_plugin_address(plugin, our.node.as_str()) else {
                                     return Ok(());
@@ -572,7 +570,7 @@ fn handle_http_server_request(
                 return Ok(());
             };
 
-            let Ok(s) = String::from_utf8(blob.bytes.clone()) else {
+            let Ok(_s) = String::from_utf8(blob.bytes.clone()) else {
                 return Ok(());
             };
 
@@ -646,16 +644,6 @@ fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
             }
         }
         Ok(())
-    }
-}
-
-fn update_all_consumers_with_service_plugin(state: &DartState, update: ConsumerUpdate, service_id: &ServiceId, plugin: &String) {
-    for (_id, consumer) in state.client.consumers.iter() {
-        if let Some(service) = consumer.services.get(service_id) {
-            if service.service.metadata.plugins.contains(plugin) {
-                update_consumer(consumer.ws_channel_id, update.clone()).unwrap();
-            }
-        }
     }
 }
 

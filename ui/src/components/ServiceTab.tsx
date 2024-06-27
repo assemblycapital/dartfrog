@@ -78,7 +78,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services, addTab }) 
                         height: "400px",
                       }}
                     >
-                      You were kicked from the service...
+                      You were kicked from {serviceId}
                     </div>
                   ) : (
                     <>
@@ -91,7 +91,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, services, addTab }) 
                           height: "400px",
                         }}
                       >
-                        Service does not exist...
+                        {serviceId} does not exist...
                       </div>
                     ) : (
                       <div

@@ -1,0 +1,88 @@
+.sidebar {
+  height: 100%;
+  width: 100%;
+  color: white;
+  transition: flex 0.3s ease, width 0.3s ease, display 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+  color: #ffffffcc;
+}
+
+.sidebar div {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+  user-select: none;
+}
+
+.sidebar div:hover {
+  background-color: #222;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar .profile {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.profile-image {
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgb(91, 91, 91);
+  display: inline-block;
+}
+
+.profile-image img {
+  width: 100px;
+  height: 100px;
+  padding: 24px;
+  object-fit: cover;
+  background-color: #252525;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  cursor: pointer;
+}
+
+.profile-image img:hover {
+  background-color: #222;
+  transform: scale(1.1);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.profile-name {
+  margin-top: 6px;
+  transition: transform 0.3s ease;
+}
+.profile-name:hover {
+  transform: scale(1.1);
+  transition: transform 0.3s ease;
+}
+
+.sidebar.closed {
+  flex: 0;
+}
+
+.sidebar.open {
+  flex: 1;
+  width: 100%;
+}
+
+.sidebar-content {
+  padding: 1rem;
+}
+
+button {
+  background-color: #444;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}

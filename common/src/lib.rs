@@ -153,8 +153,8 @@ pub enum ServiceRequest {
     PresenceHeartbeat,
     AddPlugin(String),
     RemovePlugin(String),
-    PluginRequest(String, String),
-    // PluginOutput(String, PluginServiceOutput) // plugin name, pluginOutput
+    PluginRequest(String, String), // plugin name, update
+    // TODO should pluginrequests include if they are from a client vs a frontend? what about a service?
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ClientUpdate {
@@ -367,7 +367,7 @@ where
                             println!("Error handling unsubscribe: {}", e);
                         }
                     }
-                    PluginServiceInput::Message(client_id, node_type, request) => {
+                    PluginServiceInput::Message(client_id, _node_type, request) => {
                         if let Err(e) = service.state.handle_request(client_id, request, our, &service.metadata) {
                             println!("Error handling client request: {}", e);
                         }
@@ -602,6 +602,18 @@ pub fn plugin_service_to_client_frontend(to: String, update: impl Serialize, met
             meta.service.id.id.clone(),
             ConsumerServiceUpdate::MessageFromPluginServiceToFrontend(meta.plugin_name.clone(), update)
         )));
+    let _ = Request::to(address)
+        .body(serde_json::to_vec(&dart_message).unwrap())
+        .send()?;
+    Ok(())
+}
+
+// I haven't tried this but it probably works
+pub fn plugin_client_to_service(message: impl Serialize, meta: &PluginMetadata) -> anyhow::Result<()> {
+    let update = serde_json::to_string(&message).unwrap();
+    let address = get_server_address(&meta.service.id.node);
+    let dart_message = 
+        DartMessage::ServerRequest(ServerRequest::ServiceRequest(meta.service.id.clone(), ServiceRequest::PluginRequest(meta.plugin_name.clone(), update)));
     let _ = Request::to(address)
         .body(serde_json::to_vec(&dart_message).unwrap())
         .send()?;

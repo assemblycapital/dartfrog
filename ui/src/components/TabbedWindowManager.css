@@ -1,17 +1,13 @@
-button.add-tab-button {
+.add-tab-button{
   color: #ffffff66;
-  margin-top: 0px;
-  width: 26px;
-  height: 26px;
-  padding: 3px;
   background-color: #44444400;
   border: none;
-  border-radius: 0px;
+  padding:3px;
   cursor: pointer;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 20px;
+  width: 20px;
+  min-width: 20px;
+  text-align:center;
   transition: background-color 0.25s;
 }
 .add-tab-button:hover {
@@ -21,7 +17,6 @@ button.add-tab-button {
 .close-tab-button{
   color: #ffffff66;
   background-color: #44444400;
-  /* border-radius: 999999999px; */
   border: none;
   margin-left: 12px;
   padding:3px;
@@ -41,8 +36,6 @@ button.add-tab-button {
   flex-direction: row;
   cursor: pointer;
   font-size: 0.8rem;
-  min-width: 100px;
-  overflow: hidden;
   white-space: nowrap;
   height: 26px;
   transition: background-color 0.25s;

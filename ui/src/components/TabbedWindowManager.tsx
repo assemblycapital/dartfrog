@@ -1,32 +1,19 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { ServiceId, Service, parseServiceId, AvailableServices } from '@dartfrog/puddle';
+import React, { useEffect } from 'react';
+import { ServiceId, Service } from '@dartfrog/puddle';
 import ServiceTab from './ServiceTab';
 import useDartStore from '../store/dart';
 import './TabbedWindowManager.css';
-import { PlusIcon, XIcon } from './icons/Icons';
+import { PlusIcon } from './icons/Icons';
 import NewTab from './NewTab/NewTab';
-import { join } from 'path';
 import { HUB_NODE } from '../utils';
-import Spinner from './Spinner';
 import TabTop from './TabTop';
-
-interface Tab {
-  serviceId: ServiceId | null;
-}
 
 interface TabbedWindowManagerProps {
   services: Map<ServiceId, Service>;
 }
 
-const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({services}) => {
-  const [tabs, setTabs] = useState<Tab[]>([
-    { serviceId: "hub."+HUB_NODE},
-    { serviceId: null },
-  ]);
-
-  const [activeTabIndex, setActiveTabIndex] = useState<number>(0);
-  const [currentTabService, setCurrentTabService] = useState<Service | null>(null);
-  const { exitService, joinService } = useDartStore();
+const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) => {
+  const { tabs, activeTabIndex, setTabs, setActiveTabIndex, addTab, closeTab, setFromNewTab, joinService, exitService } = useDartStore();
 
   useEffect(() => {
     if (!(services instanceof Map)) return;
@@ -38,40 +25,22 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({services}) => 
         }
       }
     });
-
-  }, [tabs, services]);
-
-  const addTab = useCallback((maybeServiceId: ServiceId | null) => {
-    setTabs(prevTabs => {
-      const newTabs = [...prevTabs, { serviceId: maybeServiceId }];
-      setActiveTabIndex(newTabs.length - 1);  // Set the active tab index to the new tab
-      return newTabs;
-    });
-  }, []);
-  
-
-  const closeTab = useCallback((index: number) => {
-    setTabs(prevTabs => prevTabs.filter((_, i) => i !== index));
-    if (index === activeTabIndex) {
-      setActiveTabIndex(prevIndex => prevIndex === 0 ? 0 : prevIndex - 1);
-    } else if (index < activeTabIndex) {
-      setActiveTabIndex(prevIndex => prevIndex - 1);
-    }
-  }, [activeTabIndex]);
-
-  const setFromNewTab = useCallback((serviceId: string) => {
-    setTabs(currentTabs => {
-      const updatedTabs = [...currentTabs];
-      updatedTabs[activeTabIndex] = {...updatedTabs[activeTabIndex], serviceId};
-      return updatedTabs;
-    });
-  }, [activeTabIndex]);
+  }, [tabs, services, joinService]);
 
   return (
-    <div>
+    <div
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <div style={{
         display: 'flex',
+        flexDirection: 'row',
         borderBottom: '2px solid #ffffff22',
+        overflowX: "hidden",
+        overflowY: "hidden",
       }}>
         {tabs.map((tab, index) => (
           <div key={index}
@@ -103,12 +72,13 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({services}) => 
             </div>
           </div>
         ))}
-        <button onClick={() =>addTab(null)}
+        <div onClick={() => addTab(null)}
           className="add-tab-button"
         >
           <PlusIcon />
-        </button>
+        </div>
       </div>
+
       <div>
         {tabs.length === 0 ? (
           <div
@@ -132,7 +102,7 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({services}) => 
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                height: '40px', // Adjust this value as needed
+                height: '40px',
               }}
               onClick={() => addTab(null)}
             >

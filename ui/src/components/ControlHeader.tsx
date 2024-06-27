@@ -1,86 +1,54 @@
 import { useState, useEffect } from "react";
 import useDartStore from "../store/dart";
-import { IconMailUnread } from "./icons/Icons";
+import { IconMail, IconMailUnread } from "./icons/Icons";
+import "./ControlHeader.css";
 
-// type ControlHeaderProps = {
-//   nodeConnected: boolean;
-// };
+interface ControlHeaderProps {
+  // setIsSidebarOpen: (isOpen: boolean) => void;
+}
 
-// const ControlHeader = ({ nodeConnected }: ControlHeaderProps) => {
-const ControlHeader = () => {
-
-  // const { muteSoundEffects, setMuteSoundEffects } = useChatStore();
-  const { api, isClientConnected } = useDartStore();
-
+const ControlHeader: React.FC<ControlHeaderProps> = ({ }) => {
+  const { api, isClientConnected, sidebar, setSidebar } = useDartStore();
   return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          color: "#ffffff55",
-          fontSize: "0.8rem",
-          gap: "0.8rem",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            gap: "0.8rem",
-            flexGrow: 1,
-          }}
-        >
-          <a href="/"
-            className='home-link'
-            style={{
-              cursor: "pointer",
-              textDecoration:"underline"
-            }}
-          >
-            <div>
-                <span
-                >
-                home
-                </span>
-            </div>
-          </a>
-
-        </div>
-
-        <div>
-          <span
-          style={{
-            cursor: "default",
-            userSelect: "none",
-          }}
-          >
-            <span
-              style={{
-                fontWeight: "bold",
-              }}
-            >
-              {window.our.node}
-            </span>
-          {isClientConnected ? '': ' connecting...'}
-          </span>
-        </div>
-        <div
-          style={{
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          onClick={() => {
-            alert('DMs and service invites coming soon');
-          }}
-        >
-          <IconMailUnread size={'1.5em'}/>
-        </div>
-
+    <div className="control-header">
+      <div className="control-header-left">
+        <a href="/" className='home-link control-header-button'>
+          <span>home</span>
+        </a>
       </div>
-
+      <div className="control-header-right">
+        <div className={`user-profile control-header-button ${sidebar === 'profile' ? 'active' : ''}`}
+          onClick={() => {
+            if (sidebar === 'profile') {
+              setSidebar(null);
+            } else {
+              setSidebar('profile');
+            }
+          }}
+        >
+          <span className="username">
+            {window.our.node}
+          </span>
+          {isClientConnected &&
+            <span className="connection-status">
+              {isClientConnected ? '' : ' connecting...'}
+            </span>
+          }
+        </div>
+        {/* <div className={`icon-mail control-header-button ${sidebar === 'messages' ? 'active' : ''}`}
+          onClick={() => {
+            if (sidebar === 'messages') {
+              setSidebar(null);
+            } else {
+              setSidebar('messages');
+            }
+          }}
+        >
+          <IconMail size={'1.5em'} />
+        </div> */}
+      </div>
+    </div>
   );
 }
+
 export default ControlHeader;

@@ -51,6 +51,7 @@ export interface ServiceMetadata {
   subscribers: Array<string>;
   user_presence: { [key: string]: Presence };
   plugins: Array<string>;
+  last_sent_presence: number;
 }
 
 export type Services = Map<ServiceId, Service>;
@@ -74,7 +75,7 @@ export type AvailableServices = Map<string, ServiceMetadata> // serviceId, metad
 function new_service(serviceId: ParsedServiceId) : Service {
   return {
     serviceId: serviceId,
-    metadata: {subscribers: [], user_presence: {}, plugins: []},
+    metadata: {subscribers: [], user_presence: {}, plugins: [], last_sent_presence: 0},
     connectionStatus: {status:ServiceConnectionStatusType.Connecting, timestamp:Date.now()},
   }
 }
@@ -342,14 +343,17 @@ class DartApi {
 
   sendRequest(req: any) {
     if (!this.api) { return; }
-    // console.log("Sending request", req)
     const wrapper = {
       "ClientRequest": {
         "ConsumerRequest": [0, req]
       }
     }
 
-    this.api.send({ data:wrapper });
+    try {
+      this.api.send({ data:wrapper });
+    } catch (error) {
+      console.error('Failed to send request:', error);
+    }
   }
 
   pokeService(parsedServiceId: ParsedServiceId, data: any) {

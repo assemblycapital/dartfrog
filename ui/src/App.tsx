@@ -7,10 +7,12 @@ import DartApi from "@dartfrog/puddle";
 import useDartStore from "./store/dart";
 import BrowserBox from "./components/BrowserBox";
 import TabbedWindowManager from "./components/TabbedWindowManager";
+import Sidebar from "./components/Sidebar/Sidebar";
+import Middle from "./components/Middle";
 
 function App() {
 
-  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, services, setAvailableServices, requestServiceList, availableServices} = useDartStore();
+  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, services, setAvailableServices, requestServiceList, availableServices, sidebar} = useDartStore();
 
   useEffect(() => {
     const api = new DartApi({
@@ -52,20 +54,24 @@ function App() {
 
   return (
     <div style={{
-      width: "100%",
-      display: "flex",
-      flexDirection: "column",
-      gap: "0.4rem",
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: '20px', // Add padding
+      boxSizing: 'border-box' // Ensure padding doesn't affect overall size
     }}>
-      <ControlHeader />
-
-      <TabbedWindowManager services={services} />
-      {/* <FullServicesView /> */}
-
-      <Footer />
+      <div>
+        <ControlHeader />
+      </div>
+      <div
+        style={{
+          flexGrow: 1,
+        }}
+      >
+        <Middle />
+      </div>
     </div>
   );
 }
-
 
 export default App;

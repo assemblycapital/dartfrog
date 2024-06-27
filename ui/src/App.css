@@ -1,6 +1,22 @@
 #root {
-  /* max-width: 1280px; */
-  margin: 0 auto;
-  padding: 0.8rem 2rem;
-  width: 100%;
+  width: 100vw;
+  max-width: 100vw;
+}
+.gutter.gutter-horizontal {
+  cursor: col-resize;
+  background-color: transparent;
+  width: 10px !important;
+  position: relative;
+}
+.gutter.gutter-horizontal::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #393939;
+  width: 2px;
+  height: 100%;
+}
+.gutter.gutter-horizontal:hover {
+  cursor: col-resize;
 }

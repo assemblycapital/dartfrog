@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import DartApi, { AvailableServices, ParsedServiceId, PerNodeAvailableServices, Service, ServiceId, parseServiceId } from '@dartfrog/puddle';
+import { HUB_NODE } from '../utils';
+
+interface Tab {
+  serviceId: ServiceId | null;
+}
 
 export interface DartStore {
   api: DartApi | null,
@@ -29,12 +34,21 @@ export interface DartStore {
   nameColors: Map<string, string>
   addNameColor: (name:string, color:string) => void
   // 
+  sidebar: 'messages' | 'profile' | 'home' | null
+  setSidebar: (sidebar: 'messages' | 'profile' | 'home' | null) => void
+  tabs: Tab[];
+  activeTabIndex: number;
+  setTabs: (tabs: Tab[]) => void;
+  setActiveTabIndex: (index: number) => void;
+  addTab: (maybeServiceId: ServiceId | null) => void;
+  closeTab: (index: number) => void;
+  setFromNewTab: (serviceId: string) => void;
   get: () => DartStore 
   set: (partial: DartStore | Partial<DartStore>) => void
 }
 
 const useDartStore = create<DartStore>()(
-  persist(
+  // persist(
     (set, get) => ({
       api: null,
       setApi: (api) => set({ api }),
@@ -123,14 +137,41 @@ const useDartStore = create<DartStore>()(
         nameColors[name] = color;
         set({ nameColors: nameColors })
       },
+      sidebar: null,
+      setSidebar: (sidebar) => {
+        set({ sidebar: sidebar })
+      },
+      tabs: [
+        { serviceId: "hub." + HUB_NODE },
+        { serviceId: null },
+      ],
+      activeTabIndex: 0,
+      setTabs: (tabs) => set({ tabs }),
+      setActiveTabIndex: (index) => set({ activeTabIndex: index }),
+      addTab: (maybeServiceId) => set((state) => {
+        const newTabs = [...state.tabs, { serviceId: maybeServiceId }];
+        return { tabs: newTabs, activeTabIndex: newTabs.length - 1 };
+      }),
+      closeTab: (index) => set((state) => {
+        const newTabs = state.tabs.filter((_, i) => i !== index);
+        const newActiveTabIndex = index === state.activeTabIndex
+          ? (state.activeTabIndex === 0 ? 0 : state.activeTabIndex - 1)
+          : (index < state.activeTabIndex ? state.activeTabIndex - 1 : state.activeTabIndex);
+        return { tabs: newTabs, activeTabIndex: newActiveTabIndex };
+      }),
+      setFromNewTab: (serviceId) => set((state) => {
+        const updatedTabs = [...state.tabs];
+        updatedTabs[state.activeTabIndex] = { ...updatedTabs[state.activeTabIndex], serviceId };
+        return { tabs: updatedTabs };
+      }),
       get,
       set,
     }),
-    {
-      name: 'dart', // unique name
-      storage: createJSONStorage(() => sessionStorage), // (optional) by default, 'localStorage' is used
-    }
-  )
+    // {
+    //   name: 'dart', // unique name
+    //   storage: createJSONStorage(() => sessionStorage), // (optional) by default, 'localStorage' is used
+    // }
+  // )
 )
 
 const parsePresence = (presence: any) => {

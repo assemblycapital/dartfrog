@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { PlusIcon, XIcon } from './icons/Icons';
 
-const Tab = ({ tab, index, activeTabIndex, setActiveTabIndex, closeTab, tabs, exitService }) => {
+const TabTop = ({ tab, index, activeTabIndex, setActiveTabIndex, closeTab, tabs, exitService }) => {
 
   const [isActive, setIsActive] = useState(false);
   const [displayText, setDisplayText] = useState(tab.serviceId ? tab.serviceId : 'new tab');
@@ -57,4 +57,4 @@ const Tab = ({ tab, index, activeTabIndex, setActiveTabIndex, closeTab, tabs, ex
   );
 };
 
-export default Tab;
+export default TabTop;

@@ -1,0 +1,63 @@
+.control-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  color: #ffffff55;
+  font-size: 0.8rem;
+  width: 100%;
+}
+
+.control-header-button {
+  padding: 0.4rem 0.4rem;
+}
+
+.control-header-left {
+  flex-grow:1;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.control-header-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.user-profile.active {
+  background-color: #333;
+  transition: background-color 0.2s;
+}
+.user-profile.active:hover {
+  background-color: #2d2d2d;
+  transition: background-color 0.2s;
+}
+
+.user-profile {
+  flex: 2;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  user-select: none;
+}
+
+.user-profile:hover {
+  background-color: #333;
+  transition: background-color 0.2s;
+}
+
+.icon-mail {
+  flex: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.home-link, .user-profile, .icon-mail {
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
