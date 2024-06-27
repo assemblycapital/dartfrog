@@ -57,7 +57,7 @@ function App() {
     <div style={{
       height: '100vh',
       maxHeight: '100vh',
-      overflowY: 'hidden',
+      overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
       padding: '20px',

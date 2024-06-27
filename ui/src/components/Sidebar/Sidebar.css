@@ -25,6 +25,13 @@
   transition: background-color 0.3s ease;
 }
 
+.top-row-and-back-button {
+  display: flex;
+justify-content: baseline;
+
+  align-items: center;
+}
+
 .sidebar .profile {
   flex: 3;
   display: flex;
