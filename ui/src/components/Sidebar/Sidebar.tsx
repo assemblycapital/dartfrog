@@ -156,6 +156,7 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
               position: 'absolute',
               left: '0px',
               padding: '0px 3px',
+              // color: '#808080',
             }}
           >
             back

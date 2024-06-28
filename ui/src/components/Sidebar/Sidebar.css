@@ -10,11 +10,19 @@
   transform-origin: right;
   padding-bottom: 4rem;
 }
+.sidebar-back-button {
+  color: #ffffff66;
+  transition: color 0.25s, background-color 0.25s;
+}
 .sidebar-back-button:hover {
+  color: #ffffffbb;
   background-color: #88888855;
+  transition: color 0.25s, background-color 0.25s;
 }
 .close-sidebar-button:hover {
+  color: #ffffffbb;
   background-color: #88888855;
+  transition: color 0.25s, background-color 0.25s;
 }
 .close-sidebar-button {
   color: #ffffff66;
@@ -26,7 +34,7 @@
   text-align:center;
   height: 100%;
   width: 26px;
-  transition: background-color 0.25s;
+  transition: color 0.25s, background-color 0.25s; 
   display: flex;
   align-items: center;
   justify-content: center;
