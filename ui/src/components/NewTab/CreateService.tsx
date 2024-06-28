@@ -21,8 +21,7 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
 
   const [inputCreateServiceName, setInputCreateServiceName] = useState('');
   const [isCreateInputValid, setIsCreateInputValid] = useState(true);
-  const [selectedPlugin, setSelectedPlugin] = useState('text-chat');
-  const [selectedPlugins, setSelectedPlugins] = useState([CHAT_PLUGIN]);
+  const [selectedPlugins, setSelectedPlugins] = useState([CHAT_PLUGIN, PAGE_PLUGIN]);
   const [selectedVisibility, setSelectedVisibility] = useState<ServiceVisibility>('Visible');
   const [selectedAccess, setSelectedAccess] = useState<ServiceAccess>('Public');
 
@@ -34,9 +33,14 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
     setIsCreateInputValid(validateServiceName(value));
   };
 
-  const handlePluginChange = (e) => {
-    setSelectedPlugin(e.target.value);
-    setSelectedPlugins(PLUGIN_MAP[e.target.value]);
+  const handlePluginChange = (plugin) => {
+    setSelectedPlugins((prevSelectedPlugins) => {
+      if (prevSelectedPlugins.includes(plugin)) {
+        return prevSelectedPlugins.filter((p) => p !== plugin);
+      } else {
+        return [...prevSelectedPlugins, plugin];
+      }
+    });
   };
 
   const handleAccessChange = (e) => {
@@ -133,17 +137,47 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
             onChange={handleCreateInputChange}
             className={`${isCreateInputValid ? '' : 'invalid'}`}
           />
-          <select
-            name="servicePluginsOption"
-            id="servicePluginsOption"
-            value={selectedPlugin}
-            onChange={handlePluginChange}
+          <div
+            style={{
+              padding: '0.8rem 0',
+              display: 'flex',
+              flexDirection: 'row',
+              gap: '0.6rem',
+            }}
           >
-            <option value="text-chat">Text Chat</option>
-            <option value="piano">Piano</option>
-            <option value="page">Page</option>
-            <option value="chess">Chess</option>
-          </select>
+            <label>
+              <input
+                type="checkbox"
+                checked={selectedPlugins.includes(CHAT_PLUGIN)}
+                onChange={() => handlePluginChange(CHAT_PLUGIN)}
+              />
+              Chat
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={selectedPlugins.includes(PIANO_PLUGIN)}
+                onChange={() => handlePluginChange(PIANO_PLUGIN)}
+              />
+              Piano
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={selectedPlugins.includes(PAGE_PLUGIN)}
+                onChange={() => handlePluginChange(PAGE_PLUGIN)}
+              />
+              Page
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={selectedPlugins.includes(CHESS_PLUGIN)}
+                onChange={() => handlePluginChange(CHESS_PLUGIN)}
+              />
+              Chess
+            </label>
+          </div>
           <select
             name="serviceAccessOption"
             id="serviceAccessOption"
@@ -161,8 +195,8 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
             onChange={handleVisibilityChange}
           >
             <option value="Visible">Visible</option>
-            <option value="VisibleToHost">Visible to Host</option>
-            <option value="Hidden">Hidden</option>
+            <option value="VisibleToHost">Invisible</option>
+            {/* <option value="Hidden">Hidden</option> */}
           </select>
           <button
             style={{

@@ -17,7 +17,22 @@ const ServiceConnectedRow: React.FC<ServiceConnectedRowProps> = ({serviceId, ser
   // Function to render plugins based on count
   const renderPlugins = () => {
     if (plugins.length === 0) {
-      return <div>No plugins available</div>;
+      return (
+        <div style={{ 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100%', 
+          width: '100%', 
+          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          <div>
+          No plugins available
+
+          </div>
+        </div>
+      );
     } else if (plugins.length === 1) {
       return (
         <div className="plugin-wrapper">
@@ -30,8 +45,11 @@ const ServiceConnectedRow: React.FC<ServiceConnectedRowProps> = ({serviceId, ser
         </div>
       );
     } else if (plugins.length === 2) {
-
       const nonChatPlugin = plugins.find(plugin => plugin !== CHAT_PLUGIN) || plugins[0];
+      const [firstPlugin, secondPlugin] = plugins.includes(CHAT_PLUGIN)
+        ? [nonChatPlugin, CHAT_PLUGIN]
+        : plugins;
+
       return (
           <>
           <Split
@@ -44,7 +62,7 @@ const ServiceConnectedRow: React.FC<ServiceConnectedRowProps> = ({serviceId, ser
               <PluginIFrame
                 service={service}
                 serviceId={serviceId}
-                plugin={nonChatPlugin}
+                plugin={firstPlugin}
                 addTab={addTab}
               />
             </div>
@@ -52,7 +70,7 @@ const ServiceConnectedRow: React.FC<ServiceConnectedRowProps> = ({serviceId, ser
               <PluginIFrame
                 service={service}
                 serviceId={serviceId}
-                plugin={CHAT_PLUGIN}
+                plugin={secondPlugin}
                 addTab={addTab}
               />
             </div>
@@ -60,7 +78,31 @@ const ServiceConnectedRow: React.FC<ServiceConnectedRowProps> = ({serviceId, ser
         </>
       );
     } else {
-      return <div>Support for more than two plugins is not available</div>;
+      return (
+        <div style={{ 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100%', 
+          width: '100%', 
+          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.8rem'
+        }}>
+          <div>
+            cant display more than two plugins
+          </div>
+          <div>
+            {plugins.map((plugin) => (
+              <div>
+                <a href={`/${plugin}/?service=${serviceId}`} target="_blank" rel="noopener noreferrer">
+                  /{plugin}/?service={serviceId}
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
     }
   };
 

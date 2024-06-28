@@ -12,13 +12,15 @@ const ServiceList = ({ setTabService }) => {
     return <Spinner />
   }
 
-  // Flatten the Map of Maps structure into an array of objects
+  // Flatten the Map of Maps structure into an array of objects, excluding services with visibility "hidden"
   const flattenedServices = Array.from(availableServices.entries()).flatMap(([node, services]) =>
-    Array.from(services.entries()).map(([serviceId, serviceDetails]) => ({
-      node,
-      serviceId,
-      serviceDetails
-    }))
+    Array.from(services.entries())
+      .filter(([_, serviceDetails]) => serviceDetails.visibility !== "Hidden")
+      .map(([serviceId, serviceDetails]) => ({
+        node,
+        serviceId,
+        serviceDetails
+      }))
   );
 
   // Sort the flattened array by the number of subscribers, and for those with zero subscribers, sort by recency
