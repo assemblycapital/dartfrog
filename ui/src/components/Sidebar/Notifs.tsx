@@ -5,13 +5,22 @@ interface NotifsProps {
 
 const Notifs: React.FC<NotifsProps> = ({}) => {
     return (
-        <div className="notifs">
-            <ul>
-                <li className="unread">Notification 1</li>
-                <li className="read">Notification 2</li>
-                <li className="unread">Notification 3</li>
-            </ul>
-        </div>
+      <div className=""
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        style={{
+          padding: '5rem 0rem',
+        }}
+      >
+        coming soon
+      </div>
+    </div>
     );
 };
 

@@ -98,15 +98,15 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
                   {window.our?.node}
                 </div>
               </div>
-              <div className='sidebar-option' onClick={() => setActiveComponent('notifs')}>
+              {/* <div className='sidebar-option' onClick={() => setActiveComponent('notifs')}>
                 notifs
-              </div>
+              </div> */}
               <div className='sidebar-option' onClick={() => setActiveComponent('messages')}>
                 messages
               </div>
-              <div className='sidebar-option' onClick={() => setActiveComponent('invites')}>
+              {/* <div className='sidebar-option' onClick={() => setActiveComponent('invites')}>
                 invites
-              </div>
+              </div> */}
               <div className='sidebar-option' onClick={() => setActiveComponent('friends')}>
                 friends
               </div>
@@ -122,6 +122,8 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
       <div
         style={{
           overflow: 'hidden',
+          height: '100%',
+          width: '100%',
         }}
       >
         <div 

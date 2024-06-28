@@ -5,13 +5,22 @@ interface MessagesProps {
 
 const Messages: React.FC<MessagesProps> = ({ }) => {
     return (
-        <div className="messages">
-            <ul>
-                <li className="unread">Message 1</li>
-                <li className="read">Message 2</li>
-                <li className="unread">Message 3</li>
-            </ul>
-        </div>
+      <div className=""
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        style={{
+          padding: '5rem 0rem',
+        }}
+      >
+        coming soon
+      </div>
+    </div>
     );
 };
 

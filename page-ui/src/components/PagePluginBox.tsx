@@ -35,7 +35,13 @@ const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, page }) => {
   const iframeView = (
     <iframe
       srcDoc={page}
-      style={{ width: '100%', height: '100%', border: 'none' }}
+      style={{
+        width: '100%',
+        height: '100%',
+        // border: '1px solid green',
+        border: 'none',
+        boxSizing: 'border-box',
+      }}
       sandbox=""
     />
   );
@@ -47,6 +53,9 @@ const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, page }) => {
           // height: '500px',
           height: '100%',
           width: '100%',
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         {editMode ? (
@@ -57,12 +66,13 @@ const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, page }) => {
               gap: "2px",
               height: '100%',
               width: '100%',
+              overflow: 'hidden',
             }}
             >
             <textarea
               value={editableText}
               onChange={(e) => setEditableText(e.target.value)}
-              style={{ width: '100%', height: '100%', minHeight: '150px' }}
+              style={{ width: '100%', height: '100%', flex: 1, overflow: 'auto' }}
             />
             <div>
               <button onClick={handleSave}>Save</button>
@@ -76,6 +86,7 @@ const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, page }) => {
               flexDirection: 'column',
               gap: "2px",
               height: '100%',
+              overflow: 'hidden',
             }}
             >
             {iframeView}
@@ -90,8 +101,12 @@ const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, page }) => {
     <div
       style={{
         // height: '500px',
+        display: 'flex',
+        flexDirection: 'column',
         height: '100%',
         width: '100%',
+        boxSizing: 'border-box',
+        // border: '1px solid red',
       }}
     >
       {iframeView}

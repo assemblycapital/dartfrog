@@ -51,7 +51,12 @@ function App() {
 
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100%' }}>
+    <div style={{
+      display: 'flex',
+      height: '100%',
+      width: '100%',
+      // border: '1px solid blue',
+    }}>
       {page !== null ? (
         <PagePluginBox serviceId={serviceId} page={page} />
       ) : (

@@ -5,12 +5,21 @@ interface FriendsProps {
 
 const Friends: React.FC<FriendsProps> = ({ }) => {
     return (
-        <div className="friends">
-            <ul>
-                <li>Friend 1</li>
-                <li>Friend 2</li>
-                <li>Friend 3</li>
-            </ul>
+        <div className=""
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <div
+            style={{
+              padding: '5rem 0rem',
+            }}
+          >
+            coming soon
+          </div>
         </div>
     );
 };
