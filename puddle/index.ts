@@ -23,6 +23,7 @@ export enum ServiceConnectionStatusType {
   Disconnected,
   ServiceDoesNotExist,
   Kicked,
+  AccessDenied,
 }
 
 export type ServiceConnectionStatus = {
@@ -47,11 +48,16 @@ export interface Presence {
   time: number;
 }
 
+export type ServiceAccess = 'Public' | 'Whitelist' | 'HostOnly';
+export type ServiceVisibility = 'Visible' | 'VisibleToHost' | 'Hidden';
 export interface ServiceMetadata {
   subscribers: Array<string>;
   user_presence: { [key: string]: Presence };
   plugins: Array<string>;
   last_sent_presence: number;
+  access: ServiceAccess;
+  visibility: ServiceVisibility;
+  whitelist: Array<string>;
 }
 
 export type Services = Map<ServiceId, Service>;
@@ -75,7 +81,7 @@ export type AvailableServices = Map<string, ServiceMetadata> // serviceId, metad
 function new_service(serviceId: ParsedServiceId) : Service {
   return {
     serviceId: serviceId,
-    metadata: {subscribers: [], user_presence: {}, plugins: [], last_sent_presence: 0},
+    metadata: {subscribers: [], user_presence: {}, plugins: [], last_sent_presence: 0, access: "Public", visibility: "Visible", whitelist: []},
     connectionStatus: {status:ServiceConnectionStatusType.Connecting, timestamp:Date.now()},
   }
 }
@@ -254,8 +260,13 @@ class DartApi {
           // this.services.delete(serviceId);
           this.onServicesChange();
         } else if (response === 'Kick') {
-          console.log("Kicked", serviceId);
           service.connectionStatus = {status:ServiceConnectionStatusType.Kicked, timestamp:Date.now()};
+          this.cancelPresenceHeartbeat(serviceId);
+          // TODO?
+          // this.services.delete(serviceId);
+          this.onServicesChange();
+        } else if (response === 'AccessDenied') {
+          service.connectionStatus = {status:ServiceConnectionStatusType.AccessDenied, timestamp:Date.now()};
           this.cancelPresenceHeartbeat(serviceId);
           // TODO?
           // this.services.delete(serviceId);
@@ -389,14 +400,17 @@ class DartApi {
     this.sendRequest(request);
   }
 
-  sendCreateServiceRequest(serviceId: ParsedServiceId, plugins: Array<String>) {
+  sendCreateServiceRequest(serviceId: ParsedServiceId, plugins: Array<String>, visibility: ServiceVisibility, access: ServiceAccess, whitelist: Array<String>) {
     if (!this.api) { return; }
     // console.log("Sending create service request", serviceId, plugins)
     const wrapper = {
       "ServerRequest": {
         "CreateService": [
           { "node": serviceId.node, "id": serviceId.id },
-          plugins
+          plugins,
+          visibility,
+          access,
+          whitelist
         ]
       }
     }
@@ -518,6 +532,8 @@ export function stringifyServiceConnectionStatus(status: ServiceConnectionStatus
       return "ServiceDoesNotExist";
     case ServiceConnectionStatusType.Kicked:
       return "Kicked";
+    case ServiceConnectionStatusType.AccessDenied:
+      return "AccessDenied";
     default:
       return "Unknown Status";
   }

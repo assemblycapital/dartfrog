@@ -1,7 +1,7 @@
 import React from 'react';
 import useDartStore from '../../store/dart';
 import Spinner from '../Spinner';
-import { Presence } from '@dartfrog/puddle/index';
+import { Presence, ServiceAccess } from '@dartfrog/puddle/index';
 
 const ServiceList = ({ setTabService }) => {
   const { requestAllServiceList, requestServiceList, availableServices, deleteService} = useDartStore();
@@ -131,19 +131,35 @@ const ServiceList = ({ setTabService }) => {
                 gap: "0.2rem",
               }}
             >
-              <div
-                style={{
-                  cursor: "pointer",
-                  flex: "1",
-                  textAlign: "center",
-                }}
-                className="join-button"
-                onClick={() => {
-                  setTabService(serviceId);
-                }}
-              >
-                join
-              </div>
+              { (serviceDetails.access === "Public") ||
+               (serviceDetails.access === "HostOnly" && node === window.our?.node) ||
+               (serviceDetails.access === "Whitelist" && (node === window.our?.node || serviceDetails.whitelist.includes(window.our?.node))) ? (
+                <div
+                  style={{
+                    cursor: "pointer",
+                    flex: "1",
+                    textAlign: "center",
+                  }}
+                  className="join-button"
+                  onClick={() => {
+                    setTabService(serviceId);
+                  }}
+                >
+                  join
+                </div>
+              ) : (
+                <div
+                  style={{
+                    flex: "1",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    textAlign: "center",
+                  }}
+                >
+                  private
+                </div>
+              )}
               {node === window.our?.node && (
                 <div
                   style={{
@@ -162,7 +178,12 @@ const ServiceList = ({ setTabService }) => {
               )}
             </div>
 
-            <div style={{ flex: "3" }}>{serviceId}</div>
+            <div style={{
+                flex: "3",
+                padding: "0.5rem 0",
+              }}
+              >
+              {serviceId}</div>
             <div style={{ flex: "4" }}>
               {getPluginText(serviceDetails.plugins)}
             </div>

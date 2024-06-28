@@ -38,12 +38,7 @@ impl Service {
                 node: String::from(""),
                 id: String::from(""),
             },
-            metadata: ServiceMetadata {
-                subscribers: HashSet::new(),
-                user_presence: HashMap::new(),
-                plugins: HashSet::new(),
-                last_sent_presence: 0,
-            },
+            metadata: new_service_metadata(),
         }
     }
 
@@ -68,6 +63,11 @@ pub fn new_service_metadata() -> ServiceMetadata {
       user_presence: HashMap::new(),
       plugins: HashSet::new(),
       last_sent_presence: 0,
+      visibility: ServiceVisibility::Visible,
+      access: ServiceAccess::Public,
+      whitelist: HashSet::new(),
+      title: String::from(""),
+      description: String::from(""),
   }
 }
 pub fn new_sync_service(id: ServiceId) -> SyncService {
@@ -95,11 +95,30 @@ pub fn new_server_state() -> ServerState {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ServiceAccess {
+    Public,
+    Whitelist,
+    HostOnly,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ServiceVisibility {
+    Visible,
+    VisibleToHost,
+    Hidden,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ServiceMetadata {
     pub subscribers: HashSet<String>,
     pub user_presence: HashMap<String, Presence>,
     pub last_sent_presence: u64,
     pub plugins: HashSet<String>,
+    pub visibility: ServiceVisibility,
+    pub access: ServiceAccess,
+    pub whitelist: HashSet<String>,
+    pub title: String,
+    pub description: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -140,7 +159,7 @@ pub fn new_client_state() -> ClientState {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ServerRequest {
     ServiceRequest(ServiceId, ServiceRequest),
-    CreateService(ServiceId, Vec<String>), // service id, plugins
+    CreateService(ServiceId, Vec<String>, ServiceVisibility, ServiceAccess, Vec<String>), // service id, plugins, visibility, access, whitelist
     DeleteService(ServiceId),
     RequestServiceList,
 }
@@ -154,6 +173,8 @@ pub enum ServiceRequest {
     AddPlugin(String),
     RemovePlugin(String),
     PluginRequest(String, String), // plugin name, update
+    WhitelistAdd(String),
+    WhitelistRemove(String),
     // TODO should pluginrequests include if they are from a client vs a frontend? what about a service?
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -178,6 +199,7 @@ pub enum ConsumerServiceUpdate {
     ServiceMetadata(ServiceMetadata),
     ServiceDeleted,
     Kick,
+    AccessDenied,
     // TODO better way to encode the plugin update than as a json string?
     MessageFromPluginServiceToClient(String, String), // plugin_name, update 
     MessageFromPluginServiceToFrontend(String, String), // plugin_name, update 

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import DartApi, { AvailableServices, ParsedServiceId, PerNodeAvailableServices, Service, ServiceId, parseServiceId } from '@dartfrog/puddle';
+import DartApi, { AvailableServices, ParsedServiceId, PerNodeAvailableServices, Service, ServiceAccess, ServiceId, ServiceVisibility, parseServiceId } from '@dartfrog/puddle';
 import { HUB_NODE } from '../utils';
 
 export interface Tab {
@@ -23,7 +23,7 @@ export interface DartStore {
   exitService: (serviceId: ServiceId) => void
   joinService: (serviceId: ServiceId) => void
   pokeService: (parsedServiceId: ServiceId, data:any) => void
-  createService: (serviceId: ServiceId, plugins: Array<String>) => void
+  createService: (serviceId: ServiceId, plugins: Array<String>, visibility: ServiceVisibility, access: ServiceAccess, whitelist: Array<String>) => void
   deleteService: (serviceId: ServiceId) => void
   requestServiceList: (serviceId: ServiceId) => void
   requestAllServiceList: () => void
@@ -99,11 +99,11 @@ const useDartStore = create<DartStore>()(
       }
         api.sendRequest(request);
       },
-      createService: (serviceId: ServiceId, plugins: Array<String>) => {
+      createService: (serviceId: ServiceId, plugins: Array<String>, visibility: ServiceVisibility, access: ServiceAccess, whitelist: Array<String>) => {
         const { api } = get();
         if (!api) { return; }
         let parsedServiceId = parseServiceId(serviceId);
-        api.sendCreateServiceRequest(parsedServiceId, plugins);
+        api.sendCreateServiceRequest(parsedServiceId, plugins, visibility, access, whitelist);
 
       },
       deleteService: (serviceId: ServiceId) => {

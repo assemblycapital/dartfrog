@@ -92,16 +92,31 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, addTab }) => {
                         {serviceId} does not exist...
                       </div>
                     ) : (
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          height: "100%",
-                        }}
-                      >
-                        Disconnected
-                      </div>
+                      <>
+                      {(service.connectionStatus.status === ServiceConnectionStatusType.AccessDenied) ? (
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            height: "100%",
+                          }}
+                        >
+                          Access Denied to {serviceId}
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            height: "100%",
+                          }}
+                        >
+                          Disconnected
+                        </div>
+                      )}
+                      </>
                       )}
                       </>
                     )}

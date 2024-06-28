@@ -29,7 +29,7 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                 }
             }
         }
-        ServerRequest::CreateService(service_id, plugins) => {
+        ServerRequest::CreateService(service_id, plugins, visibility, access, whitelist) => {
             if source.node != our.node {
                 return Ok(());
             }
@@ -40,6 +40,9 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
                 // already exists
             } else {
                 let mut service = new_service(service_id.clone());
+                service.metadata.visibility = visibility;
+                service.metadata.access = access;
+                service.metadata.whitelist = whitelist.into_iter().collect();
                 for plugin in plugins {
                     match get_plugin_address(&plugin, our.node.as_str()) {
                       Ok(plugin_address) => {
@@ -81,16 +84,25 @@ fn handle_server_request(our: &Address, state: &mut DartState, source: Address, 
         }
         ServerRequest::RequestServiceList => {
 
-            let services: HashMap<String, ServiceMetadata> = state.server.services.iter().map(|(id, service)| {
+            let mut services: HashMap<String, ServiceMetadata> = HashMap::new();
+            for (id, service) in state.server.services.iter() {
                 let service_id = ServiceId {
                     node: our.node.clone(),
-                    id: id.clone()
+                    id: id.clone(),
                 };
-                (get_service_id_string(&service_id), service.metadata.clone())
-            }).collect();
+                if !matches!(service.metadata.visibility, ServiceVisibility::Visible) {
+                    // if its not visible, ignore unless the request is from the host
+                    if source.node != our.node {
+                        continue;
+                    }
+                }
+                services.insert(get_service_id_string(&service_id), service.metadata.clone());
+            }
+            
             let update = ConsumerUpdate::FromServer(our.node.clone(), ConsumerServerUpdate::ServiceList(services));
             update_client_consumer(update, source.node.clone())?;
         }
+        
     }
     Ok(())
 }
@@ -153,6 +165,14 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                 }
             }
             ServiceRequest::Subscribe => {
+                // check service access
+                if !matches!(service.metadata.access, ServiceAccess::Public) {
+                    if source.node != our.node && !service.metadata.whitelist.contains(&source.node) {
+                        let ack = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::AccessDenied);
+                        update_client_consumer(ack, source.node.clone())?;
+                        return Ok(());
+                    }
+                }
                 let mut subscriber_is_new = false;
                 if !service.metadata.subscribers.contains(&source.node.clone()) {
                     // subscriber is new, notify plugins
@@ -234,6 +254,28 @@ fn handle_service_request(our: &Address, state: &mut DartState, source: Address,
                 let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
                 update_subscribers(meta, service.metadata.subscribers.clone())?;
             }
+            ServiceRequest::WhitelistAdd(node) => {
+                if source.node != our.node {
+                    return Ok(());
+                }
+                if let Some(service) = state.server.services.get_mut(&service_id.id) {
+                    service.metadata.whitelist.insert(node.clone());
+                    write_service(state.server.drive_path.clone(), service)?;
+                    let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
+                    update_subscribers(meta, service.metadata.subscribers.clone())?;
+                }
+            }
+            ServiceRequest::WhitelistRemove(node) => {
+                if source.node != our.node {
+                    return Ok(());
+                }
+                if let Some(service) = state.server.services.get_mut(&service_id.id) {
+                    service.metadata.whitelist.remove(&node);
+                    write_service(state.server.drive_path.clone(), service)?;
+                    let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
+                    update_subscribers(meta, service.metadata.subscribers.clone())?;
+                }
+            }
             _ => {
                 println!("unexpected service request: {:?}", req);
             }
@@ -293,6 +335,10 @@ fn handle_client_update(our: &Address, state: &mut DartState, source: &Address, 
                                 update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
                             }
                             ConsumerServiceUpdate::Kick => {
+                                consumer.services.remove(&service_id);
+                                update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
+                            }
+                            ConsumerServiceUpdate::AccessDenied => {
                                 consumer.services.remove(&service_id);
                                 update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
                             }

@@ -29,9 +29,6 @@ const parseServiceLink = (value) => {
 export const validateServiceLink = (value) => {
   if (value === '') return true;
   const { serviceName, hostNode, isValid } = parseServiceLink(value);
-  console.log('serviceName', serviceName);
-  console.log('hostNode', hostNode);  // TODO validate hostnode
-
   return isValid;
 };
 
