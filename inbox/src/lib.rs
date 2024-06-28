@@ -1,6 +1,6 @@
 use std::{collections::HashMap, time::{SystemTime, UNIX_EPOCH}};
 
-use common::{get_server_address, handle_plugin_update, send_to_frontend, update_subscriber_clients, update_subscribers, DartMessage, DefaultPluginClientState, DefaultPluginServiceState, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState, ServerRequest, ServiceAccess, ServiceId, ServiceVisibility};
+use common::{get_server_address, handle_plugin_update, plugin_client_to_service, send_to_frontend, update_subscriber_clients, update_subscribers, DartMessage, DefaultPluginClientState, DefaultPluginServiceState, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState, ServerRequest, ServiceAccess, ServiceId, ServiceVisibility};
 use kinode_process_lib::{await_message, call_init, println, Address, Request};
 use serde::{Deserialize, Serialize};
 
@@ -20,7 +20,10 @@ pub enum InboxUpdate {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum InboxRequest {
     HostSendMessage(String, String), // send_to, message
-    NewMessage(String, String) // from, message
+    NewMessage(String, String), // from, message
+    RequestInbox(String), // get inbox for user
+    RequestAllInboxes, // get all inboxes
+    CreateInbox(String),
 }
 
 
@@ -47,15 +50,18 @@ pub fn new_inbox_service() -> InboxService {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InboxClient {}
+
 #[derive(Debug, Clone)]
 pub struct AppState {
-    pub plugin: PluginState<InboxService, DefaultPluginClientState>,
+    pub plugin: PluginState<InboxService, InboxClient>,
 }
 
 impl AppState {
     pub fn new() -> Self {
         AppState {
-            plugin: PluginState::<InboxService, DefaultPluginClientState>::new(),
+            plugin: PluginState::<InboxService, InboxClient>::new(),
         }
     }
 }
@@ -67,6 +73,28 @@ fn get_now() -> u64 {
         .as_secs()
 }
 
+
+impl PluginClientState for InboxClient {
+    fn new() -> Self {
+        InboxClient {
+        }
+    }
+    
+    fn handle_new_frontend(&mut self, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
+        // poke the service to get the inboxes
+        let req = InboxRequest::RequestAllInboxes;
+        let _ = plugin_client_to_service(req, metadata)?;
+        Ok(())
+    }
+
+    fn handle_frontend_message(&mut self, _update: String, _our: &Address, _metadata: &PluginMetadata) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    fn handle_service_message(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
+        Ok(())
+    }
+}
 impl PluginServiceState for InboxService {
 
     fn new() -> Self {
@@ -79,8 +107,6 @@ impl PluginServiceState for InboxService {
     }
 
     fn handle_subscribe(&mut self, _subscriber_node: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
-        println!("inbox handle_subscribe");
-
         let upd = InboxUpdate::AllInboxes(self.inboxes.iter().map(|(k, v)| (k.clone(), v.clone())).collect());
         match update_subscribers(our, upd, metadata) {
             Ok(()) => {}
@@ -92,12 +118,55 @@ impl PluginServiceState for InboxService {
     }
 
     fn handle_request(&mut self, from: String, req: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
-        println!("inbox handle_subscribe");
         let Ok(request) = serde_json::from_str::<InboxRequest>(&req) else {
             println!("error parsing request: {:?}", req);
             return Ok(());
         };
         match request {
+            InboxRequest::RequestInbox(user) => {
+                if from != our.node() {
+                    return Ok(())
+                }
+                let inbox = self.inboxes.get(&user).cloned().unwrap_or_else(|| {
+                    Inbox {
+                        messages: vec![],
+                    }
+                });
+                let upd = InboxUpdate::Inbox(user, inbox);
+                match update_subscribers(our, upd, metadata) {
+                    Ok(()) => {}
+                    Err(e) => {
+                        println!("error sending update to subscribers: {:?}", e);
+                    }
+                }
+            }
+            InboxRequest::RequestAllInboxes => {
+                if from != our.node() {
+                    return Ok(())
+                }
+                let upd = InboxUpdate::AllInboxes(self.inboxes.iter().map(|(k, v)| (k.clone(), v.clone())).collect());
+                match update_subscribers(our, upd, metadata) {
+                    Ok(()) => {}
+                    Err(e) => {
+                        println!("error sending update to subscribers: {:?}", e);
+                    }
+                }
+            }
+            InboxRequest::CreateInbox(user) => {
+                if from != our.node() {
+                    return Ok(())
+                }
+                if !self.inboxes.contains_key(&user) {
+                    self.inboxes.insert(user.clone(), Inbox { messages: vec![] });
+                    let upd = InboxUpdate::Inbox(user.clone(), self.inboxes.get(&user).unwrap().clone());
+                    match update_subscribers(our, upd, metadata) {
+                        Ok(()) => {}
+                        Err(e) => {
+                            println!("error sending update to subscribers: {:?}", e);
+                        }
+                    }
+                }
+            }
             InboxRequest::NewMessage(msg_from, message) => {
                 let inbox = self.inboxes.entry(msg_from.clone()).or_insert(Inbox {
                     messages: vec![],

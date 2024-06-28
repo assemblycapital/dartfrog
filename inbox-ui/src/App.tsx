@@ -4,10 +4,11 @@ import "./App.css";
 import DartApi, { parseServiceId } from "@dartfrog/puddle";
 import { WEBSOCKET_URL, maybePlaySoundEffect } from "./utils";
 import useInboxStore, { PLUGIN_NAME } from "./store/inbox";
+import InboxApp from "./components/InboxApp";
 
 function App() {
   const location = useLocation();
-  const {api, setApi, serviceId, setServiceId, inbox, setInbox} = useInboxStore();
+  const {api, setApi, serviceId, setServiceId, inboxService, setInboxService} = useInboxStore();
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -33,9 +34,26 @@ function App() {
           serviceId,
           handler:(pluginUpdate, service, source) => {
             console.log("inbox pluginUpdate", pluginUpdate);
-            // if (pluginUpdate["inbox"]) {
-            //   setInbox(pluginUpdate["inbox"]);
-            // }
+            if (pluginUpdate["Inbox"]) {
+            let [key, value] = pluginUpdate["Inbox"];
+
+            if (!inboxService) {
+              console.error("InboxService is null");
+              return;
+            }
+            let updatedInboxes = new Map(inboxService.inboxes);
+            updatedInboxes.set(key, value);
+            setInboxService({ inboxes: updatedInboxes });
+            } else if (pluginUpdate["AllInboxes"]) {
+              let allInboxes = pluginUpdate["AllInboxes"]
+
+              let allInboxesMap = new Map();
+              for (let i = 0; i < allInboxes.length; i++) {
+                let [key, value] = allInboxes[i];
+                allInboxesMap.set(key, value);
+              }
+              setInboxService({ inboxes: allInboxesMap });
+            }
           }
         },
       onOpen: () => {
@@ -55,10 +73,8 @@ function App() {
       height: '100%',
       width: '100%',
     }}>
-      {inbox !== null ? (
-        <div>
-          <h1>TODO Inbox</h1>
-        </div>
+      {inboxService !== null ? (
+        <InboxApp inboxService={inboxService} />
       ) : (
         <p>loading...</p>
       )}

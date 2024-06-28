@@ -3,25 +3,40 @@ import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId, parseS
 
 export const PLUGIN_NAME = "inbox:dartfrog:herobrine.os";
 
+// Define TypeScript interfaces based on Rust structs
+export type InboxMessage = {
+  sender: string;
+  message: string;
+  time: number;
+}
 
+ export type Inbox = {
+  messages: InboxMessage[];
+}
 
+export type InboxService = {
+  inboxes: Map<string, Inbox>;
+}
 
 export interface inboxStore {
   serviceId: string | null,
   setServiceId: (service: string) => void
   api: DartApi | null,
   setApi: (api: DartApi) => void
-  //
-  inbox: string | null,
-  setInbox: (inbox: string) => void
-  //
-  sendInboxEdit: (text: string) => void
-  // 
+
   nameColors: Map<string, string>
   addNameColor: (name:string, color:string) => void
   // 
   get: () => inboxStore 
   set: (partial: inboxStore | Partial<inboxStore>) => void
+  // Add new state for InboxService
+  inboxService: InboxService | null,
+  setInboxService: (inboxService: InboxService) => void
+  //
+  requestInbox: (user: string) => void
+  requestAllInboxes: () => void
+  //
+  createInbox: (user:string) => void
 }
 
 const useinboxStore = create<inboxStore>((set, get) => ({
@@ -29,22 +44,8 @@ const useinboxStore = create<inboxStore>((set, get) => ({
   setServiceId: (serviceId) => set({ serviceId }),
   api: null,
   setApi: (api) => set({ api }),
-  // 
-  inbox: null,
-  setInbox: (inbox) => set({ inbox }),
-  // 
-  sendInboxEdit: (text) => {
-    // const { api, serviceId } = get();
-    // if (!api) { return; }
-    // if (!serviceId) { return; }
-    // let innerPluginRequest = 
-    //   {
-    //   "Editinbox": 
-    //     text
-    //   }
-    // api.pokePluginService(serviceId, PLUGIN_NAME, innerPluginRequest);
-    // TODO
-  },
+
+
   // 
   nameColors: new Map<string, string>(),
   addNameColor: (name:string, color:string) => {
@@ -55,6 +56,23 @@ const useinboxStore = create<inboxStore>((set, get) => ({
   // 
   get,
   set,
+  // Initialize new state for InboxService
+  inboxService: null,
+  setInboxService: (inboxService) => set({ inboxService }),
+  //
+  requestInbox: (user: string) => {
+    const { api, serviceId } = get();
+    api.pokePluginService(serviceId, PLUGIN_NAME, { RequestInbox: user });
+  },
+  requestAllInboxes: () => {
+    const { api, serviceId } = get();
+    api.pokePluginService(serviceId, PLUGIN_NAME, { RequestAllInboxes: null });
+  },
+  createInbox: (user: string) => {
+    const { api, serviceId } = get();
+    api.pokePluginService(serviceId, PLUGIN_NAME, { CreateInbox: user});
+
+  }
 }))
 
 export default useinboxStore;
