@@ -10,8 +10,29 @@ import ServiceList from "./ServiceList";
 
 export const validateServiceName = (value) => {
   if (value==='') return true;
-  const regex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+  const regex = /^[a-z0-9]+(?:[-.][a-z0-9]+)*$/;
   return regex.test(value);
+};
+
+const parseServiceLink = (value) => {
+  const [protocol, the_rest] = value.split('://');
+  if (protocol !== 'df') return { serviceName: '', hostNode: '', isValid: false };
+
+  const dots = the_rest.split('.').reverse();
+  const tld = dots[0];
+  const hostNode = dots[1] + '.' + tld;
+  const serviceName = the_rest.slice(0, -(hostNode.length + 1));
+
+  return { serviceName, hostNode, isValid: validateServiceName(serviceName) };
+};
+
+export const validateServiceLink = (value) => {
+  if (value === '') return true;
+  const { serviceName, hostNode, isValid } = parseServiceLink(value);
+  console.log('serviceName', serviceName);
+  console.log('hostNode', hostNode);  // TODO validate hostnode
+
+  return isValid;
 };
 
 interface NewTabProps {
@@ -22,11 +43,19 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
   const [inputJoinServiceName, setInputJoinServiceName] = useState('');
   const [isJoinServiceNameInputValid, setIsJoinServiceNameInputValid] = useState(true);
   const [inputJoinServiceHostNode, setInputJoinServiceHostNode] = useState('');
+  const [inputJoinServiceLink, setInputJoinServiceLink] = useState(''); // Added state
+  const [isJoinServiceLinkInputValid, setIsJoinServiceLinkInputValid] = useState(true); // Added state
 
-  const handleJoinServiceNameInputChange= (e) => {
+  const handleJoinServiceNameInputChange = (e) => {
     const value = e.target.value;
     setInputJoinServiceName(value);
     setIsJoinServiceNameInputValid(validateServiceName(value));
+  };
+
+  const handleJoinServiceLinkInputChange = (e) => { // Added function
+    const value = e.target.value;
+    setInputJoinServiceLink(value);
+    setIsJoinServiceLinkInputValid(validateServiceLink(value));
   };
 
   const handleInputJoinClick = useCallback(() => {
@@ -38,6 +67,15 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
     }
   }, [inputJoinServiceName, inputJoinServiceHostNode]);
 
+  const handleLinkInputJoinClick = useCallback(() => { // Added function
+    if (isJoinServiceLinkInputValid) {
+      if (inputJoinServiceLink === '') return;
+      const { serviceName, hostNode, isValid } = parseServiceLink(inputJoinServiceLink);
+      if (!isValid) return;
+
+      setTabService(makeServiceId(hostNode, serviceName));
+    }
+  }, [inputJoinServiceLink]);
 
   return (
     <div
@@ -60,13 +98,14 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
 
       <div
         style={{
-          flex: 1,
+          // flex: 1,
         }}
       >
         <div
           style={{
             cursor: "default",
             userSelect: "none",
+            marginBottom: '0.8rem',
           }}
         >
           join service by id:
@@ -100,11 +139,30 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
           </button>
         </div>
       </div>
-
+      <div
+          style={{
+            display: "flex",
+          }}
+        >
+          <input type="text" placeholder="df://service.node.os" 
+            value={inputJoinServiceLink}
+            onChange={handleJoinServiceLinkInputChange}
+            className={`${isJoinServiceLinkInputValid ? '' : 'invalid'}`}
+          />
+          <button
+            style={{
+              cursor: "pointer",
+            }}
+            onClick={() => {
+              handleLinkInputJoinClick();
+            }}
+          >
+            join
+          </button>
+      </div>
 
     </div>
   )
 }
 
 export default NewTab;
-
