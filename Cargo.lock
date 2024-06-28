@@ -990,6 +990,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "inbox"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "common",
+ "kinode_process_lib",
+ "serde",
+ "serde_json",
+ "wit-bindgen",
+]
+
+[[package]]
 name = "indexmap"
 version = "2.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"

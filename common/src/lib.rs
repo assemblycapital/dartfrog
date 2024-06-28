@@ -365,7 +365,7 @@ pub enum PluginNodeType {
     Service, 
 }
 
-pub fn handle_plugin_update<T, U>(update: PluginMessage, state: &mut PluginState<T, U>, our: &Address) -> anyhow::Result<()>
+pub fn handle_plugin_update<T, U>(update: PluginMessage, state: &mut PluginState<T, U>, our: &Address, source: &Address) -> anyhow::Result<()>
 where
     T: PluginServiceState,
     U: PluginClientState,
@@ -377,14 +377,23 @@ where
                 match service_input {
                     PluginServiceInput::Init(meta) => {
                         // println!("reinitializing service with metadata: {:?}", meta);
+                        if source != &get_server_address(our.node()) {
+                            return Ok(());
+                        }
                         service.metadata = meta;
                     }
                     PluginServiceInput::ClientJoined(client_id) => {
+                        if source != &get_server_address(our.node()) {
+                            return Ok(());
+                        }
                         if let Err(e) = service.state.handle_subscribe(client_id, our, &service.metadata) {
                             println!("Error handling subscribe: {}", e);
                         }
                     }
                     PluginServiceInput::ClientExited(client_id) => {
+                        if source != &get_server_address(our.node()) {
+                            return Ok(());
+                        }
                         if let Err(e) = service.state.handle_unsubscribe(client_id, our, &service.metadata) {
                             println!("Error handling unsubscribe: {}", e);
                         }
@@ -395,6 +404,9 @@ where
                         }
                     }
                     PluginServiceInput::Kill => {
+                        if source != &get_server_address(our.node()) {
+                            return Ok(());
+                        }
                         // Remove the service from the active service list
                         // state.services.remove(&service_id);
                         // println!("Service {} has been killed", service_id.id);

@@ -205,7 +205,7 @@ fn handle_message(our: &Address, state: &mut AppState) -> anyhow::Result<()> {
     }
     
     if let Ok(plugin_message) = serde_json::from_slice::<PluginMessage>(&body) {
-        if let Err(e) = handle_plugin_update(plugin_message, &mut state.plugin, our) {
+        if let Err(e) = handle_plugin_update(plugin_message, &mut state.plugin, our, source) {
             println!("chat.wasm error handling plugin update: {:?}", e);
         }
     }

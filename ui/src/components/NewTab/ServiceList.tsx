@@ -15,7 +15,8 @@ const ServiceList = ({ setTabService }) => {
   // Flatten the Map of Maps structure into an array of objects, excluding services with visibility "hidden"
   const flattenedServices = Array.from(availableServices.entries()).flatMap(([node, services]) =>
     Array.from(services.entries())
-      .filter(([_, serviceDetails]) => serviceDetails.visibility !== "Hidden")
+      // TODO hide these
+      // .filter(([_, serviceDetails]) => serviceDetails.visibility !== "Hidden")
       .map(([serviceId, serviceDetails]) => ({
         node,
         serviceId,
