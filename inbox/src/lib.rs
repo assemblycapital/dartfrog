@@ -1,7 +1,7 @@
 use std::{collections::HashMap, time::{SystemTime, UNIX_EPOCH}};
 
 use common::{get_server_address, handle_plugin_update, plugin_client_to_service, send_to_frontend, update_subscriber_clients, update_subscribers, DartMessage, DefaultPluginClientState, DefaultPluginServiceState, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState, ServerRequest, ServiceAccess, ServiceId, ServiceVisibility};
-use kinode_process_lib::{await_message, call_init, println, Address, Request};
+use kinode_process_lib::{await_message, call_init, http::header::USER_AGENT, println, Address, Request};
 use serde::{Deserialize, Serialize};
 
 
@@ -24,6 +24,7 @@ pub enum InboxRequest {
     RequestInbox(String), // get inbox for user
     RequestAllInboxes, // get all inboxes
     CreateInbox(String),
+    DeleteInbox(String),
 }
 
 
@@ -159,6 +160,20 @@ impl PluginServiceState for InboxService {
                 if !self.inboxes.contains_key(&user) {
                     self.inboxes.insert(user.clone(), Inbox { messages: vec![] });
                     let upd = InboxUpdate::Inbox(user.clone(), self.inboxes.get(&user).unwrap().clone());
+                    match update_subscribers(our, upd, metadata) {
+                        Ok(()) => {}
+                        Err(e) => {
+                            println!("error sending update to subscribers: {:?}", e);
+                        }
+                    }
+                }
+            }
+            InboxRequest::DeleteInbox(user) => {
+                if from != our.node() {
+                    return Ok(())
+                }
+                if self.inboxes.remove(&user).is_some() {
+                    let upd = InboxUpdate::AllInboxes(self.inboxes.iter().map(|(k, v)| (k.clone(), v.clone())).collect());
                     match update_subscribers(our, upd, metadata) {
                         Ok(()) => {}
                         Err(e) => {

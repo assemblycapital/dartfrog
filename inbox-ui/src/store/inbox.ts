@@ -32,6 +32,7 @@ export interface inboxStore {
   // Add new state for InboxService
   inboxService: InboxService | null,
   setInboxService: (inboxService: InboxService) => void
+  setInboxFromUpdate: (user:string, inbox: Inbox) => void
   //
   requestInbox: (user: string) => void
   requestAllInboxes: () => void
@@ -59,6 +60,14 @@ const useinboxStore = create<inboxStore>((set, get) => ({
   // Initialize new state for InboxService
   inboxService: null,
   setInboxService: (inboxService) => set({ inboxService }),
+  setInboxFromUpdate: (user: string, inbox: Inbox) => {
+    const {inboxService} = get()
+    if (!(inboxService)) {
+      return;
+    }
+    inboxService.inboxes.set(user, inbox)
+    set({inboxService: inboxService})
+  },
   //
   requestInbox: (user: string) => {
     const { api, serviceId } = get();

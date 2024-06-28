@@ -2,41 +2,77 @@ import React, { useState, useCallback } from 'react';
 import { InboxService } from '../store/inbox';
 import useInboxStore, { PLUGIN_NAME } from "../store/inbox";
 import { serialize } from 'v8';
+import InboxPreview from './InboxPreview';
 
 // Define TypeScript interfaces based on Rust structs
 const InboxApp: React.FC<{ inboxService: InboxService }> = ({ inboxService }) => {
-  const [username, setUsername] = useState('');
+  const [addUsernameInput, setAddUsernameInput] = useState('');
+  
+  const [inboxView, setInboxView] = useState<string | null>(null);
 
   const { createInbox } = useInboxStore();
   const handleCreateInbox = useCallback(() => {
-    createInbox(username);
-    setUsername('')
-  }, [createInbox, username]);
+    if (addUsernameInput === "") {
+      return;
+    }
+    let kindaParse = addUsernameInput.split(".")
+    if (kindaParse.length != 2) {
+      return;
+    }
+    createInbox(addUsernameInput);
+    setAddUsernameInput('')
+  }, [createInbox, addUsernameInput]);
+
+  const handleInboxClick = useCallback((user: string) => {
+    setInboxView(user);
+  }, []);
 
   if (!(inboxService.inboxes instanceof Map)) {
     return <div>loading inboxes</div>
   }
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      {/* <div style={{ fontSize: '24px', marginBottom: '10px' }}>Inbox</div> */}
-      <div style={{ marginBottom: '20px' }}>
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="username.os"
-          // style={{ padding: '5px', marginRight: '10px' }}
-        />
-        <button onClick={handleCreateInbox} style={{ padding: '5px 10px' }}>
-          Add
-        </button>
-      </div>
-      <ul>
-        {[...inboxService.inboxes.entries()].map(([key, inbox], index) => (
-          <li key={index}>{key}: {key}</li>
-        ))}
-      </ul>
+    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif',
+      width: "100%",
+    }}>
+      {inboxView === null ? (
+        <>
+          <div style={{ marginBottom: '20px' }}>
+            <input
+              type="text"
+              value={addUsernameInput}
+              onChange={(e) => setAddUsernameInput(e.target.value)}
+              placeholder="username.os"
+            />
+            <button onClick={handleCreateInbox} style={{ padding: '5px 10px' }}>
+              Add
+            </button>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {[...inboxService.inboxes.entries()].map(([user, inbox], index) => (
+              <div
+                key={user}
+                onClick={() => handleInboxClick(user)}
+              >
+                <InboxPreview user={user} inbox={inbox} />
+              </div>
+
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          <button onClick={() => setInboxView(null)} style={{ padding: '5px 10px', marginBottom: '20px' }}>
+            Back
+          </button>
+          <div>{inboxView}</div>
+        </>
+      )}
     </div>
   );
 };

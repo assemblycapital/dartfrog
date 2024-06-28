@@ -8,7 +8,7 @@ import InboxApp from "./components/InboxApp";
 
 function App() {
   const location = useLocation();
-  const {api, setApi, serviceId, setServiceId, inboxService, setInboxService} = useInboxStore();
+  const {api, setApi, serviceId, setServiceId, inboxService, setInboxService, setInboxFromUpdate} = useInboxStore();
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -35,15 +35,10 @@ function App() {
           handler:(pluginUpdate, service, source) => {
             console.log("inbox pluginUpdate", pluginUpdate);
             if (pluginUpdate["Inbox"]) {
-            let [key, value] = pluginUpdate["Inbox"];
+              let [user, inbox] = pluginUpdate["Inbox"];
+              setInboxFromUpdate(user, inbox);
 
-            if (!inboxService) {
-              console.error("InboxService is null");
-              return;
-            }
-            let updatedInboxes = new Map(inboxService.inboxes);
-            updatedInboxes.set(key, value);
-            setInboxService({ inboxes: updatedInboxes });
+
             } else if (pluginUpdate["AllInboxes"]) {
               let allInboxes = pluginUpdate["AllInboxes"]
 
