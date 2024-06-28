@@ -54,12 +54,6 @@ const TabTop = ({ tab, index, activeTabIndex, setActiveTabIndex, closeTab, tabs,
         <div
           className="close-tab-button-svg"
           style={{
-            // width: '10px',
-            // height: '10px',
-            padding: '3px',
-            alignItems: 'center',
-            display: 'flex',
-            justifyContent: 'center',
           }}
         >
           <XIcon />

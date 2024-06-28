@@ -71,26 +71,34 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
         >
           join service by id:
         </div>
-        <input type="text" placeholder="service-name" 
-          value={inputJoinServiceName}
-          onChange={handleJoinServiceNameInputChange}
-          className={`${isJoinServiceNameInputValid ? '' : 'invalid'}`}
-        />
-        <input type="text" placeholder="template.os"
-          value={inputJoinServiceHostNode}
-          onChange={(e) => setInputJoinServiceHostNode(e.target.value)}
-          />
-        <button
+        <div
           style={{
-            cursor: "pointer",
-          }}
-          onClick={() => {
-            // alert("coming soon");
-            handleInputJoinClick();
+            display: "flex",
+            // alignItems: "center",
+            // gap: "0.5rem",
           }}
         >
-          join
-        </button>
+          <input type="text" placeholder="service-name" 
+            value={inputJoinServiceName}
+            onChange={handleJoinServiceNameInputChange}
+            className={`${isJoinServiceNameInputValid ? '' : 'invalid'}`}
+          />
+          <input type="text" placeholder="template.os"
+            value={inputJoinServiceHostNode}
+            onChange={(e) => setInputJoinServiceHostNode(e.target.value)}
+          />
+          <button
+            style={{
+              cursor: "pointer",
+            }}
+            onClick={() => {
+              // alert("coming soon");
+              handleInputJoinClick();
+            }}
+          >
+            join
+          </button>
+        </div>
       </div>
 
 

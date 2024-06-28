@@ -36,12 +36,15 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, addTab }) => {
           <div
             style={{
               display: "flex",
+              flexDirection: "column",
               justifyContent: "center",
               alignItems: "center",
+              gap: "2rem",
               height: "100%",
             }}
           >
-              no service
+              
+              loading...
               <Spinner />
           </div>
         ) : (
@@ -52,8 +55,10 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, addTab }) => {
                     <div
                       style={{
                         display: "flex",
+                        flexDirection: "column",
                         justifyContent: "center",
                         alignItems: "center",
+                        gap: "2rem",
                         height: "100%",
                       }}
                     >

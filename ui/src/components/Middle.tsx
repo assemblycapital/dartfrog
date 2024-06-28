@@ -31,6 +31,7 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'row',
+          overflowX: 'hidden',
           // width: '100%',
           // height: '100%'
         }}

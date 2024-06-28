@@ -7,11 +7,12 @@ import Messages from './Messages';
 import Invites from './Invites';
 import Settings from './Settings';
 import Friends from './Friends';
+import { XIcon } from '../icons/Icons';
 
 interface SidebarProps {}
 
 const Sidebar: React.FC<SidebarProps> = ({ }) => {
-  const { isSidebarOpen, nameColors, addNameColor } = useDartStore();
+  const { isSidebarOpen, nameColors, addNameColor, setIsSidebarOpen } = useDartStore();
   const [myNameColor, setMyNameColor] = useState<string>('');
   const [activeComponent, setActiveComponent] = useState<string>('sidebar');
 
@@ -46,38 +47,72 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
         break;
       default:
         return (
-          <div className={`sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
-            <div className={`profile`}>
-              <div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+              <div
+                style={{
+                  backgroundColor: '#333',
+                  color: '#b4b4b4',
+                  height: '26px',
+                  width: '100%',
+                  textAlign: 'center',
+                  userSelect: 'none',
+                  marginBottom: '1rem',
+                  fontSize: '0.8rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                }}
+              >
+                <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>dartfrog</div>
+                <div className="close-sidebar-button" style={{ position: 'absolute', right: '0px' }}
+                  onClick={() => setIsSidebarOpen(false)}
+                >
+                  <div className="close-sidebar-button-svg" style={{ width: '16px', height: '16px' }}>
+                    <XIcon />
+                  </div>
+                </div>
+              </div>
+              <div className='sidebar'>
+
+              <div className='profile'>
+
                 <div className='profile-image'>
                   <img src="assets/dartfrog256_nobg.png" alt="profile" />
                 </div>
+                <div
+                  className='profile-name'
+                  style={{
+                    flex: '1',
+                    color: myNameColor,
+                    fontSize: '1.5em',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {window.our?.node}
+                </div>
               </div>
-              <div
-                className='profile-name'
-                style={{
-                  color: myNameColor,
-                  fontSize: '1.5em',
-                  cursor: 'pointer',
-                }}
-              >
-                {window.our?.node}
+              <div className='sidebar-option' onClick={() => setActiveComponent('notifs')}>
+                notifs
               </div>
-            </div>
-            <div style={{ cursor: 'pointer' }} onClick={() => setActiveComponent('notifs')}>
-              notifs
-            </div>
-            <div style={{ cursor: 'pointer' }} onClick={() => setActiveComponent('messages')}>
-              messages
-            </div>
-            <div style={{ cursor: 'pointer' }} onClick={() => setActiveComponent('invites')}>
-              invites
-            </div>
-            <div style={{ cursor: 'pointer' }} onClick={() => setActiveComponent('friends')}>
-              friends
-            </div>
-            <div style={{ cursor: 'pointer' }} onClick={() => setActiveComponent('settings')}>
-              settings
+              <div className='sidebar-option' onClick={() => setActiveComponent('messages')}>
+                messages
+              </div>
+              <div className='sidebar-option' onClick={() => setActiveComponent('invites')}>
+                invites
+              </div>
+              <div className='sidebar-option' onClick={() => setActiveComponent('friends')}>
+                friends
+              </div>
+              <div className='sidebar-option' onClick={() => setActiveComponent('settings')}>
+                settings
+              </div>
             </div>
           </div>
         );
@@ -91,42 +126,43 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
       >
         <div 
           style={{
+            backgroundColor: '#333',
+            color: '#b4b4b4',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             marginBottom: '1rem',
             height: '26px',
-            color: '#757575',
-            backgroundColor: '#1f1f1f',
             gap: '1rem',
             overflowX: 'hidden',
             overflowY: 'hidden',
             padding: '0px 10px',
+            position: 'relative',
+            fontSize: '0.8em',
+            userSelect: 'none',
           }}
         >
           <div
             onClick={() => setActiveComponent('sidebar')}
+            className='sidebar-back-button'
             style={{ cursor: 'pointer',
               flex:1,
               height: '100%',
-              display: 'flex', // Added
-              alignItems: 'center', // Added
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'absolute',
+              left: '0px',
+              padding: '0px 3px',
             }}
           >
             back
           </div>
+          <div style={{ flex: 1, textAlign: 'center' }}>
 
-          <div
-            style={{
-              flex:3,
-              height: '100%',
-              fontSize: '1.5em',
-              display: 'flex', // Added
-              alignItems: 'center', // Added
-            }}
-          >
             {activeComponent}
           </div>
+
         </div>
         {component}
       </div>
@@ -137,3 +173,4 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
 };
 
 export default Sidebar;
+
