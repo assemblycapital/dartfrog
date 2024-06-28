@@ -3,6 +3,7 @@ import { InboxService } from '../store/inbox';
 import useInboxStore, { PLUGIN_NAME } from "../store/inbox";
 import { serialize } from 'v8';
 import InboxPreview from './InboxPreview';
+import InboxUser from './InboxUser';
 
 // Define TypeScript interfaces based on Rust structs
 const InboxApp: React.FC<{ inboxService: InboxService }> = ({ inboxService }) => {
@@ -67,10 +68,9 @@ const InboxApp: React.FC<{ inboxService: InboxService }> = ({ inboxService }) =>
         </>
       ) : (
         <>
-          <button onClick={() => setInboxView(null)} style={{ padding: '5px 10px', marginBottom: '20px' }}>
-            Back
-          </button>
-          <div>{inboxView}</div>
+          <InboxUser user={inboxView} inbox={inboxService.inboxes.get(inboxView)} goBack={()=>{
+            setInboxView(null);
+          }}/>
         </>
       )}
     </div>

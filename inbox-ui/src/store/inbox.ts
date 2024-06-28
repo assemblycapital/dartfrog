@@ -40,7 +40,7 @@ export interface inboxStore {
   createInbox: (user:string) => void
 }
 
-const useinboxStore = create<inboxStore>((set, get) => ({
+const useInboxStore = create<inboxStore>((set, get) => ({
   serviceId: null,
   setServiceId: (serviceId) => set({ serviceId }),
   api: null,
@@ -84,4 +84,4 @@ const useinboxStore = create<inboxStore>((set, get) => ({
   }
 }))
 
-export default useinboxStore;
+export default useInboxStore;
