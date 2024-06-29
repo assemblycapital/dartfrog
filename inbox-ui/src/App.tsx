@@ -26,7 +26,6 @@ function App() {
     if (!serviceId) {
       return;
     }
-    console.log(PLUGIN_NAME)
     const api = new DartApi({
       our: window.our,
       websocket_url: WEBSOCKET_URL,
