@@ -36,12 +36,13 @@ const InboxApp: React.FC<{ inboxService: InboxService }> = ({ inboxService }) =>
     <div 
       style={{
       width: "100%",
+      height: "100%",
     }}>
       {inboxView === null ? (
         <>
           <div 
             style={{ 
-              marginBottom: '20px', 
+              marginBottom: '0.4rem', 
               display: 'flex', 
               flexDirection: 'row', 
               alignItems: 'center',
@@ -53,6 +54,9 @@ const InboxApp: React.FC<{ inboxService: InboxService }> = ({ inboxService }) =>
               value={addUsernameInput}
               onChange={(e) => setAddUsernameInput(e.target.value)}
               placeholder="username.os"
+              style={{
+                flexGrow: "1"
+              }}
             />
             <button onClick={handleCreateInbox} style={{ padding: '5px 10px' }}>
               Add
@@ -64,14 +68,22 @@ const InboxApp: React.FC<{ inboxService: InboxService }> = ({ inboxService }) =>
               flexDirection: "column",
             }}
           >
-            {[...inboxService.inboxes.entries()].map(([user, inbox], index) => (
-              <div
-                key={user}
-                onClick={() => handleInboxClick(user)}
-              >
-                <InboxPreview user={user} inbox={inbox} />
-              </div>
-
+            {[...inboxService.inboxes.entries()]
+              .sort(([, inboxA], [, inboxB]) => {
+                const latestMessageA = inboxA.messages[inboxA.messages.length - 1];
+                const latestMessageB = inboxB.messages[inboxB.messages.length - 1];
+                if (!latestMessageA || !latestMessageB) {
+                    return 0; // Handle case where there are no messages
+                }
+                return new Date(latestMessageB.time).getTime() - new Date(latestMessageA.time).getTime();
+              })
+              .map(([user, inbox], index) => (
+                <div
+                  key={user}
+                  onClick={() => handleInboxClick(user)}
+                >
+                  <InboxPreview user={user} inbox={inbox} />
+                </div>
             ))}
           </div>
         </>

@@ -55,7 +55,12 @@ const InboxUser: React.FC<InboxUserProps> = ({ user, inbox, goBack }) => {
   }, [inbox, scrollDownChat]);
 
   return (
-    <div>
+    <div
+      style={{
+        width:"100%",
+        height:"100%"
+      }}
+    >
       <div
         ref={topRowRef}
         style={{
@@ -76,13 +81,13 @@ const InboxUser: React.FC<InboxUserProps> = ({ user, inbox, goBack }) => {
           className="dm-back-button"
           style={{
             cursor: 'pointer',
-            padding: '0.5rem 3rem',
+            padding: '0.5rem 0.5rem',
           }}
           onClick={goBack}
         >
           back
         </div>
-        <div style={{ color: nameColor, display: 'flex', alignItems: 'center' }}>{user}</div>
+        <div style={{ color: nameColor, display: 'flex', alignItems: 'center', userSelect: "none" }}>{user}</div>
       </div>
       <ChatBox user={user} inbox={inbox} />
     </div>

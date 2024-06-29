@@ -124,6 +124,8 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
           overflow: 'hidden',
           height: '100%',
           width: '100%',
+          display: "flex",
+          flexDirection: "column"
         }}
       >
         <div 
@@ -133,7 +135,7 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '1rem',
+            marginBottom: '0.4rem',
             height: '26px',
             gap: '1rem',
             overflowX: 'hidden',
@@ -167,7 +169,17 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
           </div>
 
         </div>
-        {component}
+        <div
+          style={{
+            height:"100%",
+            width:"100%",
+            maxHeight:"100%",
+            flexGrow:"1",
+          }}
+        >
+
+          {component}
+        </div>
       </div>
     );
   };

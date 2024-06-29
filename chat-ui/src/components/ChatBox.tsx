@@ -199,7 +199,16 @@ function isImageUrl(url: string) {
 
 export function formatTimestamp(timestamp: number): string {
   const date = new Date(timestamp * 1000); // convert from seconds to milliseconds
-  const day = date.toLocaleDateString('en-US', { weekday: 'short' });
-  const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-  return `${day} ${time}`;
+  const now = new Date();
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  if (date < oneWeekAgo) {
+    const month = date.getMonth() + 1; // getMonth() is zero-based
+    const year = date.getFullYear().toString().slice(-2); // get last two digits of the year
+    return `${month}/${year}`;
+  } else {
+    const day = date.toLocaleDateString('en-US', { weekday: 'short' });
+    const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return `${day} ${time}`;
+  }
 }

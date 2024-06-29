@@ -33,6 +33,7 @@ const InboxPreview: React.FC<InboxPreviewProps> = ({ user, inbox}) => {
         gap: "0.8rem",
         cursor: "pointer",
         padding: "0rem 0.6rem",
+        overflowX:'hidden',
       }}
       >
       <div
@@ -52,7 +53,8 @@ const InboxPreview: React.FC<InboxPreviewProps> = ({ user, inbox}) => {
           display: "flex",
           padding: "0.5rem 1rem 0.5rem 0rem",
           alignItems: "center",
-          flex: 1,
+          flex: 2,
+          maxWidth: "66.66%", // Ensure the width never exceeds flex: 2
         }}
       >
         {inbox.messages.length > 0 ? (

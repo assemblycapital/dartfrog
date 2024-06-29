@@ -106,7 +106,7 @@ textarea:focus {
 input[type="text"] {
   padding: 4px 8px;
   /* border-radius: 4px; */
-  border: 2px solid #555;
+  border: 1px solid #555;
 }
 
 input[type="text"].invalid {

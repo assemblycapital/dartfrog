@@ -1,6 +1,6 @@
 use std::{collections::HashMap, time::{SystemTime, UNIX_EPOCH}};
 
-use common::{get_server_address, handle_plugin_update, plugin_client_to_service, send_to_frontend, update_subscriber_clients, update_subscribers, DartMessage, DefaultPluginClientState, DefaultPluginServiceState, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState, ServerRequest, ServiceAccess, ServiceId, ServiceVisibility};
+use common::{get_process_address, get_server_address, handle_plugin_update, plugin_client_to_service, send_to_frontend, update_subscriber_clients, update_subscribers, DartMessage, DefaultPluginClientState, DefaultPluginServiceState, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState, ServerRequest, ServiceAccess, ServiceId, ServiceVisibility};
 use kinode_process_lib::{await_message, call_init, http::header::USER_AGENT, println, Address, Request};
 use serde::{Deserialize, Serialize};
 
@@ -217,7 +217,7 @@ impl PluginServiceState for InboxService {
 
                 // send to the sender
                 let req = InboxRequest::NewMessage(our.node().to_string(), message.clone());
-                let recipient_address = get_server_address(&send_to.as_str());
+                let recipient_address = get_process_address(&send_to.as_str(), INBOX_PROCESS_NAME);
                 let sent =  Request::to(recipient_address)
                     .body(serde_json::to_vec(&req)?)
                     .send();
