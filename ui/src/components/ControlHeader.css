@@ -34,6 +34,9 @@
   transition: background-color 0.2s;
 }
 
+.inbox-unread {
+  border: 1px solid blue;
+}
 .sidebar-toggle {
   flex: 2;
   cursor: pointer;

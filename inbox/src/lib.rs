@@ -25,6 +25,7 @@ pub enum InboxRequest {
     RequestAllInboxes, // get all inboxes
     CreateInbox(String),
     DeleteInbox(String),
+    ReadInbox(String),
 }
 
 
@@ -38,6 +39,7 @@ pub struct InboxMessage {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Inbox {
     pub messages: Vec<InboxMessage>,
+    pub has_unread: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -132,9 +134,10 @@ impl PluginServiceState for InboxService {
                 let inbox = self.inboxes.get(&user).cloned().unwrap_or_else(|| {
                     Inbox {
                         messages: vec![],
+                        has_unread: false,
                     }
                 });
-                let upd = InboxUpdate::Inbox(user, inbox);
+                let upd = InboxUpdate::AllInboxes(self.inboxes.iter().map(|(k, v)| (k.clone(), v.clone())).collect());
                 match update_subscribers(our, upd, metadata) {
                     Ok(()) => {}
                     Err(e) => {
@@ -159,8 +162,8 @@ impl PluginServiceState for InboxService {
                     return Ok(())
                 }
                 if !self.inboxes.contains_key(&user) {
-                    self.inboxes.insert(user.clone(), Inbox { messages: vec![] });
-                    let upd = InboxUpdate::Inbox(user.clone(), self.inboxes.get(&user).unwrap().clone());
+                    self.inboxes.insert(user.clone(), Inbox { messages: vec![], has_unread: false});
+                    let upd = InboxUpdate::AllInboxes(self.inboxes.iter().map(|(k, v)| (k.clone(), v.clone())).collect());
                     match update_subscribers(our, upd, metadata) {
                         Ok(()) => {}
                         Err(e) => {
@@ -186,13 +189,15 @@ impl PluginServiceState for InboxService {
             InboxRequest::NewMessage(msg_from, message) => {
                 let inbox = self.inboxes.entry(msg_from.clone()).or_insert(Inbox {
                     messages: vec![],
+                    has_unread: false,
                 });
                 inbox.messages.push(InboxMessage {
                     sender: msg_from.clone(),
                     message: message.clone(),
                     time: get_now(),
                 });
-                let upd = InboxUpdate::Inbox(msg_from, inbox.clone());
+                inbox.has_unread = true;
+                let upd = InboxUpdate::AllInboxes(self.inboxes.iter().map(|(k, v)| (k.clone(), v.clone())).collect());
 
                 match update_subscribers(our, upd, metadata) {
                     Ok(()) => {}
@@ -201,6 +206,25 @@ impl PluginServiceState for InboxService {
                     }
                 }
             }
+            InboxRequest::ReadInbox(inbox_user) => {
+                // assert that from is our
+                if from != our.node() {
+                    return Ok(())
+                }
+                let inbox = self.inboxes.entry(inbox_user.clone()).or_insert(Inbox {
+                    messages: vec![],
+                    has_unread: false,
+                });
+                inbox.has_unread = false;
+                let upd = InboxUpdate::AllInboxes(self.inboxes.iter().map(|(k, v)| (k.clone(), v.clone())).collect());
+                match update_subscribers(our, upd, metadata) {
+                    Ok(()) => {}
+                    Err(e) => {
+                        println!("error sending update to subscribers: {:?}", e);
+                    }
+                }
+
+            }
             InboxRequest::HostSendMessage(send_to, message) => {
                 // assert that from is our
                 if from != our.node() {
@@ -208,6 +232,7 @@ impl PluginServiceState for InboxService {
                 }
                 let inbox = self.inboxes.entry(send_to.clone()).or_insert(Inbox {
                     messages: vec![],
+                    has_unread: false,
                 });
                 inbox.messages.push(InboxMessage {
                     sender: our.node().to_string(),
@@ -229,7 +254,7 @@ impl PluginServiceState for InboxService {
                     }
                 }
 
-                let upd = InboxUpdate::Inbox(send_to.clone(), inbox.clone());
+                let upd = InboxUpdate::AllInboxes(self.inboxes.iter().map(|(k, v)| (k.clone(), v.clone())).collect());
 
                 match update_subscribers(our, upd, metadata) {
                     Ok(()) => {}

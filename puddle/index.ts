@@ -122,8 +122,10 @@ class DartApi {
     onServicesChangeHook = (services) => {},
     onAvailableServicesChangeHook = (availableServices) => {},
   }: ConstructorArgs) {
+    // console.log("init puddle")
     this.pluginUpdateHandlers = pluginUpdateHandlers;
     if (pluginUpdateHandler) {
+      // console.log("registerplugin handler", pluginUpdateHandler.serviceId, pluginUpdateHandler.plugin)
       this.registerPluginUpdateHandler(pluginUpdateHandler.serviceId, pluginUpdateHandler.plugin, pluginUpdateHandler.handler);
     }
     this.onOpen = onOpen;

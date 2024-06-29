@@ -33,6 +33,9 @@ export interface DartStore {
   // chat stuff here until its properly abstracted later
   nameColors: Map<string, string>
   addNameColor: (name:string, color:string) => void
+  //
+  hasUnreadInbox: boolean
+  setHasUnreadInbox: (has:boolean) => void
   // 
   isSidebarOpen: boolean
   setIsSidebarOpen: (isSidebarOpen: boolean) => void
@@ -136,6 +139,10 @@ const useDartStore = create<DartStore>()(
         const { nameColors } = get()
         nameColors[name] = color;
         set({ nameColors: nameColors })
+      },
+      hasUnreadInbox: false,
+      setHasUnreadInbox: (hasUnreadInbox: boolean) => {
+        set({ hasUnreadInbox });
       },
       tabs: [
         { serviceId: "hub." + HUB_NODE },

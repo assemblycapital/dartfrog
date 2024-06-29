@@ -26,6 +26,7 @@ function App() {
     if (!serviceId) {
       return;
     }
+    console.log(PLUGIN_NAME)
     const api = new DartApi({
       our: window.our,
       websocket_url: WEBSOCKET_URL,
@@ -33,7 +34,6 @@ function App() {
           plugin:PLUGIN_NAME,
           serviceId,
           handler:(pluginUpdate, service, source) => {
-            // console.log("inbox pluginUpdate", pluginUpdate);
             if (pluginUpdate["Inbox"]) {
               let [user, inbox] = pluginUpdate["Inbox"];
               setInboxFromUpdate(user, inbox);

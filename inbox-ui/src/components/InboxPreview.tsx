@@ -26,7 +26,7 @@ const InboxPreview: React.FC<InboxPreviewProps> = ({ user, inbox}) => {
 
   return (
     <div 
-      className="inbox-preview"
+      className={`inbox-preview ${inbox.has_unread && 'inbox-unread'}`}
       style={{
         display:"flex",
         flexDirection: "row",

@@ -12,7 +12,7 @@ interface InboxUserProps {
 }
 
 const InboxUser: React.FC<InboxUserProps> = ({ user, inbox, goBack }) => {
-  const { nameColors } = useInboxStore();
+  const { nameColors, readInbox} = useInboxStore();
   const [nameColor, setNameColor] = useState<string>('');
   const [myNameColor, setMyNameColor] = useState<string>('');
   const [paddingTop, setPaddingTop] = useState<number>(0);
@@ -20,6 +20,7 @@ const InboxUser: React.FC<InboxUserProps> = ({ user, inbox, goBack }) => {
   const topRowRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
 
   useEffect(() => {
     let color = nameColors[user];
@@ -54,6 +55,11 @@ const InboxUser: React.FC<InboxUserProps> = ({ user, inbox, goBack }) => {
     scrollDownChat();
   }, [inbox, scrollDownChat]);
 
+  useEffect(()=> {
+
+    readInbox(user);
+  }, [])
+
   return (
     <div
       style={{
@@ -83,7 +89,10 @@ const InboxUser: React.FC<InboxUserProps> = ({ user, inbox, goBack }) => {
             cursor: 'pointer',
             padding: '0.5rem 0.5rem',
           }}
-          onClick={goBack}
+          onClick={()=>{
+            readInbox(user);
+            goBack();
+          }}
         >
           back
         </div>

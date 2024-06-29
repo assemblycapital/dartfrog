@@ -12,6 +12,7 @@ export type InboxMessage = {
 
  export type Inbox = {
   messages: InboxMessage[];
+  has_unread: boolean;
 }
 
 export type InboxService = {
@@ -40,6 +41,7 @@ export interface inboxStore {
   sendMessage: (user:string, message:string) => void
   //
   createInbox: (user:string) => void
+  readInbox: (user:string) => void
 }
 
 const useInboxStore = create<inboxStore>((set, get) => ({
@@ -86,7 +88,10 @@ const useInboxStore = create<inboxStore>((set, get) => ({
   createInbox: (user: string) => {
     const { api, serviceId } = get();
     api.pokePluginService(serviceId, PLUGIN_NAME, { CreateInbox: user});
-
+  },
+  readInbox: (user: string) => {
+    const { api, serviceId } = get();
+    api.pokePluginService(serviceId, PLUGIN_NAME, { ReadInbox: user});
   }
 }))
 

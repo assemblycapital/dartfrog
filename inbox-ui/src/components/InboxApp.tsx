@@ -57,6 +57,11 @@ const InboxApp: React.FC<{ inboxService: InboxService }> = ({ inboxService }) =>
               style={{
                 flexGrow: "1"
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleCreateInbox();
+                }
+              }}
             />
             <button onClick={handleCreateInbox} style={{}}>
               Add
@@ -73,7 +78,8 @@ const InboxApp: React.FC<{ inboxService: InboxService }> = ({ inboxService }) =>
                 const latestMessageA = inboxA.messages[inboxA.messages.length - 1];
                 const latestMessageB = inboxB.messages[inboxB.messages.length - 1];
                 if (!latestMessageA || !latestMessageB) {
-                    return 0; // Handle case where there are no messages
+                    return latestMessageA ? -1 : 1; // Handle case where there are no messages
+                    // return +1; // Handle case where there are no messages
                 }
                 return new Date(latestMessageB.time).getTime() - new Date(latestMessageA.time).getTime();
               })

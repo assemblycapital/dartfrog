@@ -12,7 +12,7 @@ import { XIcon } from '../icons/Icons';
 interface SidebarProps {}
 
 const Sidebar: React.FC<SidebarProps> = ({ }) => {
-  const { isSidebarOpen, nameColors, addNameColor, setIsSidebarOpen } = useDartStore();
+  const { isSidebarOpen, nameColors, addNameColor, setIsSidebarOpen, hasUnreadInbox } = useDartStore();
   const [myNameColor, setMyNameColor] = useState<string>('');
   const [activeComponent, setActiveComponent] = useState<string>('sidebar');
 
@@ -101,18 +101,19 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
               {/* <div className='sidebar-option' onClick={() => setActiveComponent('notifs')}>
                 notifs
               </div> */}
-              <div className='sidebar-option' onClick={() => setActiveComponent('messages')}>
+              <div className={`sidebar-option ${hasUnreadInbox ? 'inbox-unread' : ''}`}
+              onClick={() => setActiveComponent('messages')}>
                 messages
               </div>
               {/* <div className='sidebar-option' onClick={() => setActiveComponent('invites')}>
                 invites
               </div> */}
-              <div className='sidebar-option' onClick={() => setActiveComponent('friends')}>
+              {/* <div className='sidebar-option' onClick={() => setActiveComponent('friends')}>
                 friends
               </div>
               <div className='sidebar-option' onClick={() => setActiveComponent('settings')}>
                 settings
-              </div>
+              </div> */}
             </div>
           </div>
         );

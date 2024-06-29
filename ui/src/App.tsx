@@ -12,17 +12,40 @@ import Middle from "./components/Middle";
 
 function App() {
 
-  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, services, setAvailableServices, requestServiceList, availableServices, } = useDartStore();
-
+  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, joinService, setAvailableServices, requestServiceList, availableServices, setHasUnreadInbox} = useDartStore();
 
   useEffect(() => {
+    const inbox_service = `inbox.${window.our?.node}`;
     const api = new DartApi({
       our: window.our,
       websocket_url: WEBSOCKET_URL,
+      pluginUpdateHandler: {
+          plugin:'inbox:dartfrog:herobrine.os',
+          serviceId: inbox_service,
+          handler:(pluginUpdate, service, source) => {
+            if (pluginUpdate["Inbox"]) {
+              let [user, inbox] = pluginUpdate["Inbox"];
+              if (inbox.has_unread) {
+                setHasUnreadInbox(true);
+              }
+            } else if (pluginUpdate["AllInboxes"]) {
+              let allInboxes = pluginUpdate["AllInboxes"]
+              let anyHasUnread = false;
+              for (let i = 0; i < allInboxes.length; i++) {
+                let [key, value] = allInboxes[i];
+                if (value.has_unread) {
+                  anyHasUnread = true;
+                }
+              }
+              setHasUnreadInbox(anyHasUnread);
+            }
+          }
+      },
       onOpen: () => {
         setIsClientConnected(true);
         requestServiceList(window.our.node);
         setServices(new Map());
+        joinService(inbox_service);
       },
       onClose: () => {
         setIsClientConnected(false);
