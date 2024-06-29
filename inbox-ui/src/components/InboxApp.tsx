@@ -39,7 +39,15 @@ const InboxApp: React.FC<{ inboxService: InboxService }> = ({ inboxService }) =>
     }}>
       {inboxView === null ? (
         <>
-          <div style={{ marginBottom: '20px' }}>
+          <div 
+            style={{ 
+              marginBottom: '20px', 
+              display: 'flex', 
+              flexDirection: 'row', 
+              alignItems: 'center',
+              gap: "4px"
+            }}
+          >
             <input
               type="text"
               value={addUsernameInput}

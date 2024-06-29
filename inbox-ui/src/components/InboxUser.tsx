@@ -3,6 +3,7 @@ import { Inbox } from '../store/inbox';
 import useInboxStore from '../store/inbox';
 import { computeColorForName } from '@dartfrog/puddle';
 import ChatInput from './ChatInput';
+import ChatBox from './ChatBox';
 
 interface InboxUserProps {
   user: string;
@@ -83,61 +84,8 @@ const InboxUser: React.FC<InboxUserProps> = ({ user, inbox, goBack }) => {
         </div>
         <div style={{ color: nameColor, display: 'flex', alignItems: 'center' }}>{user}</div>
       </div>
-      <ul
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-end',
-          marginTop: `${paddingTop}px`,
-          marginBottom: `${paddingBottom}px`,
-          overflowY: 'auto',
-        }}
-      >
-        {inbox.messages.map((message, index) => (
-          <li key={index} className="chat-message">
-            <div style={{ display: 'inline-block', verticalAlign: 'top' }}>
-              <div style={{ color: '#ffffff77', fontSize: '0.8rem', display: 'inline-block', marginRight: '5px', cursor: 'default' }}>
-                <span>{formatTimestamp(message.time)}</span>
-              </div>
-              <div style={{ color: message.sender === window.our?.node ? myNameColor : nameColors[message.sender] || '#ffffff', display: 'inline-block', marginRight: '5px', cursor: 'default' }}>
-                <span>{message.sender}:</span>
-              </div>
-            </div>
-            <span style={{ cursor: 'default' }}>{message.message}</span>
-          </li>
-        ))}
-        <div ref={messagesEndRef} style={{ display: 'inline' }} />
-      </ul>
-      <div
-        ref={chatInputRef}
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          width: '100%',
-          zIndex: 1000,
-        }}
-      >
-        <ChatInput user={user} />
-      </div>
+      <ChatBox user={user} inbox={inbox} />
     </div>
   );
-};
-
-export function formatTimestamp(timestamp: number): string {
-  const date = new Date(timestamp * 1000); // convert from seconds to milliseconds
-  const now = new Date();
-  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-  if (date < oneWeekAgo) {
-    const month = date.getMonth() + 1; // getMonth() is zero-based
-    const year = date.getFullYear().toString().slice(-2); // get last two digits of the year
-    return `${month}/${year}`;
-  } else {
-    const day = date.toLocaleDateString('en-US', { weekday: 'short' });
-    const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-    return `${day} ${time}`;
-  }
 }
-
 export default InboxUser;

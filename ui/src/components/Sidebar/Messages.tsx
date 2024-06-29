@@ -11,15 +11,17 @@ const Messages: React.FC<MessagesProps> = ({ }) => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
+        height: '100%',
       }}
     >
-      <div
+      <iframe
+        src={`/inbox:dartfrog:herobrine.os/?service=inbox.${window.our?.node}`}
         style={{
-          padding: '5rem 0rem',
+          width: '100%',
+          height: '100%',
+          border: 'none',
         }}
-      >
-        coming soon
-      </div>
+      />
     </div>
     );
 };

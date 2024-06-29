@@ -52,7 +52,7 @@ const InboxPreview: React.FC<InboxPreviewProps> = ({ user, inbox}) => {
           display: "flex",
           padding: "0.5rem 1rem 0.5rem 0rem",
           alignItems: "center",
-          flex: 4,
+          flex: 1,
         }}
       >
         {inbox.messages.length > 0 ? (

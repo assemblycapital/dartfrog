@@ -33,7 +33,7 @@ function App() {
           plugin:PLUGIN_NAME,
           serviceId,
           handler:(pluginUpdate, service, source) => {
-            console.log("inbox pluginUpdate", pluginUpdate);
+            // console.log("inbox pluginUpdate", pluginUpdate);
             if (pluginUpdate["Inbox"]) {
               let [user, inbox] = pluginUpdate["Inbox"];
               setInboxFromUpdate(user, inbox);

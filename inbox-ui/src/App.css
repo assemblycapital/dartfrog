@@ -24,3 +24,9 @@ html, body {
 .dm-back-button:hover {
   background-color:#333;
 }
+.chat-input-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
