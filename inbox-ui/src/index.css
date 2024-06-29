@@ -79,7 +79,7 @@ button {
   cursor: pointer;
   padding: 4px 8px;
   transition: background-color 0.25s;
-  /* border: 1px solid #333; */
+  border: 1px solid #333;
 }
 
 button:hover {
@@ -91,13 +91,14 @@ textarea, input[type="text"] {
   border: 1px solid #333;
   padding: 3px;
   resize: none;
-  margin-right:10px;
+  /* margin-right:10px; */
   transition: background-color 0.25s;
 }
 
 textarea:hover {
   background-color: #1d1d1d;
 }
+
 textarea:focus {
   background-color: #1b1b1b;
   outline:none;
@@ -106,7 +107,7 @@ textarea:focus {
 input[type="text"] {
   padding: 4px 8px;
   /* border-radius: 4px; */
-  border: 1px solid #555;
+  border: 1px solid #333;
 }
 
 input[type="text"].invalid {
@@ -118,6 +119,7 @@ input[type="text"].invalid {
 .chat-message:hover {
   background:#00000011;
 }
+
 .chat-message {
   word-wrap: "break-word";
   vertical-align: "text-top";

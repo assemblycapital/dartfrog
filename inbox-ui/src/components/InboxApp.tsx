@@ -46,7 +46,7 @@ const InboxApp: React.FC<{ inboxService: InboxService }> = ({ inboxService }) =>
               display: 'flex', 
               flexDirection: 'row', 
               alignItems: 'center',
-              gap: "4px"
+              gap: "2px"
             }}
           >
             <input
@@ -58,7 +58,7 @@ const InboxApp: React.FC<{ inboxService: InboxService }> = ({ inboxService }) =>
                 flexGrow: "1"
               }}
             />
-            <button onClick={handleCreateInbox} style={{ padding: '5px 10px' }}>
+            <button onClick={handleCreateInbox} style={{}}>
               Add
             </button>
           </div>

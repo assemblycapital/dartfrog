@@ -59,7 +59,7 @@ const useDartStore = create<DartStore>()(
         set({ api: null });
       },
       handleUpdate: (json: string | Blob) => {
-        console.log('TODO?', json);
+        // console.log('TODO?', json);
       },
       sendPoke: (data) => {
         const { api } = get();
@@ -138,7 +138,7 @@ const useDartStore = create<DartStore>()(
         set({ nameColors: nameColors })
       },
       tabs: [
-        // { serviceId: "hub." + HUB_NODE },
+        { serviceId: "hub." + HUB_NODE },
         { serviceId: null },
       ],
       activeTabIndex: 0,

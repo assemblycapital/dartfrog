@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AssemblyCapitalLogo } from "./icons/Icons";
-import { Service, ServiceId } from "@dartfrog/puddle/index";
+import { ConnectionStatusType, Service, ServiceId, ServiceConnectionStatusType } from "@dartfrog/puddle/index";
 import useDartStore from "../store/dart";
 import DisplayUserActivity from "./DisplayUserActivity";
 
@@ -22,13 +22,12 @@ const Footer = () => {
     const gotService = services.get(serviceId);
     if (gotService) {
       setService({ ...gotService });
-      // console.log("service updated in servicetab")
     } else {
       setService(null);
     }
   }, [services, serviceId]);
 
-  if (serviceId !== null && service !== null) {
+  if (serviceId !== null && (service !== null && service.connectionStatus.status === ServiceConnectionStatusType.Connected)) {
     return (
       <>
         <DisplayUserActivity serviceId={serviceId} metadata={service?.metadata}/>

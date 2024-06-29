@@ -12,6 +12,7 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
 
   const { services, isSidebarOpen } = useDartStore();
 
+
   return (
     <div style={{ height: '100%',
       flexGrow: 1,
