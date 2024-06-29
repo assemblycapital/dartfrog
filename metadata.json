@@ -4,7 +4,7 @@
     "image": "https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/dartfrog256_nobg.png",
     "properties": {
         "package_name": "dartfrog",
-        "current_version": "0.2.2",
+        "current_version": "0.2.3",
         "publisher": "herobrine.os",
         "mirrors": ["waterhouse.os"],
         "code_hashes": {
