@@ -37,6 +37,8 @@ export interface inboxStore {
   requestInbox: (user: string) => void
   requestAllInboxes: () => void
   //
+  sendMessage: (user:string, message:string) => void
+  //
   createInbox: (user:string) => void
 }
 
@@ -76,6 +78,10 @@ const useInboxStore = create<inboxStore>((set, get) => ({
   requestAllInboxes: () => {
     const { api, serviceId } = get();
     api.pokePluginService(serviceId, PLUGIN_NAME, { RequestAllInboxes: null });
+  },
+  sendMessage: (user:string, message:string) => {
+    const { api, serviceId } = get();
+    api.pokePluginService(serviceId, PLUGIN_NAME, { HostSendMessage: [user, message]});
   },
   createInbox: (user: string) => {
     const { api, serviceId } = get();

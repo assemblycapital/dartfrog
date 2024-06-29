@@ -33,7 +33,8 @@ const InboxApp: React.FC<{ inboxService: InboxService }> = ({ inboxService }) =>
   }
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif',
+    <div 
+      style={{
       width: "100%",
     }}>
       {inboxView === null ? (

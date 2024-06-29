@@ -119,6 +119,7 @@ impl PluginServiceState for InboxService {
     }
 
     fn handle_request(&mut self, from: String, req: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
+        // println!("handle_request");
         let Ok(request) = serde_json::from_str::<InboxRequest>(&req) else {
             println!("error parsing request: {:?}", req);
             return Ok(());
