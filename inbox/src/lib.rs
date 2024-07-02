@@ -1,6 +1,6 @@
 use std::{collections::HashMap, time::{SystemTime, UNIX_EPOCH}};
 
-use common::{get_process_address, get_server_address, handle_plugin_update, plugin_client_to_service, send_to_frontend, update_subscriber_clients, update_subscribers, DartMessage, DefaultPluginClientState, DefaultPluginServiceState, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState, ServerRequest, ServiceAccess, ServiceId, ServiceVisibility};
+use dartfrog_lib::{get_process_address, get_server_address, handle_plugin_update, plugin_client_to_service, send_to_frontend, update_subscriber_clients, update_subscribers, DartMessage, DefaultPluginClientState, DefaultPluginServiceState, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState, ServerRequest, ServiceAccess, ServiceId, ServiceVisibility};
 use kinode_process_lib::{await_message, call_init, http::header::USER_AGENT, println, Address, Request};
 use serde::{Deserialize, Serialize};
 
@@ -301,7 +301,7 @@ fn init(our: Address) {
     println!("init inbox");
     let mut state: AppState = AppState::new();
 
-    let try_ui = kinode_process_lib::http::serve_ui(&our, "inbox-ui", true, false, vec!["/"]);
+    let try_ui = kinode_process_lib::http::secure_serve_ui(&our, "inbox-ui", vec!["/"]);
     match try_ui {
         Ok(()) => {}
         Err(e) => {

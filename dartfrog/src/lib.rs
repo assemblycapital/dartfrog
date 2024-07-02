@@ -1,8 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-// mod common;
-use common::*;
+use dartfrog_lib::*;
 use kinode_process_lib::vfs::{create_drive, open_file};
 mod constants;
 use kinode_process_lib::{http, await_message, call_init, println, Address, Request,
@@ -751,13 +750,10 @@ fn init(our: Address) {
     println!("initializing");
     
     // Serve the index.html and other UI files found in pkg/ui at the root path.
-    http::serve_ui(&our, "ui", true, false, vec!["/"]).unwrap();
-
-    // // Allow HTTP requests to be made to /api; they will be handled dynamically.
-    // http::bind_http_path("/api", true, false).unwrap();
+    http::secure_serve_ui(&our, "ui", vec!["/"]).unwrap();
 
     // Allow websockets to be opened at / (our process ID will be prepended).
-    http::bind_ws_path("/", true, false).unwrap();
+    http::secure_bind_ws_path("/", true).unwrap();
 
     Request::to(("our", "homepage", "homepage", "sys"))
         .body(

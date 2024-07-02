@@ -522,7 +522,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
- "common",
+ "dartfrog-lib",
  "kinode_process_lib",
  "serde",
  "serde_json",
@@ -535,21 +535,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
- "common",
+ "dartfrog-lib",
  "kinode_process_lib",
  "serde",
  "serde_json",
  "wit-bindgen",
-]
-
-[[package]]
-name = "common"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "kinode_process_lib",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -620,11 +610,21 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
- "common",
+ "dartfrog-lib",
  "kinode_process_lib",
  "serde",
  "serde_json",
  "wit-bindgen",
+]
+
+[[package]]
+name = "dartfrog-lib"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "kinode_process_lib",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -995,7 +995,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
- "common",
+ "dartfrog-lib",
  "kinode_process_lib",
  "serde",
  "serde_json",
@@ -1218,7 +1218,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
- "common",
+ "dartfrog-lib",
  "kinode_process_lib",
  "serde",
  "serde_json",
@@ -1280,7 +1280,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
- "common",
+ "dartfrog-lib",
  "kinode_process_lib",
  "serde",
  "serde_json",

@@ -1,4 +1,4 @@
-use common::{get_server_address, handle_plugin_update, send_to_frontend, update_subscriber_clients, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState};
+use dartfrog_lib::{get_server_address, handle_plugin_update, send_to_frontend, update_subscriber_clients, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState};
 use kinode_process_lib::{await_message, call_init, println, Address};
 use serde::{Deserialize, Serialize};
 
@@ -250,7 +250,7 @@ fn init(our: Address) {
     println!("init chess");
     let mut state: AppState = AppState::new();
 
-    let try_ui = kinode_process_lib::http::serve_ui(&our, "chess-ui", true, false, vec!["/"]);
+    let try_ui = kinode_process_lib::http::secure_serve_ui(&our, "chess-ui", vec!["/"]);
     match try_ui {
         Ok(()) => {}
         Err(e) => {

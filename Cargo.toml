@@ -7,7 +7,7 @@ members = [
     "page",
     "chess",
     "inbox",
-    "common",
+    "dartfrog-lib",
 ]
 
 [profile.release]
