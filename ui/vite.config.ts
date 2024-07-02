@@ -14,6 +14,7 @@ IMPORTANT:
 This must match the process name from pkg/manifest.json + pkg/metadata.json
 The format is "/" + "process_name:package_name:publisher_node"
 */
+const PACKAGE_SUBDOMAIN = `${metadata.properties.package_name}-${metadata.properties.publisher.replace(/\./g, '-')}`;
 const BASE_URL = `/${manifest[0].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}/`;
 const CHAT_URL = `/${manifest[1].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 const PIANO_URL = `/${manifest[2].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
@@ -22,10 +23,9 @@ const CHESS_URL = `/${manifest[4].process_name}:${metadata.properties.package_na
 const INBOX_URL = `/${manifest[5].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 
 // This is the proxy URL, it must match the node you are developing against
-const PROXY_URL = (process.env.VITE_NODE_URL || 'http://127.0.0.1:8080').replace('localhost', '127.0.0.1');
+const PROXY_URL = (process.env.VITE_NODE_URL || `http://${PACKAGE_SUBDOMAIN}.localhost:8080`)
 // proxy for applet to its vite hot reload server
-const APPLET_PROXY_URL = (process.env.VITE_NODE_URL || 'http://127.0.0.1:3001').replace('localhost', '127.0.0.1');
-
+const APPLET_PROXY_URL = (process.env.VITE_NODE_URL || `http://${PACKAGE_SUBDOMAIN}.localhost:3001`)
 console.log('process.env.VITE_NODE_URL', process.env.VITE_NODE_URL, PROXY_URL);
 
 export default defineConfig({
@@ -43,6 +43,10 @@ export default defineConfig({
   },
   server: {
     open: true,
+    hmr: {
+      host: `${PACKAGE_SUBDOMAIN}.localhost`, // Explicit HMR host
+      port: 3000, // Ensure the port is correctly specified for WebSocket connections
+    },
     proxy: {
       '/our': {
         target: PROXY_URL,
