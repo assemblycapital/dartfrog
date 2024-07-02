@@ -57,7 +57,7 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(BASE_URL, ''),
       },
-      [`${INBOX_URL}`]: {
+      [`${CHAT_URL}`]: {
         target: APPLET_PROXY_URL,
         changeOrigin: true,
         rewrite: (path) => path.replace(BASE_URL, ''),

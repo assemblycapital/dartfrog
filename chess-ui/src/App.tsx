@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import "./App.css";
 import DartApi, { parseServiceId } from "@dartfrog/puddle";
-import { WEBSOCKET_URL, maybePlaySoundEffect } from "./utils";
+import { WEBSOCKET_URL } from "./utils";
 import useChessStore, { PLUGIN_NAME, handleChessUpdate } from "./store/chess";
 import ChessPluginBox from "./components/ChessPluginBox";
 

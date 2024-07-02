@@ -110,7 +110,7 @@ class DartApi {
   private onClose: () => void;
   private onServicesChangeHook: (services: Services) => void = () => {};
   private onAvailableServicesChangeHook: (availableServices: PerNodeAvailableServices) => void = () => {};
-  private reconnectIntervalId?: NodeJS.Timeout;
+  // private reconnectIntervalId?: NodeJS.Timeout;
 
   constructor({
     our,
@@ -476,8 +476,9 @@ class DartApi {
     }
   }
   private initialize(our, websocket_url) {
-    // console.log("Attempting to connect to Kinode...");
+    // console.log("Attempting to connect to Kinode...", our, websocket_url);
     if (!(our.node && our.process)) {
+      // console.log("exit")
       return;
     }
     const newApi = new KinodeClientApi({
@@ -485,22 +486,22 @@ class DartApi {
       nodeId: our.node,
       processId: "dartfrog:dartfrog:herobrine.os",
       onClose: (event) => {
-        console.log("Disconnected from Kinode");
+        // console.log("Disconnected from Kinode");
         this.setConnectionStatus(ConnectionStatusType.Disconnected);
         this.onClose();
-        // Set a timeout to attempt reconnection
-        setTimeout(() => {
-          this.initialize(our, websocket_url);
-        }, 5000); // Retry every 5 seconds
+        // // Set a timeout to attempt reconnection
+        // setTimeout(() => {
+        //   this.initialize(our, websocket_url);
+        // }, 5000); // Retry every 5 seconds
       },
       onOpen: (event, api) => {
         // console.log("Connected to Kinode");
         this.onOpen();
         this.setConnectionStatus(ConnectionStatusType.Connected);
-        if (this.reconnectIntervalId) {
-          clearInterval(this.reconnectIntervalId);
-          this.reconnectIntervalId = undefined;
-        }
+        // if (this.reconnectIntervalId) {
+        //   clearInterval(this.reconnectIntervalId);
+        //   this.reconnectIntervalId = undefined;
+        // }
       },
       onMessage: (json, api) => {
         this.setConnectionStatus(ConnectionStatusType.Connected);
@@ -512,13 +513,13 @@ class DartApi {
     });
 
     this.api = newApi;
-    if (this.connectionStatus.status !== ConnectionStatusType.Connected) {
-      this.reconnectIntervalId = setInterval(() => {
-        if (this.connectionStatus.status !== ConnectionStatusType.Connected) {
-          this.initialize(our, websocket_url);
-        }
-      }, 5000);
-    }
+    // if (this.connectionStatus.status !== ConnectionStatusType.Connected) {
+    //   this.reconnectIntervalId = setInterval(() => {
+    //     if (this.connectionStatus.status !== ConnectionStatusType.Connected) {
+    //       this.initialize(our, websocket_url);
+    //     }
+    //   }, 5000);
+    // }
   }
 }
 

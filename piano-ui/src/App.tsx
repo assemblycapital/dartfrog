@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import Piano, { PianoState } from "./components/Piano/Piano";
 import "./App.css";
 import DartApi, { parseServiceId } from "@dartfrog/puddle";
-import { WEBSOCKET_URL, maybePlaySoundEffect } from "./utils";
+import { WEBSOCKET_URL } from "./utils";
 import usePianoStore, { PLUGIN_NAME } from "./store/piano";
 
 function App() {
