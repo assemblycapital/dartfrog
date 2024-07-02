@@ -34,16 +34,20 @@ const InboxPreview: React.FC<InboxPreviewProps> = ({ user, inbox}) => {
         cursor: "pointer",
         padding: "0rem 0.6rem",
         overflowX:'hidden',
+        height: "39px",
       }}
       >
       <div
         style={{
           borderRight: "1px solid gray",
-          flex:1,
+          flex: '1 1 0',
           display: "flex",
-          padding: "0.5rem 1rem 0.5rem 0rem",
           alignItems: "center",
-          color: nameColor, // Apply the name color
+          height: "100%",
+          color: nameColor,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
         }}
       >
         {user}
@@ -51,10 +55,12 @@ const InboxPreview: React.FC<InboxPreviewProps> = ({ user, inbox}) => {
       <div
         style={{
           display: "flex",
-          padding: "0.5rem 1rem 0.5rem 0rem",
           alignItems: "center",
-          flex: 2,
-          maxWidth: "66.66%", // Ensure the width never exceeds flex: 2
+          height: "100%",
+          flex: '2 1 0',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
         }}
       >
         {inbox.messages.length > 0 ? (

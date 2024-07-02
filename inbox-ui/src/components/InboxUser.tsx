@@ -76,10 +76,13 @@ const InboxUser: React.FC<InboxUserProps> = ({ user, inbox, goBack }) => {
           width: '100%',
           display: 'flex',
           flexDirection: 'row',
+          alignItems: 'center',
           gap: '0.5rem',
           borderBottom: '1px solid gray',
           marginBottom: '0.3rem',
           backgroundColor: '#242424',
+          height: "26px",
+          fontSize:" 0.8rem",
           zIndex: 1000,
         }}
       >
@@ -87,7 +90,10 @@ const InboxUser: React.FC<InboxUserProps> = ({ user, inbox, goBack }) => {
           className="dm-back-button"
           style={{
             cursor: 'pointer',
-            padding: '0.5rem 0.5rem',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0px 3px'
           }}
           onClick={()=>{
             readInbox(user);
