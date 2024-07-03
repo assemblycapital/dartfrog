@@ -16,10 +16,18 @@ const PluginIFrame: React.FC<PluginIFrameProps> = ({serviceId, service, plugin, 
     const checkPluginAvailability = async () => {
       try {
         const response = await fetch(`/${plugin}/?service=${serviceId}`);
-        if (!response.ok) throw new Error('Plugin not found');
+        if (!response.ok) {
+          setIsPluginAvailable(false);
+        } else {
+          setIsPluginAvailable(true);
+        }
       } catch (error) {
-        console.log(error);
-        setIsPluginAvailable(false);
+        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+          // This is likely a CORS error
+          setIsPluginAvailable(true);
+        } else {
+          setIsPluginAvailable(false);
+        }
       }
     };
 

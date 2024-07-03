@@ -8,6 +8,7 @@ import Invites from './Invites';
 import Settings from './Settings';
 import Friends from './Friends';
 import { XIcon } from '../icons/Icons';
+import profileImage from '../../assets/dartfrog256_nobg.png';
 
 interface SidebarProps {}
 
@@ -84,7 +85,7 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
               <div className='profile'>
 
                 <div className='profile-image'>
-                  <img src="assets/dartfrog256_nobg.png" alt="profile" />
+                  <img src={profileImage} alt="profile" />
                 </div>
                 <div
                   className='profile-name'
@@ -189,4 +190,3 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
 };
 
 export default Sidebar;
-

@@ -24,6 +24,7 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
   const [selectedPlugins, setSelectedPlugins] = useState([CHAT_PLUGIN, PAGE_PLUGIN]);
   const [selectedVisibility, setSelectedVisibility] = useState<ServiceVisibility>('Visible');
   const [selectedAccess, setSelectedAccess] = useState<ServiceAccess>('Public');
+  const [pluginInput, setPluginInput] = useState('');
 
   const { requestServiceList, createService } = useDartStore();
 
@@ -68,6 +69,21 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
     createService(serviceId, PLUGIN_MAP[pluginName], 'Visible', 'Public', []);
     setTabService(serviceId);
   }
+
+  const handlePluginInputChange = (e) => {
+    setPluginInput(e.target.value);
+  };
+
+  const handleAddPlugin = () => {
+    if (pluginInput && !selectedPlugins.includes(pluginInput)) {
+      setSelectedPlugins([...selectedPlugins, pluginInput]);
+      setPluginInput('');
+    }
+  };
+
+  const handleRemovePlugin = (plugin) => {
+    setSelectedPlugins(selectedPlugins.filter(p => p !== plugin));
+  };
 
   return (
     <div
@@ -177,6 +193,22 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
               />
               Chess
             </label>
+          </div>
+          <div>
+            <input
+              type="text"
+              placeholder="Add plugin"
+              value={pluginInput}
+              onChange={handlePluginInputChange}
+            />
+            <button onClick={handleAddPlugin}>Add</button>
+          </div>
+          <div>
+            {selectedPlugins.map((plugin, index) => (
+              <div key={index}>
+                {plugin} <button onClick={() => handleRemovePlugin(plugin)}>Remove</button>
+              </div>
+            ))}
           </div>
           <select
             name="serviceAccessOption"
