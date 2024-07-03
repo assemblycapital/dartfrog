@@ -3,6 +3,13 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import DartApi, { AvailableServices, ParsedServiceId, PerNodeAvailableServices, Service, ServiceAccess, ServiceId, ServiceVisibility, parseServiceId } from '@dartfrog/puddle';
 import { HUB_NODE } from '../utils';
 
+export const PACKAGE_ID = "dartfrog:herobrine.os";
+export const CHAT_PLUGIN = `chat:${PACKAGE_ID}`;
+export const PIANO_PLUGIN = `piano:${PACKAGE_ID}`;
+export const PAGE_PLUGIN = `page:${PACKAGE_ID}`;
+export const CHESS_PLUGIN = `chess:${PACKAGE_ID}`;
+export const INBOX_PLUGIN = `inbox:${PACKAGE_ID}`;
+
 export interface Tab {
   serviceId: ServiceId | null;
 }
@@ -46,6 +53,10 @@ export interface DartStore {
   addTab: (maybeServiceId: ServiceId | null) => void;
   closeTab: (index: number) => void;
   setFromNewTab: (serviceId: string) => void;
+  // 
+  authDialog: string[] | null;
+  setAuthDialog: (plugins: string[] | null) => void;
+  // 
   get: () => DartStore 
   set: (partial: DartStore | Partial<DartStore>) => void
 }
@@ -172,6 +183,9 @@ const useDartStore = create<DartStore>()(
       }),
       isSidebarOpen: false,
       setIsSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
+      authDialog: null,
+      setAuthDialog: (plugins) => set({authDialog: plugins}),
+      // 
       get,
       set,
     }),

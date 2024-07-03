@@ -4,15 +4,16 @@ import ControlHeader from "./components/ControlHeader";
 import { useEffect, useRef, useState } from "react";
 import { WEBSOCKET_URL, } from './utils';
 import DartApi from "@dartfrog/puddle";
-import useDartStore from "./store/dart";
+import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, INBOX_PLUGIN, PAGE_PLUGIN, PIANO_PLUGIN } from "./store/dart";
 import BrowserBox from "./components/BrowserBox";
 import TabbedWindowManager from "./components/TabbedWindowManager";
 import Sidebar from "./components/Sidebar/Sidebar";
 import Middle from "./components/Middle";
+import AuthDialog from "./components/AuthDialog";
 
 function App() {
 
-  const {setApi, closeApi, handleUpdate, setIsClientConnected, setServices, joinService, setAvailableServices, requestServiceList, availableServices, setHasUnreadInbox} = useDartStore();
+  const {setApi, closeApi, handleUpdate, authDialog, setAuthDialog, setIsClientConnected, setServices, joinService, setAvailableServices, requestServiceList, availableServices, setHasUnreadInbox} = useDartStore();
 
   useEffect(() => {
     const inbox_service = `inbox.${window.our?.node}`;
@@ -76,6 +77,40 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    const checkCookies = () => {
+      if (!(window.our)) {
+        return;
+      }
+
+      const getCookieName = (ourNode, pluginName) => {
+        return `kinode-auth_${ourNode}@${pluginName}`
+      }
+
+
+      const cookies = document.cookie;
+      const requiredCookies = [
+        getCookieName(window.our.node, CHAT_PLUGIN),
+        getCookieName(window.our.node, PAGE_PLUGIN),
+        getCookieName(window.our.node, CHESS_PLUGIN),
+        getCookieName(window.our.node, PIANO_PLUGIN),
+        getCookieName(window.our.node, INBOX_PLUGIN),
+      ];
+
+      const missingCookies = requiredCookies.filter(cookieName => !cookies.includes(cookieName));
+      console.log('Missing cookies:', missingCookies);
+
+      let plugins = missingCookies.map(cookieName => cookieName.split('@')[1]);
+      console.log(plugins)
+
+      setAuthDialog(plugins);
+
+      
+    };
+
+    checkCookies();
+  }, []);
+
   return (
     <div style={{
       height: '100vh',
@@ -85,6 +120,9 @@ function App() {
       flexDirection: 'column',
       padding: '20px',
     }}>
+      {authDialog && (
+        <AuthDialog />
+      )}
       <div
         style={{
           flexShrink: 0,

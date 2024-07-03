@@ -1,14 +1,10 @@
 import { useCallback, useState } from "react";
 import { validateServiceName } from "./NewTab";
-import useDartStore from "../../store/dart";
+import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, PAGE_PLUGIN, PIANO_PLUGIN } from "../../store/dart";
 
 import './CreateService.css';
 import { ServiceAccess, ServiceVisibility } from "@dartfrog/puddle";
 
-const CHAT_PLUGIN = "chat:dartfrog:herobrine.os";
-const PIANO_PLUGIN = "piano:dartfrog:herobrine.os";
-const PAGE_PLUGIN = "page:dartfrog:herobrine.os";
-const CHESS_PLUGIN = "chess:dartfrog:herobrine.os";
 
 const PLUGIN_MAP = {
   "chat": [CHAT_PLUGIN],
