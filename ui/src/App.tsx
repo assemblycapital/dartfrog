@@ -103,7 +103,11 @@ function App() {
       let plugins = missingCookies.map(cookieName => cookieName.split('@')[1]);
       console.log(plugins)
 
-      setAuthDialog(plugins);
+      if (plugins.length === 0) {
+        setAuthDialog(null);
+      } else {
+        setAuthDialog(plugins);
+      }
 
       
     };

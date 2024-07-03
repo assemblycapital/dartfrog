@@ -18,22 +18,25 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ }) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password_hash: hashHex, subdomain: subdomain }),
+      credentials: 'include', // Include credentials to allow cookies
     });
 
     if (result.status == 200) {
       // reload page
       // window.location.reload();
       console.log("login OK", result)
-      // get the setcookie from the result
-      const setCookie = result.headers.getSetCookie();
-      console.log("Set-Cookie:", setCookie);
+      // Check if the cookie is set
+      const cookies = document.cookie;
+      console.log("Cookies:", cookies);
     } else {
       console.log("login NOT OK", result)
     }
   }, []);
 
   const handlePasswordSubmit = useCallback(async () => {
-    requestSubdomainAuthCookie(password, "example")
+    for (const pluginName of authDialog) {
+      requestSubdomainAuthCookie(password, pluginName);
+    }
 
 
   }, [password, authDialog, setAuthDialog]);
