@@ -1,95 +1,126 @@
 import React, { useState } from 'react';
+import { XIcon } from '../icons/Icons';
 
-const CreateServicePlugins = () => {
-  const [pluginInput, setPluginInput] = useState('');
-  const [selectedPlugins, setSelectedPlugins] = useState<string[]>([]);
 
-  const handlePluginInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPluginInput(e.target.value);
-  };
+const PACKAGE = "dartfrog:herobrine.os"
+const CHAT_PLUGIN = `chat:${PACKAGE}`
+const PIANO_PLUGIN = `piano:${PACKAGE}`;
+const PAGE_PLUGIN = `page:${PACKAGE}`;
+const CHESS_PLUGIN = `chess:${PACKAGE}`;
 
-  const handleAddPlugin = () => {
-    if (pluginInput && !selectedPlugins.includes(pluginInput)) {
-      setSelectedPlugins([...selectedPlugins, pluginInput]);
-      setPluginInput('');
-    }
-  };
+const PLUGINS = [CHAT_PLUGIN, PIANO_PLUGIN, PAGE_PLUGIN, CHESS_PLUGIN]
 
-  const handleRemovePlugin = (plugin: string) => {
-    setSelectedPlugins(selectedPlugins.filter(p => p !== plugin));
-  };
 
-  const handlePluginChange = (plugin: string) => {
-    if (selectedPlugins.includes(plugin)) {
-      setSelectedPlugins(selectedPlugins.filter(p => p !== plugin));
+
+const PluginSelector = ({ plugin, setPlugin, removeSelf}) => {
+  const [isCustom, setIsCustom] = useState(false);
+  const [customPlugin, setCustomPlugin] = useState(plugin.replace('Custom: ', ''));
+
+  const handlePluginChange = (e) => {
+    const value = e.target.value;
+    if (value === 'custom') {
+      setIsCustom(true);
+      setPlugin(customPlugin);
     } else {
-      setSelectedPlugins([...selectedPlugins, plugin]);
+      setIsCustom(false);
+      setPlugin(value);
     }
   };
 
-  const CHAT_PLUGIN = 'Chat';
-  const PIANO_PLUGIN = 'Piano';
-  const PAGE_PLUGIN = 'Page';
-  const CHESS_PLUGIN = 'Chess';
+  const handleCustomPluginChange = (e) => {
+    const value = e.target.value;
+    setCustomPlugin(value);
+    setPlugin(value);
+  };
 
   return (
-      <div>
-        <div>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '0.6rem' }}>
-          <label>
-            <input
-              type="checkbox"
-              checked={selectedPlugins.includes(CHAT_PLUGIN)}
-              onChange={() => handlePluginChange(CHAT_PLUGIN)}
-            />
-            Chat
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={selectedPlugins.includes(PIANO_PLUGIN)}
-              onChange={() => handlePluginChange(PIANO_PLUGIN)}
-            />
-            Piano
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={selectedPlugins.includes(PAGE_PLUGIN)}
-              onChange={() => handlePluginChange(PAGE_PLUGIN)}
-            />
-            Page
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={selectedPlugins.includes(CHESS_PLUGIN)}
-              onChange={() => handlePluginChange(CHESS_PLUGIN)}
-            />
-            Chess
-          </label>
-        </div>
-      </div>
-      <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-        <span style={{ marginRight: "0.5rem" }}>Add Plugin:</span>
+    <div style={{
+        boxSizing: "border-box",
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: "0.4rem",
+        width:"100%",
+        height:"27px",
+        maxHeight:"27px",
+      }}
+    >
+      <div 
+        className='remove-plugin-selector'
+        onClick={removeSelf}
+        style={{
+          padding: "6px",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          flexShrink: 0
+        }}
+        >
+        <XIcon />
+      </div >
+      <select 
+        value={isCustom ? 'custom' : plugin} 
+        onChange={handlePluginChange} 
+        style={{
+          width: 'auto',
+          padding: "0px 6px",
+          margin: "0px"
+        }}
+      >
+        {PLUGINS.map((p) => (
+          <option key={p} value={p}>{p}</option>
+        ))}
+        <option value="custom">custom</option>
+      </select>
+      {isCustom && (
         <input
           type="text"
-          placeholder="Add plugin"
-          value={pluginInput}
-          onChange={handlePluginInputChange}
+          value={customPlugin}
+          onChange={handleCustomPluginChange}
+          style={{
+            width: '100%',
+            margin:"0px",
+          }}
         />
-        <button onClick={handleAddPlugin}>Add</button>
-      </div>
-      <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-        <span style={{ marginRight: "0.5rem" }}>Selected Plugins:</span>
-        <div>
-          {selectedPlugins.map((plugin, index) => (
-            <div key={index}>
-              {plugin} <button onClick={() => handleRemovePlugin(plugin)}>Remove</button>
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
+    </div>
+  );
+};
+
+const CreateServicePlugins = ({selectedPlugins, setSelectedPlugins}) => {
+
+  const handleAddPlugin = () => {
+    setSelectedPlugins([...selectedPlugins, CHAT_PLUGIN]);
+  };
+
+  const handlePluginChange = (index: number, value: string) => {
+    const newPlugins = [...selectedPlugins];
+    newPlugins[index] = value;
+    setSelectedPlugins(newPlugins);
+  };
+
+  const handleRemovePlugin = (index: number) => {
+    setSelectedPlugins(selectedPlugins.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div
+      style={{
+        width:"100%",
+        display: "flex",
+        flexDirection: "column",
+        gap:"0.4rem",
+      }}
+    >
+      {selectedPlugins.map((plugin, index) => (
+        <PluginSelector
+          key={index}
+          plugin={plugin}
+          setPlugin={(value) => handlePluginChange(index, value)}
+          removeSelf={() => handleRemovePlugin(index)}
+        />
+      ))}
+      <button onClick={handleAddPlugin}>Add Plugin</button>
     </div>
   );
 };

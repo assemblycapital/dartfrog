@@ -154,7 +154,7 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
             >
               <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                 <span style={{ marginRight: "0.5rem" }}>Plugins:</span>
-                <CreateServicePlugins />
+                <CreateServicePlugins selectedPlugins={selectedPlugins} setSelectedPlugins={setSelectedPlugins}/>
               </div>
               <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                 <span style={{ marginRight: "0.5rem" }}>Access:</span>

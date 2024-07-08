@@ -16,3 +16,16 @@
   transition: background-color 0.25s;
   background-color: #181818;
 }
+.remove-plugin-selector {
+  display: inline-block;
+  border: none;
+  background-color: #1f1f1f;
+  cursor: pointer;
+  transition: background-color 0.25s;
+  width:27px;
+  height:27px;
+}
+
+.remove-plugin-selector:hover {
+  background-color: #181818;
+}
