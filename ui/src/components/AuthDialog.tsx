@@ -1,16 +1,19 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import useDartStore from '../store/dart';
 import CryptoJS from 'crypto-js';
+import Spinner from './Spinner';
+import './AuthDialog.css';
 
 interface AuthDialogProps {
 }
 
 const AuthDialog: React.FC<AuthDialogProps> = ({ }) => {
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const {authDialog, setAuthDialog, isAuthDialogActive, clearPluginFromAuthDialog, setIsAuthDialogActive} = useDartStore();
   
   useEffect(()=>{
-    if (authDialog.length === 0) { // Remove null check
+    if (authDialog.length === 0) {
       setIsAuthDialogActive(false);
     }
   }, [authDialog])
@@ -27,7 +30,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ }) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password_hash: hashHex, subdomain: subdomain }),
-      credentials: 'include', // Include credentials to allow cookies
+      credentials: 'include',
     });
 
     if (result.status == 200) {
@@ -36,9 +39,11 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ }) => {
   }, [clearSubdomain]);
 
   const handlePasswordSubmit = useCallback(async () => {
+    setIsLoading(true);
     for (const pluginName of authDialog) {
-      requestSubdomainAuthCookie(password, pluginName);
+      await requestSubdomainAuthCookie(password, pluginName);
     }
+    setIsLoading(false);
   }, [password, authDialog, requestSubdomainAuthCookie]);
 
   return (
@@ -59,13 +64,26 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ }) => {
         left: '50%',
         transform: 'translate(-50%, -50%)',
         backgroundColor: '#242424',
-        padding: '20px',
+        padding: '2rem 4rem',
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
         zIndex: 1000,
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.8rem",
       }}>
-        <h2>dartfrog auth</h2>
-        <p>grant dartfrog access to the following processes</p>
-        <ul>
+        
+        <div
+          style={{
+            fontWeight: 'bold'
+          }}
+        >
+          grant dartfrog access to
+        </div>
+        <ul
+          style={{
+            fontSize: '0.8rem'
+          }}
+        >
           {authDialog.map((plugin, index) => (
             <li key={index}>{plugin}</li>
           ))}
@@ -75,25 +93,19 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ }) => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter password"
+          disabled={isLoading}
+          autoComplete="off"  // Disable suggestions
           style={{
             width: '100%',
             padding: '10px',
-            margin: '10px 0',
-            borderRadius: '4px',
-            border: '1px solid #ccc',
           }}
         />
         <button
           onClick={handlePasswordSubmit}
-          style={{
-            backgroundColor: '#007bff',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
+          disabled={isLoading || password.length < 3}
+          className="password-button"
         >
-          OK
+          {isLoading ? <Spinner /> : 'OK'}
         </button>
       </div>
     </>

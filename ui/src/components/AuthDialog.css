@@ -1,0 +1,19 @@
+.password-button {
+  width:auto;
+  height:auto;
+  background-color: #555;
+  padding:10px 4rem;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.password-button:hover {
+  background-color: #777;
+  color:white;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.password-button:disabled {
+  background-color: #333; 
+  color: #666; 
+  cursor: not-allowed;
+}
