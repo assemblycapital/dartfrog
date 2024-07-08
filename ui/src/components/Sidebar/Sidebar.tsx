@@ -92,7 +92,6 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
                   style={{
                     flex: '1',
                     color: myNameColor,
-                    fontSize: '1.5em',
                     cursor: 'pointer',
                   }}
                 >

@@ -4,6 +4,7 @@ import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, PAGE_PLUGIN, PIANO_PLUGIN } fr
 
 import './CreateService.css';
 import { ServiceAccess, ServiceVisibility } from "@dartfrog/puddle";
+import CreateServicePlugins from "./CreateServicePlugins";
 
 
 const PLUGIN_MAP = {
@@ -20,7 +21,7 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
   const [selectedPlugins, setSelectedPlugins] = useState([CHAT_PLUGIN, PAGE_PLUGIN]);
   const [selectedVisibility, setSelectedVisibility] = useState<ServiceVisibility>('Visible');
   const [selectedAccess, setSelectedAccess] = useState<ServiceAccess>('Public');
-  const [pluginInput, setPluginInput] = useState('');
+  const [isAdvancedOptionsVisible, setIsAdvancedOptionsVisible] = useState(false);
 
   const { requestServiceList, createService } = useDartStore();
 
@@ -66,19 +67,9 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
     setTabService(serviceId);
   }
 
-  const handlePluginInputChange = (e) => {
-    setPluginInput(e.target.value);
-  };
 
-  const handleAddPlugin = () => {
-    if (pluginInput && !selectedPlugins.includes(pluginInput)) {
-      setSelectedPlugins([...selectedPlugins, pluginInput]);
-      setPluginInput('');
-    }
-  };
-
-  const handleRemovePlugin = (plugin) => {
-    setSelectedPlugins(selectedPlugins.filter(p => p !== plugin));
+  const toggleAdvancedOptions = () => {
+    setIsAdvancedOptionsVisible(!isAdvancedOptionsVisible);
   };
 
   return (
@@ -138,104 +129,82 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
           marginTop: "0.8rem",
         }}
       >
-        <div>
-          advanced options
+        <div
+          style={{
+            cursor: "pointer",
+          }}
+          onClick={toggleAdvancedOptions}
+        >
+          advanced options {isAdvancedOptionsVisible ? '▲' : '▼'}
         </div>
-        <div>
-          <input
-            type="text"
-            placeholder="service-name"
-            value={inputCreateServiceName}
-            onChange={handleCreateInputChange}
-            className={`${isCreateInputValid ? '' : 'invalid'}`}
-          />
+        {isAdvancedOptionsVisible && (
           <div
             style={{
-              padding: '0.8rem 0',
-              display: 'flex',
-              flexDirection: 'row',
-              gap: '0.6rem',
+              display:"flex",
+              flexDirection:"column",
+              gap: "0.6rem"
             }}
           >
-            <label>
-              <input
-                type="checkbox"
-                checked={selectedPlugins.includes(CHAT_PLUGIN)}
-                onChange={() => handlePluginChange(CHAT_PLUGIN)}
-              />
-              Chat
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={selectedPlugins.includes(PIANO_PLUGIN)}
-                onChange={() => handlePluginChange(PIANO_PLUGIN)}
-              />
-              Piano
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={selectedPlugins.includes(PAGE_PLUGIN)}
-                onChange={() => handlePluginChange(PAGE_PLUGIN)}
-              />
-              Page
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={selectedPlugins.includes(CHESS_PLUGIN)}
-                onChange={() => handlePluginChange(CHESS_PLUGIN)}
-              />
-              Chess
-            </label>
-          </div>
-          <div>
-            <input
-              type="text"
-              placeholder="Add plugin"
-              value={pluginInput}
-              onChange={handlePluginInputChange}
-            />
-            <button onClick={handleAddPlugin}>Add</button>
-          </div>
-          <div>
-            {selectedPlugins.map((plugin, index) => (
-              <div key={index}>
-                {plugin} <button onClick={() => handleRemovePlugin(plugin)}>Remove</button>
+            <div
+              style={{
+                display: "flex",
+                flexDirection:"column",
+                gap: "0.6rem"
+              }}
+            >
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                <span style={{ marginRight: "0.5rem" }}>Plugins:</span>
+                <CreateServicePlugins />
               </div>
-            ))}
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                <span style={{ marginRight: "0.5rem" }}>Access:</span>
+                <select
+                  name="serviceAccessOption"
+                  id="serviceAccessOption"
+                  value={selectedAccess}
+                  onChange={handleAccessChange}
+                >
+                  <option value="Public">Public</option>
+                  <option value="Whitelist">Whitelist</option>
+                  <option value="HostOnly">Host Only</option>
+                </select>
+              </div>
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                <span style={{ marginRight: "0.5rem" }}>Visibility:</span>
+                <select
+                  name="serviceVisibilityOption"
+                  id="serviceVisibilityOption"
+                  value={selectedVisibility}
+                  onChange={handleVisibilityChange}
+                >
+                  <option value="Visible">Visible</option>
+                  <option value="VisibleToHost">Invisible</option>
+                  {/* <option value="Hidden">Hidden</option> */}
+                </select>
+              </div>
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                <span style={{ marginRight: "0.5rem" }}>Name:</span>
+                <input
+                  type="text"
+                  placeholder="service-name"
+                  value={inputCreateServiceName}
+                  onChange={handleCreateInputChange}
+                  className={`${isCreateInputValid ? '' : 'invalid'}`}
+                />
+              </div>
+            </div>
+
+            <button
+              style={{
+                cursor: 'pointer',
+                justifyContent: 'center',
+              }}
+              onClick={handleInputCreateClick}
+            >
+              create
+            </button>
           </div>
-          <select
-            name="serviceAccessOption"
-            id="serviceAccessOption"
-            value={selectedAccess}
-            onChange={handleAccessChange}
-          >
-            <option value="Public">Public</option>
-            <option value="Whitelist">Whitelist</option>
-            <option value="HostOnly">Host Only</option>
-          </select>
-          <select
-            name="serviceVisibilityOption"
-            id="serviceVisibilityOption"
-            value={selectedVisibility}
-            onChange={handleVisibilityChange}
-          >
-            <option value="Visible">Visible</option>
-            <option value="VisibleToHost">Invisible</option>
-            {/* <option value="Hidden">Hidden</option> */}
-          </select>
-          <button
-            style={{
-              cursor: 'pointer',
-              justifyContent: 'center',
-            }}
-            onClick={handleInputCreateClick}
-          >
-            create
-          </button>
-        </div>
+        )}
       </div>
     </div>
   )

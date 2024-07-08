@@ -91,8 +91,10 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
       <ServiceList
         setTabService={setTabService}
       />
+
       <CreateService setTabService={setTabService}/>
 
+      <hr />
       <div
         style={{
           // flex: 1,
