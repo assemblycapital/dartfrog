@@ -13,7 +13,7 @@ import AuthDialog from "./components/AuthDialog";
 
 function App() {
 
-  const {setApi, closeApi, handleUpdate, authDialog, setAuthDialog, setIsClientConnected, setServices, joinService, setAvailableServices, requestServiceList, availableServices, setHasUnreadInbox} = useDartStore();
+  const {setApi, closeApi, handleUpdate, setIsAuthDialogActive, isAuthDialogActive, authDialog, setAuthDialog, setIsClientConnected, setServices, joinService, setAvailableServices, requestServiceList, availableServices, setHasUnreadInbox} = useDartStore();
 
   useEffect(() => {
     const inbox_service = `inbox.${window.our?.node}`;
@@ -98,18 +98,16 @@ function App() {
       ];
 
       const missingCookies = requiredCookies.filter(cookieName => !cookies.includes(cookieName));
-      console.log('Missing cookies:', missingCookies);
 
       let plugins = missingCookies.map(cookieName => cookieName.split('@')[1]);
-      console.log(plugins)
 
       if (plugins.length === 0) {
-        setAuthDialog(null);
+        setAuthDialog([]);
+        setIsAuthDialogActive(false);
       } else {
         setAuthDialog(plugins);
+        setIsAuthDialogActive(true);
       }
-
-      
     };
 
     checkCookies();
@@ -124,7 +122,7 @@ function App() {
       flexDirection: 'column',
       padding: '20px',
     }}>
-      {authDialog && (
+      {isAuthDialogActive && (
         <AuthDialog />
       )}
       <div

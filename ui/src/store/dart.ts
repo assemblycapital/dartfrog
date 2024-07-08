@@ -54,8 +54,11 @@ export interface DartStore {
   closeTab: (index: number) => void;
   setFromNewTab: (serviceId: string) => void;
   // 
-  authDialog: string[] | null;
-  setAuthDialog: (plugins: string[] | null) => void;
+  authDialog: string[];
+  setAuthDialog: (plugins: string[]) => void;
+  clearPluginFromAuthDialog: (plugin: string) => void;
+  isAuthDialogActive: boolean;
+  setIsAuthDialogActive: (isActive:boolean) => void;
   // 
   get: () => DartStore 
   set: (partial: DartStore | Partial<DartStore>) => void
@@ -183,9 +186,14 @@ const useDartStore = create<DartStore>()(
       }),
       isSidebarOpen: false,
       setIsSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
-      authDialog: null,
-      setAuthDialog: (plugins) => set({authDialog: plugins}),
-      // 
+      authDialog: [],
+      setAuthDialog: (plugins) => set({ authDialog: plugins }),
+      clearPluginFromAuthDialog: (plugin) => set((state) => {
+        const updatedAuthDialog = state.authDialog.filter((p) => p !== plugin);
+        return { authDialog: updatedAuthDialog };
+      }),
+      isAuthDialogActive: false,
+      setIsAuthDialogActive: (isActive) => set({ isAuthDialogActive: isActive }),
       get,
       set,
     }),

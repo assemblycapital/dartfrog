@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import useDartStore from '../store/dart';
 import CryptoJS from 'crypto-js';
 
@@ -7,10 +7,19 @@ interface AuthDialogProps {
 
 const AuthDialog: React.FC<AuthDialogProps> = ({ }) => {
   const [password, setPassword] = useState("");
-  const {authDialog, setAuthDialog} = useDartStore();
+  const {authDialog, setAuthDialog, isAuthDialogActive, clearPluginFromAuthDialog, setIsAuthDialogActive} = useDartStore();
+  
+  useEffect(()=>{
+    if (authDialog.length === 0) { // Remove null check
+      setIsAuthDialogActive(false);
+    }
+  }, [authDialog])
+
+  const clearSubdomain = useCallback((subdomain: string) => {
+    clearPluginFromAuthDialog(subdomain)
+  }, [setAuthDialog]);
 
   const requestSubdomainAuthCookie = useCallback(async (password: string, subdomain: string) => {
-    console.log("todo request cookie")
     // sha256 hash password using crypto-js
     const hashHex = '0x' + CryptoJS.SHA256(password).toString(CryptoJS.enc.Hex);
 
@@ -22,24 +31,15 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ }) => {
     });
 
     if (result.status == 200) {
-      // reload page
-      // window.location.reload();
-      console.log("login OK", result)
-      // Check if the cookie is set
-      const cookies = document.cookie;
-      console.log("Cookies:", cookies);
-    } else {
-      console.log("login NOT OK", result)
+      clearSubdomain(subdomain);
     }
-  }, []);
+  }, [clearSubdomain]);
 
   const handlePasswordSubmit = useCallback(async () => {
     for (const pluginName of authDialog) {
       requestSubdomainAuthCookie(password, pluginName);
     }
-
-
-  }, [password, authDialog, setAuthDialog]);
+  }, [password, authDialog, requestSubdomainAuthCookie]);
 
   return (
     <>
