@@ -11,6 +11,7 @@ import Sidebar from "./components/Sidebar/Sidebar";
 import Middle from "./components/Middle";
 import AuthDialog from "./components/AuthDialog";
 import JoinPage from "./components/JoinPage";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 function App() {
 
@@ -79,14 +80,17 @@ function App() {
   }, []);
 
   return (
-          <div style={{
-            height: '100vh',
-            maxHeight: '100vh',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '20px',
-          }}>
+    <div style={{
+      height: '100vh',
+      maxHeight: '100vh',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: '20px',
+    }}>
+      <Routes>
+        <Route path="/" element={
+            <>
             <div
               style={{
                 flexShrink: 0,
@@ -101,7 +105,11 @@ function App() {
             >
                 <Middle />
             </div>
-          </div>
+            </>
+        } />
+        <Route path="/join/:id" element={<JoinPage />} />
+      </Routes>
+    </div>
   );
 }
 

@@ -23,6 +23,7 @@ const CreateService: React.FC<{ }> = ({ }) => {
   const [selectedVisibility, setSelectedVisibility] = useState<ServiceVisibility>('Visible');
   const [selectedAccess, setSelectedAccess] = useState<ServiceAccess>('Public');
   const [isAdvancedOptionsVisible, setIsAdvancedOptionsVisible] = useState(false);
+
   const navigate = useNavigate();
 
   const { requestServiceList, createService } = useDartStore();
@@ -125,13 +126,18 @@ const CreateService: React.FC<{ }> = ({ }) => {
           marginTop: "0.8rem",
         }}
       >
+        <div>
         <div
-          style={{
-            cursor: "pointer",
-          }}
-          onClick={toggleAdvancedOptions}
-        >
-          advanced options {isAdvancedOptionsVisible ? '▲' : '▼'}
+            className="toggle-advanced-options"
+            style={{
+              cursor: "pointer",
+              display:"inline-block",
+              padding: "0.4rem 0.2rem",
+            }}
+            onClick={toggleAdvancedOptions}
+          >
+            advanced options {isAdvancedOptionsVisible ? '▲' : '▼'}
+        </div>
         </div>
         {isAdvancedOptionsVisible && (
           <div
@@ -149,7 +155,7 @@ const CreateService: React.FC<{ }> = ({ }) => {
               }}
             >
               <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-                <span style={{ marginRight: "0.5rem" }}>Plugins:</span>
+                <span style={{ marginRight: "0.5rem" }}>Plugin:</span>
                 <CreateServicePlugins selectedPlugin={selectedPlugin} setSelectedPlugin={setSelectedPlugin}/>
               </div>
               <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>

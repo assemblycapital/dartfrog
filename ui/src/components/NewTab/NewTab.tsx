@@ -7,6 +7,7 @@ import './NewTab.css'
 import { createSecretKey } from "crypto";
 import CreateService from "./CreateService";
 import ServiceList from "./ServiceList";
+import { useNavigate } from 'react-router-dom';
 
 export const validateServiceName = (value) => {
   if (value==='') return true;
@@ -42,6 +43,8 @@ const NewTab: React.FC<NewTabProps> = ({ }) => {
   const [inputJoinServiceLink, setInputJoinServiceLink] = useState(''); // Added state
   const [isJoinServiceLinkInputValid, setIsJoinServiceLinkInputValid] = useState(true); // Added state
 
+  const navigate = useNavigate();
+
   const handleJoinServiceNameInputChange = (e) => {
     const value = e.target.value;
     setInputJoinServiceName(value);
@@ -59,8 +62,7 @@ const NewTab: React.FC<NewTabProps> = ({ }) => {
       if (inputJoinServiceHostNode === '') return;
 
       if (inputJoinServiceName === '') return;
-      // TODO
-      // setTabService(makeServiceId(inputJoinServiceHostNode, inputJoinServiceName));
+      navigate(`/join/${inputJoinServiceName}.${inputJoinServiceHostNode}`);
     }
   }, [inputJoinServiceName, inputJoinServiceHostNode]);
 
@@ -69,9 +71,8 @@ const NewTab: React.FC<NewTabProps> = ({ }) => {
       if (inputJoinServiceLink === '') return;
       const { serviceName, hostNode, isValid } = parseServiceLink(inputJoinServiceLink);
       if (!isValid) return;
+      navigate(`/join/${serviceName}.${hostNode}`);
 
-      // TODO
-      // setTabService(makeServiceId(hostNode, serviceName));
     }
   }, [inputJoinServiceLink]);
 

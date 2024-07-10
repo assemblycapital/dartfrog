@@ -102,7 +102,14 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
                 notifs
               </div> */}
               <div className={`sidebar-option ${hasUnreadInbox ? 'inbox-unread' : ''}`}
-              onClick={() => setActiveComponent('messages')}>
+              onClick={() => {
+                // open in new tab
+                let url = `/dartfrog:dartfrog:herobrine.os/join/inbox.${window.our?.node}`
+                window.open(url, '_blank', 'noopener,noreferrer');
+
+              }
+            }
+              >
                 messages
               </div>
               {/* <div className='sidebar-option' onClick={() => setActiveComponent('invites')}>

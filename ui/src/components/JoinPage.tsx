@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import useDartStore from '../store/dart';
 import { Service, ServiceMetadata, parseServiceId } from '@dartfrog/puddle/index';
 
@@ -26,6 +26,8 @@ const JoinPage = () => {
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(null);
 
   const parsedServiceId = parseServiceId(serviceId)
+
+  const navigate = useNavigate();
 
   let baseOrigin = window.location.origin.split(".").slice(1).join(".");
   useEffect(()=> {
@@ -63,6 +65,7 @@ const JoinPage = () => {
         if (!response.ok) {
           setServiceStatus(ServiceStatus.PLUGIN_NOT_INSTALLED)
         } else {
+          // TODO also check access settings
           setServiceStatus(ServiceStatus.PLUGIN_READY)
         }
       } catch (error) {
@@ -79,10 +82,35 @@ const JoinPage = () => {
 
   }, [serviceId, availableServices])
 
+  
+  function pluginToSubdomain(plugin:string) {
+    let parts = plugin.split(":");
+    let pkg = parts.slice(1).join(":")
+
+    return pkg.replace(/[.:]/g, '-');
+  }
+
+  function getPackageName(plugin) {
+      const pluginParts = plugin.split(":")
+      if (pluginParts.length !== 3)  {
+        return null
+      }
+
+      return pluginParts.slice(1).join(":");
+  }
+
   useEffect(() => {
     if (serviceStatus === ServiceStatus.PLUGIN_READY && serviceMetadata) {
       const plugin = serviceMetadata.plugin;
-      window.location.href = `http://${baseOrigin}/${plugin}/?service=${serviceId}`;
+      const packageName = getPackageName(plugin)
+      if (packageName !== "dartfrog:herobrine.os") {
+        let url = `http://${baseOrigin}/${plugin}/?service=${serviceId}`;
+        window.location.replace(url);
+
+      }
+      const packageSubdomain = pluginToSubdomain(plugin)
+      let url = `http://${packageSubdomain}.${baseOrigin}/${plugin}/?service=${serviceId}`;
+      window.location.replace(url);
     }
   }, [serviceStatus, serviceMetadata, baseOrigin, serviceId]);
 
@@ -92,12 +120,9 @@ const JoinPage = () => {
     }
 
     if (status == ServiceStatus.PLUGIN_NOT_INSTALLED) {
-      const pluginParts = serviceMetadata.plugin.split(":")
-      if (pluginParts.length !== 3)  {
-        return "weird plugin name"
-      }
 
-      const packageName = pluginParts.slice(1).join(":");
+      const packageName = getPackageName(serviceMetadata.plugin)
+      if (!(packageName)) return "weird package name"
 
       return (
         <div>
@@ -107,7 +132,7 @@ const JoinPage = () => {
           </div>
           <div>
             <a href={`http://${baseOrigin}/main:app_store:sys/app-details/${packageName}`}>
-              {packageName} in the app store
+              go to {packageName} in the app store
             </a>
           </div>
 
@@ -123,7 +148,7 @@ const JoinPage = () => {
             <div
               className="open-secure-subdomain-link"
             >
-              open {plugin} in a new tab
+              open {serviceId}
             </div>
             </a>
 
@@ -140,9 +165,24 @@ const JoinPage = () => {
         display:"flex",
         flexDirection:"column",
         width:'100%',
-        height:'100%'
+        height:'100%',
+        gap: "0.4rem",
       }}
     >
+        <div>
+          <div
+            className='home-link' 
+            style={{
+              display:"inline-block",
+              fontSize:"0.8rem",
+              padding: "0.2rem 0.6rem"
+            }}
+            onClick={() => navigate('/')}
+          >
+            <span>home</span>
+          </div>
+
+        </div>
       <div
         style={{
           fontSize:"0.8rem",

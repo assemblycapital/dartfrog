@@ -7,7 +7,6 @@ import Split from 'react-split';
 import Footer from './Footer';
 import NewTab from './NewTab/NewTab';
 import JoinPage from './JoinPage';
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 interface MiddleProps {
 }
@@ -44,11 +43,7 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
               }}
             >
               <div>
-                <Routes>
-                  <Route path="/" element={<NewTab />} />
-                  <Route path="/join/:id" element={<JoinPage />} />
-                </Routes>
-
+                <NewTab />
               </div>
 
               {isSidebarOpen ? (

@@ -106,11 +106,5 @@ const PluginIFrame: React.FC<PluginIFrameProps> = ({serviceId, service, plugin, 
   );
 };
 
-function pluginToSubdomain(plugin:string) {
-  let parts = plugin.split(":");
-  let pkg = parts.slice(1).join(":")
-
-  return pkg.replace(/[.:]/g, '-');
-}
 
 export default PluginIFrame;
