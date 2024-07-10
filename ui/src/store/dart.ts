@@ -10,6 +10,8 @@ export const PAGE_PLUGIN = `page:${PACKAGE_ID}`;
 export const CHESS_PLUGIN = `chess:${PACKAGE_ID}`;
 export const INBOX_PLUGIN = `inbox:${PACKAGE_ID}`;
 
+export const STANDARD_PLUGINS = [CHAT_PLUGIN, PIANO_PLUGIN, PAGE_PLUGIN, CHESS_PLUGIN, INBOX_PLUGIN];
+
 export interface Tab {
   serviceId: ServiceId | null;
 }

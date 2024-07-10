@@ -1,0 +1,11 @@
+.open-secure-subdomain-link {
+  background-color: #4444bb;
+  color: white;
+  padding: 2rem;
+  transition: background-color 0.3s ease;
+}
+
+.open-secure-subdomain-link:hover {
+  background-color: #333399;
+  transition: background-color 0.3s ease;
+}
