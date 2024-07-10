@@ -45,16 +45,6 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) =
         overflowY: 'hidden', // Ensure no overflow on the main container
       }}
     >
-     
-      {/* this is the topbar of constant size */}
-      <div style={{
-        height: "26px",
-        display: "block",
-        flexShrink: 0, // Ensure this div does not shrink
-      }}>
-        <TabTops />
-      </div>
-
       <Split
         sizes={[80,20]}
         minSize={[80, 30]}
@@ -68,7 +58,7 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) =
       >
         <div>
 
-          <TabbedWindowStack />
+          <NewTab />
         </div>
       
         <div>

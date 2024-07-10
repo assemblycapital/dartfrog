@@ -8,17 +8,17 @@ import CreateServicePlugins from "./CreateServicePlugins";
 
 
 const PLUGIN_MAP = {
-  "chat": [CHAT_PLUGIN],
-  "piano": [CHAT_PLUGIN, PIANO_PLUGIN],
-  "page": [CHAT_PLUGIN, PAGE_PLUGIN],
-  "chess": [CHAT_PLUGIN, CHESS_PLUGIN]
+  "chat": CHAT_PLUGIN,
+  "piano": PIANO_PLUGIN,
+  "page": PAGE_PLUGIN,
+  "chess": CHESS_PLUGIN,
 }
 
-const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({ setTabService }) => {
+const CreateService: React.FC<{ }> = ({ }) => {
 
   const [inputCreateServiceName, setInputCreateServiceName] = useState('');
   const [isCreateInputValid, setIsCreateInputValid] = useState(true);
-  const [selectedPlugins, setSelectedPlugins] = useState([CHAT_PLUGIN, PAGE_PLUGIN]);
+  const [selectedPlugin, setSelectedPlugin] = useState(PAGE_PLUGIN);
   const [selectedVisibility, setSelectedVisibility] = useState<ServiceVisibility>('Visible');
   const [selectedAccess, setSelectedAccess] = useState<ServiceAccess>('Public');
   const [isAdvancedOptionsVisible, setIsAdvancedOptionsVisible] = useState(false);
@@ -32,13 +32,7 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
   };
 
   const handlePluginChange = (plugin) => {
-    setSelectedPlugins((prevSelectedPlugins) => {
-      if (prevSelectedPlugins.includes(plugin)) {
-        return prevSelectedPlugins.filter((p) => p !== plugin);
-      } else {
-        return [...prevSelectedPlugins, plugin];
-      }
-    });
+    setSelectedPlugin(plugin);
   };
 
   const handleAccessChange = (e) => {
@@ -52,19 +46,21 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
   const handleInputCreateClick = useCallback(() => {
     if (isCreateInputValid && inputCreateServiceName !== '') {
       let serviceId = `${inputCreateServiceName}.${window.our?.node}`;
-      createService(serviceId, selectedPlugins, selectedVisibility, selectedAccess, []);
+      createService(serviceId, selectedPlugin, selectedVisibility, selectedAccess, []);
       setInputCreateServiceName('');
-      setTabService(serviceId);
+      // TODO link
+      // setTabService(serviceId);
       requestServiceList(window.our?.node);
     }
-  }, [inputCreateServiceName, selectedPlugins, selectedVisibility, selectedAccess, isCreateInputValid]);
+  }, [inputCreateServiceName, selectedPlugin, selectedVisibility, selectedAccess, isCreateInputValid]);
   
   const createFromShortcut = (pluginName: string) => {
     let numString = Math.floor(Math.random() * 10000).toString();
     let serviceName = `${pluginName}-${numString}`;
     let serviceId = `${serviceName}.${window.our?.node}`;
     createService(serviceId, PLUGIN_MAP[pluginName], 'Visible', 'Public', []);
-    setTabService(serviceId);
+    // setTabService(serviceId);
+    // TODO link
   }
 
 
@@ -154,7 +150,7 @@ const CreateService: React.FC<{ setTabService: (service: string) => void }> = ({
             >
               <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                 <span style={{ marginRight: "0.5rem" }}>Plugins:</span>
-                <CreateServicePlugins selectedPlugins={selectedPlugins} setSelectedPlugins={setSelectedPlugins}/>
+                <CreateServicePlugins selectedPlugin={selectedPlugin} setSelectedPlugin={setSelectedPlugin}/>
               </div>
               <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                 <span style={{ marginRight: "0.5rem" }}>Access:</span>

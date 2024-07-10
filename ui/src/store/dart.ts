@@ -32,7 +32,7 @@ export interface DartStore {
   exitService: (serviceId: ServiceId) => void
   joinService: (serviceId: ServiceId) => void
   pokeService: (parsedServiceId: ServiceId, data:any) => void
-  createService: (serviceId: ServiceId, plugins: Array<String>, visibility: ServiceVisibility, access: ServiceAccess, whitelist: Array<String>) => void
+  createService: (serviceId: ServiceId, plugin: String, visibility: ServiceVisibility, access: ServiceAccess, whitelist: Array<String>) => void
   deleteService: (serviceId: ServiceId) => void
   requestServiceList: (serviceId: ServiceId) => void
   requestAllServiceList: () => void
@@ -118,11 +118,11 @@ const useDartStore = create<DartStore>()(
       }
         api.sendRequest(request);
       },
-      createService: (serviceId: ServiceId, plugins: Array<String>, visibility: ServiceVisibility, access: ServiceAccess, whitelist: Array<String>) => {
+      createService: (serviceId: ServiceId, plugin: String, visibility: ServiceVisibility, access: ServiceAccess, whitelist: Array<String>) => {
         const { api } = get();
         if (!api) { return; }
         let parsedServiceId = parseServiceId(serviceId);
-        api.sendCreateServiceRequest(parsedServiceId, plugins, visibility, access, whitelist);
+        api.sendCreateServiceRequest(parsedServiceId, plugin, visibility, access, whitelist);
 
       },
       deleteService: (serviceId: ServiceId) => {

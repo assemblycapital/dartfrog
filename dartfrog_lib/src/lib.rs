@@ -61,7 +61,7 @@ pub fn new_service_metadata() -> ServiceMetadata {
   ServiceMetadata {
       subscribers: HashSet::new(),
       user_presence: HashMap::new(),
-      plugins: HashSet::new(),
+      plugin: String::from(""),
       last_sent_presence: 0,
       visibility: ServiceVisibility::Visible,
       access: ServiceAccess::Public,
@@ -113,7 +113,7 @@ pub struct ServiceMetadata {
     pub subscribers: HashSet<String>,
     pub user_presence: HashMap<String, Presence>,
     pub last_sent_presence: u64,
-    pub plugins: HashSet<String>,
+    pub plugin: String,
     pub visibility: ServiceVisibility,
     pub access: ServiceAccess,
     pub whitelist: HashSet<String>,
@@ -159,7 +159,7 @@ pub fn new_client_state() -> ClientState {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ServerRequest {
     ServiceRequest(ServiceId, ServiceRequest),
-    CreateService(ServiceId, Vec<String>, ServiceVisibility, ServiceAccess, Vec<String>), // service id, plugins, visibility, access, whitelist
+    CreateService(ServiceId, String, ServiceVisibility, ServiceAccess, Vec<String>), // service id, plugin, visibility, access, whitelist
     DeleteService(ServiceId),
     RequestServiceList,
 }

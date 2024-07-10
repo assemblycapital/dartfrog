@@ -53,7 +53,7 @@ export type ServiceVisibility = 'Visible' | 'VisibleToHost' | 'Hidden';
 export interface ServiceMetadata {
   subscribers: Array<string>;
   user_presence: { [key: string]: Presence };
-  plugins: Array<string>;
+  plugin: string;
   last_sent_presence: number;
   access: ServiceAccess;
   visibility: ServiceVisibility;
@@ -81,7 +81,7 @@ export type AvailableServices = Map<string, ServiceMetadata> // serviceId, metad
 function new_service(serviceId: ParsedServiceId) : Service {
   return {
     serviceId: serviceId,
-    metadata: {subscribers: [], user_presence: {}, plugins: [], last_sent_presence: 0, access: "Public", visibility: "Visible", whitelist: []},
+    metadata: {subscribers: [], user_presence: {}, plugin: "", last_sent_presence: 0, access: "Public", visibility: "Visible", whitelist: []},
     connectionStatus: {status:ServiceConnectionStatusType.Connecting, timestamp:Date.now()},
   }
 }
@@ -402,14 +402,14 @@ class DartApi {
     this.sendRequest(request);
   }
 
-  sendCreateServiceRequest(serviceId: ParsedServiceId, plugins: Array<String>, visibility: ServiceVisibility, access: ServiceAccess, whitelist: Array<String>) {
+  sendCreateServiceRequest(serviceId: ParsedServiceId, plugin: String, visibility: ServiceVisibility, access: ServiceAccess, whitelist: Array<String>) {
     if (!this.api) { return; }
     // console.log("Sending create service request", serviceId, plugins)
     const wrapper = {
       "ServerRequest": {
         "CreateService": [
           { "node": serviceId.node, "id": serviceId.id },
-          plugins,
+          plugin,
           visibility,
           access,
           whitelist

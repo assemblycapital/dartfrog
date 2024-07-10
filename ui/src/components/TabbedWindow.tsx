@@ -22,9 +22,9 @@ const TabbedWindow: React.FC<TabbedWindowProps> = ({ tab }) => {
         >
           {!tab.serviceId ? (
             <NewTab 
-              setTabService={(serviceId: string) => {
-                setFromNewTab(serviceId);
-              }}
+              // setTabService={(serviceId: string) => {
+              //   setFromNewTab(serviceId);
+              // }}
             />
           ) : (
             <ServiceTab

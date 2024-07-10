@@ -315,7 +315,7 @@ fn init(our: Address) {
                 node: our.node().to_string(),
                 id: "inbox".to_string(),
             },
-            vec![INBOX_PROCESS_NAME.to_string()], // Vec<String> plugins
+            INBOX_PROCESS_NAME.to_string(), // Vec<String> plugins
             ServiceVisibility::Hidden, // ServiceVisibility
             ServiceAccess::HostOnly, // ServiceAccess
             vec![] // Vec<String> whitelist

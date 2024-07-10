@@ -33,10 +33,9 @@ export const validateServiceLink = (value) => {
 };
 
 interface NewTabProps {
-  setTabService: (serviceId: ServiceId) => void;
 }
 
-const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
+const NewTab: React.FC<NewTabProps> = ({ }) => {
   const [inputJoinServiceName, setInputJoinServiceName] = useState('');
   const [isJoinServiceNameInputValid, setIsJoinServiceNameInputValid] = useState(true);
   const [inputJoinServiceHostNode, setInputJoinServiceHostNode] = useState('');
@@ -60,7 +59,8 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
       if (inputJoinServiceHostNode === '') return;
 
       if (inputJoinServiceName === '') return;
-      setTabService(makeServiceId(inputJoinServiceHostNode, inputJoinServiceName));
+      // TODO
+      // setTabService(makeServiceId(inputJoinServiceHostNode, inputJoinServiceName));
     }
   }, [inputJoinServiceName, inputJoinServiceHostNode]);
 
@@ -70,7 +70,8 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
       const { serviceName, hostNode, isValid } = parseServiceLink(inputJoinServiceLink);
       if (!isValid) return;
 
-      setTabService(makeServiceId(hostNode, serviceName));
+      // TODO
+      // setTabService(makeServiceId(hostNode, serviceName));
     }
   }, [inputJoinServiceLink]);
 
@@ -89,10 +90,9 @@ const NewTab: React.FC<NewTabProps> = ({ setTabService }) => {
     >
 
       <ServiceList
-        setTabService={setTabService}
       />
 
-      <CreateService setTabService={setTabService}/>
+      <CreateService />
 
       <hr />
       <div

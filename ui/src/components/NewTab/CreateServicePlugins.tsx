@@ -12,7 +12,7 @@ const PLUGINS = [CHAT_PLUGIN, PIANO_PLUGIN, PAGE_PLUGIN, CHESS_PLUGIN]
 
 
 
-const PluginSelector = ({ plugin, setPlugin, removeSelf}) => {
+const PluginSelector = ({ plugin, setPlugin}) => {
   const [isCustom, setIsCustom] = useState(false);
   const [customPlugin, setCustomPlugin] = useState(plugin.replace('Custom: ', ''));
 
@@ -45,19 +45,6 @@ const PluginSelector = ({ plugin, setPlugin, removeSelf}) => {
         maxHeight:"27px",
       }}
     >
-      <div 
-        className='remove-plugin-selector'
-        onClick={removeSelf}
-        style={{
-          padding: "6px",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flexShrink: 0
-        }}
-        >
-        <XIcon />
-      </div >
       <select 
         value={isCustom ? 'custom' : plugin} 
         onChange={handlePluginChange} 
@@ -87,21 +74,7 @@ const PluginSelector = ({ plugin, setPlugin, removeSelf}) => {
   );
 };
 
-const CreateServicePlugins = ({selectedPlugins, setSelectedPlugins}) => {
-
-  const handleAddPlugin = () => {
-    setSelectedPlugins([...selectedPlugins, CHAT_PLUGIN]);
-  };
-
-  const handlePluginChange = (index: number, value: string) => {
-    const newPlugins = [...selectedPlugins];
-    newPlugins[index] = value;
-    setSelectedPlugins(newPlugins);
-  };
-
-  const handleRemovePlugin = (index: number) => {
-    setSelectedPlugins(selectedPlugins.filter((_, i) => i !== index));
-  };
+const CreateServicePlugins = ({selectedPlugin, setSelectedPlugin}) => {
 
   return (
     <div
@@ -112,15 +85,10 @@ const CreateServicePlugins = ({selectedPlugins, setSelectedPlugins}) => {
         gap:"0.4rem",
       }}
     >
-      {selectedPlugins.map((plugin, index) => (
-        <PluginSelector
-          key={index}
-          plugin={plugin}
-          setPlugin={(value) => handlePluginChange(index, value)}
-          removeSelf={() => handleRemovePlugin(index)}
-        />
-      ))}
-      <button onClick={handleAddPlugin}>Add Plugin</button>
+      <PluginSelector
+        plugin={selectedPlugin}
+        setPlugin={(value) => setSelectedPlugin(value)}
+      />
     </div>
   );
 };

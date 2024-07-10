@@ -3,7 +3,7 @@ import useDartStore from '../../store/dart';
 import Spinner from '../Spinner';
 import { Presence, ServiceAccess } from '@dartfrog/puddle/index';
 
-const ServiceList = ({ setTabService }) => {
+const ServiceList = ({ }) => {
   const { requestAllServiceList, requestServiceList, availableServices, deleteService} = useDartStore();
 
   if (!(availableServices instanceof Map)) {
@@ -41,14 +41,19 @@ const ServiceList = ({ setTabService }) => {
     "page:dartfrog:herobrine.os": "page",
     "chess:dartfrog:herobrine.os": "chess",
   }
-  function getPluginText(plugins: string[]) {
-    let asNames = plugins.map((plugin) => knownPlugins[plugin] || plugin);
-    // if it contains nulls, then it's not a known plugin
-    if (asNames.includes(null)) {
-      return "custom"
+  function getPluginText(plugin: string) {
+    let known = knownPlugins[plugin];
+    if (!(known)) {
+      return plugin
     }
-    // filter out "chat"
-    return asNames.filter((name) => name !== "chat").join(', ');
+    return known
+    // let asNames = plugin.map((plugin) => knownPlugins[plugin] || plugin);
+    // // if it contains nulls, then it's not a known plugin
+    // if (asNames.includes(null)) {
+    //   return "custom"
+    // }
+    // // filter out "chat"
+    // return asNames.filter((name) => name !== "chat").join(', ');
   }
 
   function getRecencyText(presence: { [key: string]: Presence }, subscribers) {
@@ -144,7 +149,8 @@ const ServiceList = ({ setTabService }) => {
                   }}
                   className="join-button"
                   onClick={() => {
-                    setTabService(serviceId);
+                    // setTabService(serviceId);
+                    // TODO link
                   }}
                 >
                   join
@@ -187,7 +193,7 @@ const ServiceList = ({ setTabService }) => {
               >
               {serviceId}</div>
             <div style={{ flex: "4" }}>
-              {getPluginText(serviceDetails.plugins)}
+              {getPluginText(serviceDetails.plugin)}
             </div>
             <div style={{ flex: "1" }}>
               {getRecencyText(serviceDetails.user_presence, serviceDetails.subscribers)}
