@@ -84,7 +84,6 @@ const NewTab: React.FC<NewTabProps> = ({ }) => {
         fontSize: "0.8rem",
         display: "flex",
         flexDirection: "column",
-        padding: "1rem 0.4rem",
         gap: "1rem",
       }}
     >

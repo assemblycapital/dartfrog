@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import "./App.css";
-import DartApi, { parseServiceId } from "@dartfrog/puddle";
+import DartApi from "@dartfrog/puddle";
 import { WEBSOCKET_URL } from "./utils";
 import usePageStore, { PLUGIN_NAME } from "./store/page";
 import PagePluginBox from "./components/PagePluginBox";

@@ -3,7 +3,6 @@ import Chessboard from 'chessboardjsx';
 import { Chess } from 'chess.js';
 import useChessStore, { ChessState } from '../store/chess';
 import './ChessPluginBox.css';
-import { parseServiceId } from '@dartfrog/puddle';
 
 interface ChessGameProps {
   chessState: ChessState;

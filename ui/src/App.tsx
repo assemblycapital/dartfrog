@@ -10,6 +10,7 @@ import TabbedWindowManager from "./components/TabbedWindowManager";
 import Sidebar from "./components/Sidebar/Sidebar";
 import Middle from "./components/Middle";
 import AuthDialog from "./components/AuthDialog";
+import JoinPage from "./components/JoinPage";
 
 function App() {
 
@@ -77,69 +78,30 @@ function App() {
     };
   }, []);
 
-  useEffect(() => {
-    const checkCookies = () => {
-      if (!(window.our)) {
-        return;
-      }
-
-      const getCookieName = (ourNode, pluginName) => {
-        return `kinode-auth_${ourNode}@${pluginName}`
-      }
-
-
-      const cookies = document.cookie;
-      const requiredCookies = [
-        getCookieName(window.our.node, CHAT_PLUGIN),
-        getCookieName(window.our.node, PAGE_PLUGIN),
-        getCookieName(window.our.node, CHESS_PLUGIN),
-        getCookieName(window.our.node, PIANO_PLUGIN),
-        getCookieName(window.our.node, INBOX_PLUGIN),
-      ];
-
-      const missingCookies = requiredCookies.filter(cookieName => !cookies.includes(cookieName));
-
-      let plugins = missingCookies.map(cookieName => cookieName.split('@')[1]);
-
-      if (plugins.length === 0) {
-        setAuthDialog([]);
-        setIsAuthDialogActive(false);
-      } else {
-        setAuthDialog(plugins);
-        setIsAuthDialogActive(true);
-      }
-    };
-
-    checkCookies();
-  }, []);
-
   return (
-    <div style={{
-      height: '100vh',
-      maxHeight: '100vh',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-      padding: '20px',
-    }}>
-      {isAuthDialogActive && (
-        <AuthDialog />
-      )}
-      <div
-        style={{
-          flexShrink: 0,
-        }}
-      >
-        <ControlHeader />
-      </div>
-      <div
-        style={{
-          flexGrow: 1,
-        }}
-      >
-          <Middle />
-      </div>
-    </div>
+          <div style={{
+            height: '100vh',
+            maxHeight: '100vh',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '20px',
+          }}>
+            <div
+              style={{
+                flexShrink: 0,
+              }}
+            >
+              <ControlHeader />
+            </div>
+            <div
+              style={{
+                flexGrow: 1,
+              }}
+            >
+                <Middle />
+            </div>
+          </div>
   );
 }
 

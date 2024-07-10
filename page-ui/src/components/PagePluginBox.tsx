@@ -19,6 +19,9 @@ const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, page }) => {
 
   useEffect(() => {
     const parsedServiceId = parseServiceId(serviceId);
+    if (!parsedServiceId) {
+      return;
+    }
     setIsAuthor(parsedServiceId.node === window.our?.node);
   }, [serviceId]);
 

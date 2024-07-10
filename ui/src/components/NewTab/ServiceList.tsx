@@ -2,9 +2,11 @@ import React from 'react';
 import useDartStore from '../../store/dart';
 import Spinner from '../Spinner';
 import { Presence, ServiceAccess } from '@dartfrog/puddle/index';
+import { useNavigate } from 'react-router-dom';
 
 const ServiceList = ({ }) => {
   const { requestAllServiceList, requestServiceList, availableServices, deleteService} = useDartStore();
+  const navigate = useNavigate();
 
   if (!(availableServices instanceof Map)) {
     // this is pretty dumb
@@ -149,8 +151,7 @@ const ServiceList = ({ }) => {
                   }}
                   className="join-button"
                   onClick={() => {
-                    // setTabService(serviceId);
-                    // TODO link
+                    navigate(`/join/${serviceId}`);
                   }}
                 >
                   join

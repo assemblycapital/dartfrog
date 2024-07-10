@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId, parseServiceId } from '@dartfrog/puddle';
+import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId } from '@dartfrog/puddle';
 
 export const PLUGIN_NAME = "piano:dartfrog:herobrine.os";
 

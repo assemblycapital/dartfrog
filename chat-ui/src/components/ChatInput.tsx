@@ -1,5 +1,4 @@
 import React, { useCallback, useState } from 'react';
-import { parseServiceId } from '@dartfrog/puddle';
 import useChatStore, { PLUGIN_NAME } from '../store/chat';
 import { maybeReplaceWithImage } from '../utils';
 

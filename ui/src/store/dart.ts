@@ -34,7 +34,7 @@ export interface DartStore {
   pokeService: (parsedServiceId: ServiceId, data:any) => void
   createService: (serviceId: ServiceId, plugin: String, visibility: ServiceVisibility, access: ServiceAccess, whitelist: Array<String>) => void
   deleteService: (serviceId: ServiceId) => void
-  requestServiceList: (serviceId: ServiceId) => void
+  requestServiceList: (serverNode: ServiceId) => void
   requestAllServiceList: () => void
   availableServices: PerNodeAvailableServices
   setAvailableServices: (availableServices: PerNodeAvailableServices) => void
@@ -109,6 +109,7 @@ const useDartStore = create<DartStore>()(
 
         // console.log('pokeService', parsedServiceId, data)
         let parsedServiceId = parseServiceId(serviceId);
+        if (!parsedServiceId) return;
 
         const request =  { "SendToService": 
         [
@@ -122,6 +123,7 @@ const useDartStore = create<DartStore>()(
         const { api } = get();
         if (!api) { return; }
         let parsedServiceId = parseServiceId(serviceId);
+        if (!parsedServiceId) return;
         api.sendCreateServiceRequest(parsedServiceId, plugin, visibility, access, whitelist);
 
       },
@@ -129,6 +131,7 @@ const useDartStore = create<DartStore>()(
         const { api } = get();
         if (!api) { return; }
         let parsedServiceId = parseServiceId(serviceId);
+        if (!parsedServiceId) return;
         api.sendDeleteServiceRequest(parsedServiceId);
 
       },

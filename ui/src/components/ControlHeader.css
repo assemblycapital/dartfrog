@@ -62,6 +62,14 @@
   transition: background-color 0.2s;
 }
 
+.home-link {
+  color: #ffffff33;
+  transition: color 0.3s ease;
+}
+.home-link:hover {
+  color: #ffffff55;
+  transition: color 0.3s ease;
+}
 .home-link, .sidebar-toggle, .icon-mail {
   cursor: pointer;
   transition: background-color 0.3s ease;

@@ -45,27 +45,8 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) =
         overflowY: 'hidden', // Ensure no overflow on the main container
       }}
     >
-      <Split
-        sizes={[80,20]}
-        minSize={[80, 30]}
-        direction="vertical"
-        style={{
-          flexGrow: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-        }}
-      >
-        <div>
-
-          <NewTab />
-        </div>
+      <NewTab />
       
-        <div>
-
-          <Footer />
-        </div>
-      </Split>
     </div>
   );
 };

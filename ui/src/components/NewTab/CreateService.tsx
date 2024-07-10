@@ -5,6 +5,7 @@ import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, PAGE_PLUGIN, PIANO_PLUGIN } fr
 import './CreateService.css';
 import { ServiceAccess, ServiceVisibility } from "@dartfrog/puddle";
 import CreateServicePlugins from "./CreateServicePlugins";
+import { useNavigate } from 'react-router-dom';
 
 
 const PLUGIN_MAP = {
@@ -22,6 +23,7 @@ const CreateService: React.FC<{ }> = ({ }) => {
   const [selectedVisibility, setSelectedVisibility] = useState<ServiceVisibility>('Visible');
   const [selectedAccess, setSelectedAccess] = useState<ServiceAccess>('Public');
   const [isAdvancedOptionsVisible, setIsAdvancedOptionsVisible] = useState(false);
+  const navigate = useNavigate();
 
   const { requestServiceList, createService } = useDartStore();
 
@@ -48,8 +50,7 @@ const CreateService: React.FC<{ }> = ({ }) => {
       let serviceId = `${inputCreateServiceName}.${window.our?.node}`;
       createService(serviceId, selectedPlugin, selectedVisibility, selectedAccess, []);
       setInputCreateServiceName('');
-      // TODO link
-      // setTabService(serviceId);
+      navigate(`/join/${serviceId}`);
       requestServiceList(window.our?.node);
     }
   }, [inputCreateServiceName, selectedPlugin, selectedVisibility, selectedAccess, isCreateInputValid]);
@@ -59,8 +60,7 @@ const CreateService: React.FC<{ }> = ({ }) => {
     let serviceName = `${pluginName}-${numString}`;
     let serviceId = `${serviceName}.${window.our?.node}`;
     createService(serviceId, PLUGIN_MAP[pluginName], 'Visible', 'Public', []);
-    // setTabService(serviceId);
-    // TODO link
+    navigate(`/join/${serviceId}`);
   }
 
 

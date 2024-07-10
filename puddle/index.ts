@@ -66,12 +66,15 @@ export const makeServiceId = (node: string, id: string) => {
   return `${id}.${node}`;
 }
 
-export const parseServiceId = (serviceId: string) => {
+export const parseServiceId = (serviceId: string): ParsedServiceId | null => {
   const split = serviceId.split('.');
+  if (split.length < 3) {
+    return null;
+  }
   let tlz = split.slice(-1)[0];
-  let node_sub = split.slice(-2,-1)[0];
-  let id = split.slice(0,-2).join('.');
-  const node = `${node_sub}.${tlz}`
+  let node_sub = split.slice(-2, -1)[0];
+  let id = split.slice(0, -2).join('.');
+  const node = `${node_sub}.${tlz}`;
   return { node, id };
 }
 
@@ -205,7 +208,7 @@ class DartApi {
               this.onServicesChange();
 
           } else if (response.ServiceList) {
-              // console.log('Service List:', address, response.ServiceList);
+              // console.log('Service List update:', address, response.ServiceList);
               // Add your logic to handle the ServiceList response here
               // for (let serviceId of Array.from(response.ServiceList.keys())) {
 
@@ -334,6 +337,10 @@ class DartApi {
   presenceHeartbeat(serviceId: ServiceId) {
     // Add your logic to send the presence heartbeat here
     let parsedServiceId = parseServiceId(serviceId);
+    if (!parsedServiceId) {
+      console.error('Failed to parse serviceId:', serviceId);
+      return;
+    }
     const request =  { "ServiceHeartbeat": { "node": parsedServiceId.node, "id": parsedServiceId.id } }
     // console.log("sending presence", serviceId);
     this.sendRequest(request);
@@ -387,11 +394,19 @@ class DartApi {
       ]
     }
     let parsedServiceId = parseServiceId(serviceId);
+    if (!parsedServiceId) {
+      console.error('Failed to parse serviceId:', serviceId);
+      return;
+    }
     this.pokeService(parsedServiceId, wrap);
   }
 
   pokePluginClient(serviceId: ServiceId, plugin: string, innerPluginRequest: any) {
     let parsedServiceId = parseServiceId(serviceId);
+    if (!parsedServiceId) {
+      console.error('Failed to parse serviceId:', serviceId);
+      return;
+    }
     const request =  { "SendToPluginClient": 
       [
         { "node": parsedServiceId.node, "id": parsedServiceId.id },
@@ -433,6 +448,10 @@ class DartApi {
 
   public joinService(serviceId: ServiceId) {
     let parsedServiceId = parseServiceId(serviceId);
+    if (!parsedServiceId) {
+      console.error('Failed to parse serviceId:', serviceId);
+      return;
+    }
     this._joinService(parsedServiceId);
   }
   public _joinService(serviceId: ParsedServiceId) {
@@ -451,6 +470,10 @@ class DartApi {
 
   public exitService(serviceId: ServiceId) {
     let parsedServiceId = parseServiceId(serviceId);
+    if (!parsedServiceId) {
+      console.error('Failed to parse serviceId:', serviceId);
+      return;
+    }
     this._exitService(parsedServiceId);
   }
   public _exitService(parsedServiceId: ParsedServiceId) {
@@ -467,6 +490,7 @@ class DartApi {
   }
 
   requestServiceList(serverNode: string) {
+    // console.log("requesting service list", serverNode)
     const request =  { "RequestServiceList": serverNode }
     this.sendRequest(request);
   }

@@ -744,7 +744,7 @@ fn init(our: Address) {
     println!("initializing");
     
     // Serve the index.html and other UI files found in pkg/ui at the root path.
-    http::secure_serve_ui(&our, "ui", vec!["/"]).unwrap();
+    http::secure_serve_ui(&our, "ui", vec!["/", "*"]).unwrap();
 
     // Allow websockets to be opened at / (our process ID will be prepended).
     http::secure_bind_ws_path("/", true).unwrap();

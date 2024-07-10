@@ -1,5 +1,4 @@
 import React, { useCallback, useState } from 'react';
-import { parseServiceId } from '@dartfrog/puddle';
 import useInboxStore, { PLUGIN_NAME } from '../store/inbox';
 import { maybeReplaceWithImage } from '../utils';
 

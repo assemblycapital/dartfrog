@@ -16,6 +16,9 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
 
   useEffect(() => {
     let parsedServiceId = parseServiceId(serviceId);
+    if (!parsedServiceId) {
+      return;
+    }
     if (parsedServiceId.node === window.our.node) {
       setIsAdmin(true);
     }
