@@ -1,5 +1,7 @@
 import { create } from 'zustand'
-import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId, } from '@dartfrog/puddle';
+import DartApi from '@dartfrog/puddle';
+
+import KinodeClientApi from "@kinode/client-api";
 
 export const PLUGIN_NAME = "chat:dartfrog:herobrine.os";
 
@@ -22,6 +24,8 @@ export interface ChatStore {
   setServiceId: (service: string) => void
   api: DartApi | null,
   setApi: (api: DartApi) => void
+  createService: (name: string) => void
+  requestMyServices: () => void
   //
   chatState: ChatState,
   setChatState: (chatState: ChatState) => void
@@ -41,7 +45,16 @@ const useChatStore = create<ChatStore>((set, get) => ({
   setServiceId: (serviceId) => set({ serviceId }),
   api: null,
   setApi: (api) => set({ api }),
-  // 
+  createService: (name) => {
+    const { api } = get();
+    if (!api) { return; }
+    api.createService(name);
+  },
+  requestMyServices: () => {
+    const { api } = get();
+    if (!api) { return; }
+    api.requestMyServices();
+  },
   chatState: { messages: new Map(), lastUpdateType: "history" },
   setChatState: (chatState) => {  set({ chatState: chatState }) },
   addChatMessage: (message) => {
@@ -60,7 +73,7 @@ const useChatStore = create<ChatStore>((set, get) => ({
       "SendMessage": 
         text
       }
-    api.pokePluginService(serviceId, PLUGIN_NAME, innerPluginRequest);
+    // api.pokePluginService(serviceId, PLUGIN_NAME, innerPluginRequest);
   },
   // 
   nameColors: new Map<string, string>(),

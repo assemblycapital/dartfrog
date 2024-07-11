@@ -4,7 +4,6 @@ export const PACKAGE_SUBDOMAIN = "dartfrog-herobrine-os";
 export const PROCESS_NAME = "chat:dartfrog:herobrine.os";
 
 export const BASE_URL = `/${PROCESS_NAME}/`;
-console.log(BASE_URL)
 
 // if (window.our) window.our.process = BASE_URL?.replace("/", "");
 

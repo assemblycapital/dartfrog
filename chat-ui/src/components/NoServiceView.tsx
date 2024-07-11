@@ -1,27 +1,25 @@
-import React from 'react';
-import KinodeClientApi from "@kinode/client-api";
+import React, { useEffect } from 'react';
+import DartApi from '@dartfrog/puddle';
 import { PROCESS_NAME } from '../App';
 import { WEBSOCKET_URL } from '../utils';
+import useChatStore from '../store/chat';
 
 const NoServiceView = () => {
+  const {api, setApi, createService, requestMyServices} = useChatStore();
 
-  const newApi = new KinodeClientApi({
-    uri: WEBSOCKET_URL,
-    nodeId: window.our?.node,
-    processId: PROCESS_NAME,
-    onClose: (event) => {
-      console.log("Disconnected from Kinode");
-    },
-    onOpen: (event, api) => {
-      console.log("Connected to Kinode");
-    },
-    onMessage: (json, api) => {
-      console.log("update")
-    },
-    onError: (event) => {
-      console.log("Kinode connection error", event);
-    },
-  });
+  useEffect(()=>{
+    const newApi = new DartApi({
+      our: {
+        "node": window.our?.node,
+        "process": PROCESS_NAME,
+      },
+      websocket_url: WEBSOCKET_URL,
+      onOpen: () => {
+        requestMyServices();
+      }
+    });
+    setApi(newApi);
+  }, [])
 
   return (
     <div
@@ -38,13 +36,20 @@ const NoServiceView = () => {
       <div>
         <div>
           services:
-
         </div>
         <div>
           todo
         </div>
       </div>
-      <div>
+      <div
+        style={{
+          cursor:"pointer",
+        }}
+        onClick={()=> {
+          createService("foo")
+
+        }}
+      >
         create a service
       </div>
     </div>

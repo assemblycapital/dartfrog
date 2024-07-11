@@ -1,68 +1,126 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-use dartfrog_lib::{get_server_address, handle_plugin_update, send_to_frontend, update_client, update_subscriber_clients, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState};
-use kinode_process_lib::{await_message, call_init, get_blob, http::{self, HttpServerRequest, WsMessageType}, println, Address};
+use std::{collections::HashMap, str::FromStr, time::{SystemTime, UNIX_EPOCH}};
+use kinode_process_lib::{await_message, call_init, get_blob, http::{self, send_ws_push, HttpServerRequest, WsMessageType}, println, Address, LazyLoadBlob};
 use serde::{Deserialize, Serialize};
+use std::hash::{Hash, Hasher};
 
 wit_bindgen::generate!({
     path: "target/wit",
     world: "process-v0",
 });
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChatMessage {
-    pub id: u64,
-    pub time: u64,
-    pub from: String,
-    pub msg: String,
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum DartfrogRequest {
+    Meta(MetaRequest),
+    Service(ServiceRequest),
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum MetaRequest {
+    RequestMyServices,
+    CreateService(String),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ChatUpdate {
-    Message(ChatMessage),
-    FullMessageHistory(Vec<ChatMessage>),
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ServiceRequest {
+    SetService(ServiceID)
 }
 
-#[derive(Debug, Clone, Deserialize)]
-pub enum ChatRequest {
-    SendMessage(String),
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ConsumerUpdate {
+    Meta(MetaUpdate),
+    Service(String, ServiceUpdate),
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum MetaUpdate {
+    MyServices(Vec<String>),
 }
 
-#[derive(Debug, Clone)]
-pub struct ChatService {
-    // todo move metadata out?
-    pub metadata: PluginMetadata,
-    pub last_message_id: u64,
-    pub messages: Vec<ChatMessage>,
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ServiceUpdate {
 }
 
-pub fn new_chat_service() -> ChatService {
-    ChatService {
-        metadata: PluginMetadata::new(),
-        last_message_id: 0,
-        messages: Vec::new(),
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Consumer {
+    pub ws_channel_id: u32,
+    pub last_active: u64,
+    pub service: Option<String>,
+}
+
+impl Consumer {
+    pub fn new(id:u32) -> Self {
+        Consumer {
+            ws_channel_id: id,
+            last_active: get_now(),
+            service: None,
+        }
+    }
+}
+impl Hash for Consumer{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.ws_channel_id.hash(state);
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ChatClient{
-    pub messages: Vec<ChatMessage>,
+const CONSUMER_TIMEOUT : u64 = 10*60; //10 minutes
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Client {
+    id: ServiceID,
+    todo: u32,
 }
 
-pub fn new_chat_client() -> ChatClient {
-    ChatClient {
-        messages: Vec::new(),
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Service {
+    id: ServiceID,
+    todo: u32,
+}
+impl Service {
+    pub fn new(name: String, address: Address) -> Self {
+        Service {
+            id: ServiceID {
+                name,
+                address,
+            },
+            todo: 0,
+        }
+    }
+
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
+pub struct ServiceID {
+    name: String,
+    address: Address,
+}
+
+impl ServiceID {
+    pub fn to_string(&self) -> String {
+        format!("{}:{}", self.name, self.address.to_string())
+    }
+    pub fn from_string(s: &str) -> Option<Self> {
+        let parts: Vec<&str> = s.split(':').collect();
+        if parts.len() != 2 {
+            return None;
+        }
+        let name = parts[0].to_string();
+        let address = Address::from_str(parts[1]).ok()?;
+        Some(ServiceID { name, address })
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct AppState {
-    pub plugin: PluginState<ChatService, ChatClient>,
+    pub consumers: HashMap<u32, Consumer>,
+    pub clients: HashMap<String, Client>,
+    pub services: HashMap<String, Service>,
 }
 
 impl AppState {
     pub fn new() -> Self {
         AppState {
-            plugin: PluginState::<ChatService, ChatClient>::new(),
+            consumers: HashMap::new(),
+            clients: HashMap::new(),
+            services: HashMap::new()
         }
     }
 }
@@ -73,123 +131,9 @@ fn get_now() -> u64 {
         .as_secs()
 }
 
-impl PluginClientState for ChatClient {
-    fn new() -> Self {
-        ChatClient {
-            messages: Vec::new(),
-        }
-    }
-    fn handle_new_frontend(&mut self, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
-        let chat_history = serde_json::to_string(&ChatUpdate::FullMessageHistory(self.messages.clone()));
-        match chat_history {
-            Ok(chat_history) => {
-                match send_to_frontend(&chat_history, metadata, our) {
-                    Ok(()) => {}
-                    Err(e) => {
-                        println!("error sending chat history to frontend: {:?}", e);
-                    }
-                }
-            }
-            Err(e) => {
-                println!("error encoding chat history: {:?}", e);
-            }
-        }
-        Ok(())
-    }
-    fn handle_frontend_message(&mut self, _update: String, _our: &Address, _metadata: &PluginMetadata) -> anyhow::Result<()> {
-        // println!("chat client received frontend message: {:?}", update);
-        Ok(())
-    }
-    fn handle_service_message(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
-        let parsed_update = serde_json::from_str::<ChatUpdate>(&update);
-        match parsed_update {   
-            Ok(parsed_update) => {
-                match parsed_update {
-                    ChatUpdate::Message(msg) => {
-                        self.messages.push(msg);
-                    }
-                    ChatUpdate::FullMessageHistory(history) => {
-                        self.messages = history;
-                    }
-                }
-                send_to_frontend(&update, metadata, our)?;
-            }
-            Err(e) => {
-                println!("error parsing update: {:?}", e);
-            }
-        }
-        Ok(())
-    }
-}
-
-impl PluginServiceState for ChatService {
-
-    fn new() -> Self {
-        ChatService {
-            metadata: PluginMetadata::new(),
-            last_message_id: 0,
-            messages: Vec::new(),
-        }
-    }
-    fn handle_unsubscribe(&mut self, _subscriber_node: String, _our: &Address, _metadata: &PluginMetadata) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    fn handle_subscribe(&mut self, subscriber_node: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
-        let chat_history = ChatUpdate::FullMessageHistory(self.messages.clone());
-        // println!("chat sending initial state from service");
-        update_client(our, subscriber_node, chat_history, metadata)?;
-        Ok(())
-    }
-
-    fn handle_request(&mut self, from: String, req: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
-        let Ok(request) = serde_json::from_str::<ChatRequest>(&req) else {
-            println!("error parsing request: {:?}", req);
-            return Ok(());
-        };
-        // println!("chat service received request: {:?}", request);
-        match request {
-            ChatRequest::SendMessage(msg) => {
-                const MAX_CHAT_MESSAGE_LENGTH: usize = 2048;
-                let msg = if msg.len() > MAX_CHAT_MESSAGE_LENGTH {
-                    // println!("chat message too long, slicing to max length: {:?}", msg);
-                    msg[..MAX_CHAT_MESSAGE_LENGTH].to_string()
-                } else {
-                    msg
-                };
-
-                let chat_msg = ChatMessage {
-                    id: self.last_message_id,
-                    time: get_now(),
-                    from: from.clone(),
-                    msg: msg,
-                };
-
-                const MAX_CHAT_HISTORY: usize = 64;
-                if self.messages.len() > MAX_CHAT_HISTORY {
-                    self.messages = self.messages.split_off(self.messages.len() - MAX_CHAT_HISTORY);
-                }
-
-                self.last_message_id += 1;
-                self.messages.push(chat_msg.clone());
-                let chat_upd = ChatUpdate::Message(chat_msg.clone());
-                // println!("chat service sending update to subscribers");
-                match update_subscriber_clients(our, chat_upd, metadata) {
-                    Ok(()) => {}
-                    Err(e) => {
-                        println!("error sending update to subscribers: {:?}", e);
-                    }
-                }
-            }
-        }
-        Ok(())
-    }
-}
-
-
-
 fn handle_http_server_request(
     our: &Address,
+    state: &mut AppState,
     source: &Address,
     body: &[u8],
 ) -> anyhow::Result<()> {
@@ -199,28 +143,60 @@ fn handle_http_server_request(
         return Ok(());
     };
 
+    // take the opportunity to kill any old consumers
+    // TODO this is weird if the calling consumer times out
+    state.consumers.retain(|_, consumer| {
+        get_now() - consumer.last_active <= CONSUMER_TIMEOUT
+    });
+
     match server_request {
         HttpServerRequest::WebSocketOpen { channel_id, .. } => {
-            println!("ws open");
+            state.consumers.insert(channel_id, Consumer::new(channel_id));
         }
         HttpServerRequest::WebSocketPush { channel_id, message_type} => {
-            println!("ws push");
-            if message_type == WsMessageType::Close {
-                // state.client.consumers.remove(&channel_id);
-                return Ok(());
-            }
-            if message_type != WsMessageType::Binary {
-                return Ok(());
-            }
-            let Some(blob) = get_blob() else {
-                return Ok(());
-            };
+            if let Some(consumer) = state.consumers.get_mut(&channel_id) {
+                consumer.last_active = get_now();
+                if message_type == WsMessageType::Close {
+                    state.consumers.remove(&channel_id);
+                    return Ok(());
+                }
+                if message_type != WsMessageType::Binary {
+                    return Ok(());
+                }
+                let Some(blob) = get_blob() else {
+                    return Ok(());
+                };
 
-            let Ok(_s) = String::from_utf8(blob.bytes.clone()) else {
-                return Ok(());
-            };
+                let Ok(_s) = String::from_utf8(blob.bytes.clone()) else {
+                    return Ok(());
+                };
+                match serde_json::from_slice(&blob.bytes)? {
+                    DartfrogRequest::Meta(m_req) => {
+                        println!("meta request: {:?}", m_req);
+                        match m_req {
+                            MetaRequest::RequestMyServices => {
+                            let service_keys: Vec<String> = state.services.keys().map(|id| id.to_string()).collect();
+                            let response_message = ConsumerUpdate::Meta(MetaUpdate::MyServices(service_keys));
+                            update_consumer(channel_id, response_message)?;
+
+
+                            }
+                            MetaRequest::CreateService(name) => {
+                                let service = Service::new(name, our.clone());
+                                state.services.insert(service.id.to_string(), service);
+
+                            }
+                        }
+                    }
+                    DartfrogRequest::Service(s_req) => {
+                        println!("service request: {:?}", s_req);
+                    }
+                }
+
+            }
         }
         HttpServerRequest::WebSocketClose(channel_id) => {
+            state.consumers.remove(&channel_id);
         }
         _ => {
         }
@@ -229,6 +205,26 @@ fn handle_http_server_request(
     Ok(())
 }
 
+fn update_consumer (
+    websocket_id: u32,
+    update: ConsumerUpdate,
+) -> anyhow::Result<()> {
+
+    let blob = LazyLoadBlob {
+        mime: Some("application/json".to_string()),
+        bytes: serde_json::json!(update)
+        .to_string()
+        .as_bytes()
+        .to_vec(),
+    };
+
+    send_ws_push(
+        websocket_id,
+        WsMessageType::Text,
+        blob,
+    );
+    Ok(())
+}
 fn handle_message(our: &Address, state: &mut AppState) -> anyhow::Result<()> {
     let message = await_message()?;
 
@@ -241,18 +237,13 @@ fn handle_message(our: &Address, state: &mut AppState) -> anyhow::Result<()> {
     
     if message.source().node == our.node
     && message.source().process == "http_server:distro:sys" {
-        let _ = handle_http_server_request(our, source, body);
+        let _ = handle_http_server_request(our, state, source, body);
     }
-    if let Ok(plugin_message) = serde_json::from_slice::<PluginMessage>(&body) {
-        if let Err(e) = handle_plugin_update(plugin_message, &mut state.plugin, our, source) {
-            println!("chat.wasm error handling plugin update: {:?}", e);
-        }
-    }
-    if let Ok(plugin_message) = serde_json::from_slice::<PluginMessage>(&body) {
-        if let Err(e) = handle_plugin_update(plugin_message, &mut state.plugin, our, source) {
-            println!("chat.wasm error handling plugin update: {:?}", e);
-        }
-    }
+    // if let Ok(plugin_message) = serde_json::from_slice::<PluginMessage>(&body) {
+    //     if let Err(e) = handle_plugin_update(plugin_message, &mut state.plugin, our, source) {
+    //         println!("chat.wasm error handling plugin update: {:?}", e);
+    //     }
+    // }
     Ok(())
 }
 
@@ -263,7 +254,6 @@ fn init(our: Address) {
 
     let try_ui = http::secure_serve_ui(&our, "chat-ui", vec!["/"]);
     http::secure_bind_ws_path("/", true).unwrap();
-    println!("bind ws");
 
     match try_ui {
         Ok(()) => {}
