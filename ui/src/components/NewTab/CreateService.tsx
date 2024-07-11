@@ -91,27 +91,6 @@ const CreateService: React.FC<{ }> = ({ }) => {
       >
           <div className="service-create-shortcut"
             onClick={() =>{
-              createFromShortcut("piano");
-            }}
-          >
-            piano
-          </div>
-          <div className="service-create-shortcut"
-            onClick={() =>{
-              createFromShortcut("chess");
-            }}
-          >
-            chess
-          </div>
-          <div className="service-create-shortcut"
-            onClick={() =>{
-              createFromShortcut("page");
-            }}
-          >
-            page
-          </div>
-          <div className="service-create-shortcut"
-            onClick={() =>{
               createFromShortcut("chat");
             }}
           >
@@ -135,7 +114,7 @@ const CreateService: React.FC<{ }> = ({ }) => {
               display:"inline-block",
               padding: "0.4rem 0.2rem",
             }}
-            onClick={toggleAdvancedOptions}
+            // onClick={toggleAdvancedOptions}
           >
             advanced options {isAdvancedOptionsVisible ? '▲' : '▼'}
         </div>

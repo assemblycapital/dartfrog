@@ -24,19 +24,13 @@ function App() {
       uri: WEBSOCKET_URL,
       nodeId: window.our?.node,
       processId: PROCESS_NAME,
-      onClose: (event) => {
-        console.log("Disconnected from Kinode");
-        setIsClientConnected(false);
-        // this.setConnectionStatus(ConnectionStatusType.Disconnected);
-        // this.onClose();
-        // // Set a timeout to attempt reconnection
-        // setTimeout(() => {
-        //   this.initialize(our, websocket_url);
-        // }, 5000); // Retry every 5 seconds
-      },
       onOpen: (event, api) => {
         console.log("Connected to Kinode");
         setIsClientConnected(true);
+        api.send({data:{
+          "CreateService": ["foo", "bar:baz:bop.os"]
+
+        }})
         // this.onOpen();
         // this.setConnectionStatus(ConnectionStatusType.Connected);
         // if (this.reconnectIntervalId) {
@@ -51,6 +45,16 @@ function App() {
       },
       onError: (event) => {
         console.log("Kinode connection error", event);
+      },
+      onClose: (event) => {
+        console.log("Disconnected from Kinode");
+        setIsClientConnected(false);
+        // this.setConnectionStatus(ConnectionStatusType.Disconnected);
+        // this.onClose();
+        // // Set a timeout to attempt reconnection
+        // setTimeout(() => {
+        //   this.initialize(our, websocket_url);
+        // }, 5000); // Retry every 5 seconds
       },
     });
 

@@ -28,3 +28,69 @@ impl ServiceID {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Service {
+    pub id: ServiceID,
+    pub meta: ServiceMetadata,
+}
+
+impl Service {
+    pub fn new(name: &str, address: Address) -> Self {
+        Service {
+            id: ServiceID {
+                name: name.to_string(),
+                address,
+            },
+            meta: ServiceMetadata::new(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ServiceMetadata {
+    pub last_sent_presence: Option<u64>,
+    pub subscribers: HashSet<String>,
+    pub user_presence: HashMap<String, u64>,
+    pub access: ServiceAccess,
+    pub visibility: ServiceVisibility,
+    pub whitelist: HashSet<String>,
+}
+
+impl ServiceMetadata {
+    pub fn new() -> Self {
+        ServiceMetadata {
+            last_sent_presence: None,
+            subscribers: HashSet::new(),
+            user_presence: HashMap::new(),
+            access: ServiceAccess::Public,
+            visibility: ServiceVisibility::Visible,
+            whitelist: HashSet::new(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ServiceAccess {
+    Public,
+    Whitelist,
+    HostOnly
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ServiceVisibility {
+    Visible,
+    HostOnly,
+    Hidden,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum DartfrogInput {
+    CreateService(String, String),
+    RequestLocalServices
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum DartfrogOutput {
+    LocalService(Service),
+    LocalServices(Vec<Service>)
+}

@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::hash::{Hash, Hasher};
 
@@ -42,12 +43,14 @@ impl Hash for Consumer{
 #[derive(Debug, Clone)]
 pub struct DartfrogState {
     pub consumers: HashMap<u32, Consumer>,
+    pub local_services: HashMap<String, Service>
 }
 
 impl DartfrogState {
     pub fn new() -> Self {
         DartfrogState {
             consumers: HashMap::new(),
+            local_services: HashMap::new(),
         }
     }
 }
@@ -60,6 +63,28 @@ fn get_now() -> u64 {
 }
 
 const CONSUMER_TIMEOUT : u64 = 10*60; //10 minutes
+
+
+fn update_consumer (
+    websocket_id: u32,
+    update: DartfrogOutput,
+) -> anyhow::Result<()> {
+
+    let blob = LazyLoadBlob {
+        mime: Some("application/json".to_string()),
+        bytes: serde_json::json!(update)
+        .to_string()
+        .as_bytes()
+        .to_vec(),
+    };
+
+    send_ws_push(
+        websocket_id,
+        WsMessageType::Text,
+        blob,
+    );
+    Ok(())
+}
 
 fn handle_http_server_request(
     our: &Address,
@@ -80,7 +105,6 @@ fn handle_http_server_request(
 
     match server_request {
         HttpServerRequest::WebSocketOpen { channel_id, .. } => {
-            println!("ws open df");
             state.consumers.insert(
                 channel_id,
                 Consumer {
@@ -88,6 +112,9 @@ fn handle_http_server_request(
                     last_active: now,
                 },
             );
+
+            let update = DartfrogOutput::LocalServices(state.local_services.values().cloned().collect());
+            update_consumer(channel_id, update)?;
         }
         HttpServerRequest::WebSocketPush { channel_id, message_type} => {
             // take the opportunity to kill any old consumers
@@ -111,9 +138,27 @@ fn handle_http_server_request(
                 return Ok(());
             };
 
-            // match serde_json::from_slice(&blob.bytes)? {
-            //     _ => {}
-            // }
+            match serde_json::from_slice(&blob.bytes)? {
+                DartfrogInput::CreateService(service_name, process_name) => {
+                    // println!("creating service");
+                    let address_str = format!("{}@{}",our.node, process_name);
+                    let address = Address::from_str(address_str.as_str());
+                    match address {
+                        Ok(address) => {
+                            let service = Service::new(&service_name, address);
+                            state.local_services.insert(service.clone().id.to_string(), service.clone());
+                            let update : DartfrogOutput = DartfrogOutput::LocalService(service);
+                            update_consumer(channel_id, update)?;
+                        }
+                        _ => {
+                        }
+                    }
+
+                },
+                DartfrogInput::RequestLocalServices => {
+
+                }
+            }
         }
         HttpServerRequest::WebSocketClose(channel_id) => {
             state.consumers.remove(&channel_id);
@@ -152,7 +197,7 @@ fn init(our: Address) {
     // Serve the index.html and other UI files found in pkg/ui at the root path.
     http::secure_serve_ui(&our, "ui", vec!["/", "*"]).unwrap();
 
-    // Allow websockets to be opened at / (our process ID will be prepended).
+    // Allow websocket to be opened at / (our process ID will be prepended).
     http::secure_bind_ws_path("/", true).unwrap();
 
     Request::to(("our", "homepage", "homepage", "sys"))

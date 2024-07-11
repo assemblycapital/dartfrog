@@ -7,6 +7,7 @@ import Split from 'react-split';
 import Footer from './Footer';
 import NewTab from './NewTab/NewTab';
 import JoinPage from './JoinPage';
+import Home from './Home';
 
 interface MiddleProps {
 }
@@ -31,8 +32,8 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
        ):(
 
             <Split
-              sizes={isSidebarOpen ? [80, 20] : [100, 0]} // Adjust sizes based on isSidebarOpen
-              minSize={isSidebarOpen ? [60, 60] : [0, 0]} // Ensure minimum size for sidebar
+              sizes={isSidebarOpen ? [80, 20] : [100, 0]}
+              minSize={isSidebarOpen ? [60, 60] : [0, 0]}
               direction="horizontal"
               gutterSize={10}
               style={{
@@ -43,7 +44,8 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
               }}
             >
               <div>
-                <NewTab />
+                {/* <NewTab /> */}
+                <Home />
               </div>
 
               {isSidebarOpen ? (

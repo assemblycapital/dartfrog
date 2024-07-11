@@ -15,7 +15,7 @@ This must match the process name from pkg/manifest.json + pkg/metadata.json
 The format is "/" + "process_name:package_name:publisher_node"
 */
 const PACKAGE_SUBDOMAIN = `${metadata.properties.package_name}-${metadata.properties.publisher.replace(/\./g, '-')}`;
-const BASE_URL = `/${manifest[0].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}/`;
+const BASE_URL = `/${manifest[0].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 const CHAT_URL = `/${manifest[1].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 // const PIANO_URL = `/${manifest[2].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 // const PAGE_URL = `/${manifest[3].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
@@ -52,7 +52,7 @@ export default defineConfig({
         target: PROXY_URL,
         changeOrigin: true,
       },
-      [`${BASE_URL}our.js`]: {
+      [`${BASE_URL}/our.js`]: {
         target: PROXY_URL,
         changeOrigin: true,
         rewrite: (path) => path.replace(BASE_URL, ''),
