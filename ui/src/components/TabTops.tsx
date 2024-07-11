@@ -5,7 +5,7 @@ import useDartStore from '../store/dart';
 
 const TabTops = ({  }) => {
 
-  const { tabs, activeTabIndex, setTabs, setActiveTabIndex, addTab, closeTab, setFromNewTab, joinService, exitService } = useDartStore();
+  // const { tabs, activeTabIndex, setTabs, setActiveTabIndex, addTab, closeTab, setFromNewTab, joinService, exitService } = useDartStore();
   return (
     <div style={{
       display: 'flex',
@@ -15,7 +15,7 @@ const TabTops = ({  }) => {
       overflowX: "hidden",
       overflowY: "hidden",
     }}>
-      {tabs.map((tab, index) => (
+      {/* {tabs.map((tab, index) => (
         <div key={index}
           style={{
             display: 'flex',
@@ -44,12 +44,13 @@ const TabTops = ({  }) => {
             <div className="vertical-line"></div>
           </div>
         </div>
-      ))}
-      <div onClick={() => addTab(null)}
+      ))} */}
+
+      {/* <div onClick={() => addTab(null)}
         className="add-tab-button"
       >
         <PlusIcon className="add-tab-button-svg"/>
-      </div>
+      </div> */}
     </div>
   );
 };

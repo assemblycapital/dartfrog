@@ -10,41 +10,41 @@ interface AuthDialogProps {
 const AuthDialog: React.FC<AuthDialogProps> = ({ }) => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const {authDialog, setAuthDialog, isAuthDialogActive, clearPluginFromAuthDialog, setIsAuthDialogActive} = useDartStore();
+  // const {authDialog, setAuthDialog, isAuthDialogActive, clearPluginFromAuthDialog, setIsAuthDialogActive} = useDartStore();
   
-  useEffect(()=>{
-    if (authDialog.length === 0) {
-      setIsAuthDialogActive(false);
-    }
-  }, [authDialog])
+  // useEffect(()=>{
+  //   if (authDialog.length === 0) {
+  //     setIsAuthDialogActive(false);
+  //   }
+  // }, [authDialog])
 
-  const clearSubdomain = useCallback((subdomain: string) => {
-    clearPluginFromAuthDialog(subdomain)
-  }, [setAuthDialog]);
+  // const clearSubdomain = useCallback((subdomain: string) => {
+  //   clearPluginFromAuthDialog(subdomain)
+  // }, [setAuthDialog]);
 
-  const requestSubdomainAuthCookie = useCallback(async (password: string, subdomain: string) => {
-    // sha256 hash password using crypto-js
-    const hashHex = '0x' + CryptoJS.SHA256(password).toString(CryptoJS.enc.Hex);
+  // const requestSubdomainAuthCookie = useCallback(async (password: string, subdomain: string) => {
+  //   // sha256 hash password using crypto-js
+  //   const hashHex = '0x' + CryptoJS.SHA256(password).toString(CryptoJS.enc.Hex);
 
-    const result = await fetch("/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password_hash: hashHex, subdomain: subdomain }),
-      credentials: 'include',
-    });
+  //   const result = await fetch("/login", {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify({ password_hash: hashHex, subdomain: subdomain }),
+  //     credentials: 'include',
+  //   });
 
-    if (result.status == 200) {
-      clearSubdomain(subdomain);
-    }
-  }, [clearSubdomain]);
+  //   if (result.status == 200) {
+  //     clearSubdomain(subdomain);
+  //   }
+  // }, [clearSubdomain]);
 
-  const handlePasswordSubmit = useCallback(async () => {
-    setIsLoading(true);
-    for (const pluginName of authDialog) {
-      await requestSubdomainAuthCookie(password, pluginName);
-    }
-    setIsLoading(false);
-  }, [password, authDialog, requestSubdomainAuthCookie]);
+  // const handlePasswordSubmit = useCallback(async () => {
+  //   setIsLoading(true);
+  //   for (const pluginName of authDialog) {
+  //     await requestSubdomainAuthCookie(password, pluginName);
+  //   }
+  //   setIsLoading(false);
+  // }, [password, authDialog, requestSubdomainAuthCookie]);
 
   return (
     <>
@@ -84,9 +84,9 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ }) => {
             fontSize: '0.8rem'
           }}
         >
-          {authDialog.map((plugin, index) => (
+          {/* {authDialog.map((plugin, index) => (
             <li key={index}>{plugin}</li>
-          ))}
+          ))} */}
         </ul>
         <input
           type="password"
@@ -101,7 +101,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ }) => {
           }}
         />
         <button
-          onClick={handlePasswordSubmit}
+          // onClick={handlePasswordSubmit}
           disabled={isLoading || password.length < 3}
           className="password-button"
         >

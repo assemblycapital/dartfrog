@@ -13,7 +13,7 @@ import profileImage from '../../assets/dartfrog256_nobg.png';
 interface SidebarProps {}
 
 const Sidebar: React.FC<SidebarProps> = ({ }) => {
-  const { isSidebarOpen, nameColors, addNameColor, setIsSidebarOpen, hasUnreadInbox } = useDartStore();
+  const { isSidebarOpen, nameColors, addNameColor, setIsSidebarOpen, } = useDartStore();
   const [myNameColor, setMyNameColor] = useState<string>('');
   const [activeComponent, setActiveComponent] = useState<string>('sidebar');
 
@@ -101,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
               {/* <div className='sidebar-option' onClick={() => setActiveComponent('notifs')}>
                 notifs
               </div> */}
-              <div className={`sidebar-option ${hasUnreadInbox ? 'inbox-unread' : ''}`}
+              <div className={`sidebar-option`}
               onClick={() => {
                 // open in new tab
                 let url = `/dartfrog:dartfrog:herobrine.os/join/inbox.${window.our?.node}`

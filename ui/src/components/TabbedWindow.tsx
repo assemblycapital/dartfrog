@@ -2,13 +2,13 @@ import React from 'react';
 import ServiceTab from './ServiceTab';
 import NewTab from './NewTab/NewTab';
 
-import useDartStore, { Tab } from '../store/dart';
+import useDartStore from '../store/dart';
 interface TabbedWindowProps {
-  tab: Tab;
+  // tab: Tab;
 }
 
-const TabbedWindow: React.FC<TabbedWindowProps> = ({ tab }) => {
-  const { tabs, activeTabIndex, services, setTabs, setActiveTabIndex, addTab, closeTab, setFromNewTab, joinService, exitService } = useDartStore();
+const TabbedWindow: React.FC<TabbedWindowProps> = ({ }) => {
+  // const { tabs, activeTabIndex, services, setTabs, setActiveTabIndex, addTab, closeTab, setFromNewTab, joinService, exitService } = useDartStore();
 
   
   return (
@@ -20,7 +20,7 @@ const TabbedWindow: React.FC<TabbedWindowProps> = ({ tab }) => {
             boxSizing: 'border-box',
           }}
         >
-          {!tab.serviceId ? (
+          {/* {!tab.serviceId ? (
             <NewTab 
               // setTabService={(serviceId: string) => {
               //   setFromNewTab(serviceId);
@@ -31,7 +31,7 @@ const TabbedWindow: React.FC<TabbedWindowProps> = ({ tab }) => {
               serviceId={tab.serviceId}
               addTab={addTab}
             />
-          )}
+          )} */}
         </div>
   )
 };

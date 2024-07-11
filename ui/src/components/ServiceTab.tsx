@@ -1,31 +1,31 @@
 import DisplayUserActivity from "./DisplayUserActivity";
-import { Service, ServiceConnectionStatusType, ServiceId, ServiceMetadata, makeServiceId, stringifyServiceConnectionStatus } from "@dartfrog/puddle";
+// import { Service, ServiceConnectionStatusType, ServiceId, ServiceMetadata, makeServiceId, stringifyServiceConnectionStatus } from "@dartfrog/puddle";
 import useDartStore from "../store/dart";
 import { useEffect, useState } from "react";
 import Spinner from "./Spinner";
 import ServiceConnectedDisplay from "./ServiceConnectedDisplay";
 
 interface ServiceTabProps {
-  serviceId: ServiceId;
-  addTab: (serviceId: ServiceId | null) => void;
+  // serviceId: ServiceId;
+  // addTab: (serviceId: ServiceId | null) => void;
 }
 
-const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, addTab }) => {
-  const {services} = useDartStore();
-  const service = services.get(serviceId);
+const ServiceTab: React.FC<ServiceTabProps> = () => {
+  // const {services} = useDartStore();
+  // const service = services.get(serviceId);
   const [isBadConnection, setIsBadConnection] = useState(false);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (service?.connectionStatus.status === ServiceConnectionStatusType.Connecting) {
-      timer = setTimeout(() => {
-        setIsBadConnection(true);
-      }, 10000); // 10 seconds
-    } else {
-      setIsBadConnection(false);
-    }
-    return () => clearTimeout(timer);
-  }, [service?.connectionStatus.status]);
+    // if (service?.connectionStatus.status === ServiceConnectionStatusType.Connecting) {
+    //   timer = setTimeout(() => {
+    //     setIsBadConnection(true);
+    //   }, 10000); // 10 seconds
+    // } else {
+    //   setIsBadConnection(false);
+    // }
+    // return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div
@@ -45,7 +45,7 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, addTab }) => {
           boxSizing: "border-box",
         }}
       >
-        {!service ? (
+        {/* {!service ? (
           <div
             style={{
               display: "flex",
@@ -59,8 +59,8 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, addTab }) => {
             loading...
             <Spinner />
           </div>
-        ) : (
-          <>
+        ) : ( */}
+          {/* <>
             {!(service.connectionStatus.status === ServiceConnectionStatusType.Connected) ? (
               <>
                 {isBadConnection ? (
@@ -153,8 +153,8 @@ const ServiceTab: React.FC<ServiceTabProps> = ({ serviceId, addTab }) => {
             ) : (
               <ServiceConnectedDisplay serviceId={serviceId} service={service} addTab={addTab} />
             )}
-          </>
-        )}
+          </> */}
+        {/* )} */}
       </div>
     </div>
   );

@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ChatInput from './ChatInput';
-import { Service, ServiceId, makeServiceId, computeColorForName } from '@dartfrog/puddle';
+// import { Service, ServiceId, makeServiceId, computeColorForName } from '@dartfrog/puddle';
 import ChatHeader from './ChatHeader';
 import useChatStore, { ChatState, ChatMessage} from '../store/chat';
 
 interface ChatBoxProps {
-  serviceId: ServiceId;
+  // serviceId: ServiceId;
   chatState: ChatState;
 }
 
-const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
+const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const pageBottomRef = useRef<HTMLDivElement | null>(null);
   const chatInputRef = useRef<HTMLDivElement | null>(null);
@@ -30,8 +30,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
     // Precompute name colors for all messages
     chatMessageList.forEach(message => {
       if (!nameColors[message.from]) {
-        const color = computeColorForName(message.from);
-        addNameColor(message.from, color);
+        // const color = computeColorForName(message.from);
+        // addNameColor(message.from, color);
       }
     });
   }, [chatMessageList, nameColors, addNameColor]);
@@ -44,7 +44,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
 
     const sortedMessages = Array.from(chatState.messages.values()).sort((a, b) => a.id - b.id);
     setChatMessageList(sortedMessages);
-  }, [serviceId, chatState.messages]);
+  }, [chatState.messages]);
 
   const scrollDownChat = useCallback(() => {
     if (messagesEndRef.current) {
@@ -145,7 +145,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
           zIndex: 100,
         }}
       >
-        <ChatHeader serviceId={serviceId} />
+        <ChatHeader  />
       </div>
       <div
         style={{
@@ -180,7 +180,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ serviceId, chatState }) => {
       </div>
       </div>
       <div className="chat-input-container" ref={chatInputRef}>
-        <ChatInput serviceId={serviceId} />
+        <ChatInput />
       </div>
     </>
   );

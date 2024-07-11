@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { ServiceId } from '@dartfrog/puddle';
+import {  } from '@dartfrog/puddle';
 
 interface ChatHeaderProps {
-  serviceId: ServiceId;
 }
 
-const ChatHeader: React.FC<ChatHeaderProps> = ({ serviceId }) => {
+const ChatHeader: React.FC<ChatHeaderProps> = ({ }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(false); // New state for mute status
 

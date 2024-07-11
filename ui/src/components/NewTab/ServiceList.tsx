@@ -1,42 +1,42 @@
 import React from 'react';
 import useDartStore from '../../store/dart';
 import Spinner from '../Spinner';
-import { Presence, ServiceAccess } from '@dartfrog/puddle/index';
+// import { Presence, ServiceAccess } from '@dartfrog/puddle/index';
 import { useNavigate } from 'react-router-dom';
 
 const ServiceList = ({ }) => {
-  const { requestAllServiceList, requestServiceList, availableServices, deleteService} = useDartStore();
+  // const { requestAllServiceList, requestServiceList, availableServices, deleteService} = useDartStore();
   const navigate = useNavigate();
 
-  if (!(availableServices instanceof Map)) {
-    // this is pretty dumb
-    // but if i dont do it, everything explodes :)
-    return <Spinner />
-  }
+  // if (!(availableServices instanceof Map)) {
+  //   // this is pretty dumb
+  //   // but if i dont do it, everything explodes :)
+  //   return <Spinner />
+  // }
 
   // Flatten the Map of Maps structure into an array of objects, excluding services with visibility "hidden"
-  const flattenedServices = Array.from(availableServices.entries()).flatMap(([node, services]) =>
-    Array.from(services.entries())
-      .filter(([_, serviceDetails]) => serviceDetails.visibility !== "Hidden")
-      .map(([serviceId, serviceDetails]) => ({
-        node,
-        serviceId,
-        serviceDetails
-      }))
-  );
+  // const flattenedServices = Array.from(availableServices.entries()).flatMap(([node, services]) =>
+  //   Array.from(services.entries())
+  //     .filter(([_, serviceDetails]) => serviceDetails.visibility !== "Hidden")
+  //     .map(([serviceId, serviceDetails]) => ({
+  //       node,
+  //       serviceId,
+  //       serviceDetails
+  //     }))
+  // );
 
   // Sort the flattened array by the number of subscribers, and for those with zero subscribers, sort by recency
-  const sortedServices = flattenedServices.sort((a, b) => {
-    const subDiff = b.serviceDetails.subscribers.length - a.serviceDetails.subscribers.length;
-    if (subDiff !== 0) return subDiff;
-    const aMaxTime = Object.values(a.serviceDetails.user_presence).reduce((max, p) => {
-      return Math.max(max, p.time);
-    }, 0);
-    const bMaxTime = Object.values(b.serviceDetails.user_presence).reduce((max, p) => {
-      return Math.max(max, p.time);
-    }, 0);
-    return bMaxTime - aMaxTime;
-  });
+  // const sortedServices = flattenedServices.sort((a, b) => {
+  //   const subDiff = b.serviceDetails.subscribers.length - a.serviceDetails.subscribers.length;
+  //   if (subDiff !== 0) return subDiff;
+  //   const aMaxTime = Object.values(a.serviceDetails.user_presence).reduce((max, p) => {
+  //     return Math.max(max, p.time);
+  //   }, 0);
+  //   const bMaxTime = Object.values(b.serviceDetails.user_presence).reduce((max, p) => {
+  //     return Math.max(max, p.time);
+  //   }, 0);
+  //   return bMaxTime - aMaxTime;
+  // });
   const knownPlugins = {
     "chat:dartfrog:herobrine.os": "chat",
     "piano:dartfrog:herobrine.os": "piano",
@@ -58,26 +58,26 @@ const ServiceList = ({ }) => {
     // return asNames.filter((name) => name !== "chat").join(', ');
   }
 
-  function getRecencyText(presence: { [key: string]: Presence }, subscribers) {
-    const now = new Date();
-    const time = Object.values(presence).reduce((max, p) => {
-      return Math.max(max, p.time);
-    }, 0);
-    const diff = now.getTime() - time*1000;
+  // function getRecencyText(presence: { [key: string]: Presence }, subscribers) {
+  //   const now = new Date();
+  //   const time = Object.values(presence).reduce((max, p) => {
+  //     return Math.max(max, p.time);
+  //   }, 0);
+  //   const diff = now.getTime() - time*1000;
 
-    // if less than 5min, say now
-    // if less than 1h, say x min ago
-    // if less than 1d, say x hr ago
-    // else say x days ago
-    if (subscribers.length > 0) {
-      return `now`;
-    }
-    if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)} hr ago`;
-    // if its older than 2yrs, say its old
-    if (diff > 7307200000) return `old`;
-    return `${Math.floor(diff / 86400000)} days ago`;
-  }
+  //   // if less than 5min, say now
+  //   // if less than 1h, say x min ago
+  //   // if less than 1d, say x hr ago
+  //   // else say x days ago
+  //   if (subscribers.length > 0) {
+  //     return `now`;
+  //   }
+  //   if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
+  //   if (diff < 86400000) return `${Math.floor(diff / 3600000)} hr ago`;
+  //   // if its older than 2yrs, say its old
+  //   if (diff > 7307200000) return `old`;
+  //   return `${Math.floor(diff / 86400000)} days ago`;
+  // }
   return (
     <div
       style={{
@@ -99,7 +99,7 @@ const ServiceList = ({ }) => {
           }}
           className="service-list-header-refresh"
           onClick={() => {
-            requestAllServiceList();
+            // requestAllServiceList();
           }}
         >
           <span
@@ -121,7 +121,7 @@ const ServiceList = ({ }) => {
           maxHeight: "250px",
         }}
       >
-        {sortedServices.map(({ node, serviceId, serviceDetails }) => (
+        {/* {sortedServices.map(({ node, serviceId, serviceDetails }) => (
           <div
             key={`${node}-${serviceId}`}
             className="service-list-item"
@@ -203,7 +203,7 @@ const ServiceList = ({ }) => {
               {serviceDetails.subscribers.length} online
             </div>
           </div>
-        ))}
+        ))} */}
       </div>
     </div>
   );

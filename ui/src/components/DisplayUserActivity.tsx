@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ServiceId, ServiceMetadata, computeColorForName } from '@dartfrog/puddle';
+import { computeColorForName } from '@dartfrog/puddle';
 import useDartStore from '../store/dart';
 
 interface DisplayUserActivityProps {
-  serviceId: ServiceId;
-  metadata: ServiceMetadata;
+  // serviceId: ServiceId;
+  // metadata: ServiceMetadata;
 }
 
-const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({ serviceId, metadata}) => {
+const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({}) => {
 
   // const { userActivity, nameColors, addNameColor } = useChatStore();
   const [groupedUsers, setGroupedUsers] = useState({ online: [], recentlyOnline: [], ever: [] });
@@ -28,19 +28,19 @@ const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({ serviceId, me
     }
   };
 
-  useEffect(() => {
-    const time = Date.now();
+  // useEffect(() => {
+  //   const time = Date.now();
 
-    const newGroupedUsers = Object.entries(metadata.user_presence).reduce(
-      (groups, [key, activity]) => {
-          let isSubscribed = metadata.subscribers.includes(key);
-          const status = activityStatus(isSubscribed, activity.time * 1000, time);
-          groups[status].push(key);
-          return groups;
-      },
-      { online: [], recentlyOnline: [], ever: [] }
-    );
-    setGroupedUsers(newGroupedUsers);
+    // const newGroupedUsers = Object.entries(metadata.user_presence).reduce(
+    //   (groups, [key, activity]) => {
+    //       let isSubscribed = metadata.subscribers.includes(key);
+    //       const status = activityStatus(isSubscribed, activity.time * 1000, time);
+    //       groups[status].push(key);
+    //       return groups;
+    //   },
+    //   { online: [], recentlyOnline: [], ever: [] }
+    // );
+    // setGroupedUsers(newGroupedUsers);
     // Sort each group by last activity time, descending
     // const sortByLastActivityTimeDesc = (a, b) => b.time - a.time;
 
@@ -54,7 +54,7 @@ const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({ serviceId, me
     //   recentlyOnline: newGroupedUsers.recentlyOnline.map(user => user.name),
     //   ever: newGroupedUsers.ever.map(user => user.name)
     // });
-  }, [metadata]);
+  // }, [metadata]);
 
   const getNameColor = useCallback(
     (name: string) => {

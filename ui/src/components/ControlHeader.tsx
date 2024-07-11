@@ -8,7 +8,7 @@ interface ControlHeaderProps {
 }
 
 const ControlHeader: React.FC<ControlHeaderProps> = ({ }) => {
-  const { api, isClientConnected, isSidebarOpen, setIsSidebarOpen, hasUnreadInbox } = useDartStore();
+  const { api, isClientConnected, isSidebarOpen, setIsSidebarOpen,  } = useDartStore();
   const navigate = useNavigate();
 
   return (
@@ -23,7 +23,7 @@ const ControlHeader: React.FC<ControlHeaderProps> = ({ }) => {
       </div>
       <div className="control-header-right">
         {!isClientConnected && <div className="connection-status">connecting...</div>}
-          <div className={`sidebar-toggle control-header-button ${isSidebarOpen ? 'active' : ''} ${hasUnreadInbox ? 'inbox-unread': ''}`}
+          <div className={`sidebar-toggle control-header-button ${isSidebarOpen ? 'active' : ''} `}
             onClick={() => {
               if (isSidebarOpen) {
                 setIsSidebarOpen(false);

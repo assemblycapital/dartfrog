@@ -2,7 +2,7 @@ import DisplayUserActivity from "../DisplayUserActivity";
 import { useCallback, useEffect, useState } from "react";
 import Spinner from "../Spinner";
 import useDartStore from "../../store/dart";
-import { AvailableServices, ParsedServiceId, Presence, Service, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceId, makeServiceId } from "@dartfrog/puddle";
+import {ServiceConnectionStatus, ServiceConnectionStatusType, } from "@dartfrog/puddle";
 import './NewTab.css'
 import { createSecretKey } from "crypto";
 import CreateService from "./CreateService";

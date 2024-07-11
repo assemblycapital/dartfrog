@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ServiceId, Service } from '@dartfrog/puddle';
+// import { ServiceId, Service } from '@dartfrog/puddle';
 import ServiceTab from './ServiceTab';
 import useDartStore from '../store/dart';
 import './TabbedWindowManager.css';
@@ -14,23 +14,23 @@ import TabbedWindow from './TabbedWindowStack';
 import TabbedWindowStack from './TabbedWindowStack';
 
 interface TabbedWindowManagerProps {
-  services: Map<ServiceId, Service>;
+  // services: Map<ServiceId, Service>;
 }
 
-const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) => {
-  const { tabs, activeTabIndex, setTabs, setActiveTabIndex, addTab, closeTab, setFromNewTab, joinService, exitService } = useDartStore();
+const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({  }) => {
+  // const { tabs, activeTabIndex, setTabs, setActiveTabIndex, addTab, closeTab, setFromNewTab, joinService, exitService } = useDartStore();
 
-  useEffect(() => {
-    if (!(services instanceof Map)) return;
-    tabs.forEach(tab => {
-      if (tab && tab.serviceId) {
-        const service = services.get(tab.serviceId);
-        if (!service) {
-          joinService(tab.serviceId);
-        }
-      }
-    });
-  }, [tabs, services, joinService]);
+  // useEffect(() => {
+  //   if (!(services instanceof Map)) return;
+  //   tabs.forEach(tab => {
+  //     if (tab && tab.serviceId) {
+  //       const service = services.get(tab.serviceId);
+  //       if (!service) {
+  //         joinService(tab.serviceId);
+  //       }
+  //     }
+  //   });
+  // }, [tabs, services, joinService]);
 
   return (
     <div

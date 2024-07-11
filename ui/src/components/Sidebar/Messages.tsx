@@ -5,7 +5,7 @@ interface MessagesProps {
 }
 
 const Messages: React.FC<MessagesProps> = ({ }) => {
-    const {addTab} = useDartStore();
+    // const {addTab} = useDartStore();
     useEffect(() => {
         const messageListener = (event: MessageEvent) => {
             if (event.data.type === 'open-df-service') {
@@ -15,7 +15,7 @@ const Messages: React.FC<MessagesProps> = ({ }) => {
                     sessionStorage.setItem(dialogKey, 'true'); // Set flag in session storage
                     if (confirmed) {
                         let serviceId = event.data.url.slice(5, event.data.url.length);
-                        addTab(serviceId);
+                        // addTab(serviceId);
                     }
                     setTimeout(() => {
                         sessionStorage.removeItem(dialogKey); // Remove flag after a delay

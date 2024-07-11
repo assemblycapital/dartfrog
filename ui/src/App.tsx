@@ -1,8 +1,9 @@
+import KinodeClientApi from "@kinode/client-api";
 import "./App.css";
 import Footer from "./components/Footer";
 import ControlHeader from "./components/ControlHeader";
 import { useEffect, useRef, useState } from "react";
-import { WEBSOCKET_URL, } from './utils';
+import { PROCESS_NAME, WEBSOCKET_URL, } from './utils';
 import DartApi from "@dartfrog/puddle";
 import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, INBOX_PLUGIN, PAGE_PLUGIN, PIANO_PLUGIN } from "./store/dart";
 import BrowserBox from "./components/BrowserBox";
@@ -15,68 +16,44 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 function App() {
 
-  const {setApi, closeApi, handleUpdate, setIsAuthDialogActive, isAuthDialogActive, authDialog, setAuthDialog, setIsClientConnected, setServices, joinService, setAvailableServices, requestServiceList, availableServices, setHasUnreadInbox} = useDartStore();
+  const {setApi, closeApi, setIsClientConnected } = useDartStore();
 
   useEffect(() => {
-    const inbox_service = `inbox.${window.our?.node}`;
-    const api = new DartApi({
-      our: window.our,
-      websocket_url: WEBSOCKET_URL,
-      pluginUpdateHandler: {
-          plugin:'inbox:dartfrog:herobrine.os',
-          serviceId: inbox_service,
-          handler:(pluginUpdate, service, source) => {
-            if (pluginUpdate["Inbox"]) {
-              let [user, inbox] = pluginUpdate["Inbox"];
-              if (inbox.has_unread) {
-                setHasUnreadInbox(true);
-              }
-            } else if (pluginUpdate["AllInboxes"]) {
-              let allInboxes = pluginUpdate["AllInboxes"]
-              let anyHasUnread = false;
-              for (let i = 0; i < allInboxes.length; i++) {
-                let [key, value] = allInboxes[i];
-                if (value.has_unread) {
-                  anyHasUnread = true;
-                }
-              }
-              setHasUnreadInbox(anyHasUnread);
-            }
-          }
-      },
-      onOpen: () => {
-        setIsClientConnected(true);
-        requestServiceList(window.our.node);
-        setServices(new Map());
-        joinService(inbox_service);
-      },
-      onClose: () => {
+    console.log("setting api", window.our?.node, PROCESS_NAME)
+    const newApi = new KinodeClientApi({
+      uri: WEBSOCKET_URL,
+      nodeId: window.our?.node,
+      processId: PROCESS_NAME,
+      onClose: (event) => {
+        console.log("Disconnected from Kinode");
         setIsClientConnected(false);
+        // this.setConnectionStatus(ConnectionStatusType.Disconnected);
+        // this.onClose();
+        // // Set a timeout to attempt reconnection
+        // setTimeout(() => {
+        //   this.initialize(our, websocket_url);
+        // }, 5000); // Retry every 5 seconds
       },
-      onServicesChangeHook: (services) => {
-        // console.log("servicesChange", services);
-        setServices(services);
+      onOpen: (event, api) => {
+        console.log("Connected to Kinode");
+        setIsClientConnected(true);
+        // this.onOpen();
+        // this.setConnectionStatus(ConnectionStatusType.Connected);
+        // if (this.reconnectIntervalId) {
+        //   clearInterval(this.reconnectIntervalId);
+        //   this.reconnectIntervalId = undefined;
+        // }
       },
-      onAvailableServicesChangeHook: (availableServices) => {
-        // console.log("availableServices", availableServices);
-        setAvailableServices(availableServices);
-      }
+      onMessage: (json, api) => {
+        console.log("update", json)
+        // this.setConnectionStatus(ConnectionStatusType.Connected);
+        // this.updateHandler(json);
+      },
+      onError: (event) => {
+        console.log("Kinode connection error", event);
+      },
     });
-    setApi(api);
-  }, []);
 
-  useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-        // pokeUnsubscribe();
-        // api.close();
-        closeApi();
-    };
-  
-    window.addEventListener('beforeunload', handleBeforeUnload);
-  
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
   }, []);
 
   return (

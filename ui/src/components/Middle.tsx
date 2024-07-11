@@ -12,7 +12,7 @@ interface MiddleProps {
 }
 
 const Middle: React.FC<MiddleProps> = ({ }) => {
-  const { services, isSidebarOpen, isClientConnected } = useDartStore();
+  const { isSidebarOpen, isClientConnected } = useDartStore();
 
   return (
     

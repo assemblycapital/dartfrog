@@ -80,6 +80,7 @@ fn handle_http_server_request(
 
     match server_request {
         HttpServerRequest::WebSocketOpen { channel_id, .. } => {
+            println!("ws open df");
             state.consumers.insert(
                 channel_id,
                 Consumer {

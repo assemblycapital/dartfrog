@@ -3,7 +3,7 @@ import { validateServiceName } from "./NewTab";
 import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, PAGE_PLUGIN, PIANO_PLUGIN } from "../../store/dart";
 
 import './CreateService.css';
-import { ServiceAccess, ServiceVisibility } from "@dartfrog/puddle";
+// import { ServiceAccess, ServiceVisibility } from "@dartfrog/puddle";
 import CreateServicePlugins from "./CreateServicePlugins";
 import { useNavigate } from 'react-router-dom';
 
@@ -20,13 +20,13 @@ const CreateService: React.FC<{ }> = ({ }) => {
   const [inputCreateServiceName, setInputCreateServiceName] = useState('');
   const [isCreateInputValid, setIsCreateInputValid] = useState(true);
   const [selectedPlugin, setSelectedPlugin] = useState(PAGE_PLUGIN);
-  const [selectedVisibility, setSelectedVisibility] = useState<ServiceVisibility>('Visible');
-  const [selectedAccess, setSelectedAccess] = useState<ServiceAccess>('Public');
+  // const [selectedVisibility, setSelectedVisibility] = useState<ServiceVisibility>('Visible');
+  // const [selectedAccess, setSelectedAccess] = useState<ServiceAccess>('Public');
   const [isAdvancedOptionsVisible, setIsAdvancedOptionsVisible] = useState(false);
 
   const navigate = useNavigate();
 
-  const { requestServiceList, createService } = useDartStore();
+  // const { requestServiceList, createService } = useDartStore();
 
   const handleCreateInputChange = (e) => {
     const value = e.target.value;
@@ -38,29 +38,30 @@ const CreateService: React.FC<{ }> = ({ }) => {
     setSelectedPlugin(plugin);
   };
 
-  const handleAccessChange = (e) => {
-    setSelectedAccess(e.target.value as ServiceAccess);
-  };
+  // const handleAccessChange = (e) => {
+  //   setSelectedAccess(e.target.value as ServiceAccess);
+  // };
 
-  const handleVisibilityChange = (e) => {
-    setSelectedVisibility(e.target.value as ServiceVisibility);
-  };
+  // const handleVisibilityChange = (e) => {
+  //   setSelectedVisibility(e.target.value as ServiceVisibility);
+  // };
 
   const handleInputCreateClick = useCallback(() => {
     if (isCreateInputValid && inputCreateServiceName !== '') {
       let serviceId = `${inputCreateServiceName}.${window.our?.node}`;
-      createService(serviceId, selectedPlugin, selectedVisibility, selectedAccess, []);
+      // createService(serviceId, selectedPlugin, selectedVisibility, selectedAccess, []);
       setInputCreateServiceName('');
       navigate(`/join/${serviceId}`);
-      requestServiceList(window.our?.node);
+      // requestServiceList(window.our?.node);
     }
-  }, [inputCreateServiceName, selectedPlugin, selectedVisibility, selectedAccess, isCreateInputValid]);
+  // }, [inputCreateServiceName, selectedPlugin, selectedVisibility, selectedAccess, isCreateInputValid]);
+  }, []);
   
   const createFromShortcut = (pluginName: string) => {
     let numString = Math.floor(Math.random() * 10000).toString();
     let serviceName = `${pluginName}-${numString}`;
     let serviceId = `${serviceName}.${window.our?.node}`;
-    createService(serviceId, PLUGIN_MAP[pluginName], 'Visible', 'Public', []);
+    // createService(serviceId, PLUGIN_MAP[pluginName], 'Visible', 'Public', []);
     navigate(`/join/${serviceId}`);
   }
 
@@ -163,8 +164,8 @@ const CreateService: React.FC<{ }> = ({ }) => {
                 <select
                   name="serviceAccessOption"
                   id="serviceAccessOption"
-                  value={selectedAccess}
-                  onChange={handleAccessChange}
+                  // value={selectedAccess}
+                  // onChange={handleAccessChange}
                 >
                   <option value="Public">Public</option>
                   <option value="Whitelist">Whitelist</option>
@@ -176,8 +177,8 @@ const CreateService: React.FC<{ }> = ({ }) => {
                 <select
                   name="serviceVisibilityOption"
                   id="serviceVisibilityOption"
-                  value={selectedVisibility}
-                  onChange={handleVisibilityChange}
+                  // value={selectedVisibility}
+                  // onChange={handleVisibilityChange}
                 >
                   <option value="Visible">Visible</option>
                   <option value="VisibleToHost">Invisible</option>

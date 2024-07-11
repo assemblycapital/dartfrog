@@ -1,26 +1,26 @@
 import React from 'react';
-import { ServiceId, Service } from '@dartfrog/puddle';
+// import { ServiceId, Service } from '@dartfrog/puddle';
 import useDartStore, { STANDARD_PLUGINS } from '../store/dart';
 import './PluginIFrame.css';
 
 interface PluginIFrameProps {
-  serviceId: ServiceId,
-  service: Service,
-  plugin: string,
-  addTab: (serviceId: ServiceId | null) => void;
+  // serviceId: ServiceId,
+  // service: Service,
+  // plugin: string,
+  // addTab: (serviceId: ServiceId | null) => void;
 }
 
 
-const PluginIFrame: React.FC<PluginIFrameProps> = ({serviceId, service, plugin, addTab}) => {
+const PluginIFrame: React.FC<PluginIFrameProps> = ({}) => {
   const [isThirdParty, setIsThirdParty] = React.useState(true);
 
-  const {setAuthDialog, setIsAuthDialogActive, authDialog} = useDartStore();
-
+  // const {setAuthDialog, setIsAuthDialogActive, authDialog} = useDartStore();
+// 
   let baseOrigin = window.location.origin.split(".").slice(1).join(".");
 
-  React.useEffect(()=> {
-    setIsThirdParty(!(STANDARD_PLUGINS.includes(plugin)))
-  }, [plugin])
+  // React.useEffect(()=> {
+  //   setIsThirdParty(!(STANDARD_PLUGINS.includes(plugin)))
+  // }, [plugin])
 
   // React.useEffect(() => {
   //   const checkPluginAvailability = async () => {
@@ -54,7 +54,7 @@ const PluginIFrame: React.FC<PluginIFrameProps> = ({serviceId, service, plugin, 
           sessionStorage.setItem(dialogKey, 'true');
           if (confirmed) {
             let serviceId = event.data.url.slice(5, event.data.url.length);
-            addTab(serviceId);
+            // addTab(serviceId);
           }
           setTimeout(() => {
             sessionStorage.removeItem(dialogKey);
@@ -86,13 +86,13 @@ const PluginIFrame: React.FC<PluginIFrameProps> = ({serviceId, service, plugin, 
   if (isThirdParty) {
       return (
         <div>
-          <a href={`http://${baseOrigin}/${plugin}/?service=${serviceId}`} target="_blank" rel="noopener noreferrer">
+          {/* <a href={`http://${baseOrigin}/${plugin}/?service=${serviceId}`} target="_blank" rel="noopener noreferrer"> */}
           <div
             className="open-secure-subdomain-link"
           >
-            open {plugin} in a new tab
+            {/* open {plugin} in a new tab */}
           </div>
-          </a>
+          {/* </a> */}
         </div>
 
       )
@@ -100,8 +100,8 @@ const PluginIFrame: React.FC<PluginIFrameProps> = ({serviceId, service, plugin, 
 
   return (
     <iframe 
-      src={`/${plugin}/?service=${serviceId}`} 
-      title={plugin}
+      // src={`/${plugin}/?service=${serviceId}`} 
+      // title={plugin}
     />
   );
 };

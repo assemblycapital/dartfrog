@@ -23,7 +23,7 @@
     "src",
     "../pkg/manifest.json",
     "../pkg/metadata.json",
-    "../puddle/**/*.ts", "../chess-ui/src/components/ChessPluginBox.tsx"],
+    "../puddle/**/*.ts"],
   "references": [
     { "path": "./tsconfig.node.json" }
   ]

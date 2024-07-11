@@ -3,10 +3,9 @@ import useChatStore, { PLUGIN_NAME } from '../store/chat';
 import { maybeReplaceWithImage } from '../utils';
 
 interface ChatInputProps {
-  serviceId: string;
 }
 
-const ChatInput: React.FC<ChatInputProps> = ({ serviceId }) => {
+const ChatInput: React.FC<ChatInputProps> = ({  }) => {
   const [chatMessageInputText, setChatMessageInputText] = useState('');
   const {sendChat} = useChatStore();
 

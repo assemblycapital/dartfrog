@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import useDartStore from '../store/dart';
-import { Service, ServiceMetadata, parseServiceId } from '@dartfrog/puddle/index';
+// import { Service, ServiceMetadata, parseServiceId } from '@dartfrog/puddle/index';
 
 enum ServiceStatus {
   INVALID_SERVICE_ID = "invalid service id",
@@ -20,67 +20,67 @@ const JoinPage = () => {
   const serviceId = id;
 
   
-  const {availableServices, requestServiceList} = useDartStore();
+  // const {availableServices, requestServiceList} = useDartStore();
 
-  const [serviceMetadata, setServiceMetadata] = useState<ServiceMetadata | null>(null)
+  // const [serviceMetadata, setServiceMetadata] = useState<ServiceMetadata | null>(null)
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(null);
 
-  const parsedServiceId = parseServiceId(serviceId)
+  // const parsedServiceId = parseServiceId(serviceId)
 
   const navigate = useNavigate();
 
   let baseOrigin = window.location.origin.split(".").slice(1).join(".");
-  useEffect(()=> {
-    if (!(availableServices instanceof Map)) {
-      return
-    }
-    if (!parsedServiceId) {
-      setServiceStatus(ServiceStatus.INVALID_SERVICE_ID)
-      return;
-    }
+  // useEffect(()=> {
+  //   if (!(availableServices instanceof Map)) {
+  //     return
+  //   }
+  //   if (!parsedServiceId) {
+  //     setServiceStatus(ServiceStatus.INVALID_SERVICE_ID)
+  //     return;
+  //   }
 
-    let gotServices = availableServices.get(parsedServiceId.node);
-    if (!(gotServices)) {
-      requestServiceList(parsedServiceId.node);
-      setServiceStatus(ServiceStatus.CONTACTING_HOST)
-      return;
-    }
+  //   let gotServices = availableServices.get(parsedServiceId.node);
+  //   if (!(gotServices)) {
+  //     requestServiceList(parsedServiceId.node);
+  //     setServiceStatus(ServiceStatus.CONTACTING_HOST)
+  //     return;
+  //   }
 
-    let gotService = gotServices.get(serviceId)
-    if (!(gotService)) {
-      setServiceStatus(ServiceStatus.SERVICE_DOES_NOT_EXIST);
-      setTimeout(() => {
-        requestServiceList(parsedServiceId.node);
-      }, 300);
-      return;
-    }
+  //   let gotService = gotServices.get(serviceId)
+  //   if (!(gotService)) {
+  //     setServiceStatus(ServiceStatus.SERVICE_DOES_NOT_EXIST);
+  //     setTimeout(() => {
+  //       requestServiceList(parsedServiceId.node);
+  //     }, 300);
+  //     return;
+  //   }
 
-    setServiceMetadata(gotService);
+  //   setServiceMetadata(gotService);
 
-    setServiceStatus(ServiceStatus.CHECKING_PLUGIN)
+  //   setServiceStatus(ServiceStatus.CHECKING_PLUGIN)
 
-    const checkPluginAvailability = async () => {
-      try {
-        const response = await fetch(`/${gotService.plugin}/?service=${serviceId}`);
-        if (!response.ok) {
-          setServiceStatus(ServiceStatus.PLUGIN_NOT_INSTALLED)
-        } else {
-          // TODO also check access settings
-          setServiceStatus(ServiceStatus.PLUGIN_READY)
-        }
-      } catch (error) {
-        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-          // This is likely a CORS error
-          setServiceStatus(ServiceStatus.PLUGIN_SECURE_SUBDOMAIN);
-        } else {
-          // ??
-          setServiceStatus(ServiceStatus.PLUGIN_ISSUE);
-        }
-      }
-    };
-    checkPluginAvailability();
+  //   const checkPluginAvailability = async () => {
+  //     try {
+  //       const response = await fetch(`/${gotService.plugin}/?service=${serviceId}`);
+  //       if (!response.ok) {
+  //         setServiceStatus(ServiceStatus.PLUGIN_NOT_INSTALLED)
+  //       } else {
+  //         // TODO also check access settings
+  //         setServiceStatus(ServiceStatus.PLUGIN_READY)
+  //       }
+  //     } catch (error) {
+  //       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+  //         // This is likely a CORS error
+  //         setServiceStatus(ServiceStatus.PLUGIN_SECURE_SUBDOMAIN);
+  //       } else {
+  //         // ??
+  //         setServiceStatus(ServiceStatus.PLUGIN_ISSUE);
+  //       }
+  //     }
+  //   };
+  //   checkPluginAvailability();
 
-  }, [serviceId, availableServices])
+  // }, [serviceId, availableServices])
 
   
   function pluginToSubdomain(plugin:string) {
@@ -99,65 +99,67 @@ const JoinPage = () => {
       return pluginParts.slice(1).join(":");
   }
 
-  useEffect(() => {
-    if (serviceStatus === ServiceStatus.PLUGIN_READY && serviceMetadata) {
-      const plugin = serviceMetadata.plugin;
-      const packageName = getPackageName(plugin)
-      if (packageName !== "dartfrog:herobrine.os") {
-        let url = `http://${baseOrigin}/${plugin}/df/service/${serviceId}`;
-        window.location.replace(url);
+  // useEffect(() => {
+  //   if (serviceStatus === ServiceStatus.PLUGIN_READY && serviceMetadata) {
+  //     const plugin = serviceMetadata.plugin;
+  //     const packageName = getPackageName(plugin)
+  //     if (packageName !== "dartfrog:herobrine.os") {
+  //       let url = `http://${baseOrigin}/${plugin}/df/service/${serviceId}`;
+  //       window.location.replace(url);
 
-      }
-      const packageSubdomain = pluginToSubdomain(plugin)
-      let url = `http://${packageSubdomain}.${baseOrigin}/${plugin}/df/service/${serviceId}`;
-      window.location.replace(url);
-    }
-  }, [serviceStatus, serviceMetadata, baseOrigin, serviceId]);
+  //     }
+  //     const packageSubdomain = pluginToSubdomain(plugin)
+  //     let url = `http://${packageSubdomain}.${baseOrigin}/${plugin}/df/service/${serviceId}`;
+  //     window.location.replace(url);
+  //   }
+  // }, [serviceStatus, serviceMetadata, baseOrigin, serviceId]);
 
   function renderServiceStatus(status) {
-    if (!(status)) {
-      return "loading";
-    }
-
-    if (status == ServiceStatus.PLUGIN_NOT_INSTALLED) {
-
-      const packageName = getPackageName(serviceMetadata.plugin)
-      if (!(packageName)) return "weird package name"
-
-      return (
-        <div>
-          <div>
-            {serviceMetadata.plugin} is not installed.
-            
-          </div>
-          <div>
-            <a href={`http://${baseOrigin}/main:app_store:sys/app-details/${packageName}`}>
-              go to {packageName} in the app store
-            </a>
-          </div>
-
-        </div>
-      )
-    }
-
-    if (status == ServiceStatus.PLUGIN_READY) {
-      let plugin = serviceMetadata.plugin;
-      return (
-          <div>
-            <a href={`http://${baseOrigin}/${plugin}/df/service/${serviceId}`} target="_blank" rel="noopener noreferrer">
-            <div
-              className="open-secure-subdomain-link"
-            >
-              open {serviceId}
-            </div>
-            </a>
-
-          </div>
-      )
-    }
-    return status;
-
+    return "todo"
   }
+  //   if (!(status)) {
+  //     return "loading";
+  //   }
+
+  //   if (status == ServiceStatus.PLUGIN_NOT_INSTALLED) {
+
+  //     const packageName = getPackageName(serviceMetadata.plugin)
+  //     if (!(packageName)) return "weird package name"
+
+  //     return (
+  //       <div>
+  //         <div>
+  //           {serviceMetadata.plugin} is not installed.
+            
+  //         </div>
+  //         <div>
+  //           <a href={`http://${baseOrigin}/main:app_store:sys/app-details/${packageName}`}>
+  //             go to {packageName} in the app store
+  //           </a>
+  //         </div>
+
+  //       </div>
+  //     )
+  //   }
+
+  //   if (status == ServiceStatus.PLUGIN_READY) {
+  //     let plugin = serviceMetadata.plugin;
+  //     return (
+  //         <div>
+  //           <a href={`http://${baseOrigin}/${plugin}/df/service/${serviceId}`} target="_blank" rel="noopener noreferrer">
+  //           <div
+  //             className="open-secure-subdomain-link"
+  //           >
+  //             open {serviceId}
+  //           </div>
+  //           </a>
+
+  //         </div>
+  //     )
+  //   }
+  //   return status;
+
+  // }
 
   return (
     <div
