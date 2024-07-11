@@ -1,4 +1,5 @@
 use std::{collections::HashMap, str::FromStr, time::{SystemTime, UNIX_EPOCH}};
+use dartfrog_lib::ServiceID;
 use kinode_process_lib::{await_message, call_init, get_blob, http::{self, send_ws_push, HttpServerRequest, WsMessageType}, println, Address, LazyLoadBlob};
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
@@ -87,26 +88,6 @@ impl Service {
 
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
-pub struct ServiceID {
-    name: String,
-    address: Address,
-}
-
-impl ServiceID {
-    pub fn to_string(&self) -> String {
-        format!("{}:{}", self.name, self.address.to_string())
-    }
-    pub fn from_string(s: &str) -> Option<Self> {
-        let parts: Vec<&str> = s.split(':').collect();
-        if parts.len() != 2 {
-            return None;
-        }
-        let name = parts[0].to_string();
-        let address = Address::from_str(parts[1]).ok()?;
-        Some(ServiceID { name, address })
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct AppState {
@@ -124,6 +105,7 @@ impl AppState {
         }
     }
 }
+
 fn get_now() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
