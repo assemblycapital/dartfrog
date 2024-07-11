@@ -104,12 +104,12 @@ const JoinPage = () => {
       const plugin = serviceMetadata.plugin;
       const packageName = getPackageName(plugin)
       if (packageName !== "dartfrog:herobrine.os") {
-        let url = `http://${baseOrigin}/${plugin}/?service=${serviceId}`;
+        let url = `http://${baseOrigin}/${plugin}/df/service/${serviceId}`;
         window.location.replace(url);
 
       }
       const packageSubdomain = pluginToSubdomain(plugin)
-      let url = `http://${packageSubdomain}.${baseOrigin}/${plugin}/?service=${serviceId}`;
+      let url = `http://${packageSubdomain}.${baseOrigin}/${plugin}/df/service/${serviceId}`;
       window.location.replace(url);
     }
   }, [serviceStatus, serviceMetadata, baseOrigin, serviceId]);
@@ -144,7 +144,7 @@ const JoinPage = () => {
       let plugin = serviceMetadata.plugin;
       return (
           <div>
-            <a href={`http://${baseOrigin}/${plugin}/?service=${serviceId}`} target="_blank" rel="noopener noreferrer">
+            <a href={`http://${baseOrigin}/${plugin}/df/service/${serviceId}`} target="_blank" rel="noopener noreferrer">
             <div
               className="open-secure-subdomain-link"
             >

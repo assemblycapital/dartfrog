@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 use dartfrog_lib::{get_server_address, handle_plugin_update, send_to_frontend, update_client, update_subscriber_clients, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState};
-use kinode_process_lib::{await_message, call_init, println, Address};
+use kinode_process_lib::{await_message, call_init, get_blob, http::{self, HttpServerRequest, WsMessageType}, println, Address};
 use serde::{Deserialize, Serialize};
 
 wit_bindgen::generate!({
@@ -187,23 +187,67 @@ impl PluginServiceState for ChatService {
 }
 
 
+
+fn handle_http_server_request(
+    our: &Address,
+    source: &Address,
+    body: &[u8],
+) -> anyhow::Result<()> {
+
+    let Ok(server_request) = serde_json::from_slice::<HttpServerRequest>(body) else {
+        // Fail silently if we can't parse the request
+        return Ok(());
+    };
+
+    match server_request {
+        HttpServerRequest::WebSocketOpen { channel_id, .. } => {
+            println!("ws open");
+        }
+        HttpServerRequest::WebSocketPush { channel_id, message_type} => {
+            println!("ws push");
+            if message_type == WsMessageType::Close {
+                // state.client.consumers.remove(&channel_id);
+                return Ok(());
+            }
+            if message_type != WsMessageType::Binary {
+                return Ok(());
+            }
+            let Some(blob) = get_blob() else {
+                return Ok(());
+            };
+
+            let Ok(_s) = String::from_utf8(blob.bytes.clone()) else {
+                return Ok(());
+            };
+        }
+        HttpServerRequest::WebSocketClose(channel_id) => {
+        }
+        _ => {
+        }
+    };
+
+    Ok(())
+}
+
 fn handle_message(our: &Address, state: &mut AppState) -> anyhow::Result<()> {
     let message = await_message()?;
 
     let body = message.body();
     let source = message.source();
 
-    // println!("chat received message");
-
-    if source != &get_server_address(our.node()) {
-        println!("chat received message from unknown source: {:?}", source);
-        return Ok(());
-    }
-
     if !message.is_request() {
         return Err(anyhow::anyhow!("unexpected Response: {:?}", message));
     }
     
+    if message.source().node == our.node
+    && message.source().process == "http_server:distro:sys" {
+        let _ = handle_http_server_request(our, source, body);
+    }
+    if let Ok(plugin_message) = serde_json::from_slice::<PluginMessage>(&body) {
+        if let Err(e) = handle_plugin_update(plugin_message, &mut state.plugin, our, source) {
+            println!("chat.wasm error handling plugin update: {:?}", e);
+        }
+    }
     if let Ok(plugin_message) = serde_json::from_slice::<PluginMessage>(&body) {
         if let Err(e) = handle_plugin_update(plugin_message, &mut state.plugin, our, source) {
             println!("chat.wasm error handling plugin update: {:?}", e);
@@ -217,7 +261,10 @@ fn init(our: Address) {
     println!("init chat");
     let mut state: AppState = AppState::new();
 
-    let try_ui = kinode_process_lib::http::secure_serve_ui(&our, "chat-ui", vec!["/"]);
+    let try_ui = http::secure_serve_ui(&our, "chat-ui", vec!["/"]);
+    http::secure_bind_ws_path("/", true).unwrap();
+    println!("bind ws");
+
     match try_ui {
         Ok(()) => {}
         Err(e) => {

@@ -81,6 +81,15 @@ button:hover {
   background-color: #181818;
 }
 
+.home-link {
+  color: #ffffff33;
+  transition: color 0.3s ease;
+}
+.home-link:hover {
+  color: #ffffff55;
+  transition: color 0.3s ease;
+}
+
 textarea, input[type="text"] {
   background-color: #1f1f1f;
   border: 1px solid #333;
