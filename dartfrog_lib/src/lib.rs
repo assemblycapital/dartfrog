@@ -86,11 +86,40 @@ pub enum ServiceVisibility {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DartfrogInput {
     CreateService(String, String),
-    RequestLocalServices
+    RequestServiceList(String)
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DartfrogOutput {
-    LocalService(Service),
-    LocalServices(Vec<Service>)
+    Service(String, Service), // host_node, services
+    ServiceList(String, Vec<Service>) // host_node, services
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum DartfrogAppInput {
+    CreateService(String) // service_name
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum DartfrogAppOutput {
+    Service(Service)
+}
+
+pub const PROCESS_NAME : &str = "dartfrog:dartfrog:herobrine.os";
+
+pub fn get_server_address(node_id: &str) -> Address {
+    get_process_address(node_id, PROCESS_NAME)
+}
+
+pub fn get_process_address(node_id: &str, process: &str) -> Address {
+    let s =
+        format!("{}@{}", node_id, process);
+    Address::from_str(&s).unwrap()
+}
+
+pub fn poke(address: &Address, body: impl Serialize) -> anyhow::Result<()> {
+    Request::to(address)
+        .body(serde_json::to_vec(&body)?)
+        .send()?;
+    Ok(())
 }

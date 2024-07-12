@@ -26,7 +26,7 @@ const CreateService: React.FC<{ }> = ({ }) => {
 
   const navigate = useNavigate();
 
-  // const { requestServiceList, createService } = useDartStore();
+  const { requestFullServiceList, createService } = useDartStore();
 
   const handleCreateInputChange = (e) => {
     const value = e.target.value;
@@ -60,9 +60,10 @@ const CreateService: React.FC<{ }> = ({ }) => {
   const createFromShortcut = (pluginName: string) => {
     let numString = Math.floor(Math.random() * 10000).toString();
     let serviceName = `${pluginName}-${numString}`;
-    let serviceId = `${serviceName}.${window.our?.node}`;
-    // createService(serviceId, PLUGIN_MAP[pluginName], 'Visible', 'Public', []);
-    navigate(`/join/${serviceId}`);
+    let processName = PLUGIN_MAP[pluginName];
+    createService(serviceName, processName, 'Visible', 'Public', []);
+    requestFullServiceList();
+    // navigate(`/join/${serviceId}`);
   }
 
 

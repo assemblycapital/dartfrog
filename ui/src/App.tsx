@@ -27,10 +27,10 @@ function App() {
       onOpen: (event, api) => {
         console.log("Connected to Kinode");
         setIsClientConnected(true);
-        api.send({data:{
-          "CreateService": ["foo", "bar:baz:bop.os"]
+        // api.send({data:{
+        //   "CreateService": ["foo", "bar:baz:bop.os"]
 
-        }})
+        // }})
         // this.onOpen();
         // this.setConnectionStatus(ConnectionStatusType.Connected);
         // if (this.reconnectIntervalId) {
@@ -57,6 +57,7 @@ function App() {
         // }, 5000); // Retry every 5 seconds
       },
     });
+    setApi(newApi);
 
   }, []);
 

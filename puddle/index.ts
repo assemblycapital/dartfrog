@@ -145,4 +145,96 @@ export function stringifyServiceConnectionStatus(status: ServiceConnectionStatus
       return "Unknown Status";
   }
 }
+
+export type Address = string;
+
+export interface ServiceID {
+  name: string;
+  address: Address;
+}
+
+export class ServiceID {
+  constructor(public name: string, public address: Address) {}
+
+  toString(): string {
+    return `${this.name}:${this.address}`;
+  }
+
+  static fromString(s: string): ServiceID | null {
+    const parts = s.split(':');
+    if (parts.length !== 2) {
+      return null;
+    }
+    const name = parts[0];
+    const address = parts[1];
+    if (!address) {
+      return null;
+    }
+    return new ServiceID(name, address);
+  }
+}
+
+export interface Service {
+  id: ServiceID;
+  meta: ServiceMetadata;
+}
+
+export class Service {
+  constructor(public id: ServiceID, public meta: ServiceMetadata) {}
+
+  static new(name: string, address: Address): Service {
+    return new Service(new ServiceID(name, address), ServiceMetadata.new());
+  }
+}
+
+export interface ServiceMetadata {
+  lastSentPresence: number | null;
+  subscribers: Array<string>;
+  userPresence: Map<string, number>;
+  access: ServiceAccess;
+  visibility: ServiceVisibility;
+  whitelist: Array<string>;
+}
+
+export class ServiceMetadata {
+  constructor({
+    lastSentPresence = null,
+    subscribers = new Array<string>(),
+    userPresence = new Map<string, number>(),
+    access = ServiceAccess.Public,
+    visibility = ServiceVisibility.Visible,
+    whitelist = new Array<string>()
+  }: {
+    lastSentPresence?: number | null,
+    subscribers?: Array<string>,
+    userPresence?: Map<string, number>,
+    access?: ServiceAccess,
+    visibility?: ServiceVisibility,
+    whitelist?: Array<string>
+  }) {
+    this.lastSentPresence = lastSentPresence;
+    this.subscribers = subscribers;
+    this.userPresence = userPresence;
+    this.access = access;
+    this.visibility = visibility;
+    this.whitelist = whitelist;
+  }
+
+  static new(): ServiceMetadata {
+    return new ServiceMetadata({});
+  }
+}
+
+export enum ServiceAccess {
+  Public = "Public",
+  Whitelist = "Whitelist",
+  HostOnly = "HostOnly",
+}
+
+export enum ServiceVisibility {
+  Visible = "Visible",
+  HostOnly = "HostOnly",
+  Hidden = "Hidden",
+}
+
 export default DartApi;

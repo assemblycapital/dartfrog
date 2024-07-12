@@ -86,6 +86,16 @@ fn update_consumer (
     Ok(())
 }
 
+fn update_all_consumers(
+    state: &DartfrogState,
+    update: DartfrogOutput,
+) -> anyhow::Result<()> {
+    for consumer in state.consumers.values() {
+        update_consumer(consumer.ws_channel_id, update.clone())?;
+    }
+    Ok(())
+}
+
 fn handle_http_server_request(
     our: &Address,
     state: &mut DartfrogState,
@@ -113,7 +123,7 @@ fn handle_http_server_request(
                 },
             );
 
-            let update = DartfrogOutput::LocalServices(state.local_services.values().cloned().collect());
+            let update = DartfrogOutput::ServiceList(our.node.clone(), state.local_services.values().cloned().collect());
             update_consumer(channel_id, update)?;
         }
         HttpServerRequest::WebSocketPush { channel_id, message_type} => {
@@ -140,23 +150,23 @@ fn handle_http_server_request(
 
             match serde_json::from_slice(&blob.bytes)? {
                 DartfrogInput::CreateService(service_name, process_name) => {
-                    // println!("creating service");
-                    let address_str = format!("{}@{}",our.node, process_name);
+                    let address_str = format!("{}@{}", our.node, process_name);
                     let address = Address::from_str(address_str.as_str());
                     match address {
                         Ok(address) => {
-                            let service = Service::new(&service_name, address);
-                            state.local_services.insert(service.clone().id.to_string(), service.clone());
-                            let update : DartfrogOutput = DartfrogOutput::LocalService(service);
-                            update_consumer(channel_id, update)?;
+                            // forward the request
+                            let req = DartfrogAppInput::CreateService(service_name);
+                            poke(&address, req)?;
                         }
                         _ => {
                         }
                     }
 
                 },
-                DartfrogInput::RequestLocalServices => {
-
+                DartfrogInput::RequestServiceList(node) => {
+                    let req = DartfrogInput::RequestServiceList(node.clone());
+                    let address = get_server_address(&node);
+                    poke(&address, req)?;
                 }
             }
         }
@@ -167,6 +177,33 @@ fn handle_http_server_request(
         }
     };
 
+    Ok(())
+}
+
+fn handle_df_app_output(
+    our: &Address,
+    state: &mut DartfrogState,
+    source: &Address,
+    app_message: DartfrogAppOutput,
+) -> anyhow::Result<()> {
+    if source.node != our.node {
+        return Ok(());
+    }
+
+    match app_message {
+        DartfrogAppOutput::Service(service) => {
+            // source process == service process
+            if service.id.address.node != source.node ||
+               service.id.address.process != source.process
+            {
+                // ignore
+                return Ok(())
+            }
+            state.local_services.insert(service.id.to_string(), service.clone());
+            let update = DartfrogOutput::Service(our.node.clone(), service);
+            update_all_consumers(state, update)?;
+        }
+    }
     Ok(())
 }
 
@@ -182,10 +219,9 @@ fn handle_message(our: &Address, state: &mut DartfrogState) -> anyhow::Result<()
         && message.source().process == "http_server:distro:sys" {
         handle_http_server_request(our, state, source, body)
     } else {
-        // match serde_json::from_slice(body)? {
-        //     _ => {
-        //     }
-        // }
+        if let Ok(app_message) = serde_json::from_slice::<DartfrogAppOutput>(&body) {
+            handle_df_app_output(our, state, source, app_message)?;
+        }
         Ok(())
     }
 }
@@ -227,4 +263,3 @@ fn init(our: Address) {
         };
     }
 }
-

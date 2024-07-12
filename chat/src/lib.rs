@@ -1,5 +1,5 @@
 use std::{collections::HashMap, str::FromStr, time::{SystemTime, UNIX_EPOCH}};
-use dartfrog_lib::ServiceID;
+use dartfrog_lib::{get_server_address, poke, DartfrogAppInput, DartfrogAppOutput, Service, ServiceID};
 use kinode_process_lib::{await_message, call_init, get_blob, http::{self, send_ws_push, HttpServerRequest, WsMessageType}, println, Address, LazyLoadBlob};
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
@@ -68,24 +68,6 @@ const CONSUMER_TIMEOUT : u64 = 10*60; //10 minutes
 pub struct Client {
     id: ServiceID,
     todo: u32,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Service {
-    id: ServiceID,
-    todo: u32,
-}
-impl Service {
-    pub fn new(name: String, address: Address) -> Self {
-        Service {
-            id: ServiceID {
-                name,
-                address,
-            },
-            todo: 0,
-        }
-    }
-
 }
 
 
@@ -164,7 +146,7 @@ fn handle_http_server_request(
 
                             }
                             MetaRequest::CreateService(name) => {
-                                let service = Service::new(name, our.clone());
+                                let service = Service::new(&name, our.clone());
                                 state.services.insert(service.id.to_string(), service);
 
                             }
@@ -207,6 +189,26 @@ fn update_consumer (
     );
     Ok(())
 }
+
+fn handle_df_app_input(our: &Address, state: &mut AppState, source: &Address, app_message: DartfrogAppInput) -> anyhow::Result<()> {
+    match app_message {
+        DartfrogAppInput::CreateService(service_name) => {
+            if source.node != our.node {
+                return Ok(());
+            }
+            // TODO add service settings
+            let service = Service::new(&service_name, our.clone());
+            state.services.insert(service.id.to_string(), service.clone());
+
+            // notify dartfrog
+            let req = DartfrogAppOutput::Service(service);
+            poke(&get_server_address(&our.node), req)?;
+
+        }
+    }
+    Ok(())
+}
+
 fn handle_message(our: &Address, state: &mut AppState) -> anyhow::Result<()> {
     let message = await_message()?;
 
@@ -221,11 +223,9 @@ fn handle_message(our: &Address, state: &mut AppState) -> anyhow::Result<()> {
     && message.source().process == "http_server:distro:sys" {
         let _ = handle_http_server_request(our, state, source, body);
     }
-    // if let Ok(plugin_message) = serde_json::from_slice::<PluginMessage>(&body) {
-    //     if let Err(e) = handle_plugin_update(plugin_message, &mut state.plugin, our, source) {
-    //         println!("chat.wasm error handling plugin update: {:?}", e);
-    //     }
-    // }
+    if let Ok(app_message) = serde_json::from_slice::<DartfrogAppInput>(&body) {
+        handle_df_app_input(our, state, source, app_message)?;
+    }
     Ok(())
 }
 

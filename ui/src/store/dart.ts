@@ -12,7 +12,6 @@ export const INBOX_PLUGIN = `inbox:${PACKAGE_ID}`;
 
 export const STANDARD_PLUGINS = [CHAT_PLUGIN, PIANO_PLUGIN, PAGE_PLUGIN, CHESS_PLUGIN, INBOX_PLUGIN];
 
-
 export interface DartStore {
   api: KinodeClientApi | null,
   setApi: (api: KinodeClientApi) => void
@@ -29,6 +28,9 @@ export interface DartStore {
   // 
   isSidebarOpen: boolean
   setIsSidebarOpen: (isSidebarOpen: boolean) => void
+  // 
+  requestFullServiceList: () => void
+  createService: (serviceName, processName, visibility, access, whitelist) => void
   // 
   get: () => DartStore 
   set: (partial: DartStore | Partial<DartStore>) => void
@@ -61,6 +63,23 @@ const useDartStore = create<DartStore>()(
       // 
       isSidebarOpen: false,
       setIsSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
+      // 
+      requestFullServiceList: () => {
+        // Implementation for requestServiceList
+      },
+      createService: (serviceName, processName, visibility, access, whitelist) => {
+        const { api } = get()
+        if (!(api)) return;
+        console.log("dart.ts creating service", serviceName, processName)
+        api.send({data:
+          {
+            "CreateService": [
+              serviceName,
+              processName
+            ]
+          }
+        })
+      },
       // 
       get,
       set,

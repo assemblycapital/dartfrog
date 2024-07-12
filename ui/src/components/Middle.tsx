@@ -30,7 +30,6 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
 
         <div>loading</div>
        ):(
-
             <Split
               sizes={isSidebarOpen ? [80, 20] : [100, 0]}
               minSize={isSidebarOpen ? [60, 60] : [0, 0]}
@@ -44,8 +43,8 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
               }}
             >
               <div>
-                {/* <NewTab /> */}
-                <Home />
+                <NewTab />
+                {/* <Home /> */}
               </div>
 
               {isSidebarOpen ? (
