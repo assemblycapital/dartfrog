@@ -17,6 +17,7 @@ button {
   user-select: none;
   gap: 0.5rem;
   align-items: center;
+  height: 26px;
 }
 .service-list-header-refresh {
   cursor: pointer;

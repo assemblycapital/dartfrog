@@ -205,6 +205,8 @@ fn handle_df_app_input(our: &Address, state: &mut AppState, source: &Address, ap
             poke(&get_server_address(&our.node), req)?;
 
         }
+        DartfrogAppInput::DeleteService(service_id) => {
+        }
     }
     Ok(())
 }

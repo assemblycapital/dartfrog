@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Service, ServiceID, ServiceVisibility } from '@dartfrog/puddle/index';
 
 const ServiceList = ({ }) => {
-  const { serviceMap } = useDartStore();
+  const { serviceMap, requestFullServiceList, requestServiceList, deleteService } = useDartStore();
   const navigate = useNavigate();
 
   if (!(serviceMap instanceof Map)) {
@@ -87,7 +87,7 @@ const ServiceList = ({ }) => {
           }}
           className="service-list-header-refresh"
           onClick={() => {
-            // requestAllServiceList();
+            requestFullServiceList();
           }}
         >
           <span
@@ -167,8 +167,8 @@ const ServiceList = ({ }) => {
                     }}
                     className="delete-button"
                     onClick={() => {
-                      // deleteService(serviceId);
-                      // requestServiceList(window.our?.node);
+                      deleteService(service.id.toString());
+                      requestServiceList(window.our?.node);
                     }}
                   >
                     delete

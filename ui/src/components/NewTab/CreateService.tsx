@@ -6,6 +6,7 @@ import './CreateService.css';
 // import { ServiceAccess, ServiceVisibility } from "@dartfrog/puddle";
 import CreateServicePlugins from "./CreateServicePlugins";
 import { useNavigate } from 'react-router-dom';
+import { ServiceAccess, ServiceVisibility } from "@dartfrog/puddle/index";
 
 
 const PLUGIN_MAP = {
@@ -20,13 +21,13 @@ const CreateService: React.FC<{ }> = ({ }) => {
   const [inputCreateServiceName, setInputCreateServiceName] = useState('');
   const [isCreateInputValid, setIsCreateInputValid] = useState(true);
   const [selectedPlugin, setSelectedPlugin] = useState(PAGE_PLUGIN);
-  // const [selectedVisibility, setSelectedVisibility] = useState<ServiceVisibility>('Visible');
-  // const [selectedAccess, setSelectedAccess] = useState<ServiceAccess>('Public');
+  const [selectedVisibility, setSelectedVisibility] = useState<ServiceVisibility>(ServiceVisibility.Visible);
+  const [selectedAccess, setSelectedAccess] = useState<ServiceAccess>(ServiceAccess.Public);
   const [isAdvancedOptionsVisible, setIsAdvancedOptionsVisible] = useState(false);
 
   const navigate = useNavigate();
 
-  const { requestFullServiceList, createService } = useDartStore();
+  const { requestFullServiceList, createService, requestServiceList } = useDartStore();
 
   const handleCreateInputChange = (e) => {
     const value = e.target.value;
@@ -34,33 +35,28 @@ const CreateService: React.FC<{ }> = ({ }) => {
     setIsCreateInputValid(validateServiceName(value));
   };
 
-  const handlePluginChange = (plugin) => {
-    setSelectedPlugin(plugin);
+  const handleAccessChange = (e) => {
+    setSelectedAccess(e.target.value as ServiceAccess);
   };
 
-  // const handleAccessChange = (e) => {
-  //   setSelectedAccess(e.target.value as ServiceAccess);
-  // };
-
-  // const handleVisibilityChange = (e) => {
-  //   setSelectedVisibility(e.target.value as ServiceVisibility);
-  // };
+  const handleVisibilityChange = (e) => {
+    setSelectedVisibility(e.target.value as ServiceVisibility);
+  };
 
   const handleInputCreateClick = useCallback(() => {
     if (isCreateInputValid && inputCreateServiceName !== '') {
       let serviceId = `${inputCreateServiceName}.${window.our?.node}`;
-      // createService(serviceId, selectedPlugin, selectedVisibility, selectedAccess, []);
+      createService(serviceId, selectedPlugin, selectedVisibility, selectedAccess, []);
       setInputCreateServiceName('');
       navigate(`/join/${serviceId}`);
-      // requestServiceList(window.our?.node);
+      requestServiceList(window.our?.node);
     }
-  // }, [inputCreateServiceName, selectedPlugin, selectedVisibility, selectedAccess, isCreateInputValid]);
-  }, []);
+  }, [inputCreateServiceName, selectedPlugin, selectedVisibility, selectedAccess, isCreateInputValid]);
   
-  const createFromShortcut = (pluginName: string) => {
+  const createFromShortcut = (shortProcessName: string) => {
     let numString = Math.floor(Math.random() * 10000).toString();
-    let serviceName = `${pluginName}-${numString}`;
-    let processName = PLUGIN_MAP[pluginName];
+    let serviceName = `${shortProcessName}-${numString}`;
+    let processName = PLUGIN_MAP[shortProcessName];
     createService(serviceName, processName, 'Visible', 'Public', []);
     requestFullServiceList();
     // navigate(`/join/${serviceId}`);
@@ -115,7 +111,7 @@ const CreateService: React.FC<{ }> = ({ }) => {
               display:"inline-block",
               padding: "0.4rem 0.2rem",
             }}
-            // onClick={toggleAdvancedOptions}
+            onClick={toggleAdvancedOptions}
           >
             advanced options {isAdvancedOptionsVisible ? '▲' : '▼'}
         </div>
@@ -144,8 +140,8 @@ const CreateService: React.FC<{ }> = ({ }) => {
                 <select
                   name="serviceAccessOption"
                   id="serviceAccessOption"
-                  // value={selectedAccess}
-                  // onChange={handleAccessChange}
+                  value={selectedAccess}
+                  onChange={handleAccessChange}
                 >
                   <option value="Public">Public</option>
                   <option value="Whitelist">Whitelist</option>

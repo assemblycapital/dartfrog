@@ -86,7 +86,9 @@ pub enum ServiceVisibility {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DartfrogInput {
     CreateService(String, String),
-    RequestServiceList(String)
+    DeleteService(String),
+    RequestServiceList(String),
+    RequestFullServiceList,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -97,7 +99,8 @@ pub enum DartfrogOutput {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DartfrogAppInput {
-    CreateService(String) // service_name
+    CreateService(String), // service_name
+    DeleteService(String) 
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -40,8 +40,8 @@ const NewTab: React.FC<NewTabProps> = ({ }) => {
   const [inputJoinServiceName, setInputJoinServiceName] = useState('');
   const [isJoinServiceNameInputValid, setIsJoinServiceNameInputValid] = useState(true);
   const [inputJoinServiceHostNode, setInputJoinServiceHostNode] = useState('');
-  const [inputJoinServiceLink, setInputJoinServiceLink] = useState(''); // Added state
-  const [isJoinServiceLinkInputValid, setIsJoinServiceLinkInputValid] = useState(true); // Added state
+  const [inputJoinServiceLink, setInputJoinServiceLink] = useState('');
+  const [isJoinServiceLinkInputValid, setIsJoinServiceLinkInputValid] = useState(true);
 
   const navigate = useNavigate();
 
@@ -51,7 +51,7 @@ const NewTab: React.FC<NewTabProps> = ({ }) => {
     setIsJoinServiceNameInputValid(validateServiceName(value));
   };
 
-  const handleJoinServiceLinkInputChange = (e) => { // Added function
+  const handleJoinServiceLinkInputChange = (e) => {
     const value = e.target.value;
     setInputJoinServiceLink(value);
     setIsJoinServiceLinkInputValid(validateServiceLink(value));
@@ -66,7 +66,7 @@ const NewTab: React.FC<NewTabProps> = ({ }) => {
     }
   }, [inputJoinServiceName, inputJoinServiceHostNode]);
 
-  const handleLinkInputJoinClick = useCallback(() => { // Added function
+  const handleLinkInputJoinClick = useCallback(() => {
     if (isJoinServiceLinkInputValid) {
       if (inputJoinServiceLink === '') return;
       const { serviceName, hostNode, isValid } = parseServiceLink(inputJoinServiceLink);
@@ -130,7 +130,6 @@ const NewTab: React.FC<NewTabProps> = ({ }) => {
               cursor: "pointer",
             }}
             onClick={() => {
-              // alert("coming soon");
               handleInputJoinClick();
             }}
           >

@@ -167,6 +167,12 @@ fn handle_http_server_request(
                     let req = DartfrogInput::RequestServiceList(node.clone());
                     let address = get_server_address(&node);
                     poke(&address, req)?;
+                },
+                DartfrogInput::RequestFullServiceList => {
+                    // TODO
+                },
+                DartfrogInput::DeleteService(id) => {
+                    // TODO
                 }
             }
         }

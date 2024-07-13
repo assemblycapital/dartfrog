@@ -30,7 +30,9 @@ export interface DartStore {
   isSidebarOpen: boolean
   setIsSidebarOpen: (isSidebarOpen: boolean) => void
   // 
+  requestServiceList: (node) => void
   requestFullServiceList: () => void
+  deleteService: (serviceIdStr: string) => void
   createService: (serviceName, processName, visibility, access, whitelist) => void
   // 
   serviceMap: ServiceMap
@@ -68,13 +70,37 @@ const useDartStore = create<DartStore>()(
       isSidebarOpen: false,
       setIsSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
       // 
+      requestServiceList: (node:string) => {
+        const { api } = get()
+        if (!(api)) return;
+        api.send({data:
+            {
+            "RequestServiceList":
+              node
+            }
+        })
+      },
       requestFullServiceList: () => {
-        // Implementation for requestServiceList
+        const { api } = get()
+        if (!(api)) return;
+        api.send({data:
+            "RequestFullServiceList"
+        })
+      },
+      deleteService: (serviceIdStr) => {
+        const { api } = get()
+        if (!(api)) return;
+        api.send({data:
+          {
+            "DeleteService":
+            serviceIdStr
+          }
+        })
+
       },
       createService: (serviceName, processName, visibility, access, whitelist) => {
         const { api } = get()
         if (!(api)) return;
-        console.log("dart.ts creating service", serviceName, processName)
         api.send({data:
           {
             "CreateService": [
