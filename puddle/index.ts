@@ -146,6 +146,10 @@ export function stringifyServiceConnectionStatus(status: ServiceConnectionStatus
   }
 }
 
+export type ServiceMap = Map<string, ServiceList>;
+
+export type ServiceList = Array<Service>;
+
 export type Address = string;
 
 export interface ServiceID {
@@ -156,8 +160,15 @@ export interface ServiceID {
 export class ServiceID {
   constructor(public name: string, public address: Address) {}
 
+  toShortString(): string {
+    let [node, process] = this.address.split("@")
+    const res = `${this.name}:${node}`;
+    return res;
+  }
+
   toString(): string {
-    return `${this.name}:${this.address}`;
+    const res = `${this.name}:${this.address}`;
+    return res;
   }
 
   static fromString(s: string): ServiceID | null {
@@ -188,9 +199,9 @@ export class Service {
 }
 
 export interface ServiceMetadata {
-  lastSentPresence: number | null;
+  last_sent_presence: number | null;
   subscribers: Array<string>;
-  userPresence: Map<string, number>;
+  user_presence: Map<string, number>;
   access: ServiceAccess;
   visibility: ServiceVisibility;
   whitelist: Array<string>;
@@ -198,23 +209,23 @@ export interface ServiceMetadata {
 
 export class ServiceMetadata {
   constructor({
-    lastSentPresence = null,
+    last_sent_presence = null,
     subscribers = new Array<string>(),
-    userPresence = new Map<string, number>(),
+    user_presence = new Map<string, number>(),
     access = ServiceAccess.Public,
     visibility = ServiceVisibility.Visible,
     whitelist = new Array<string>()
   }: {
-    lastSentPresence?: number | null,
+    last_sent_presence?: number | null,
     subscribers?: Array<string>,
-    userPresence?: Map<string, number>,
+    user_presence?: Map<string, number>,
     access?: ServiceAccess,
     visibility?: ServiceVisibility,
     whitelist?: Array<string>
   }) {
-    this.lastSentPresence = lastSentPresence;
+    this.last_sent_presence = last_sent_presence;
     this.subscribers = subscribers;
-    this.userPresence = userPresence;
+    this.user_presence = user_presence;
     this.access = access;
     this.visibility = visibility;
     this.whitelist = whitelist;
@@ -235,6 +246,34 @@ export enum ServiceVisibility {
   Visible = "Visible",
   HostOnly = "HostOnly",
   Hidden = "Hidden",
+}
+
+export interface JsonService {
+  id: {
+    name: string;
+    address: string;
+  };
+  meta: {
+    last_sent_presence: number | null;
+    subscribers: Array<string>;
+    user_presence: { [key: string]: number };
+    access: ServiceAccess;
+    visibility: ServiceVisibility;
+    whitelist: Array<string>;
+  };
+}
+export function serviceFromJson(jsonService: JsonService): Service {
+  return {
+    id: new ServiceID(jsonService.id.name, jsonService.id.address),
+    meta: new ServiceMetadata({
+      last_sent_presence: jsonService.meta.last_sent_presence,
+      subscribers: jsonService.meta.subscribers,
+      user_presence: new Map(Object.entries(jsonService.meta.user_presence)),
+      access: jsonService.meta.access,
+      visibility: jsonService.meta.visibility,
+      whitelist: jsonService.meta.whitelist,
+    })
+  };
 }
 
 export default DartApi;

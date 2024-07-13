@@ -4,7 +4,7 @@ import Footer from "./components/Footer";
 import ControlHeader from "./components/ControlHeader";
 import { useEffect, useRef, useState } from "react";
 import { PROCESS_NAME, WEBSOCKET_URL, } from './utils';
-import DartApi from "@dartfrog/puddle";
+import DartApi, { Service, ServiceConnectionStatusType, serviceFromJson, stringifyServiceConnectionStatus, } from "@dartfrog/puddle";
 import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, INBOX_PLUGIN, PAGE_PLUGIN, PIANO_PLUGIN } from "./store/dart";
 import BrowserBox from "./components/BrowserBox";
 import TabbedWindowManager from "./components/TabbedWindowManager";
@@ -16,10 +16,9 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 function App() {
 
-  const {setApi, closeApi, setIsClientConnected } = useDartStore();
+  const {setApi, closeApi, setIsClientConnected, serviceMap, putServiceMap } = useDartStore();
 
   useEffect(() => {
-    console.log("setting api", window.our?.node, PROCESS_NAME)
     const newApi = new KinodeClientApi({
       uri: WEBSOCKET_URL,
       nodeId: window.our?.node,
@@ -39,7 +38,17 @@ function App() {
         // }
       },
       onMessage: (json, api) => {
-        console.log("update", json)
+        const data = JSON.parse(json)
+        let serviceList = data["ServiceList"];
+        if (serviceList) {
+          let [node, services] = serviceList;
+          let parsedServices = [];
+          for (let jsonService of services) {
+            let service = serviceFromJson(jsonService);
+            parsedServices.push(service);
+          }
+          putServiceMap(node, parsedServices);
+        }
         // this.setConnectionStatus(ConnectionStatusType.Connected);
         // this.updateHandler(json);
       },

@@ -23,7 +23,9 @@
     "src",
     "../pkg/manifest.json",
     "../pkg/metadata.json",
-    "../puddle/**/*.ts"],
+    "../puddle/**/*.ts",
+    "../puddle/index.ts"
+  ],
   "references": [
     { "path": "./tsconfig.node.json" }
   ]

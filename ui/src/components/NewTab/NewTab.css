@@ -28,6 +28,7 @@ button {
 }
 
 .join-button {
+  height:"100%";
   padding: 0.5rem 0;
   color: #646cff;
   transition: background-color 0.2s;
@@ -37,6 +38,7 @@ button {
   transition: background-color 0.2s;
 }
 .delete-button {
+  height:"100%";
   padding: 0.5rem 0;
   color: #d65353;
   transition: background-color 0.2s;

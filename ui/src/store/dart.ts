@@ -2,6 +2,7 @@ import KinodeClientApi from "@kinode/client-api";
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { HUB_NODE } from '../utils';
+import { ServiceList, ServiceMap } from "@dartfrog/puddle/index";
 
 export const PACKAGE_ID = "dartfrog:herobrine.os";
 export const CHAT_PLUGIN = `chat:${PACKAGE_ID}`;
@@ -31,6 +32,9 @@ export interface DartStore {
   // 
   requestFullServiceList: () => void
   createService: (serviceName, processName, visibility, access, whitelist) => void
+  // 
+  serviceMap: ServiceMap
+  putServiceMap: (node:string, services: ServiceList) => void
   // 
   get: () => DartStore 
   set: (partial: DartStore | Partial<DartStore>) => void
@@ -79,6 +83,14 @@ const useDartStore = create<DartStore>()(
             ]
           }
         })
+      },
+      // 
+      serviceMap: new Map<string, ServiceList>(),
+      putServiceMap: (node, services) => {
+        const { serviceMap } = get();
+        const newServiceMap = new Map(serviceMap);
+        newServiceMap.set(node, services);
+        set({ serviceMap: newServiceMap });
       },
       // 
       get,
