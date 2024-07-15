@@ -146,9 +146,7 @@ export function stringifyServiceConnectionStatus(status: ServiceConnectionStatus
   }
 }
 
-export type ServiceMap = Map<string, ServiceList>;
-
-export type ServiceList = Array<Service>;
+export type PeerMap = Map<string, Peer>;
 
 export type Address = string;
 
@@ -171,13 +169,22 @@ export class ServiceID {
     return res;
   }
 
+  hostNode(): string {
+    let [node, process] = this.address.split("@")
+    return node;
+  }
+  process(): string {
+    let [node, process] = this.address.split("@")
+    return process;
+  }
+
   static fromString(s: string): ServiceID | null {
     const parts = s.split(':');
-    if (parts.length !== 2) {
+    if (parts.length < 2) {
       return null;
     }
     const name = parts[0];
-    const address = parts[1];
+    const address = parts.slice(1).join(':'); // Join parts 1 to n by ':'
     if (!address) {
       return null;
     }
@@ -262,6 +269,7 @@ export interface JsonService {
     whitelist: Array<string>;
   };
 }
+
 export function serviceFromJson(jsonService: JsonService): Service {
   return {
     id: new ServiceID(jsonService.id.name, jsonService.id.address),
@@ -274,6 +282,113 @@ export function serviceFromJson(jsonService: JsonService): Service {
       whitelist: jsonService.meta.whitelist,
     })
   };
+}
+
+export enum PeerActivity {
+  Offline = "Offline",
+  Private = "Private",
+  Online = "Online",
+  RecentlyOnline = "RecentlyOnline",
+}
+
+export type PeerActivityType = 
+  | { type: PeerActivity.Offline }
+  | { type: PeerActivity.Private }
+  | { type: PeerActivity.Online, timestamp: number }
+  | { type: PeerActivity.RecentlyOnline, timestamp: number };
+
+export enum ActivitySetting {
+  Public = "Public",
+  Private = "Private",
+}
+
+export enum NameColor {
+  Red = "Red",
+  Blue = "Blue",
+  Green = "Green",
+  Orange = "Orange",
+  Purple = "Purple",
+}
+
+export interface Profile {
+  bio: string;
+  nameColor: NameColor;
+  pfp?: string; // url
+}
+
+export class Profile {
+  constructor(public bio: string, public nameColor: NameColor, public pfp?: string) {}
+
+  static new(node: string): Profile {
+    return new Profile("", NameColor.Blue, undefined);
+  }
+}
+
+export interface Peer {
+  node: string;
+  hostedServices: Service[];
+  profile: Profile;
+  activity: PeerActivityType;
+  outstandingRequest: boolean;
+  lastUpdated?: number;
+}
+
+export class Peer {
+  constructor(
+    public node: string,
+    public hostedServices: Service[],
+    public profile: Profile,
+    public activity: PeerActivityType,
+    public outstandingRequest: boolean,
+    public lastUpdated?: number
+  ) {}
+
+  static new(node: string): Peer {
+    return new Peer(
+      node,
+      [],
+      Profile.new(node),
+      { type: PeerActivity.Offline },
+      false,
+      undefined
+    );
+  }
+}
+
+export function peerFromJson(json: any): Peer {
+  const hostedServices = json.hosted_services.map((service: any) => serviceFromJson(service));
+  const profile = new Profile(
+    json.profile.bio,
+    json.profile.nameColor,
+    json.profile.pfp
+  );
+
+  let activity: PeerActivityType;
+  switch (json.activity.type) {
+    case PeerActivity.Offline:
+      activity = { type: PeerActivity.Offline };
+      break;
+    case PeerActivity.Private:
+      activity = { type: PeerActivity.Private };
+      break;
+    case PeerActivity.Online:
+      activity = { type: PeerActivity.Online, timestamp: json.activity.timestamp };
+      break;
+    case PeerActivity.RecentlyOnline:
+      activity = { type: PeerActivity.RecentlyOnline, timestamp: json.activity.timestamp };
+      break;
+    default:
+      throw new Error("Unknown activity type");
+  }
+
+  return new Peer(
+    json.node,
+    hostedServices,
+    profile,
+    activity,
+    json.outstanding_request,
+    json.last_updated
+  );
 }
 
 export default DartApi;

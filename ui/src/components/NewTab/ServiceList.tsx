@@ -6,26 +6,16 @@ import { useNavigate } from 'react-router-dom';
 import { Service, ServiceID, ServiceVisibility } from '@dartfrog/puddle/index';
 
 const ServiceList = ({ }) => {
-  const { serviceMap, requestFullServiceList, requestServiceList, deleteService } = useDartStore();
+  const { localServices, deleteService, requestLocalServiceList } = useDartStore();
   const navigate = useNavigate();
 
-  if (!(serviceMap instanceof Map)) {
-    // this is pretty dumb
-    // but if i don't do it, everything explodes :)
-    return <Spinner />
-  }
-
-  const flattenedServices = Array.from(serviceMap.entries())
-    .flatMap(([node, services]) => services.map(service => ({ node, service })));
-    // .filter(service => service.meta.visibility !== ServiceVisibility.Hidden);
-
   // Sort the flattened array by the number of subscribers, and for those with zero subscribers, sort by recency
-  const sortedServices = flattenedServices.sort((a, b) => {
-    const subDiff = b.service.meta.subscribers.length - a.service.meta.subscribers.length;
+  const sortedServices = localServices.sort((a, b) => {
+    const subDiff = b.meta.subscribers.length - a.meta.subscribers.length;
     if (subDiff !== 0) return subDiff;
 
-    const aMaxTime = a.service.meta.last_sent_presence ?? 0;
-    const bMaxTime = b.service.meta.last_sent_presence ?? 0;
+    const aMaxTime = a.meta.last_sent_presence ?? 0;
+    const bMaxTime = b.meta.last_sent_presence ?? 0;
 
     return bMaxTime - aMaxTime;
   });
@@ -66,6 +56,7 @@ const ServiceList = ({ }) => {
     if (diff > 7307200000) return `old`;
     return `${Math.floor(diff / 86400000)} days ago`;
   }
+
   return (
     <div
       style={{
@@ -87,7 +78,7 @@ const ServiceList = ({ }) => {
           }}
           className="service-list-header-refresh"
           onClick={() => {
-            requestFullServiceList();
+            requestLocalServiceList();
           }}
         >
           <span
@@ -109,10 +100,11 @@ const ServiceList = ({ }) => {
           maxHeight: "250px",
         }}
       >
-        {sortedServices.map(({ node, service }) => {
+        {sortedServices.map((service) => {
+          let hostNode = service.id.address.split("@")[0];
           return (
             <div
-              key={`${node}-${service.id.toString()}`}
+              key={`${service.id.toString()}`}
               className="service-list-item"
               style={{
                 display: "flex",
@@ -130,8 +122,8 @@ const ServiceList = ({ }) => {
                 }}
               >
                 { (service.meta.access === "Public") ||
-                 (service.meta.access === "HostOnly" && node === window.our?.node) ||
-                 (service.meta.access === "Whitelist" && (node === window.our?.node || service.meta.whitelist.includes(window.our?.node))) ? (
+                 (service.meta.access === "HostOnly" && hostNode === window.our?.node) ||
+                 (service.meta.access === "Whitelist" && (hostNode === window.our?.node || service.meta.whitelist.includes(window.our?.node))) ? (
                   <div
                     style={{
                       cursor: "pointer",
@@ -158,7 +150,7 @@ const ServiceList = ({ }) => {
                     private
                   </div>
                 )}
-                {node === window.our?.node && (
+                {hostNode === window.our?.node && (
                   <div
                     style={{
                       cursor: "pointer",
@@ -168,7 +160,7 @@ const ServiceList = ({ }) => {
                     className="delete-button"
                     onClick={() => {
                       deleteService(service.id.toString());
-                      requestServiceList(window.our?.node);
+                      // requestLocalServiceList(window.our?.node);
                     }}
                   >
                     delete

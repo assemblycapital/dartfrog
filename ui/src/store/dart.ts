@@ -2,7 +2,7 @@ import KinodeClientApi from "@kinode/client-api";
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { HUB_NODE } from '../utils';
-import { ServiceList, ServiceMap } from "@dartfrog/puddle/index";
+import { Peer, PeerMap, Service,  } from "@dartfrog/puddle/index";
 
 export const PACKAGE_ID = "dartfrog:herobrine.os";
 export const CHAT_PLUGIN = `chat:${PACKAGE_ID}`;
@@ -30,13 +30,15 @@ export interface DartStore {
   isSidebarOpen: boolean
   setIsSidebarOpen: (isSidebarOpen: boolean) => void
   // 
-  requestServiceList: (node) => void
-  requestFullServiceList: () => void
+  requestLocalServiceList: () => void
   deleteService: (serviceIdStr: string) => void
   createService: (serviceName, processName, visibility, access, whitelist) => void
   // 
-  serviceMap: ServiceMap
-  putServiceMap: (node:string, services: ServiceList) => void
+  localServices: Service[],
+  setLocalServices: (services: Service[]) => void,
+  // 
+  peerMap: PeerMap,
+  putPeerMap: (peer:Peer) => void,
   // 
   get: () => DartStore 
   set: (partial: DartStore | Partial<DartStore>) => void
@@ -70,21 +72,11 @@ const useDartStore = create<DartStore>()(
       isSidebarOpen: false,
       setIsSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
       // 
-      requestServiceList: (node:string) => {
+      requestLocalServiceList: () => {
         const { api } = get()
         if (!(api)) return;
         api.send({data:
-            {
-            "RequestServiceList":
-              node
-            }
-        })
-      },
-      requestFullServiceList: () => {
-        const { api } = get()
-        if (!(api)) return;
-        api.send({data:
-            "RequestFullServiceList"
+            "RequestLocalServiceList"
         })
       },
       deleteService: (serviceIdStr) => {
@@ -111,12 +103,16 @@ const useDartStore = create<DartStore>()(
         })
       },
       // 
-      serviceMap: new Map<string, ServiceList>(),
-      putServiceMap: (node, services) => {
-        const { serviceMap } = get();
-        const newServiceMap = new Map(serviceMap);
-        newServiceMap.set(node, services);
-        set({ serviceMap: newServiceMap });
+      localServices: [],
+      setLocalServices: (services) => {
+        set({localServices: services})
+      },
+      // 
+      peerMap: new Map<string, Peer>(),
+      putPeerMap: (peer) => {
+        const { peerMap } = get()
+        peerMap.set(peer.node, peer);
+        set({ peerMap });
       },
       // 
       get,
@@ -128,14 +124,5 @@ const useDartStore = create<DartStore>()(
     // }
   // )
 )
-
-const parsePresence = (presence: any) => {
-  return Object.entries(presence).map(([key, value]) => ({
-      name: key,
-      time: value['time'] as number,
-      was_online_at_time: value['was_online_at_time'] as boolean
-    }));
-}
-
 
 export default useDartStore;

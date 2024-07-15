@@ -27,7 +27,7 @@ const CreateService: React.FC<{ }> = ({ }) => {
 
   const navigate = useNavigate();
 
-  const { requestFullServiceList, createService, requestServiceList } = useDartStore();
+  const { requestLocalServiceList, createService } = useDartStore();
 
   const handleCreateInputChange = (e) => {
     const value = e.target.value;
@@ -49,7 +49,9 @@ const CreateService: React.FC<{ }> = ({ }) => {
       createService(serviceId, selectedPlugin, selectedVisibility, selectedAccess, []);
       setInputCreateServiceName('');
       navigate(`/join/${serviceId}`);
-      requestServiceList(window.our?.node);
+      setTimeout(() => {
+        requestLocalServiceList();
+      }, 100);
     }
   }, [inputCreateServiceName, selectedPlugin, selectedVisibility, selectedAccess, isCreateInputValid]);
   
@@ -58,7 +60,9 @@ const CreateService: React.FC<{ }> = ({ }) => {
     let serviceName = `${shortProcessName}-${numString}`;
     let processName = PLUGIN_MAP[shortProcessName];
     createService(serviceName, processName, 'Visible', 'Public', []);
-    requestFullServiceList();
+    setTimeout(() => {
+      requestLocalServiceList();
+    }, 100);
     // navigate(`/join/${serviceId}`);
   }
 

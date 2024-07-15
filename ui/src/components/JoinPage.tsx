@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import useDartStore from '../store/dart';
+import { ServiceID, ServiceMetadata } from '@dartfrog/puddle/index';
 // import { Service, ServiceMetadata, parseServiceId } from '@dartfrog/puddle/index';
 
 enum ServiceStatus {
@@ -17,149 +18,159 @@ enum ServiceStatus {
 const JoinPage = () => {
   const { id } = useParams<{ id: string }>();
 
-  const serviceId = id;
+  const serviceIdString = id;
 
-  
-  // const {availableServices, requestServiceList} = useDartStore();
+  const serviceId = ServiceID.fromString(serviceIdString);
+  const {peerMap, localServices} = useDartStore();
 
-  // const [serviceMetadata, setServiceMetadata] = useState<ServiceMetadata | null>(null)
+  const [serviceMetadata, setServiceMetadata] = useState<ServiceMetadata | null>(null)
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(null);
 
-  // const parsedServiceId = parseServiceId(serviceId)
 
   const navigate = useNavigate();
 
   let baseOrigin = window.location.origin.split(".").slice(1).join(".");
-  // useEffect(()=> {
-  //   if (!(availableServices instanceof Map)) {
-  //     return
-  //   }
-  //   if (!parsedServiceId) {
-  //     setServiceStatus(ServiceStatus.INVALID_SERVICE_ID)
-  //     return;
-  //   }
+  useEffect(()=> {
+    if (!(peerMap instanceof Map)) {
+      return
+    }
+    if (!serviceId) {
+      setServiceStatus(ServiceStatus.INVALID_SERVICE_ID)
+      return;
+    }
 
-  //   let gotServices = availableServices.get(parsedServiceId.node);
-  //   if (!(gotServices)) {
-  //     requestServiceList(parsedServiceId.node);
-  //     setServiceStatus(ServiceStatus.CONTACTING_HOST)
-  //     return;
-  //   }
+    let gotService = null;
+    if (serviceId.hostNode() === window.our?.node) {
 
-  //   let gotService = gotServices.get(serviceId)
-  //   if (!(gotService)) {
-  //     setServiceStatus(ServiceStatus.SERVICE_DOES_NOT_EXIST);
-  //     setTimeout(() => {
-  //       requestServiceList(parsedServiceId.node);
-  //     }, 300);
-  //     return;
-  //   }
+      console.log("our")
+      gotService = localServices.find(service => service.id.toString() === serviceId.toString());
 
-  //   setServiceMetadata(gotService);
+    } else {
+      console.log("not our")
+      let gotPeer = peerMap.get(serviceId.hostNode());
+      if (!(gotPeer)) {
+        // TODO
+        // requestServiceList(parsedServiceId.node);
+        setServiceStatus(ServiceStatus.CONTACTING_HOST)
+        return;
+      }
+      gotService = gotPeer.hostedServices.find(service => service.id === serviceId);
 
-  //   setServiceStatus(ServiceStatus.CHECKING_PLUGIN)
+    }
 
-  //   const checkPluginAvailability = async () => {
-  //     try {
-  //       const response = await fetch(`/${gotService.plugin}/?service=${serviceId}`);
-  //       if (!response.ok) {
-  //         setServiceStatus(ServiceStatus.PLUGIN_NOT_INSTALLED)
-  //       } else {
-  //         // TODO also check access settings
-  //         setServiceStatus(ServiceStatus.PLUGIN_READY)
-  //       }
-  //     } catch (error) {
-  //       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-  //         // This is likely a CORS error
-  //         setServiceStatus(ServiceStatus.PLUGIN_SECURE_SUBDOMAIN);
-  //       } else {
-  //         // ??
-  //         setServiceStatus(ServiceStatus.PLUGIN_ISSUE);
-  //       }
-  //     }
-  //   };
-  //   checkPluginAvailability();
 
-  // }, [serviceId, availableServices])
+    if (!(gotService)) {
+      setServiceStatus(ServiceStatus.SERVICE_DOES_NOT_EXIST);
+      // setTimeout(() => {
+      //   requestServiceList(parsedServiceId.node);
+      // }, 300);
+      return;
+    }
+
+    setServiceMetadata(gotService.meta);
+
+    setServiceStatus(ServiceStatus.CHECKING_PLUGIN)
+
+    const checkProcessAvailability = async () => {
+      const process = gotService.id.process();
+      try {
+        const response = await fetch(`/${process}/?service=${serviceId}`);
+        if (!response.ok) {
+          setServiceStatus(ServiceStatus.PLUGIN_NOT_INSTALLED)
+        } else {
+          // TODO also check access settings
+          setServiceStatus(ServiceStatus.PLUGIN_READY)
+        }
+      } catch (error) {
+        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+          // This is likely a CORS error
+          setServiceStatus(ServiceStatus.PLUGIN_SECURE_SUBDOMAIN);
+        } else {
+          // ??
+          setServiceStatus(ServiceStatus.PLUGIN_ISSUE);
+        }
+      }
+    };
+    checkProcessAvailability();
+
+  }, [peerMap, localServices])
 
   
-  function pluginToSubdomain(plugin:string) {
-    let parts = plugin.split(":");
+  function processToSubdomain(process:string) {
+    let parts = process.split(":");
     let pkg = parts.slice(1).join(":")
 
     return pkg.replace(/[.:]/g, '-');
   }
 
-  function getPackageName(plugin) {
-      const pluginParts = plugin.split(":")
-      if (pluginParts.length !== 3)  {
+  function getPackageName(process:string) {
+      const processParts = process.split(":")
+      if (processParts.length !== 3)  {
         return null
       }
 
-      return pluginParts.slice(1).join(":");
+      return processParts.slice(1).join(":");
   }
 
-  // useEffect(() => {
-  //   if (serviceStatus === ServiceStatus.PLUGIN_READY && serviceMetadata) {
-  //     const plugin = serviceMetadata.plugin;
-  //     const packageName = getPackageName(plugin)
-  //     if (packageName !== "dartfrog:herobrine.os") {
-  //       let url = `http://${baseOrigin}/${plugin}/df/service/${serviceId}`;
-  //       window.location.replace(url);
+  useEffect(() => {
+    if (serviceStatus === ServiceStatus.PLUGIN_READY && serviceMetadata) {
+      const process = serviceId.process();
+      const packageName = getPackageName(process)
+      if (packageName !== "dartfrog:herobrine.os") {
+        let url = `http://${baseOrigin}/${process}/df/service/${serviceId}`;
+        window.location.replace(url);
 
-  //     }
-  //     const packageSubdomain = pluginToSubdomain(plugin)
-  //     let url = `http://${packageSubdomain}.${baseOrigin}/${plugin}/df/service/${serviceId}`;
-  //     window.location.replace(url);
-  //   }
-  // }, [serviceStatus, serviceMetadata, baseOrigin, serviceId]);
+      }
+      const packageSubdomain = processToSubdomain(process)
+      let url = `http://${packageSubdomain}.${baseOrigin}/${process}/df/service/${serviceId}`;
+      window.location.replace(url);
+    }
+  }, [serviceStatus, serviceMetadata, baseOrigin, serviceId]);
 
-  function renderServiceStatus(status) {
-    return "todo"
-  }
-  //   if (!(status)) {
-  //     return "loading";
-  //   }
+  const renderServiceStatus = useCallback((status) => {
+    if (!(status)) {
+      return "loading";
+    }
 
-  //   if (status == ServiceStatus.PLUGIN_NOT_INSTALLED) {
+    if (status == ServiceStatus.PLUGIN_NOT_INSTALLED) {
 
-  //     const packageName = getPackageName(serviceMetadata.plugin)
-  //     if (!(packageName)) return "weird package name"
+      const packageName = getPackageName(serviceId.process())
+      if (!(packageName)) return "weird package name"
 
-  //     return (
-  //       <div>
-  //         <div>
-  //           {serviceMetadata.plugin} is not installed.
+      return (
+        <div>
+          <div>
+            {serviceId.process()} is not installed.
             
-  //         </div>
-  //         <div>
-  //           <a href={`http://${baseOrigin}/main:app_store:sys/app-details/${packageName}`}>
-  //             go to {packageName} in the app store
-  //           </a>
-  //         </div>
+          </div>
+          <div>
+            <a href={`http://${baseOrigin}/main:app_store:sys/app-details/${packageName}`}>
+              go to {packageName} in the app store
+            </a>
+          </div>
 
-  //       </div>
-  //     )
-  //   }
+        </div>
+      )
+    }
 
-  //   if (status == ServiceStatus.PLUGIN_READY) {
-  //     let plugin = serviceMetadata.plugin;
-  //     return (
-  //         <div>
-  //           <a href={`http://${baseOrigin}/${plugin}/df/service/${serviceId}`} target="_blank" rel="noopener noreferrer">
-  //           <div
-  //             className="open-secure-subdomain-link"
-  //           >
-  //             open {serviceId}
-  //           </div>
-  //           </a>
+    if (status == ServiceStatus.PLUGIN_READY) {
+      let process = serviceId.process();
+      return (
+          <div>
+            <a href={`http://${baseOrigin}/${process}/df/service/${serviceId}`} target="_blank" rel="noopener noreferrer">
+            <div
+              className="open-secure-subdomain-link"
+            >
+              open {serviceIdString}
+            </div>
+            </a>
 
-  //         </div>
-  //     )
-  //   }
-  //   return status;
+          </div>
+      )
+    }
+    return status;
 
-  // }
+  }, [serviceId, serviceMetadata])
 
   return (
     <div
@@ -208,7 +219,7 @@ const JoinPage = () => {
           style={{
           }}
         >
-          {serviceId}
+          {serviceIdString}
         </span>
       </div>
 

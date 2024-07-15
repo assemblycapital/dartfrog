@@ -19,11 +19,12 @@ impl ServiceID {
     }
     pub fn from_string(s: &str) -> Option<Self> {
         let parts: Vec<&str> = s.split(':').collect();
-        if parts.len() != 2 {
+        if parts.len() < 2 {
             return None;
         }
         let name = parts[0].to_string();
-        let address = Address::from_str(parts[1]).ok()?;
+        let address_str = parts[1..].join(":");
+        let address = Address::from_str(&address_str).ok()?;
         Some(ServiceID { name, address })
     }
 }
@@ -84,17 +85,108 @@ pub enum ServiceVisibility {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum PeerActivity {
+    Offline,
+    Private,
+    Online(u64),
+    RecentlyOnline(u64),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ActivitySetting {
+    Public,
+    Private,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum NameColor {
+    Red,
+    Blue,
+    Green,
+    Orange,
+    Purple
+}
+
+fn get_default_color_for_string(s: &str) -> NameColor {
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    s.hash(&mut hasher);
+    let hash = hasher.finish();
+    match hash % 5 {
+        0 => NameColor::Red,
+        1 => NameColor::Blue,
+        2 => NameColor::Green,
+        3 => NameColor::Orange,
+        _ => NameColor::Purple,
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Profile {
+    pub bio: String,
+    pub name_color: NameColor,
+    pub pfp: Option<String>, //url
+}
+
+impl Profile {
+    pub fn new(node: String) -> Self {
+        let name_color = get_default_color_for_string(&node);
+        Profile {
+            bio: String::new(),
+            name_color,
+            pfp: None,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Peer {
+    pub node: String,
+    pub hosted_services: Vec<Service>,
+    pub profile: Profile,
+    pub activity: PeerActivity,
+    pub outstanding_request: bool,
+    pub last_updated: Option<u64>
+}
+
+impl Peer {
+    pub fn new(node: String) -> Self {
+        Peer {
+            node: node.clone(),
+            hosted_services: Vec::new(),
+            profile: Profile::new(node),
+            activity: PeerActivity::Offline,
+            outstanding_request: false,
+            last_updated: None,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DartfrogInput {
     CreateService(String, String),
     DeleteService(String),
-    RequestServiceList(String),
-    RequestFullServiceList,
+    //
+    RequestLocalService(String),
+    RequestLocalServiceList,
+    // 
+    LocalRequestPeer(String),
+    LocalRequestAllPeers,
+    // 
+    LocalFwdPeerRequest(String),
+    LocalFwdAllPeerRequests,
+    // 
+    RemoteRequestPeer,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DartfrogOutput {
-    Service(String, Service), // host_node, services
-    ServiceList(String, Vec<Service>) // host_node, services
+    LocalUser(Profile, PeerActivity, ActivitySetting),
+    LocalService(Service),
+    LocalServiceList(Vec<Service>),
+    // 
+    Peer(Peer),
+    PeerList(Vec<Peer>),
+    // 
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -105,7 +197,9 @@ pub enum DartfrogAppInput {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DartfrogAppOutput {
-    Service(Service)
+    Service(Service),
+    ServiceList(Vec<Service>),
+    DeleteService(ServiceID)
 }
 
 pub const PROCESS_NAME : &str = "dartfrog:dartfrog:herobrine.os";

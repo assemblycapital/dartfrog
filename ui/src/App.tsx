@@ -4,7 +4,7 @@ import Footer from "./components/Footer";
 import ControlHeader from "./components/ControlHeader";
 import { useEffect, useRef, useState } from "react";
 import { PROCESS_NAME, WEBSOCKET_URL, } from './utils';
-import DartApi, { Service, ServiceConnectionStatusType, serviceFromJson, stringifyServiceConnectionStatus, } from "@dartfrog/puddle";
+import DartApi, { Service, ServiceConnectionStatusType, peerFromJson, serviceFromJson, stringifyServiceConnectionStatus, } from "@dartfrog/puddle";
 import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, INBOX_PLUGIN, PAGE_PLUGIN, PIANO_PLUGIN } from "./store/dart";
 import BrowserBox from "./components/BrowserBox";
 import TabbedWindowManager from "./components/TabbedWindowManager";
@@ -16,7 +16,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 function App() {
 
-  const {setApi, closeApi, setIsClientConnected, serviceMap, putServiceMap } = useDartStore();
+  const {setApi, closeApi, setIsClientConnected, peerMap, putPeerMap, localServices, setLocalServices } = useDartStore();
 
   useEffect(() => {
     const newApi = new KinodeClientApi({
@@ -39,15 +39,24 @@ function App() {
       },
       onMessage: (json, api) => {
         const data = JSON.parse(json)
-        let serviceList = data["ServiceList"];
-        if (serviceList) {
-          let [node, services] = serviceList;
+        if (data["LocalServiceList"]) {
+          let localServiceList = data["LocalServiceList"];
           let parsedServices = [];
-          for (let jsonService of services) {
+          for (let jsonService of localServiceList) {
             let service = serviceFromJson(jsonService);
             parsedServices.push(service);
           }
-          putServiceMap(node, parsedServices);
+          setLocalServices(parsedServices);
+        } else if (data["LocalUser"]) {
+          let [profile, activity, activity_setting] = data["LocalUser"]
+          // TODO
+        } else if (data["PeerList"]) {
+          let peerList = data["PeerList"]
+          let parsedPeers = [];
+          for (let jsonPeer of peerList) {
+            let peer = peerFromJson(jsonPeer);
+            parsedPeers.push(peer);
+          }
         }
         // this.setConnectionStatus(ConnectionStatusType.Connected);
         // this.updateHandler(json);

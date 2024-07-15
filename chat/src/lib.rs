@@ -193,10 +193,9 @@ fn update_consumer (
 fn handle_df_app_input(our: &Address, state: &mut AppState, source: &Address, app_message: DartfrogAppInput) -> anyhow::Result<()> {
     match app_message {
         DartfrogAppInput::CreateService(service_name) => {
-            if source.node != our.node {
+            if source != &get_server_address(&our.node) {
                 return Ok(());
             }
-            // TODO add service settings
             let service = Service::new(&service_name, our.clone());
             state.services.insert(service.id.to_string(), service.clone());
 
@@ -206,6 +205,14 @@ fn handle_df_app_input(our: &Address, state: &mut AppState, source: &Address, ap
 
         }
         DartfrogAppInput::DeleteService(service_id) => {
+            if source != &get_server_address(&our.node) {
+                return Ok(());
+            }
+            if let Some(service) = state.services.remove(&service_id) {
+                let req = DartfrogAppOutput::DeleteService(service.id);
+                poke(&get_server_address(&our.node), req)?;
+            } else {
+            }
         }
     }
     Ok(())
