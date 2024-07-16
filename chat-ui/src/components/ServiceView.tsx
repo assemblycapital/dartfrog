@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { HamburgerIcon } from './Icons';
 import TopBar from './TopBar';
-import { ServiceApi } from '@dartfrog/puddle';
+import { ServiceApi, ServiceMetadata } from '@dartfrog/puddle';
 import { PROCESS_NAME } from '../App';
 import { WEBSOCKET_URL } from '../utils';
 import useChatStore from '../store/chat';
@@ -11,7 +11,7 @@ const ServiceView = () => {
   const { id } = useParams<{ id: string }>();
   const serviceId = id
 
-  const {setApi} = useChatStore();
+  const {setApi, api, setServiceConnectionStatus, serviceConnectionStatus, setServiceMetadata, serviceMetadata} = useChatStore();
 
   useEffect(()=>{
     const newApi = new ServiceApi({
@@ -24,9 +24,28 @@ const ServiceView = () => {
       onOpen: (api) => {
         // requestMyServices();
         console.log("connected to kinode", api.serviceId)
-      }
+      },
+      onServiceConnectionStatusChange(api) {
+        console.log("new service connection status", api.serviceConnectionStatus);
+        setServiceConnectionStatus(api.serviceConnectionStatus)
+      },
+      onServiceMetadataChange(api) {
+        console.log("new service metadata", api.serviceMetadata);
+        setServiceMetadata(api.serviceMetadata)
+      },
+
     });
     setApi(newApi);
+
+    const handleBeforeUnload = () => {
+      newApi.unsubscribeService();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, [])
 
   return (
@@ -42,10 +61,14 @@ const ServiceView = () => {
       }}
     >
       <TopBar serviceId={serviceId}/>
+      <div>
+        {serviceConnectionStatus && serviceConnectionStatus.toString()}
+      </div>
+      <div>
 
-      <h1>Service View</h1>
-      <p>This is the Service View component.</p>
-      <p>{serviceId}</p>
+        {JSON.stringify(serviceMetadata)}
+      </div>
+
     </div>
   );
 };

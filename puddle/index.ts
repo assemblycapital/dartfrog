@@ -12,6 +12,32 @@ export type ConnectionStatus = {
   timestamp: number
 }
 
+export class ServiceConnectionStatus {
+  constructor(
+    public status: ServiceConnectionStatusType,
+    public timestamp: number
+  ) {}
+
+  toString(): string {
+    switch (this.status) {
+      case ServiceConnectionStatusType.Connecting:
+        return "Connecting";
+      case ServiceConnectionStatusType.Connected:
+        return "Connected";
+      case ServiceConnectionStatusType.Disconnected:
+        return "Disconnected";
+      case ServiceConnectionStatusType.ServiceDoesNotExist:
+        return "ServiceDoesNotExist";
+      case ServiceConnectionStatusType.Kicked:
+        return "Kicked";
+      case ServiceConnectionStatusType.AccessDenied:
+        return "AccessDenied";
+      default:
+        return "Unknown Status";
+    }
+  }
+}
+
 export enum ServiceConnectionStatusType {
   Connecting,
   Connected,
@@ -21,17 +47,14 @@ export enum ServiceConnectionStatusType {
   AccessDenied,
 }
 
-export type ServiceConnectionStatus = {
-  status: ServiceConnectionStatusType,
-  timestamp: number
-}
-
 interface ConstructorArgs {
   our: { node: string, process: string };
   websocket_url: string;
   onOpen?: (api) => void;
   onClose?: () => void;
   serviceId?: string;
+  onServiceConnectionStatusChange?: (api) => void;
+  onServiceMetadataChange?: (api) => void;
 }
 
 export class ServiceApi {
@@ -39,10 +62,15 @@ export class ServiceApi {
   public connectionStatus: ConnectionStatus;
   public our: { node: string, process: string };
   public websocket_url: string;
+
   public serviceId: string | null;
+  public serviceMetadata: ServiceMetadata | null;
+  public serviceConnectionStatus: ServiceConnectionStatus | null;
 
   private onOpen: (api) => void;
   private onClose: () => void;
+  private onServiceConnectionStatusChange: (api) => void;
+  private onServiceMetadataChange: (api) => void;
 
   constructor({
     our,
@@ -50,10 +78,14 @@ export class ServiceApi {
     onOpen = (api) => {},
     onClose = () => {},
     serviceId = null,
+    onServiceConnectionStatusChange = (api) => {},
+    onServiceMetadataChange = (api) => {},
   }: ConstructorArgs) {
     this.onOpen = onOpen;
     this.onClose = onClose;
     this.serviceId = serviceId;
+    this.onServiceConnectionStatusChange = onServiceConnectionStatusChange;
+    this.onServiceMetadataChange = onServiceMetadataChange;
     this.initialize(our, websocket_url);
   }
   private initialize(our, websocket_url) {
@@ -62,34 +94,33 @@ export class ServiceApi {
       // console.log("exit", our.node, our.process)
       return;
     }
+    this.serviceMetadata = null;
+    this.serviceConnectionStatus = null;
+
     const newApi = new KinodeClientApi({
       uri: websocket_url,
       nodeId: our.node,
       processId: our.process,
       onClose: (event) => {
-        // console.log("Disconnected from Kinode");
         this.setConnectionStatus(ConnectionStatusType.Disconnected);
         this.onClose();
-        // // Set a timeout to attempt reconnection
-        // setTimeout(() => {
-        //   this.initialize(our, websocket_url);
-        // }, 5000); // Retry every 5 seconds
       },
       onOpen: (event, api) => {
         console.log("Connected to Kinode");
         this.onOpen(this);
         if (this.serviceId) {
+          this.setServiceConnectionStatus(ServiceConnectionStatusType.Connecting);
+          this.onServiceConnectionStatusChange(this);
           this.setService(this.serviceId);
         }
 
+        setInterval(() => {
+          this.sendHeartbeat();
+        }, 60*1000);
+
         this.setConnectionStatus(ConnectionStatusType.Connected);
-        // if (this.reconnectIntervalId) {
-        //   clearInterval(this.reconnectIntervalId);
-        //   this.reconnectIntervalId = undefined;
-        // }
       },
       onMessage: (json, api) => {
-        this.setConnectionStatus(ConnectionStatusType.Connected);
         this.updateHandler(json);
       },
       onError: (event) => {
@@ -98,13 +129,6 @@ export class ServiceApi {
     });
 
     this.api = newApi;
-    // if (this.connectionStatus.status !== ConnectionStatusType.Connected) {
-    //   this.reconnectIntervalId = setInterval(() => {
-    //     if (this.connectionStatus.status !== ConnectionStatusType.Connected) {
-    //       this.initialize(our, websocket_url);
-    //     }
-    //   }, 5000);
-    // }
   }
 
   private setConnectionStatus(status: ConnectionStatusType) {
@@ -113,6 +137,12 @@ export class ServiceApi {
       timestamp: Date.now(),
     };
   }
+
+  private setServiceConnectionStatus(status: ServiceConnectionStatusType) {
+    this.serviceConnectionStatus = new ServiceConnectionStatus(status, Date.now());
+    this.onServiceConnectionStatusChange(this);
+  }
+
   public sendRequest(json:any) {
     if (!(this.api)) {
       return;
@@ -120,6 +150,16 @@ export class ServiceApi {
     this.api.send({data:json})
   }
 
+  public sendHeartbeat() {
+    console.log("sending heartbeat");
+    let req = {"Channel": "Heartbeat"};
+    this.sendRequest(req);
+  }
+
+  public unsubscribeService() {
+    let req = {"Meta": "Unsubscribe"}
+    this.sendRequest(req);
+  }
   public setService(fullServiceId:string) {
     let req = {"Meta": {"SetService": fullServiceId}}
     this.sendRequest(req);
@@ -130,32 +170,40 @@ export class ServiceApi {
     this.sendRequest(req);
 
   }
+
   public requestMyServices() {
     let req = {"Meta": "RequestMyServices"}
     this.sendRequest(req);
   }
 
-  private updateHandler(json: any) {
-    console.log("got update:", json);
-  }
-}
+  private updateHandler(jsonString: any) {
+    const data = JSON.parse(jsonString)
+    console.log("got update:", data);
 
-export function stringifyServiceConnectionStatus(status: ServiceConnectionStatusType): string {
-  switch (status) {
-    case ServiceConnectionStatusType.Connecting:
-      return "Connecting";
-    case ServiceConnectionStatusType.Connected:
-      return "Connected";
-    case ServiceConnectionStatusType.Disconnected:
-      return "Disconnected";
-    case ServiceConnectionStatusType.ServiceDoesNotExist:
-      return "ServiceDoesNotExist";
-    case ServiceConnectionStatusType.Kicked:
-      return "Kicked";
-    case ServiceConnectionStatusType.AccessDenied:
-      return "AccessDenied";
-    default:
-      return "Unknown Status";
+    if (data["Meta"]) {
+      const metaUpd = data["Meta"]
+      console.log("metaupd")
+    } else if (data["Channel"]) {
+      const channelUpd = data["Channel"]
+      if (channelUpd === "SubscribeAck") {
+        console.log("subscribe ack")
+        this.setServiceConnectionStatus(ServiceConnectionStatusType.Connected);
+      } else if (channelUpd["SubscribeNack"]) {
+        const nack = channelUpd["SubscribeNack"]
+        if (nack === "ServiceDoesNotExist") {
+          this.setServiceConnectionStatus(ServiceConnectionStatusType.ServiceDoesNotExist);
+        } else if (nack === "AccessDenied") {
+          this.setServiceConnectionStatus(ServiceConnectionStatusType.AccessDenied);
+        }
+      } else if (channelUpd["Metadata"]) {
+        this.setServiceConnectionStatus(ServiceConnectionStatusType.Connected);
+        const meta = channelUpd["Metadata"]
+        const parsedMeta = serviceMetadataFromJson(meta);
+        this.serviceMetadata = parsedMeta;
+        this.onServiceMetadataChange(this);
+      }
+
+    }
   }
 }
 
@@ -286,15 +334,19 @@ export interface JsonService {
 export function serviceFromJson(jsonService: JsonService): Service {
   return {
     id: new ServiceID(jsonService.id.name, jsonService.id.address),
-    meta: new ServiceMetadata({
-      last_sent_presence: jsonService.meta.last_sent_presence,
-      subscribers: jsonService.meta.subscribers,
-      user_presence: new Map(Object.entries(jsonService.meta.user_presence)),
-      access: jsonService.meta.access,
-      visibility: jsonService.meta.visibility,
-      whitelist: jsonService.meta.whitelist,
-    })
+    meta: serviceMetadataFromJson(jsonService.meta)
   };
+}
+
+export function serviceMetadataFromJson(jsonMeta: JsonService['meta']): ServiceMetadata {
+  return new ServiceMetadata({
+    last_sent_presence: jsonMeta.last_sent_presence,
+    subscribers: jsonMeta.subscribers,
+    user_presence: new Map(Object.entries(jsonMeta.user_presence)),
+    access: jsonMeta.access,
+    visibility: jsonMeta.visibility,
+    whitelist: jsonMeta.whitelist,
+  });
 }
 
 export enum PeerActivity {

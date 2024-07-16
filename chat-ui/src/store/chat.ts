@@ -1,7 +1,5 @@
 import { create } from 'zustand'
-import {ServiceApi} from '@dartfrog/puddle';
-
-import KinodeClientApi from "@kinode/client-api";
+import {ServiceApi, ServiceConnectionStatus, ServiceMetadata} from '@dartfrog/puddle';
 
 export const PLUGIN_NAME = "chat:dartfrog:herobrine.os";
 
@@ -22,8 +20,14 @@ export type ChatMessage = {
 export interface ChatStore {
   serviceId: string | null,
   setServiceId: (service: string) => void
+  serviceMetadata: ServiceMetadata | null,
+  setServiceMetadata: (meta: ServiceMetadata) => void,
+  serviceConnectionStatus: ServiceConnectionStatus | null,
+  setServiceConnectionStatus: (status: ServiceConnectionStatus) => void,
+  //
   api: ServiceApi | null,
   setApi: (api: ServiceApi) => void
+  //
   createService: (name: string) => void
   requestMyServices: () => void
   //
@@ -43,8 +47,15 @@ export interface ChatStore {
 const useChatStore = create<ChatStore>((set, get) => ({
   serviceId: null,
   setServiceId: (serviceId) => set({ serviceId }),
+  //
+  serviceMetadata: null,
+  setServiceMetadata: (serviceMetadata) => set({ serviceMetadata }),
+  serviceConnectionStatus: null,
+  setServiceConnectionStatus: (serviceConnectionStatus) => set({serviceConnectionStatus}),
+  //
   api: null,
   setApi: (api) => set({ api }),
+  //
   createService: (name) => {
     const { api } = get();
     if (!api) { return; }

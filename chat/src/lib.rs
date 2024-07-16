@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, HashSet}, str::FromStr, time::{SystemTime, UNIX_EPOCH}};
 use dartfrog_lib::{get_server_address, poke, DartfrogAppInput, DartfrogAppOutput, Service, ServiceAccess, ServiceID, ServiceMetadata};
-use kinode_process_lib::{await_message, call_init, get_blob, http::{self, send_ws_push, HttpClientRequest, HttpServerRequest, WsMessageType}, println, Address, LazyLoadBlob};
+use kinode_process_lib::{await_message, call_init, get_blob, http::{self, header::UPGRADE, send_ws_push, HttpClientRequest, HttpServerRequest, WsMessageType}, println, Address, LazyLoadBlob};
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 
@@ -26,7 +26,7 @@ pub enum ServiceRequest {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ClientRequest {
     FromFrontend(String),
-    FromService(ClientRequestFromService),
+    FromService(UpdateFromService),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -42,7 +42,7 @@ pub enum KickReason {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum ClientRequestFromService {
+pub enum UpdateFromService {
     AppMessage(String),
     Metadata(ServiceMetadata),
     SubscribeAck,
@@ -61,6 +61,7 @@ pub enum FrontendMetaRequest {
     RequestMyServices,
     CreateService(String),
     SetService(String),
+    Unsubscribe,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -73,7 +74,7 @@ pub enum FrontendChannelRequest {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum FrontendUpdate {
     Meta(MetaUpdate),
-    Service(String, FrontendServiceUpdate),
+    Channel(FrontendChannelUpdate),
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum MetaUpdate {
@@ -81,8 +82,11 @@ pub enum MetaUpdate {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum FrontendServiceUpdate {
+pub enum FrontendChannelUpdate {
     Metadata(ServiceMetadata),
+    SubscribeAck,
+    SubscribeNack(SubscribeNack),
+    Kick(KickReason),
     FromServer(String),
     FromClient(String),
 }
@@ -187,6 +191,24 @@ fn handle_http_server_request(
                     FrontendRequest::Meta(m_req) => {
                         println!("meta request: {:?}", m_req);
                         match m_req {
+                            FrontendMetaRequest::Unsubscribe => {
+
+                                let Some(sid) = consumer.service_id.clone() else {
+                                    return Ok(());
+                                };
+                                if !state.clients.contains_key(&sid) {
+                                    return Ok(());
+                                };
+
+                                let Some(service_id) = ServiceID::from_string(sid.as_str()) else {
+                                    return Ok(());
+                                };
+
+                                // TODO possibly delete client?
+                                // TODO possibly set consumer.service_id back to None?
+
+                                poke(&service_id.address, DartfrogRequest::ServiceRequest(sid, ServiceRequest::Unsubscribe))?;
+                            }
                             FrontendMetaRequest::SetService(sid) => {
                                 if let Some(service_id) = ServiceID::from_string(&sid) {
                                     consumer.service_id = Some(sid.clone());
@@ -216,21 +238,32 @@ fn handle_http_server_request(
                                 state.services.insert(service.id.to_string(), service.clone());
                                 let req = DartfrogAppOutput::Service(service);
                                 poke(&get_server_address(&our.node), req)?;
-
                             }
                         }
                     }
                     FrontendRequest::Channel(s_req) => {
-                        println!("service request: {:?}", s_req);
+                        println!("channel request: {:?}", s_req);
+                        let Some(service_id_string) = &consumer.service_id else {
+                            return Ok(())
+                        };
+                        let Some(service_id) =  ServiceID::from_string(service_id_string) else {
+                            return Ok(())
+                        };
                         match s_req {
                             FrontendChannelRequest::Heartbeat => {
-
+                                poke(
+                                    &service_id.address,
+                                    DartfrogRequest::ServiceRequest(
+                                        service_id_string.clone(),
+                                        ServiceRequest::Heartbeat
+                                    )
+                                )?;
                             }
                             FrontendChannelRequest::MessageClient(msg) => {
-
+                                // TODO
                             }
                             FrontendChannelRequest::MessageServer(msg) => {
-
+                                // TODO
                             }
                         }
 
@@ -270,6 +303,19 @@ fn update_consumer (
     Ok(())
 }
 
+fn update_all_consumers_with_service_id(
+    state: &AppState,
+    service_id: String,
+    update: FrontendUpdate,
+) -> anyhow::Result<()> {
+    for (&websocket_id, consumer) in &state.consumers {
+        if consumer.service_id == Some(service_id.clone()) {
+            update_consumer(websocket_id, update.clone())?;
+        }
+    }
+    Ok(())
+}
+
 fn handle_df_app_input(our: &Address, state: &mut AppState, source: &Address, app_message: DartfrogAppInput) -> anyhow::Result<()> {
     match app_message {
         DartfrogAppInput::CreateService(service_name) => {
@@ -298,7 +344,7 @@ fn handle_df_app_input(our: &Address, state: &mut AppState, source: &Address, ap
     Ok(())
 }
 
-fn poke_client(source: &Address, service_id: String, client_request: ClientRequestFromService) -> anyhow::Result<()> {
+fn poke_client(source: &Address, service_id: String, client_request: UpdateFromService) -> anyhow::Result<()> {
     poke(source, DartfrogRequest::ClientRequest(
         service_id,
         ClientRequest::FromService(client_request)
@@ -313,19 +359,56 @@ fn handle_df_request(
     request: DartfrogRequest,
 ) -> anyhow::Result<()> {
     match request {
-        DartfrogRequest::ClientRequest(client_id, client_request) => {
-            let Some(client) = state.clients.get_mut(&client_id) else {
-                println!("Client with id {} does not exist", client_id);
+        DartfrogRequest::ClientRequest(service_id, client_request) => {
+            let Some(client) = state.clients.get_mut(&service_id) else {
+                println!("Client with id {} does not exist", service_id);
                 return Ok(());
             };
             match client_request {
                 ClientRequest::FromFrontend(message) => {
-                    // Handle the message from the frontend
                     println!("Received message from frontend: {}", message);
                 }
-                ClientRequest::FromService(message) => {
-                    // Handle the message from the service
-                    println!("Received message from service: {:?}", message);
+                ClientRequest::FromService(from_service_req) => {
+                    let Some(parsed_service_id) = ServiceID::from_string(service_id.as_str()) else {
+                        return Ok(());
+                    };
+                    if source != &parsed_service_id.address {
+                        return Ok(());
+                    }
+                    match from_service_req {
+                        UpdateFromService::SubscribeAck => {
+                            let update = FrontendUpdate::Channel(
+                                FrontendChannelUpdate::SubscribeAck,
+                            );
+                            update_all_consumers_with_service_id(state, service_id, update)?;
+                        }
+                        UpdateFromService::SubscribeNack(nack) => {
+                            let update = FrontendUpdate::Channel(
+                                FrontendChannelUpdate::SubscribeNack(nack),
+                            );
+                            update_all_consumers_with_service_id(state, service_id, update)?;
+                        }
+                        UpdateFromService::Metadata(meta) => {
+                            client.meta = Some(meta.clone());
+                            let update = FrontendUpdate::Channel(
+                                FrontendChannelUpdate::Metadata(meta)
+                            );
+                            update_all_consumers_with_service_id(state, service_id, update)?;
+
+                        }
+                        UpdateFromService::Kick(kick_reason) => {
+                            let update = FrontendUpdate::Channel(
+                                FrontendChannelUpdate::Kick(kick_reason)
+                            );
+                            update_all_consumers_with_service_id(state, service_id, update)?;
+
+                        }
+                        UpdateFromService::AppMessage(app_message) => {
+                            // TODO
+                        }
+
+                    }
+
                 }
             }
         }
@@ -334,8 +417,7 @@ fn handle_df_request(
                 println!("Service with id {} does not exist", service_id);
                 match service_request {
                     ServiceRequest::Subscribe => {
-                        // poke_client
-                        poke_client(source, service_id.clone(), ClientRequestFromService::SubscribeNack(SubscribeNack::ServiceDoesNotExist))?;
+                        poke_client(source, service_id.clone(), UpdateFromService::SubscribeNack(SubscribeNack::ServiceDoesNotExist))?;
                     }
                     _ => {
 
@@ -349,12 +431,11 @@ fn handle_df_request(
                         println!("Service {} subscribed", service_id);
                         service.meta.subscribers.insert(source.node.clone());
                         service.meta.user_presence.insert(source.node.clone(), get_now());
-                        poke_client(source, service_id.clone(), ClientRequestFromService::SubscribeAck)?;
+                        poke_client(source, service_id.clone(), UpdateFromService::SubscribeAck)?;
                         publish_metadata(our, service)?;
                         // TODO notify the service of a new subscription
                     } else {
-                        // poke_client
-                        poke_client(source, service_id.clone(), ClientRequestFromService::SubscribeNack(SubscribeNack::Unauthorized))?;
+                        poke_client(source, service_id.clone(), UpdateFromService::SubscribeNack(SubscribeNack::Unauthorized))?;
                     }
                 }
                 ServiceRequest::Unsubscribe => {
@@ -392,7 +473,7 @@ fn handle_df_request(
 
                     for user in service.meta.subscribers.iter() {
                         if to_kick.contains(user) {
-                            let update = ClientRequestFromService::Kick(KickReason::ServiceDeleted);
+                            let update = UpdateFromService::Kick(KickReason::ServiceDeleted);
                             poke_client(source, service_id.clone(), update)?;
                         }
                     }
@@ -420,7 +501,7 @@ fn publish_metadata(our: &Address, service: &Service) -> anyhow::Result<()> {
         let req = DartfrogRequest::ClientRequest(
             service.id.to_string(),
             ClientRequest::FromService(
-                ClientRequestFromService::Metadata(service.meta.clone())
+                UpdateFromService::Metadata(service.meta.clone())
             )
         );
         let address = Address {
