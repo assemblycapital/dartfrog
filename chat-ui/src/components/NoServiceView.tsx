@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import DartApi from '@dartfrog/puddle';
+import { ServiceApi }from "@dartfrog/puddle";
 import { PROCESS_NAME } from '../App';
 import { WEBSOCKET_URL } from '../utils';
 import useChatStore from '../store/chat';
@@ -8,7 +8,7 @@ const NoServiceView = () => {
   const {api, setApi, createService, requestMyServices} = useChatStore();
 
   useEffect(()=>{
-    const newApi = new DartApi({
+    const newApi = new ServiceApi({
       our: {
         "node": window.our?.node,
         "process": PROCESS_NAME,

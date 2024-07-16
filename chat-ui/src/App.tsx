@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import "./App.css";
-import DartApi from "@dartfrog/puddle";
+import { ServiceApi }from "@dartfrog/puddle";
 import { WEBSOCKET_URL, maybePlaySoundEffect, maybePlayTTS } from "./utils";
 import useChatStore, { PLUGIN_NAME } from "./store/chat";
 import ChatBox from "./components/ChatBox";

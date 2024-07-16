@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import DartApi from '@dartfrog/puddle';
+import {ServiceApi} from '@dartfrog/puddle';
 
 import KinodeClientApi from "@kinode/client-api";
 
@@ -22,8 +22,8 @@ export type ChatMessage = {
 export interface ChatStore {
   serviceId: string | null,
   setServiceId: (service: string) => void
-  api: DartApi | null,
-  setApi: (api: DartApi) => void
+  api: ServiceApi | null,
+  setApi: (api: ServiceApi) => void
   createService: (name: string) => void
   requestMyServices: () => void
   //

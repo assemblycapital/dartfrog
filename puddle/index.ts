@@ -29,27 +29,31 @@ export type ServiceConnectionStatus = {
 interface ConstructorArgs {
   our: { node: string, process: string };
   websocket_url: string;
-  onOpen?: () => void;
+  onOpen?: (api) => void;
   onClose?: () => void;
+  serviceId?: string;
 }
 
-class DartApi {
+export class ServiceApi {
   private api: KinodeClientApi | null = null;
   public connectionStatus: ConnectionStatus;
   public our: { node: string, process: string };
   public websocket_url: string;
+  public serviceId: string | null;
 
-  private onOpen: () => void;
+  private onOpen: (api) => void;
   private onClose: () => void;
 
   constructor({
     our,
     websocket_url,
-    onOpen = () => {},
+    onOpen = (api) => {},
     onClose = () => {},
+    serviceId = null,
   }: ConstructorArgs) {
     this.onOpen = onOpen;
     this.onClose = onClose;
+    this.serviceId = serviceId;
     this.initialize(our, websocket_url);
   }
   private initialize(our, websocket_url) {
@@ -72,8 +76,12 @@ class DartApi {
         // }, 5000); // Retry every 5 seconds
       },
       onOpen: (event, api) => {
-        // console.log("Connected to Kinode");
-        this.onOpen();
+        console.log("Connected to Kinode");
+        this.onOpen(this);
+        if (this.serviceId) {
+          this.setService(this.serviceId);
+        }
+
         this.setConnectionStatus(ConnectionStatusType.Connected);
         // if (this.reconnectIntervalId) {
         //   clearInterval(this.reconnectIntervalId);
@@ -110,6 +118,11 @@ class DartApi {
       return;
     }
     this.api.send({data:json})
+  }
+
+  public setService(fullServiceId:string) {
+    let req = {"Meta": {"SetService": fullServiceId}}
+    this.sendRequest(req);
   }
 
   public createService(name:string) {
@@ -390,5 +403,3 @@ export function peerFromJson(json: any): Peer {
     json.last_updated
   );
 }
-
-export default DartApi;
