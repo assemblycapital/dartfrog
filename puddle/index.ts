@@ -168,7 +168,6 @@ export class ServiceApi {
   public createService(name:string) {
     let req = {"Meta": {"CreateService": name}}
     this.sendRequest(req);
-
   }
 
   public requestMyServices() {
@@ -182,11 +181,10 @@ export class ServiceApi {
 
     if (data["Meta"]) {
       const metaUpd = data["Meta"]
-      console.log("metaupd")
+      // TODO
     } else if (data["Channel"]) {
       const channelUpd = data["Channel"]
       if (channelUpd === "SubscribeAck") {
-        console.log("subscribe ack")
         this.setServiceConnectionStatus(ServiceConnectionStatusType.Connected);
       } else if (channelUpd["SubscribeNack"]) {
         const nack = channelUpd["SubscribeNack"]
