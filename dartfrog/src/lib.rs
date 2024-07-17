@@ -166,7 +166,7 @@ fn handle_http_server_request(
                     match address {
                         Ok(address) => {
                             // forward the request
-                            let req = DartfrogAppInput::CreateService(service_name);
+                            let req = ProviderInput::DartfrogRequest(DartfrogToProvider::CreateService(service_name));
                             poke(&address, req)?;
                         }
                         _ => {
@@ -179,7 +179,7 @@ fn handle_http_server_request(
                     match maybe_service_id {
                         Some(service_id) => {
                             // forward the request
-                            let req = DartfrogAppInput::DeleteService(id);
+                            let req = ProviderInput::DartfrogRequest(DartfrogToProvider::DeleteService(id));
                             poke(&service_id.address, req)?;
                         }
                         _ => {
@@ -234,18 +234,18 @@ fn handle_http_server_request(
     Ok(())
 }
 
-fn handle_df_app_output(
+fn handle_provider_output(
     our: &Address,
     state: &mut DartfrogState,
     source: &Address,
-    app_message: DartfrogAppOutput,
+    app_message: ProviderOutput,
 ) -> anyhow::Result<()> {
     if source.node != our.node {
         return Ok(());
     }
 
     match app_message {
-        DartfrogAppOutput::DeleteService(id) => {
+       ProviderOutput::DeleteService(id) => {
             if id.address.node != source.node ||
                id.address.process != source.process
             {
@@ -257,7 +257,7 @@ fn handle_df_app_output(
                 update_all_consumers(state, update)?;
             }
         },
-        DartfrogAppOutput::Service(service) => {
+        ProviderOutput::Service(service) => {
             // source process == service process
             if service.id.address.node != source.node ||
                service.id.address.process != source.process
@@ -269,7 +269,7 @@ fn handle_df_app_output(
             let update = DartfrogOutput::LocalService(service);
             update_all_consumers(state, update)?;
         },
-        DartfrogAppOutput::ServiceList(services) => {
+        ProviderOutput::ServiceList(services) => {
 
         }
     }
@@ -288,8 +288,8 @@ fn handle_message(our: &Address, state: &mut DartfrogState) -> anyhow::Result<()
         && message.source().process == "http_server:distro:sys" {
         handle_http_server_request(our, state, source, body)
     } else {
-        if let Ok(app_message) = serde_json::from_slice::<DartfrogAppOutput>(&body) {
-            handle_df_app_output(our, state, source, app_message)?;
+        if let Ok(app_message) = serde_json::from_slice::<ProviderOutput>(&body) {
+            handle_provider_output(our, state, source, app_message)?;
         }
         Ok(())
     }

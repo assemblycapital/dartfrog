@@ -1,3 +1,4 @@
+use kinode_process_lib::http::{send_ws_push, HttpServerRequest, WsMessageType};
 use serde::{Serialize, Deserialize};
 
 use std::collections::{HashMap, HashSet};
@@ -5,7 +6,7 @@ use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use std::hash::{Hash, Hasher};
-use kinode_process_lib::{println, Address, ProcessId, Request};
+use kinode_process_lib::{await_message, get_blob, println, Address, LazyLoadBlob, ProcessId, Request};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct ServiceID {
@@ -189,17 +190,570 @@ pub enum DartfrogOutput {
     // 
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum DartfrogAppInput {
-    CreateService(String), // service_name
-    DeleteService(String) 
+pub fn check_subscribe_permission(service: &Service, source: &Address) -> bool {
+    if source.process != service.id.address.process {
+        return false
+    }
+    match service.meta.access {
+        ServiceAccess::Public => return true,
+        ServiceAccess::Whitelist => {
+            return service.meta.whitelist.contains(&source.node)
+        }
+        ServiceAccess::HostOnly => {
+            return source.node == service.id.address.node
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum DartfrogAppOutput {
+pub enum FrontendRequest {
+    Meta(FrontendMetaRequest),
+    Channel(FrontendChannelRequest),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum FrontendMetaRequest {
+    RequestMyServices,
+    CreateService(String),
+    SetService(String),
+    Unsubscribe,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum FrontendChannelRequest {
+    Heartbeat,
+    MessageClient(String),
+    MessageServer(String)
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum FrontendUpdate {
+    Meta(FrontendMetaUpdate),
+    Channel(FrontendChannelUpdate),
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum FrontendMetaUpdate {
+    MyServices(Vec<String>),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum FrontendChannelUpdate {
+    Metadata(ServiceMetadata),
+    SubscribeAck,
+    SubscribeNack(SubscribeNack),
+    Kick(KickReason),
+    FromServer(String),
+    FromClient(String),
+}
+
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum DartfrogToProvider {
+    CreateService(String), // service_name
+    DeleteService(String) ,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ProviderInput {
+    DartfrogRequest(DartfrogToProvider),
+    ProviderUserInput(String, ProviderUserInput),
+    ProviderServiceInput(String, ProviderServiceInput),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ProviderServiceInput {
+    Subscribe,
+    Unsubscribe,
+    Heartbeat,
+    AppMessage(String),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ProviderUserInput {
+    FromFrontend(String),
+    FromService(UpdateFromService),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum SubscribeNack {
+    ServiceDoesNotExist,
+    Unauthorized,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum KickReason {
+    Custom(String),
+    ServiceDeleted,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum UpdateFromService {
+    AppMessage(String),
+    Metadata(ServiceMetadata),
+    SubscribeAck,
+    SubscribeNack(SubscribeNack),
+    Kick(KickReason),
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ProviderOutput {
     Service(Service),
     ServiceList(Vec<Service>),
     DeleteService(ServiceID)
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Consumer {
+    pub ws_channel_id: u32,
+    pub last_active: u64,
+    pub service_id: Option<String>,
+}
+
+impl Consumer {
+    pub fn new(id:u32) -> Self {
+        Consumer {
+            ws_channel_id: id,
+            last_active: get_now(),
+            service_id: None,
+        }
+    }
+}
+impl Hash for Consumer{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.ws_channel_id.hash(state);
+    }
+}
+
+const CONSUMER_TIMEOUT : u64 = 10*60; //10 minutes
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Client {
+    pub id: ServiceID,
+    pub meta: Option<ServiceMetadata>,
+    pub last_visited: u64,
+    pub last_heard_from_host: Option<u64>,
+}
+
+
+#[derive(Debug, Clone)]
+pub struct ProviderState {
+    pub consumers: HashMap<u32, Consumer>,
+    pub clients: HashMap<String, Client>,
+    pub services: HashMap<String, Service>,
+}
+
+impl ProviderState {
+    pub fn new() -> Self {
+        ProviderState {
+            consumers: HashMap::new(),
+            clients: HashMap::new(),
+            services: HashMap::new()
+        }
+    }
+}
+
+fn get_now() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
+}
+
+fn handle_websocket_push(
+    our: &Address,
+    state: &mut ProviderState,
+    channel_id: u32,
+    message_type: WsMessageType,
+) -> anyhow::Result<()> {
+    let Some(consumer) = state.consumers.get_mut(&channel_id) else {
+        return Ok(());
+    };
+    consumer.last_active = get_now();
+    if message_type == WsMessageType::Close {
+        state.consumers.remove(&channel_id);
+        return Ok(());
+    }
+    if message_type != WsMessageType::Binary {
+        return Ok(());
+    }
+    let Some(blob) = get_blob() else {
+        return Ok(());
+    };
+
+    let Ok(_s) = String::from_utf8(blob.bytes.clone()) else {
+        return Ok(());
+    };
+    if let Ok(request) = serde_json::from_slice::<FrontendRequest>(&blob.bytes) {
+        match request {
+            FrontendRequest::Meta(m_req) => {
+                match m_req {
+                    FrontendMetaRequest::Unsubscribe => {
+                        let Some(sid) = consumer.service_id.clone() else {
+                            return Ok(());
+                        };
+                        if !state.clients.contains_key(&sid) {
+                            return Ok(());
+                        };
+
+                        let Some(service_id) = ServiceID::from_string(sid.as_str()) else {
+                            return Ok(());
+                        };
+
+                        // TODO possibly delete client?
+                        // TODO possibly set consumer.service_id back to None?
+
+                        poke(&service_id.address, ProviderInput::ProviderServiceInput(sid, ProviderServiceInput::Unsubscribe))?;
+                    }
+                    FrontendMetaRequest::SetService(sid) => {
+                        if let Some(service_id) = ServiceID::from_string(&sid) {
+                            consumer.service_id = Some(sid.clone());
+                            if !state.clients.contains_key(&sid) {
+                                let client = Client {
+                                    id: service_id.clone(),
+                                    meta: None,
+                                    last_visited: get_now(),
+                                    last_heard_from_host: None,
+                                };
+                                state.clients.insert(sid.clone(), client);
+                            }
+                            poke(&service_id.address, ProviderInput::ProviderServiceInput(sid, ProviderServiceInput::Subscribe))?;
+                        } else {
+                            // bad service id
+                            // should probably notify frontend of this failure case
+                        }
+                    }
+                    FrontendMetaRequest::RequestMyServices => {
+                        let service_keys: Vec<String> = state.services.keys().map(|id| id.to_string()).collect();
+                        let response_message = FrontendUpdate::Meta(FrontendMetaUpdate::MyServices(service_keys));
+                        update_consumer(channel_id, response_message)?;
+                    }
+                    FrontendMetaRequest::CreateService(name) => {
+                        let service = Service::new(&name, our.clone());
+                        state.services.insert(service.id.to_string(), service.clone());
+                        let req = ProviderOutput::Service(service);
+                        poke(&get_server_address(&our.node), req)?;
+                    }
+                }
+            }
+            FrontendRequest::Channel(s_req) => {
+                println!("channel request: {:?}", s_req);
+                let Some(service_id_string) = &consumer.service_id else {
+                    return Ok(())
+                };
+                let Some(service_id) =  ServiceID::from_string(service_id_string) else {
+                    return Ok(())
+                };
+                match s_req {
+                    FrontendChannelRequest::Heartbeat => {
+                        poke(
+                            &service_id.address,
+                            ProviderInput::ProviderServiceInput(
+                                service_id_string.clone(),
+                                ProviderServiceInput::Heartbeat
+                            )
+                        )?;
+                    }
+                    FrontendChannelRequest::MessageClient(msg) => {
+                        // TODO
+                    }
+                    FrontendChannelRequest::MessageServer(msg) => {
+                        // TODO
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+pub fn handle_provider_http(
+    our: &Address,
+    state: &mut ProviderState,
+    source: &Address,
+    body: &[u8],
+) -> anyhow::Result<()> {
+
+    let Ok(server_request) = serde_json::from_slice::<HttpServerRequest>(body) else {
+        // Fail silently if we can't parse the request
+        return Ok(());
+    };
+
+    // take the opportunity to kill any old consumers
+    // TODO this is weird if the calling consumer times out
+    state.consumers.retain(|_, consumer| {
+        get_now() - consumer.last_active <= CONSUMER_TIMEOUT
+    });
+
+    match server_request {
+        HttpServerRequest::WebSocketOpen { channel_id, .. } => {
+            state.consumers.insert(channel_id, Consumer::new(channel_id));
+        }
+        HttpServerRequest::WebSocketPush { channel_id, message_type} => {
+            handle_websocket_push(our, state, channel_id, message_type)?;
+        }
+        HttpServerRequest::WebSocketClose(channel_id) => {
+            state.consumers.remove(&channel_id);
+        }
+        _ => {
+        }
+    };
+
+    Ok(())
+}
+
+fn update_consumer (
+    websocket_id: u32,
+    update: FrontendUpdate,
+) -> anyhow::Result<()> {
+
+    let blob = LazyLoadBlob {
+        mime: Some("application/json".to_string()),
+        bytes: serde_json::json!(update)
+        .to_string()
+        .as_bytes()
+        .to_vec(),
+    };
+
+    send_ws_push(
+        websocket_id,
+        WsMessageType::Text,
+        blob,
+    );
+    Ok(())
+}
+
+fn update_all_consumers_with_service_id(
+    state: &ProviderState,
+    service_id: String,
+    update: FrontendUpdate,
+) -> anyhow::Result<()> {
+    for (&websocket_id, consumer) in &state.consumers {
+        if consumer.service_id == Some(service_id.clone()) {
+            update_consumer(websocket_id, update.clone())?;
+        }
+    }
+    Ok(())
+}
+
+pub fn handle_dartfrog_to_provider(our: &Address, state: &mut ProviderState, source: &Address, app_message: DartfrogToProvider) -> anyhow::Result<()> {
+    match app_message {
+        DartfrogToProvider::CreateService(service_name) => {
+            if source != &get_server_address(&our.node) {
+                return Ok(());
+            }
+            let service = Service::new(&service_name, our.clone());
+            state.services.insert(service.id.to_string(), service.clone());
+
+            // notify dartfrog
+            let req = ProviderOutput::Service(service);
+            poke(&get_server_address(&our.node), req)?;
+
+        }
+        DartfrogToProvider::DeleteService(service_id) => {
+            if source != &get_server_address(&our.node) {
+                return Ok(());
+            }
+            if let Some(service) = state.services.remove(&service_id) {
+                let req = ProviderOutput::DeleteService(service.id);
+                poke(&get_server_address(&our.node), req)?;
+            } else {
+            }
+        }
+    }
+    Ok(())
+}
+
+pub fn poke_client(source: &Address, service_id: String, client_request: UpdateFromService) -> anyhow::Result<()> {
+    poke(source, ProviderInput::ProviderUserInput(
+        service_id,
+        ProviderUserInput::FromService(client_request)
+    ))?;
+    Ok(())
+}
+
+pub fn handle_provider_input(
+    our: &Address,
+    state: &mut ProviderState,
+    source: &Address,
+    request: ProviderInput,
+) -> anyhow::Result<()> {
+    match request {
+        ProviderInput::DartfrogRequest(df_req) => {
+            handle_dartfrog_to_provider(our, state, source, df_req)?;
+        }
+        ProviderInput::ProviderUserInput(service_id, user_input) => {
+            let Some(client) = state.clients.get_mut(&service_id) else {
+                println!("Client with id {} does not exist", service_id);
+                return Ok(());
+            };
+            match user_input {
+                ProviderUserInput::FromFrontend(message) => {
+                    println!("Received message from frontend: {}", message);
+                }
+                ProviderUserInput::FromService(from_service_req) => {
+                    let Some(parsed_service_id) = ServiceID::from_string(service_id.as_str()) else {
+                        return Ok(());
+                    };
+                    if source != &parsed_service_id.address {
+                        return Ok(());
+                    }
+                    match from_service_req {
+                        UpdateFromService::SubscribeAck => {
+                            let update = FrontendUpdate::Channel(
+                                FrontendChannelUpdate::SubscribeAck,
+                            );
+                            update_all_consumers_with_service_id(state, service_id, update)?;
+                        }
+                        UpdateFromService::SubscribeNack(nack) => {
+                            let update = FrontendUpdate::Channel(
+                                FrontendChannelUpdate::SubscribeNack(nack),
+                            );
+                            update_all_consumers_with_service_id(state, service_id, update)?;
+                        }
+                        UpdateFromService::Metadata(meta) => {
+                            client.meta = Some(meta.clone());
+                            let update = FrontendUpdate::Channel(
+                                FrontendChannelUpdate::Metadata(meta)
+                            );
+                            update_all_consumers_with_service_id(state, service_id, update)?;
+
+                        }
+                        UpdateFromService::Kick(kick_reason) => {
+                            let update = FrontendUpdate::Channel(
+                                FrontendChannelUpdate::Kick(kick_reason)
+                            );
+                            update_all_consumers_with_service_id(state, service_id, update)?;
+
+                        }
+                        UpdateFromService::AppMessage(app_message) => {
+                            // TODO
+                        }
+
+                    }
+
+                }
+            }
+        }
+        ProviderInput::ProviderServiceInput(service_id, service_request) => {
+            let Some(service) = state.services.get_mut(&service_id) else {
+                println!("Service with id {} does not exist", service_id);
+                match service_request {
+                    ProviderServiceInput::Subscribe => {
+                        poke_client(source, service_id.clone(), UpdateFromService::SubscribeNack(SubscribeNack::ServiceDoesNotExist))?;
+                    }
+                    _ => {
+
+                    }
+                }
+                return Ok(());
+            };
+            match service_request {
+                ProviderServiceInput::Subscribe => {
+                    if check_subscribe_permission(service, &source.clone()) {
+                        println!("Service {} subscribed", service_id);
+                        service.meta.subscribers.insert(source.node.clone());
+                        service.meta.user_presence.insert(source.node.clone(), get_now());
+                        poke_client(source, service_id.clone(), UpdateFromService::SubscribeAck)?;
+                        publish_metadata(our, service)?;
+                        // TODO notify the service of a new subscription
+                    } else {
+                        poke_client(source, service_id.clone(), UpdateFromService::SubscribeNack(SubscribeNack::Unauthorized))?;
+                    }
+                }
+                ProviderServiceInput::Unsubscribe => {
+                    println!("Service {} unsubscribed", service_id);
+                    if service.meta.subscribers.contains(&source.node) {
+                        service.meta.subscribers.remove(&source.node);
+                        service.meta.user_presence.remove(&source.node);
+                        publish_metadata(our, service)?;
+                        // TODO notify service of unsubscribe
+                    }
+                }
+                ProviderServiceInput::Heartbeat => {
+                    if !service.meta.subscribers.contains(&source.node) {
+                        // not subscribed, ignore
+                        return Ok(());
+                    }
+                    service.meta.user_presence.insert(source.node.clone(), get_now());
+                    let now = get_now();
+                    if let Some(last_sent) = service.meta.last_sent_presence {
+                        if (now - last_sent) < 1 * 60 {
+                            // "regular metadata updates"
+                            // these are evoked by client heartbeats, but only sent up to a capped rate
+                            return Ok(());
+                        }
+                    }
+
+                    // check if anyone needs to be kicked
+                    let mut to_kick: HashSet<String> = HashSet::new();
+                    for (user, presence_time) in service.meta.user_presence.iter() {
+                        const THREE_MINUTES: u64 = 3 * 60;
+                        if (now - *presence_time) > THREE_MINUTES {
+                            to_kick.insert(user.clone());
+                        }
+                    }
+
+                    for user in service.meta.subscribers.iter() {
+                        if to_kick.contains(user) {
+                            let update = UpdateFromService::Kick(KickReason::ServiceDeleted);
+                            poke_client(source, service_id.clone(), update)?;
+                        }
+                    }
+                    service.meta.subscribers.retain(|x| !to_kick.contains(x));
+
+                    // send metadata update
+                    service.meta.last_sent_presence = Some(get_now());
+                    publish_metadata(our, service)?;
+                }
+                ProviderServiceInput::AppMessage(message) => {
+                    println!("Service {} sent message: {}", service_id, message);
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+pub fn publish_metadata(our: &Address, service: &Service) -> anyhow::Result<()> {
+    // send to dartfrog
+    poke(&get_server_address(&our.node), ProviderOutput::Service(service.clone()))?;
+    
+    // send to all clients
+    for client in service.meta.subscribers.iter() {
+        let req = ProviderInput::ProviderUserInput(
+            service.id.to_string(),
+            ProviderUserInput::FromService(
+                UpdateFromService::Metadata(service.meta.clone())
+            )
+        );
+        let address = Address {
+            node: client.clone(),
+            process: our.process.clone(),
+        };
+        poke(&address, req)?;
+    }
+    
+    Ok(())
+}
+
+pub fn provider_handle_message(our: &Address, state: &mut ProviderState) -> anyhow::Result<()> {
+    let message = await_message()?;
+
+    let body = message.body();
+    let source = message.source();
+
+    if !message.is_request() {
+        return Err(anyhow::anyhow!("unexpected Response: {:?}", message));
+    }
+    
+    if message.source().node == our.node
+    && message.source().process == "http_server:distro:sys" {
+        handle_provider_http(our, state, source, body)?;
+    } else {
+        if let Ok(provider_input) = serde_json::from_slice::<ProviderInput>(&body) {
+            handle_provider_input(our, state, source, provider_input)?;
+        }
+    }
+    Ok(())
 }
 
 pub const PROCESS_NAME : &str = "dartfrog:dartfrog:herobrine.os";
