@@ -26,12 +26,16 @@ const ServiceView = () => {
         console.log("connected to kinode", api.serviceId)
       },
       onServiceConnectionStatusChange(api) {
-        console.log("new service connection status", api.serviceConnectionStatus);
         setServiceConnectionStatus(api.serviceConnectionStatus)
       },
       onServiceMetadataChange(api) {
-        console.log("new service metadata", api.serviceMetadata);
         setServiceMetadata(api.serviceMetadata)
+      },
+      onServiceMessage(msg) {
+        console.log("service message", msg)
+      },
+      onClientMessage(msg) {
+        console.log("client message", msg)
       },
 
     });

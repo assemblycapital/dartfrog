@@ -272,6 +272,12 @@ pub enum ProviderServiceInput {
 pub enum ProviderUserInput {
     FromFrontend(String),
     FromService(UpdateFromService),
+    FromClient(UpdateFromClient),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum UpdateFromClient {
+    AppMessageToFrontend(String),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -385,7 +391,7 @@ pub trait AppClientState: std::fmt::Debug {
     fn handle_new_frontend(&mut self, our: &Address, client: &Client) -> anyhow::Result<()>;
 }
 
-fn get_now() -> u64 {
+pub fn get_now() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -709,6 +715,22 @@ where
                     }
 
                 }
+                ProviderUserInput::FromClient(from_client_req) => {
+                    let Some(parsed_service_id) = ServiceID::from_string(service_id.as_str()) else {
+                        return Ok(());
+                    };
+                    if source != &parsed_service_id.address {
+                        return Ok(());
+                    }
+                    match from_client_req {
+                        UpdateFromClient::AppMessageToFrontend(app_message) => {
+                            let update: FrontendUpdate = FrontendUpdate::Channel(
+                                FrontendChannelUpdate::FromClient(app_message)
+                            );
+                            update_all_consumers_with_service_id(state, service_id, update)?;
+                        }
+                    }
+                }
             }
         }
         ProviderInput::ProviderServiceInput(service_id, service_request) => {
@@ -792,7 +814,21 @@ where
     Ok(())
 }
 
-fn app_service_to_client_frontend(
+pub fn app_client_to_frontend(
+    our: &Address,
+    message: impl Serialize,
+    client: &Client,
+) -> anyhow::Result<()> {
+    let message_str = serde_json::to_string(&message)?;
+    let req = ProviderInput::ProviderUserInput(
+        client.id.to_string(),
+        ProviderUserInput::FromClient(UpdateFromClient::AppMessageToFrontend(message_str)),
+    );
+    poke(our, req)?;
+    Ok(())
+}
+
+pub fn app_service_to_client_frontend(
     our: &Address,
     update: impl Serialize,
     service: &Service,
@@ -933,7 +969,7 @@ pub fn poke(address: &Address, body: impl Serialize) -> anyhow::Result<()> {
     Ok(())
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DefaultAppServiceState;
 
 impl AppServiceState for DefaultAppServiceState {
@@ -954,7 +990,7 @@ impl AppServiceState for DefaultAppServiceState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DefaultAppClientState;
 
 impl AppClientState for DefaultAppClientState {

@@ -55,6 +55,8 @@ interface ConstructorArgs {
   serviceId?: string;
   onServiceConnectionStatusChange?: (api) => void;
   onServiceMetadataChange?: (api) => void;
+  onServiceMessage?: (message: any) => void;
+  onClientMessage?: (message: any) => void;
 }
 
 export class ServiceApi {
@@ -71,6 +73,8 @@ export class ServiceApi {
   private onClose: () => void;
   private onServiceConnectionStatusChange: (api) => void;
   private onServiceMetadataChange: (api) => void;
+  private onServiceMessage: (message: any) => void;
+  private onClientMessage: (message: any) => void;
 
   constructor({
     our,
@@ -80,12 +84,16 @@ export class ServiceApi {
     serviceId = null,
     onServiceConnectionStatusChange = (api) => {},
     onServiceMetadataChange = (api) => {},
+    onServiceMessage = (message) => {},
+    onClientMessage = (message) => {},
   }: ConstructorArgs) {
     this.onOpen = onOpen;
     this.onClose = onClose;
     this.serviceId = serviceId;
     this.onServiceConnectionStatusChange = onServiceConnectionStatusChange;
     this.onServiceMetadataChange = onServiceMetadataChange;
+    this.onServiceMessage = onServiceMessage;
+    this.onClientMessage = onClientMessage;
     this.initialize(our, websocket_url);
   }
   private initialize(our, websocket_url) {
@@ -199,7 +207,13 @@ export class ServiceApi {
         const parsedMeta = serviceMetadataFromJson(meta);
         this.serviceMetadata = parsedMeta;
         this.onServiceMetadataChange(this);
-      }
+      } else if (channelUpd["FromClient"]) {
+        const msg = JSON.parse(channelUpd["FromClient"])
+        this.onClientMessage(msg)
+      } else if (channelUpd["FromServer"]) {
+        const msg = JSON.parse(channelUpd["FromServer"])
+        this.onServiceMessage(msg)
+      } 
 
     }
   }
