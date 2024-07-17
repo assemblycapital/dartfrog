@@ -482,7 +482,6 @@ where
                 }
             }
             FrontendRequest::Channel(s_req) => {
-                println!("channel request: {:?}", s_req);
                 let Some(service_id_string) = &consumer.service_id else {
                     return Ok(())
                 };
@@ -697,7 +696,6 @@ where
 
                         }
                         UpdateFromService::AppMessageToFrontend(app_message) => {
-                            println!("appmsg to frontend {:?}", app_message);
                             let update: FrontendUpdate = FrontendUpdate::Channel(
                                 FrontendChannelUpdate::FromServer(app_message)
                             );
@@ -750,7 +748,7 @@ where
             match service_request {
                 ProviderServiceInput::Subscribe => {
                     if check_subscribe_permission(&sw.service, &source.clone()) {
-                        println!("Service {} subscribed", service_id);
+                        // println!("Service {} subscribed", service_id);
                         sw.service.meta.subscribers.insert(source.node.clone());
                         sw.service.meta.user_presence.insert(source.node.clone(), get_now());
                         poke_client(source, service_id.clone(), UpdateFromService::SubscribeAck)?;
@@ -761,7 +759,7 @@ where
                     }
                 }
                 ProviderServiceInput::Unsubscribe => {
-                    println!("Service {} unsubscribed", service_id);
+                    // println!("Service {} unsubscribed", service_id);
                     if sw.service.meta.subscribers.contains(&source.node) {
                         sw.service.meta.subscribers.remove(&source.node);
                         sw.service.meta.user_presence.remove(&source.node);

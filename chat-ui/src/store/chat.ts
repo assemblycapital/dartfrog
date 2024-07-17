@@ -16,7 +16,6 @@ export type ChatMessage = {
   time: number;
 }
 
-
 export interface ChatStore {
   serviceId: string | null,
   setServiceId: (service: string) => void
@@ -34,11 +33,9 @@ export interface ChatStore {
   chatState: ChatState,
   setChatState: (chatState: ChatState) => void
   addChatMessage: (message: ChatMessage) => void
+  setChatHistory: (history: ChatMessage[]) => void
   // 
   sendChat: (text: string) => void
-  // 
-  nameColors: Map<string, string>
-  addNameColor: (name:string, color:string) => void
   // 
   get: () => ChatStore 
   set: (partial: ChatStore | Partial<ChatStore>) => void
@@ -66,7 +63,7 @@ const useChatStore = create<ChatStore>((set, get) => ({
     if (!api) { return; }
     api.requestMyServices();
   },
-  chatState: { messages: new Map(), lastUpdateType: "history" },
+  chatState: { messages: new Map(), lastUpdateType: "history" as "history" },
   setChatState: (chatState) => {  set({ chatState: chatState }) },
   addChatMessage: (message) => {
     const { chatState } = get();
@@ -74,26 +71,18 @@ const useChatStore = create<ChatStore>((set, get) => ({
     newMessages.set(message.id, message);
     set({ chatState: { messages: newMessages, lastUpdateType: "message" } });
   },
+  setChatHistory: (history) => {
+    const newMessages = new Map(history.map((msg) => [msg.id, msg]));
+    set({ chatState: { messages: newMessages, lastUpdateType: "history" } });
+  },
   // 
   sendChat: (text) => {
     const { api, serviceId } = get();
     if (!api) { return; }
     if (!serviceId) { return; }
-    let innerPluginRequest = 
-      {
-      "SendMessage": 
-        text
-      }
-    // api.pokePluginService(serviceId, PLUGIN_NAME, innerPluginRequest);
+    api.sendToService({SendMessage: text})
   },
-  // 
-  nameColors: new Map<string, string>(),
-  addNameColor: (name:string, color:string) => {
-    const { nameColors } = get()
-    nameColors[name] = color;
-    set({ nameColors: nameColors })
-  },
-  // 
+  //
   get,
   set,
 }))

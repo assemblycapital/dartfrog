@@ -2,28 +2,30 @@ import React, { useEffect } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { HamburgerIcon } from './Icons';
 import TopBar from './TopBar';
-import { ServiceApi, ServiceMetadata } from '@dartfrog/puddle';
+import { ServiceApi, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceMetadata } from '@dartfrog/puddle';
 import { PROCESS_NAME } from '../App';
 import { WEBSOCKET_URL } from '../utils';
 import useChatStore from '../store/chat';
+import ChatBox from './ChatBox';
 
 const ServiceView = () => {
   const { id } = useParams<{ id: string }>();
-  const serviceId = id
+  const paramServiceId = id
 
-  const {setApi, api, setServiceConnectionStatus, serviceConnectionStatus, setServiceMetadata, serviceMetadata} = useChatStore();
+  const {setApi, api, serviceId, setServiceId, setChatHistory, addChatMessage, chatState, setServiceConnectionStatus, serviceConnectionStatus, setServiceMetadata, serviceMetadata} = useChatStore();
 
   useEffect(()=>{
+    setServiceId(paramServiceId);
     const newApi = new ServiceApi({
       our: {
         "node": window.our?.node,
         "process": PROCESS_NAME,
       },
-      serviceId: serviceId,
+      serviceId: paramServiceId,
       websocket_url: WEBSOCKET_URL,
       onOpen: (api) => {
         // requestMyServices();
-        console.log("connected to kinode", api.serviceId)
+        // console.log("connected to kinode", api.serviceId)
       },
       onServiceConnectionStatusChange(api) {
         setServiceConnectionStatus(api.serviceConnectionStatus)
@@ -32,10 +34,15 @@ const ServiceView = () => {
         setServiceMetadata(api.serviceMetadata)
       },
       onServiceMessage(msg) {
-        console.log("service message", msg)
+        if (msg.FullMessageHistory) {
+          setChatHistory(msg.FullMessageHistory)
+          
+        } else if (msg.Message) {
+          addChatMessage(msg.Message);
+        }
       },
       onClientMessage(msg) {
-        console.log("client message", msg)
+        // no client messages in chat
       },
 
     });
@@ -64,15 +71,22 @@ const ServiceView = () => {
         boxSizing:"border-box",
       }}
     >
-      <TopBar serviceId={serviceId}/>
-      <div>
-        {serviceConnectionStatus && serviceConnectionStatus.toString()}
-      </div>
-      <div>
+      <TopBar serviceId={paramServiceId}/>
+      {!serviceConnectionStatus ? (
+          "loading..."
+        ):(
+          <>
+            {serviceConnectionStatus.status !== ServiceConnectionStatusType.Connected ? (
 
-        {JSON.stringify(serviceMetadata)}
-      </div>
-
+              <div>
+                {serviceConnectionStatus.toString()}
+              </div>
+            ) : ( 
+              <ChatBox chatState={chatState} />
+            )
+            }
+          </>
+      )}
     </div>
   );
 };

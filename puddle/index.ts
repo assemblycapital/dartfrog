@@ -158,8 +158,16 @@ export class ServiceApi {
     this.api.send({data:json})
   }
 
+  public sendToService(data:any) {
+    let req = {"Channel":
+                {"MessageServer":
+                  JSON.stringify(data)
+                }
+              };
+    this.sendRequest(req);
+  }
+
   public sendHeartbeat() {
-    console.log("sending heartbeat");
     let req = {"Channel": "Heartbeat"};
     this.sendRequest(req);
   }
@@ -185,7 +193,6 @@ export class ServiceApi {
 
   private updateHandler(jsonString: any) {
     const data = JSON.parse(jsonString)
-    console.log("got update:", data);
 
     if (data["Meta"]) {
       const metaUpd = data["Meta"]

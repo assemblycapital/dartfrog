@@ -1,20 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ChatInput from './ChatInput';
-// import { Service, ServiceId, makeServiceId, computeColorForName } from '@dartfrog/puddle';
 import ChatHeader from './ChatHeader';
 import useChatStore, { ChatState, ChatMessage} from '../store/chat';
+import './ChatBox.css';
 
 interface ChatBoxProps {
-  // serviceId: ServiceId;
   chatState: ChatState;
 }
 
 const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const pageBottomRef = useRef<HTMLDivElement | null>(null);
   const chatInputRef = useRef<HTMLDivElement | null>(null);
   const [inputHeight, setInputHeight] = useState(0);
-  const { nameColors, addNameColor } = useChatStore();
   const [chatMessageList, setChatMessageList] = useState<Array<ChatMessage>>([]);
 
   useEffect(() => {
@@ -25,16 +22,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
     };
     updateInputHeight(); // Update on mount
   }, []);
-
-  useEffect(() => {
-    // Precompute name colors for all messages
-    chatMessageList.forEach(message => {
-      if (!nameColors[message.from]) {
-        // const color = computeColorForName(message.from);
-        // addNameColor(message.from, color);
-      }
-    });
-  }, [chatMessageList, nameColors, addNameColor]);
 
   useEffect(() => {
     if (chatState.messages.size === 0) return;
@@ -57,13 +44,11 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
   }, [messagesEndRef, chatState.lastUpdateType]);
 
   useEffect(() => {
-    // add a slight delay... I dont remember why
     const timer = setTimeout(() => {
       scrollDownChat();
     }, 100);
     return () => clearTimeout(timer);
   }, [chatMessageList, scrollDownChat]);
-
 
   useEffect(() => {
     scrollDownChat();
@@ -82,7 +67,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
               objectFit: "cover",
               maxWidth: "100%",
             }}
-            onLoad={scrollDownChat} // Use onLoad event to trigger scrollDownChat
+            onLoad={scrollDownChat}
           />
         );
       } else if (linkRegex.test(message)) {
@@ -128,45 +113,19 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
   );
 
   return (
-    <>
-      <div
-        className="chat-container"
-        style={{
-          height: `calc(100vh - ${inputHeight}px)`,
-          paddingBottom: `${inputHeight}px`,
-        }}
-      >
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 100,
-        }}
-      >
-        <ChatHeader  />
+    <div className="chat-box">
+      <div className="chat-header">
+        <ChatHeader />
       </div>
-      <div
-        style={{
-          overflowY: "auto",
-          overflowX: "hidden",
-          boxSizing: "border-box",
-          alignContent: "flex-end",
-          position: 'relative',
-          height: '100%',
-          paddingTop: `${inputHeight}px`,
-          paddingRight: `18px`,
-        }}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "5px", backgroundColor: "#242424" }}>
+      <div className="chat-container">
+        <div className="chat-messages" style={{ paddingBottom: `${inputHeight}px` }}>
           {chatMessageList.map((message, index) => (
             <div key={index} className='chat-message'>
               <div style={{ display: "inline-block", verticalAlign: "top" }}>
                 <div style={{ color: "#ffffff77", fontSize: "0.8rem", display: "inline-block", marginRight: "5px", cursor: "default" }}>
                   <span>{formatTimestamp(message.time)}</span>
                 </div>
-                <div style={{ color: nameColors[message.from] || '#000', display: "inline-block", marginRight: "5px", cursor: "default" }}>
+                <div style={{ display: "inline-block", marginRight: "5px", cursor: "default" }}>
                   <span>{message.from}:</span>
                 </div>
               </div>
@@ -175,14 +134,13 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
               </span>
             </div>
           ))}
+          <div id="messages-end-ref" ref={messagesEndRef} style={{ display: "inline" }} />
         </div>
-        <div id="messages-end-ref" ref={messagesEndRef} style={{ display: "inline" }} />
-      </div>
       </div>
       <div className="chat-input-container" ref={chatInputRef}>
         <ChatInput />
       </div>
-    </>
+    </div>
   );
 };
 

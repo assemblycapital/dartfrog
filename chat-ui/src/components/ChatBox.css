@@ -1,0 +1,31 @@
+.chat-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-header {
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.chat-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-right: 18px;
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background-color: #242424;
+}
+
+.chat-input-container {
+  flex-shrink: 0;
+}
