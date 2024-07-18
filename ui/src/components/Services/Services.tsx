@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import Spinner from "../Spinner";
 import useDartStore from "../../store/dart";
 import {ServiceConnectionStatus, ServiceConnectionStatusType, } from "@dartfrog/puddle";
-import './NewTab.css'
+import './Services.css'
 import { createSecretKey } from "crypto";
 import CreateService from "./CreateService";
 import ServiceList from "./ServiceList";
@@ -33,10 +33,10 @@ export const validateServiceLink = (value) => {
   return isValid;
 };
 
-interface NewTabProps {
+interface ServicesProps {
 }
 
-const NewTab: React.FC<NewTabProps> = ({ }) => {
+const Services: React.FC<ServicesProps> = ({ }) => {
   const [inputJoinServiceName, setInputJoinServiceName] = useState('');
   const [isJoinServiceNameInputValid, setIsJoinServiceNameInputValid] = useState(true);
   const [inputJoinServiceHostNode, setInputJoinServiceHostNode] = useState('');
@@ -88,6 +88,11 @@ const NewTab: React.FC<NewTabProps> = ({ }) => {
         gap: "1rem",
       }}
     >
+      <div
+        className="current-page-header"
+      >
+        services 
+      </div>
 
       <ServiceList
       />
@@ -109,40 +114,12 @@ const NewTab: React.FC<NewTabProps> = ({ }) => {
         >
           join service by id:
         </div>
-        <div
-          style={{
-            display: "flex",
-            // alignItems: "center",
-            // gap: "0.5rem",
-          }}
-        >
-          <input type="text" placeholder="service-name" 
-            value={inputJoinServiceName}
-            onChange={handleJoinServiceNameInputChange}
-            className={`${isJoinServiceNameInputValid ? '' : 'invalid'}`}
-          />
-          <input type="text" placeholder="template.os"
-            value={inputJoinServiceHostNode}
-            onChange={(e) => setInputJoinServiceHostNode(e.target.value)}
-          />
-          <button
-            style={{
-              cursor: "pointer",
-            }}
-            onClick={() => {
-              handleInputJoinClick();
-            }}
-          >
-            join
-          </button>
-        </div>
-      </div>
       <div
           style={{
             display: "flex",
           }}
         >
-          <input type="text" placeholder="df://service.node.os" 
+          <input type="text" placeholder="df://service:node.os@app:pkg:dev.os" 
             value={inputJoinServiceLink}
             onChange={handleJoinServiceLinkInputChange}
             className={`${isJoinServiceLinkInputValid ? '' : 'invalid'}`}
@@ -158,9 +135,10 @@ const NewTab: React.FC<NewTabProps> = ({ }) => {
             join
           </button>
       </div>
+      </div>
 
     </div>
   )
 }
 
-export default NewTab;
+export default Services;

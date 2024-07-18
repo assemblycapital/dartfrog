@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { validateServiceName } from "./NewTab";
+import { validateServiceName } from "./Services";
 import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, PAGE_PLUGIN, PIANO_PLUGIN } from "../../store/dart";
 
 import './CreateService.css';

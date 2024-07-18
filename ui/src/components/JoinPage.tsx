@@ -54,7 +54,7 @@ const JoinPage = () => {
         setServiceStatus(ServiceStatus.CONTACTING_HOST)
         return;
       }
-      gotService = gotPeer.hostedServices.find(service => service.id === serviceId);
+      // gotService = gotPeer.hostedServices.find(service => service.id === serviceId);
 
     }
 
@@ -182,20 +182,6 @@ const JoinPage = () => {
         gap: "0.4rem",
       }}
     >
-        <div>
-          <div
-            className='home-link' 
-            style={{
-              display:"inline-block",
-              fontSize:"0.8rem",
-              padding: "0.2rem 0.6rem"
-            }}
-            onClick={() => navigate('/')}
-          >
-            <span>home</span>
-          </div>
-
-        </div>
       <div
         style={{
           fontSize:"0.8rem",

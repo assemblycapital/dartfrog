@@ -140,12 +140,17 @@ impl Profile {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Peer {
-    pub node: String,
+pub struct PeerData {
     pub hosted_services: Vec<Service>,
     pub profile: Profile,
     pub activity: PeerActivity,
-    pub outstanding_request: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Peer {
+    pub node: String,
+    pub peer_data: Option<PeerData>,
+    pub outstanding_request: Option<u64>,
     pub last_updated: Option<u64>
 }
 
@@ -153,10 +158,8 @@ impl Peer {
     pub fn new(node: String) -> Self {
         Peer {
             node: node.clone(),
-            hosted_services: Vec::new(),
-            profile: Profile::new(node),
-            activity: PeerActivity::Offline,
-            outstanding_request: false,
+            peer_data: None,
+            outstanding_request: None,
             last_updated: None,
         }
     }
@@ -177,6 +180,7 @@ pub enum DartfrogInput {
     LocalFwdAllPeerRequests,
     // 
     RemoteRequestPeer,
+    RemoteResponsePeer(PeerData),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -188,6 +192,8 @@ pub enum DartfrogOutput {
     Peer(Peer),
     PeerList(Vec<Peer>),
     // 
+    NodeList(Vec<String>),
+    Node(String),
 }
 
 pub fn check_subscribe_permission(service: &Service, source: &Address) -> bool {

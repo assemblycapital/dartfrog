@@ -5,9 +5,12 @@ import Sidebar from './Sidebar/Sidebar';
 import useDartStore from '../store/dart';
 import Split from 'react-split';
 import Footer from './Footer';
-import NewTab from './NewTab/NewTab';
+import Nodes from './Nodes/Nodes';
 import JoinPage from './JoinPage';
 import Home from './Home';
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Services from './Services/Services';
+import NodeProfile from './Nodes/NodeProfile';
 
 interface MiddleProps {
 }
@@ -43,8 +46,26 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
               }}
             >
               <div>
-                <NewTab />
-                {/* <Home /> */}
+              <Routes>
+                <Route path="/" element={
+                  <Home />
+                } />
+                <Route path="/services" element={
+                      <Services />
+                } />
+                <Route path="/messages" element={
+                      <div>
+                        TODO messages
+                      </div>
+                } />
+                <Route path="/nodes" element={
+                  <Nodes />
+                } />
+                <Route path="/nodes/:node" element={
+                    <NodeProfile />
+                } />
+                <Route path="/join/:id" element={<JoinPage />} />
+              </Routes>
               </div>
 
               {isSidebarOpen ? (

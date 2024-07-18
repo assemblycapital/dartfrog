@@ -20,6 +20,29 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.name-color-default {
+  color: #d1d1d1;
+}
+.name-color-red {
+  color: #cc4444;
+}
+
+.name-color-green {
+  color: #339933;
+}
+
+.name-color-blue {
+  color: #4682B4;
+}
+
+.name-color-orange {
+  color: #cc7a00;
+}
+
+.name-color-purple {
+  color: #a36bdb;
+}
+
 a {
   color: #646cff;
   text-decoration: inherit;

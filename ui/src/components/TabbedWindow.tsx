@@ -1,6 +1,5 @@
 import React from 'react';
 import ServiceTab from './ServiceTab';
-import NewTab from './NewTab/NewTab';
 
 import useDartStore from '../store/dart';
 interface TabbedWindowProps {

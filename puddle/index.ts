@@ -368,18 +368,18 @@ export function serviceMetadataFromJson(jsonMeta: JsonService['meta']): ServiceM
   });
 }
 
-export enum PeerActivity {
+export enum PeerActivityType {
   Offline = "Offline",
   Private = "Private",
   Online = "Online",
   RecentlyOnline = "RecentlyOnline",
 }
 
-export type PeerActivityType = 
-  | { type: PeerActivity.Offline }
-  | { type: PeerActivity.Private }
-  | { type: PeerActivity.Online, timestamp: number }
-  | { type: PeerActivity.RecentlyOnline, timestamp: number };
+export type PeerActivity = 
+  | { type: PeerActivityType.Offline }
+  | { type: PeerActivityType.Private }
+  | { type: PeerActivityType.Online, timestamp: number }
+  | { type: PeerActivityType.RecentlyOnline, timestamp: number };
 
 export enum ActivitySetting {
   Public = "Public",
@@ -408,70 +408,46 @@ export class Profile {
   }
 }
 
-export interface Peer {
-  node: string;
+export interface PeerData {
   hostedServices: Service[];
   profile: Profile;
-  activity: PeerActivityType;
-  outstandingRequest: boolean;
-  lastUpdated?: number;
+  activity: PeerActivity;
 }
 
 export class Peer {
   constructor(
     public node: string,
-    public hostedServices: Service[],
-    public profile: Profile,
-    public activity: PeerActivityType,
-    public outstandingRequest: boolean,
-    public lastUpdated?: number
+    public peerData: PeerData | null = null,
+    public outstandingRequest: number | null = null,
+    public lastUpdated: number | null = null
   ) {}
 
   static new(node: string): Peer {
     return new Peer(
       node,
-      [],
-      Profile.new(node),
-      { type: PeerActivity.Offline },
-      false,
-      undefined
+      null, // Initialize peerData as null
+      null, // Initialize outstandingRequest as null
+      null  // Initialize lastUpdated as null
     );
   }
 }
 
 export function peerFromJson(json: any): Peer {
-  const hostedServices = json.hosted_services.map((service: any) => serviceFromJson(service));
-  const profile = new Profile(
-    json.profile.bio,
-    json.profile.nameColor,
-    json.profile.pfp
-  );
-
-  let activity: PeerActivityType;
-  switch (json.activity.type) {
-    case PeerActivity.Offline:
-      activity = { type: PeerActivity.Offline };
-      break;
-    case PeerActivity.Private:
-      activity = { type: PeerActivity.Private };
-      break;
-    case PeerActivity.Online:
-      activity = { type: PeerActivity.Online, timestamp: json.activity.timestamp };
-      break;
-    case PeerActivity.RecentlyOnline:
-      activity = { type: PeerActivity.RecentlyOnline, timestamp: json.activity.timestamp };
-      break;
-    default:
-      throw new Error("Unknown activity type");
-  }
+  const peerData: PeerData | null = json.peer_data ? {
+    hostedServices: json.peer_data.hosted_services.map((service: any) => serviceFromJson(service)),
+    profile: new Profile(
+      json.peer_data.profile.bio,
+      json.peer_data.profile.name_color,
+      json.peer_data.profile.pfp
+    ),
+    activity: json.peer_data.activity
+  } : null;
 
   return new Peer(
     json.node,
-    hostedServices,
-    profile,
-    activity,
-    json.outstanding_request,
-    json.last_updated
+    peerData,
+    json.outstanding_request || null,
+    json.last_updated || null
   );
 }
 
@@ -479,4 +455,21 @@ export const dfLinkRegex = /^df:\/\/([a-zA-Z0-9\-]+):([a-zA-Z0-9\-]+\.[a-zA-Z0-9
 
 export function dfLinkToRealLink(dfLink: string, baseOrigin:string) {
   return `http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/join/${dfLink.slice(5)}`
+}
+
+export function getClassForNameColor(nameColor: NameColor): string {
+  switch (nameColor) {
+    case NameColor.Red:
+      return 'name-color-red';
+    case NameColor.Blue:
+      return 'name-color-blue';
+    case NameColor.Green:
+      return 'name-color-green';
+    case NameColor.Orange:
+      return 'name-color-orange';
+    case NameColor.Purple:
+      return 'name-color-purple';
+    default:
+      return 'name-color-default';
+  }
 }

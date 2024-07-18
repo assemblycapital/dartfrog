@@ -9,24 +9,16 @@ import Settings from './Settings';
 import Friends from './Friends';
 import { XIcon } from '../icons/Icons';
 import profileImage from '../../assets/dartfrog256_nobg.png';
+import { useNavigate } from 'react-router-dom';
+import { NameColor, getClassForNameColor } from '@dartfrog/puddle/index';
 
 interface SidebarProps {}
 
 const Sidebar: React.FC<SidebarProps> = ({ }) => {
   const { isSidebarOpen, nameColors, addNameColor, setIsSidebarOpen, } = useDartStore();
-  const [myNameColor, setMyNameColor] = useState<string>('');
   const [activeComponent, setActiveComponent] = useState<string>('sidebar');
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (window.our?.node) {
-      let color = nameColors[window.our?.node];
-      if (!color) {
-        color = computeColorForName(window.our?.node);
-        addNameColor(window.our?.node, color);
-      }
-      setMyNameColor(color);
-    }
-  }, [nameColors]);
 
   const renderComponent = () => {
     let component;
@@ -88,39 +80,43 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
                   <img src={profileImage} alt="profile" />
                 </div>
                 <div
-                  className='profile-name'
+                  className={`profile-name ${getClassForNameColor(NameColor.Orange)}`}
                   style={{
                     flex: '1',
-                    color: myNameColor,
                     cursor: 'pointer',
                   }}
                 >
                   {window.our?.node}
                 </div>
               </div>
-              {/* <div className='sidebar-option' onClick={() => setActiveComponent('notifs')}>
-                notifs
-              </div> */}
               <div className={`sidebar-option`}
-              onClick={() => {
-                // open in new tab
-                let url = `/dartfrog:dartfrog:herobrine.os/join/inbox.${window.our?.node}`
-                window.open(url, '_blank', 'noopener,noreferrer');
-
-              }
-            }
+                onClick={()=>{
+                  navigate("/");
+                }}
+              >
+                home 
+              </div>
+              <div className={`sidebar-option`}
+                onClick={()=>{
+                  navigate("/services");
+                }}
+              >
+                services
+              </div>
+              <div className={`sidebar-option`}
+                onClick={()=>{
+                  navigate("/messages");
+                }}
               >
                 messages
               </div>
-              {/* <div className='sidebar-option' onClick={() => setActiveComponent('invites')}>
-                invites
-              </div> */}
-              {/* <div className='sidebar-option' onClick={() => setActiveComponent('friends')}>
-                friends
+              <div className={`sidebar-option`}
+                onClick={()=>{
+                  navigate("/nodes");
+                }}
+              >
+                nodes
               </div>
-              <div className='sidebar-option' onClick={() => setActiveComponent('settings')}>
-                settings
-              </div> */}
             </div>
           </div>
         );

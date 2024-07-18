@@ -4,7 +4,6 @@ import ServiceTab from './ServiceTab';
 import useDartStore from '../store/dart';
 import './TabbedWindowManager.css';
 import { PlusIcon } from './icons/Icons';
-import NewTab from './NewTab/NewTab';
 import { HUB_NODE } from '../utils';
 import TabTop from './TabTop';
 import TabTops from './TabTops';
@@ -45,7 +44,7 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({  }) => {
         overflowY: 'hidden', // Ensure no overflow on the main container
       }}
     >
-      <NewTab />
+      {/* <NewTab /> */}
       
     </div>
   );

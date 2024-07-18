@@ -40,8 +40,13 @@ impl Hash for Consumer{
         self.ws_channel_id.hash(state);
     }
 }
+
+const IS_FAKE: bool = !cfg!(feature = "prod");
+const NETWORK_HUB: &str = if IS_FAKE { "fake.dev" } else { "waterhouse.os" };
+
 #[derive(Debug, Clone)]
 pub struct DartfrogState {
+    pub network_hub: Option<String>,
     pub consumers: HashMap<u32, Consumer>,
     pub local_services: HashMap<String, Service>,
     pub peers: HashMap<String, Peer>,
@@ -53,6 +58,7 @@ pub struct DartfrogState {
 impl DartfrogState {
     pub fn new(our: &Address) -> Self {
         DartfrogState {
+            network_hub: None,
             consumers: HashMap::new(),
             local_services: HashMap::new(),
             peers: HashMap::new(),
@@ -63,15 +69,7 @@ impl DartfrogState {
     }
 }
 
-fn get_now() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs()
-}
-
 const CONSUMER_TIMEOUT : u64 = 10*60; //10 minutes
-
 
 fn update_consumer (
     websocket_id: u32,
@@ -109,7 +107,7 @@ fn handle_http_server_request(
     state: &mut DartfrogState,
     source: &Address,
     body: &[u8],
-    ) -> anyhow::Result<()> {
+) -> anyhow::Result<()> {
 
     let Ok(server_request) = serde_json::from_slice::<HttpServerRequest>(body) else {
         // Fail silently if we can't parse the request
@@ -220,6 +218,19 @@ fn handle_http_server_request(
                         poke(&address, DartfrogInput::RemoteRequestPeer)?;
                     }
                 },
+                DartfrogInput::LocalFwdPeerRequest(node) => {
+                    if source.node != our.node { return Ok(()); }
+                    
+                    let peer = state.peers.entry(node.clone())
+                        .or_insert_with(|| Peer::new(node.clone()));
+                    
+                    peer.outstanding_request = Some(get_now());
+                    let update = DartfrogOutput::Peer(peer.clone());
+                    update_all_consumers(state, update)?;
+
+                    let address = get_server_address(&node);
+                    poke(&address, DartfrogInput::RemoteRequestPeer)?;
+                },
                 _ => {
                 }
             }
@@ -270,7 +281,75 @@ fn handle_provider_output(
             update_all_consumers(state, update)?;
         },
         ProviderOutput::ServiceList(services) => {
+            for service in services {
+                if service.id.address.node == source.node &&
+                   service.id.address.process == source.process
+                {
+                    state.local_services.insert(service.id.to_string(), service.clone());
+                }
+            }
+            let update = DartfrogOutput::LocalServiceList(state.local_services.values().cloned().collect());
+            update_all_consumers(state, update)?;
+        }
+    }
+    Ok(())
+}
 
+fn handle_dartfrog_input(
+    our: &Address,
+    state: &mut DartfrogState,
+    source: &Address,
+    dartfrog_input: DartfrogInput,
+) -> anyhow::Result<()> {
+
+    match dartfrog_input {
+        DartfrogInput::LocalFwdAllPeerRequests => {
+            if source.node != our.node { return Ok(()); }
+            for peer in state.peers.values() {
+                let address = get_server_address(&peer.node);
+                poke(&address, DartfrogInput::RemoteRequestPeer)?;
+            }
+        },
+        DartfrogInput::LocalFwdPeerRequest(node) => {
+            if source.node != our.node { return Ok(()); }
+            
+            let peer = state.peers.entry(node.clone())
+                .or_insert_with(|| Peer::new(node.clone()));
+            
+            peer.outstanding_request = Some(get_now());
+            let update = DartfrogOutput::Peer(peer.clone());
+            update_all_consumers(state, update)?;
+
+            let address = get_server_address(&node);
+            poke(&address, DartfrogInput::RemoteRequestPeer)?;
+        }
+        DartfrogInput::RemoteRequestPeer => {
+            let address = get_server_address(&source.node());
+            let my_peer_data = PeerData {
+                profile: state.profile.clone(),
+                hosted_services: state.local_services.values().cloned().collect(),
+                activity: state.activity.clone(),
+            };
+            poke(&address, DartfrogInput::RemoteResponsePeer(my_peer_data))?;
+        }
+        DartfrogInput::RemoteResponsePeer(peer_data) => {
+            let Some(local_peer) = state.peers.get_mut(source.node()) else {
+                return Ok(());
+            };
+            match local_peer.outstanding_request {
+                None => {
+                }
+                Some(time) => {
+                    local_peer.peer_data = Some(peer_data);
+                    local_peer.outstanding_request = None;
+                    local_peer.last_updated = Some(get_now());
+                    let update = DartfrogOutput::Peer(local_peer.clone());
+                    update_all_consumers(state, update)?;
+                }
+            }
+        }
+        _ => {
+            println!("unhandled DartfrogInput: {:?}", dartfrog_input);
         }
     }
     Ok(())
@@ -290,6 +369,9 @@ fn handle_message(our: &Address, state: &mut DartfrogState) -> anyhow::Result<()
     } else {
         if let Ok(app_message) = serde_json::from_slice::<ProviderOutput>(&body) {
             handle_provider_output(our, state, source, app_message)?;
+        }
+        if let Ok(dartfrog_input) = serde_json::from_slice::<DartfrogInput>(&body) {
+            handle_dartfrog_input(our, state, source, dartfrog_input)?;
         }
         Ok(())
     }
@@ -322,6 +404,7 @@ fn init(our: Address) {
         .unwrap();
 
     let mut state = DartfrogState::new(&our);
+    state.network_hub = Some(NETWORK_HUB.to_string());
 
     loop {
         match handle_message(&our, &mut state) {

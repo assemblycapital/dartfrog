@@ -31,6 +31,7 @@ export interface DartStore {
   setIsSidebarOpen: (isSidebarOpen: boolean) => void
   // 
   requestLocalServiceList: () => void
+  localFwdPeerRequest: (node:string) => void
   deleteService: (serviceIdStr: string) => void
   createService: (serviceName, processName, visibility, access, whitelist) => void
   // 
@@ -79,6 +80,16 @@ const useDartStore = create<DartStore>()(
             "RequestLocalServiceList"
         })
       },
+      localFwdPeerRequest: (node:string) => {
+        const { api } = get()
+        if (!(api)) return;
+        api.send({data:
+            {
+              "LocalFwdPeerRequest":
+                node
+            }
+        })
+      },
       deleteService: (serviceIdStr) => {
         const { api } = get()
         if (!(api)) return;
@@ -110,9 +121,11 @@ const useDartStore = create<DartStore>()(
       // 
       peerMap: new Map<string, Peer>(),
       putPeerMap: (peer) => {
-        const { peerMap } = get()
-        peerMap.set(peer.node, peer);
-        set({ peerMap });
+        const { peerMap } = get();
+        console.log("putting in peer map", peer);
+        const newPeerMap = new Map(peerMap);
+        newPeerMap.set(peer.node, peer);
+        set({ peerMap: newPeerMap });
       },
       // 
       get,

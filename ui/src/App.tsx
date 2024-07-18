@@ -39,6 +39,7 @@ function App() {
       },
       onMessage: (json, api) => {
         const data = JSON.parse(json)
+
         if (data["LocalServiceList"]) {
           let localServiceList = data["LocalServiceList"];
           let parsedServices = [];
@@ -52,11 +53,13 @@ function App() {
           // TODO
         } else if (data["PeerList"]) {
           let peerList = data["PeerList"]
-          let parsedPeers = [];
           for (let jsonPeer of peerList) {
             let peer = peerFromJson(jsonPeer);
-            parsedPeers.push(peer);
+            putPeerMap(peer)
           }
+          // console.log("parsed peers", parsedPeers)
+        } else {
+          console.log("unhandled update", data)
         }
         // this.setConnectionStatus(ConnectionStatusType.Connected);
         // this.updateHandler(json);
@@ -88,27 +91,20 @@ function App() {
       flexDirection: 'column',
       padding: '20px',
     }}>
-      <Routes>
-        <Route path="/" element={
-            <>
-            <div
-              style={{
-                flexShrink: 0,
-              }}
-            >
-              <ControlHeader />
-            </div>
-            <div
-              style={{
-                flexGrow: 1,
-              }}
-            >
-                <Middle />
-            </div>
-            </>
-        } />
-        <Route path="/join/:id" element={<JoinPage />} />
-      </Routes>
+      <div
+        style={{
+          flexShrink: 0,
+        }}
+      >
+        <ControlHeader />
+      </div>
+      <div
+        style={{
+          flexGrow: 1,
+        }}
+      >
+          <Middle />
+      </div>
     </div>
   );
 }
