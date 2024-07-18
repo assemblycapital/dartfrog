@@ -1,3 +1,46 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.gutter.gutter-horizontal {
+  cursor: col-resize;
+  background-color: transparent;
+  width: 10px !important;
+  position: relative;
+}
+.gutter.gutter-horizontal::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  width: 1px;
+  height: 100%;
+}
+.gutter.gutter-horizontal:hover {
+  cursor: col-resize;
+}
+.gutter.gutter-vertical {
+  cursor: row-resize;
+  background-color: transparent;
+  height: 10px !important;
+  position: relative;
+}
+.gutter.gutter-vertical::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #333;
+  height: 1px;
+  width: 100%;
+}
+.gutter.gutter-vertical:hover {
+  cursor: row-resize;
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

@@ -652,13 +652,14 @@ where
         }
         ProviderInput::ProviderUserInput(service_id, user_input) => {
             let Some(mut client_wrapper) = state.clients.get_mut(&service_id) else {
-                println!("Client with id {} does not exist", service_id);
+                // println!("Client with id {} does not exist", service_id);
                 return Ok(());
             };
             let client = &mut client_wrapper.client;
             match user_input {
                 ProviderUserInput::FromFrontend(message) => {
-                    println!("Received message from frontend: {}", message);
+                    // TODO remove?
+                    // println!("Received message from frontend: {}", message);
                 }
                 ProviderUserInput::FromService(from_service_req) => {
                     let Some(parsed_service_id) = ServiceID::from_string(service_id.as_str()) else {

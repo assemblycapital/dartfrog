@@ -18,7 +18,11 @@ const TopBar = ({ serviceId }) => {
         fontSize: "0.8rem",
         display: "flex",
         flexDirection: "row",
-        gap: "4px"
+        gap: "4px",
+        height:"26px",
+        maxHeight:"26px",
+        maxWidth:"100%",
+        alignItems: "center", // Center items vertically
       }}
     >
       <div
@@ -36,13 +40,20 @@ const TopBar = ({ serviceId }) => {
       <div
         style={{
           flexGrow: "1",
+          overflow: "hidden",
+          display: "flex", // Add this line
+          alignItems: "center", // Add this line
         }}
       >
         <div
           style={{
             display: "inline-block",
             cursor: "pointer",
-            padding: "0rem 1rem"
+            padding: "0rem 1rem",
+            overflowX: "hidden",
+            whiteSpace: "nowrap", // Prevent text wrapping
+            textOverflow: "ellipsis", // Add ellipsis for overflowed text
+            wordWrap: "normal",
           }}
           onClick={handleCopyClick}
         >

@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ChatInput from './ChatInput';
 import ChatHeader from './ChatHeader';
 import useChatStore, { ChatState, ChatMessage} from '../store/chat';
+import Split from 'react-split';
 import './ChatBox.css';
+import { dfLinkRegex, dfLinkToRealLink } from '@dartfrog/puddle';
 
 interface ChatBoxProps {
   chatState: ChatState;
@@ -79,15 +81,15 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                 cursor: "pointer",
                 fontSize: "1rem",
               }}
-              onClick={() => {
-                window.parent.postMessage({type: 'open-http-url', url:message}, '*');
-              }}
+              href={message}
             >
               {message}
             </a>
           </span>
         );
       } else if (dfLinkRegex.test(message)) {
+        const baseOrigin = window.origin.split(".").slice(1).join(".")
+        const realLink = dfLinkToRealLink(message, baseOrigin)
         return (
           <span>
             <a
@@ -96,9 +98,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                 cursor: "pointer",
                 fontSize: "1rem",
               }}
-              onClick={() => {
-                window.parent.postMessage({type: 'open-df-service', url:message}, '*');
-              }}
+              href={realLink}
             >
               {message}
             </a>
@@ -106,39 +106,93 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
         );
 
       } else {
-        return <span>{message}</span>;
+        return <span>{message.replace(/\s+/g, ' ')}</span>;
       }
     },
     [scrollDownChat]
   );
 
   return (
-    <div className="chat-box">
-      <div className="chat-header">
+    <div
+      style={{
+        width:"100%",
+        maxWidth:"100%",
+        height:"100%",
+        maxHeight:"100%",
+        display:"flex",
+        flexDirection:"column",
+        overflow:"hidden",
+      }}
+    >
+      <div>
         <ChatHeader />
       </div>
-      <div className="chat-container">
-        <div className="chat-messages" style={{ paddingBottom: `${inputHeight}px` }}>
-          {chatMessageList.map((message, index) => (
-            <div key={index} className='chat-message'>
-              <div style={{ display: "inline-block", verticalAlign: "top" }}>
-                <div style={{ color: "#ffffff77", fontSize: "0.8rem", display: "inline-block", marginRight: "5px", cursor: "default" }}>
-                  <span>{formatTimestamp(message.time)}</span>
+
+      <div
+        style={{
+          flexGrow:"1",
+          height:"100%",
+          maxHeight:"100%",
+          overflow:"hidden",
+        }}
+      >
+        <Split
+          sizes={[95, 5]}
+          minSize={45}
+          direction="vertical"
+          style={{
+            flexGrow:"1",
+            height:"100%",
+            maxHeight:"100%",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div
+            style={{
+              overflowY: "scroll",
+              width:"100%",
+              maxWidth:"100%",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexGrow: 1,
+                flexDirection:"column",
+                justifyContent: "flex-end",
+                height:"100%",
+              }}
+            >
+              {chatMessageList.map((message, index) => (
+                <div key={index} className='chat-message' >
+                  <div style={{ display: "inline-block", verticalAlign: "top" }}>
+                    <div style={{ color: "#ffffff77", fontSize: "0.8rem", display: "inline-block", marginRight: "5px", cursor: "default" }}>
+                      <span>{formatTimestamp(message.time)}</span>
+                    </div>
+                    <div style={{ display: "inline-block", marginRight: "5px", cursor: "default" }}>
+                      <span>{message.from}:</span>
+                    </div>
+                  </div>
+                  <span style={{ cursor: "default", wordWrap: "break-word", overflowWrap: "break-word", whiteSpace: "pre-wrap" }}>
+                    {getMessageInnerText(message.msg)}
+                  </span>
                 </div>
-                <div style={{ display: "inline-block", marginRight: "5px", cursor: "default" }}>
-                  <span>{message.from}:</span>
-                </div>
-              </div>
-              <span style={{ cursor: "default" }}>
-                {getMessageInnerText(message.msg)}
-              </span>
+              ))}
+              <div id="messages-end-ref" ref={messagesEndRef} style={{ display: "inline" }} />
             </div>
-          ))}
-          <div id="messages-end-ref" ref={messagesEndRef} style={{ display: "inline" }} />
-        </div>
-      </div>
-      <div className="chat-input-container" ref={chatInputRef}>
-        <ChatInput />
+          </div>
+          <div
+            ref={chatInputRef}
+            style={{
+              width: "100%",
+              maxWidth: "100%",
+            }}
+          >
+            <ChatInput />
+          </div>
+        </Split>
+
       </div>
     </div>
   );
@@ -146,14 +200,13 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
 
 export default React.memo(ChatBox);
 
-const dfLinkRegex = /^df:\/\/[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\.([a-zA-Z0-9]+\.)+[a-zA-Z]+$/;
-
 const linkRegex = /^https?:\/\/\S+$/i;
 const imageRegex = /^https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp)$/i;
 
 function isImageUrl(url: string) {
   return imageRegex.test(url);
 }
+
 
 export function formatTimestamp(timestamp: number): string {
   const date = new Date(timestamp * 1000); // convert from seconds to milliseconds

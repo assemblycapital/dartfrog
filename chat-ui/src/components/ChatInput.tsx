@@ -26,7 +26,14 @@ const ChatInput: React.FC<ChatInputProps> = ({  }) => {
 
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'row' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+        height:"100%",
+        maxHeight:"100%",
+      }}
+    >
       <textarea
         style={{
           flexGrow: 1,

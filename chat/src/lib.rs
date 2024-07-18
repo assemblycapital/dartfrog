@@ -110,7 +110,7 @@ fn init(our: Address) {
     println!("init chat");
     let mut state = AppState::new();
 
-    let try_ui = http::secure_serve_ui(&our, "chat-ui", vec!["/"]);
+    let try_ui = http::secure_serve_ui(&our, "chat-ui", vec!["/", "*"]);
     http::secure_bind_ws_path("/", true).unwrap();
 
     match try_ui {

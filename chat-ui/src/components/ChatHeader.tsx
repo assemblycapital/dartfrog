@@ -50,7 +50,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ }) => {
         </span>
       </div>
       <div style={menuStyle}>
-        <button // New mute button
+        {/* <button // New mute button
           style={{
             border: "none",
             cursor: "pointer",
@@ -59,7 +59,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ }) => {
           onClick={() => setIsMuted(!isMuted)}
         >
           {isMuted ? 'unmute' : 'mute'}
-        </button>
+        </button> */}
         
         <div>sfx: /yes /no /why /fart /people /robust /robustness</div>
         <div>img: /die /kino /panda /dev /tiger /wow /cry /ok /oops</div>

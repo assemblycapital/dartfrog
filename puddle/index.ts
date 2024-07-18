@@ -474,3 +474,9 @@ export function peerFromJson(json: any): Peer {
     json.last_updated
   );
 }
+
+export const dfLinkRegex = /^df:\/\/([a-zA-Z0-9\-]+):([a-zA-Z0-9\-]+\.[a-zA-Z0-9\-]+)@([a-zA-Z0-9\-]+):([a-zA-Z0-9\-]+):([a-zA-Z0-9\-]+\.[a-zA-Z0-9\-]+)$/;
+
+export function dfLinkToRealLink(dfLink: string, baseOrigin:string) {
+  return `http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/join/${dfLink.slice(5)}`
+}
