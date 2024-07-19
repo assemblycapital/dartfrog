@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import useDartStore from '../../store/dart';
 import { useNavigate } from 'react-router-dom';
+import { getPeerNameColor, getPeerPfp } from '@dartfrog/puddle/index';
+import ProfilePicture from '../ProfilePicture';
+import './Nodes.css';
 
 const Nodes: React.FC = () => {
   const { peerMap, localFwdPeerRequest } = useDartStore();
@@ -11,8 +14,7 @@ const Nodes: React.FC = () => {
 
   const handleSubmit = useCallback(() => {
     if (inputValue === "") return;
-    localFwdPeerRequest(inputValue);
-    setInputValue("");
+    navigate(`/nodes/${inputValue}`)
   }, [inputValue]);
 
   return (
@@ -39,7 +41,7 @@ const Nodes: React.FC = () => {
           value={inputValue} 
           onChange={(e) => setInputValue(e.target.value)} 
         />
-        <button onClick={handleSubmit}>Submit</button>
+        <button onClick={handleSubmit}>find</button>
 
       </div>
       <div
@@ -49,18 +51,34 @@ const Nodes: React.FC = () => {
       >
         {Array.from(peerMap.entries()).map(([node, peer]) => (
           <div key={node}
+            className="nodes-node-row"
+              onClick={ ()=>{
+                navigate(`/nodes/${node}`)
+              }}
           >
             <div
               style={{
                 cursor:"pointer",
                 display:"inline-block",
               }}
-              onClick={ ()=>{
-                navigate(`/nodes/${node}`)
-              }}
             >
 
-            <span>{node}</span>
+              <div
+                style={{
+                display:"flex",
+                flexDirection:"row",
+                gap :"1rem",
+                alignItems: "center"
+                }}
+              >
+
+                <ProfilePicture size={"64px"} node={node} />
+                <span
+                  className={getPeerNameColor(peer)}
+                >
+                {node}
+                </span>
+              </div>
             </div>
           </div>
         ))}

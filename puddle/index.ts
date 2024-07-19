@@ -457,6 +457,20 @@ export function dfLinkToRealLink(dfLink: string, baseOrigin:string) {
   return `http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/join/${dfLink.slice(5)}`
 }
 
+
+export const DEFAULT_PFP = 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/dartfrog256_nobg.png';
+export function getPeerPfp(peer: Peer): string {
+  if (peer.peerData && peer.peerData.profile.pfp) {
+    return peer.peerData.profile.pfp
+  }
+  return DEFAULT_PFP;
+}
+export function getPeerNameColor(peer: Peer): string {
+  if (peer.peerData) {
+    return getClassForNameColor(peer.peerData.profile.nameColor)
+  }
+  return 'name-color-default';
+}
 export function getClassForNameColor(nameColor: NameColor): string {
   switch (nameColor) {
     case NameColor.Red:

@@ -58,6 +58,9 @@ function App() {
             putPeerMap(peer)
           }
           // console.log("parsed peers", parsedPeers)
+        } else if (data["Peer"]){
+            let peer = peerFromJson(data["Peer"]);
+            putPeerMap(peer)
         } else {
           console.log("unhandled update", data)
         }

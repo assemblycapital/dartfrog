@@ -74,10 +74,33 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
               </div>
               <div className='sidebar'>
 
-              <div className='profile'>
+              <div className='profile'
+                style={{
+                  cursor:"pointer"
+                }}
+                onClick={()=>{
+                  navigate(`/nodes/${window.our?.node}`)
 
-                <div className='profile-image'>
-                  <img src={profileImage} alt="profile" />
+                }}
+              >
+
+                <div
+                  style={{
+                    width:"100%",
+                  }}
+                >
+                  <div
+                    style={{
+                      width:'15vh',
+                      height:'15vh',
+                      maxWidth:'15vh',
+                      maxHeight:'15vh',
+                    }}
+                  >
+                    <div className='profile-image'>
+                      <img src={profileImage} alt="profile" />
+                    </div>
+                  </div>
                 </div>
                 <div
                   className={`profile-name ${getClassForNameColor(NameColor.Orange)}`}
