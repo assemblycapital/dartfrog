@@ -64,7 +64,7 @@ impl DartfrogState {
             peers: HashMap::new(),
             profile : Profile::new(our.node.clone()),
             activity_setting: ActivitySetting::Public,
-            activity: PeerActivity::Offline,
+            activity: PeerActivity::Offline(get_now()),
         }
     }
 }
@@ -128,6 +128,7 @@ fn handle_http_server_request(
                     last_active: now,
                 },
             );
+            state.activity = PeerActivity::Online(get_now());
             let services: Vec<Service> = state.local_services.values().cloned().collect();
             update_consumer(channel_id, DartfrogOutput::LocalServiceList(services))?;
             let peers: Vec<Peer> = state.peers.values().cloned().collect();
@@ -141,7 +142,7 @@ fn handle_http_server_request(
             state.consumers.retain(|_, consumer| {
                 get_now() - consumer.last_active <= CONSUMER_TIMEOUT
             });
-            state.activity = PeerActivity::Active(get_now());
+            state.activity = PeerActivity::Online(get_now());
 
             if message_type == WsMessageType::Close {
                 state.consumers.remove(&channel_id);
@@ -204,6 +205,17 @@ fn handle_http_server_request(
                 DartfrogInput::RequestLocalServiceList => {
                     let services: Vec<Service> = state.local_services.values().cloned().collect();
                     update_consumer(channel_id, DartfrogOutput::LocalServiceList(services))?;
+                }
+                DartfrogInput::LocalDeletePeer(node) => {
+                    match state.peers.get(&node) {
+                        Some(peer) => {
+                            state.peers.remove(&node);
+                            let peers: Vec<Peer> = state.peers.values().cloned().collect();
+                            update_consumer(channel_id, DartfrogOutput::PeerList(peers))?;
+                        }
+                        None => {
+                        }
+                    }
                 }
                 DartfrogInput::LocalRequestPeer(node) => {
                     match state.peers.get(&node) {

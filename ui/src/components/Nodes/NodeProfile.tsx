@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import useDartStore from '../../store/dart';
-import { Peer, getClassForNameColor, NameColor, Profile } from '@dartfrog/puddle/index';
+import { Peer, getClassForNameColor, NameColor, Profile, getRecencyText } from '@dartfrog/puddle/index';
 import { useNavigate } from 'react-router-dom';
 
 import { useParams } from 'react-router-dom';
@@ -42,7 +42,9 @@ const renderConnectionStatus = (peer: Peer | null, isBadConnection: boolean) => 
 
 const NodeProfile: React.FC<NodeProps> = ({ }) => {
     const { node } = useParams<{ node: string }>();
-    const { peerMap, localFwdPeerRequest, requestSetProfile } = useDartStore();
+
+    const { peerMap, delPeerMap, localFwdPeerRequest, requestSetProfile, localDeletePeer } = useDartStore();
+
     const [peer, setPeer] = useState<Peer|null>(null);
     const [profileImage, setProfileImage] = useState<string>(defaultProfileImage);
     const [selectedProfileImage, setSelectedProfileImage] = useState<string | null>(null);
@@ -151,6 +153,27 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
         return () => clearTimeout(timer);
     }, [peer]);
 
+    function getActivityMessage() {
+      if (peer && peer.peerData) {
+        if (peer.peerData.activity.type === 'Private') {
+          return 'has activity set to private';
+        }
+
+        const activity = peer.peerData.activity;
+        const activityTime = activity.timestamp*1000;
+        const now = Date.now();
+
+        if (now - activityTime <= 5 * 60 * 1000 && activity.type === 'Online') {
+          return 'is online';
+        }
+
+        const delta = now - activityTime;
+
+        return `active ${getRecencyText(delta)}`;
+      }
+      return ''
+    }
+
     return (
         <div
           style={{
@@ -200,8 +223,7 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                       }}
                     >
                       <div>
-                        back to all nodes
-
+                        all nodes
                       </div>
                     </button>
                     {isOurProfile && 
@@ -214,6 +236,17 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                       </button>
                     }
                     {renderConnectionStatus(peer, isBadConnection)}
+                    {isBadConnection &&
+                      <button
+                        onClick={()=>{
+                          localDeletePeer(node);
+                          navigate("/nodes");
+                          delPeerMap(node);
+                        }}
+                      >
+                        delete
+                      </button>
+                    }
                   </div>
                  
                   <div>
@@ -266,15 +299,23 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                     >
                       {peer.node}
                     </div>
-                      {isEditMode && (
-                        <div>
-                          <select onChange={handleColorChange} value={selectedNameColor}>
-                            {Object.values(NameColor).map((color) => (
-                                <option key={color} value={color}>{color.toLowerCase()}</option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
+                    {isEditMode && (
+                      <div>
+                        <select onChange={handleColorChange} value={selectedNameColor}>
+                          {Object.values(NameColor).map((color) => (
+                              <option key={color} value={color}>{color.toLowerCase()}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    <div
+                      style={{
+                        color:'gray',
+                        cursor:'default',
+                      }}
+                    >
+                      {getActivityMessage()}
+                    </div>
                     {isEditMode ? (
                         <div>
                           <textarea

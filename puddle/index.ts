@@ -376,10 +376,21 @@ export enum PeerActivityType {
 }
 
 export type PeerActivity = 
-  | { type: PeerActivityType.Offline }
   | { type: PeerActivityType.Private }
   | { type: PeerActivityType.Online, timestamp: number }
-  | { type: PeerActivityType.RecentlyOnline, timestamp: number };
+  | { type: PeerActivityType.Offline, timestamp: number }
+
+export function activityFromJson(jsonActivity: any): PeerActivity {
+  if (jsonActivity.Online !== undefined) {
+    return { type: PeerActivityType.Online, timestamp: jsonActivity.Online };
+  } else if (jsonActivity.Offline !== undefined) {
+    return { type: PeerActivityType.Offline, timestamp: jsonActivity.Offline };
+  } else if (jsonActivity === 'Private') {
+    return { type: PeerActivityType.Private };
+  } else {
+    throw new Error("Unknown activity type");
+  }
+}
 
 export enum ActivitySetting {
   Public = "Public",
@@ -445,7 +456,7 @@ export function peerFromJson(json: any): Peer {
   const peerData: PeerData | null = json.peer_data ? {
     hostedServices: json.peer_data.hosted_services.map((service: any) => serviceFromJson(service)),
     profile: profileFromJson(json.peer_data.profile),
-    activity: json.peer_data.activity
+    activity: activityFromJson(json.peer_data.activity)  // Use activityFromJson here
   } : null;
 
   return new Peer(
@@ -491,4 +502,34 @@ export function getClassForNameColor(nameColor: NameColor): string {
     default:
       return 'name-color-default';
   }
+}
+
+
+export function getServiceRecencyText(service: Service) {
+  const now = new Date();
+  if (!(service.meta.last_sent_presence)) {
+    return "new"
+  }
+  const time = service.meta.last_sent_presence
+  const diff = now.getTime() - time*1000;
+
+  // if less than 5min, say now
+  // if less than 1h, say x min ago
+  // if less than 1d, say x hr ago
+  // else say x days ago
+  if (service.meta.subscribers.length > 0) {
+    return `now`;
+  }
+  getRecencyText(diff);
+}
+
+export function getRecencyText(diff:number) {
+  if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)} hr ago`;
+  if (diff > 7307200000) {
+    const years = Math.floor(diff / 31536000000);
+    const months = Math.floor((diff % 31536000000) / 2592000000);
+    return `${years} yrs ${months} months ago`;
+  }
+  return `${Math.floor(diff / 86400000)} days ago`;
 }

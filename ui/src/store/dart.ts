@@ -28,6 +28,8 @@ export interface DartStore {
   // 
   requestLocalServiceList: () => void
   localFwdPeerRequest: (node:string) => void
+  localFwdAllPeerRequests: () => void
+  localDeletePeer: (node:string) => void
   deleteService: (serviceIdStr: string) => void
   createService: (serviceName, processName, visibility, access, whitelist) => void
   // 
@@ -36,6 +38,7 @@ export interface DartStore {
   // 
   peerMap: PeerMap,
   putPeerMap: (peer:Peer) => void,
+  delPeerMap: (node:string) => void,
   // 
   profile: Profile | null,
   setProfile: (profile) => void,
@@ -85,6 +88,24 @@ const useDartStore = create<DartStore>()(
             }
         })
       },
+      localFwdAllPeerRequests: () => {
+        const { api } = get()
+        if (!(api)) return;
+        api.send({data:
+              "LocalFwdAllPeerRequests"
+        })
+      },
+      localDeletePeer: (node) => {
+        const { api } = get()
+        if (!(api)) return;
+        api.send({data:
+          {
+            "LocalDeletePeer":
+            node
+          }
+        })
+
+      },
       deleteService: (serviceIdStr) => {
         const { api } = get()
         if (!(api)) return;
@@ -119,6 +140,12 @@ const useDartStore = create<DartStore>()(
         const { peerMap } = get();
         const newPeerMap = new Map(peerMap);
         newPeerMap.set(peer.node, peer);
+        set({ peerMap: newPeerMap });
+      },
+      delPeerMap: (node:string) => {
+        const { peerMap } = get();
+        const newPeerMap = new Map(peerMap);
+        newPeerMap.delete(node)
         set({ peerMap: newPeerMap });
       },
       // 

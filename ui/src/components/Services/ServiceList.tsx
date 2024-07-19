@@ -3,7 +3,7 @@ import useDartStore from '../../store/dart';
 import Spinner from '../Spinner';
 // import { Presence, ServiceAccess } from '@dartfrog/puddle/index';
 import { useNavigate } from 'react-router-dom';
-import { Service, ServiceID, ServiceVisibility } from '@dartfrog/puddle/index';
+import { Service, ServiceID, ServiceVisibility, getServiceRecencyText } from '@dartfrog/puddle/index';
 
 const ServiceList = ({ }) => {
   const { localServices, deleteService, requestLocalServiceList } = useDartStore();
@@ -33,28 +33,6 @@ const ServiceList = ({ }) => {
       return process
     }
     return known
-  }
-
-  function getRecencyText(service: Service) {
-    const now = new Date();
-    if (!(service.meta.last_sent_presence)) {
-      return "new"
-    }
-    const time = service.meta.last_sent_presence
-    const diff = now.getTime() - time*1000;
-
-    // if less than 5min, say now
-    // if less than 1h, say x min ago
-    // if less than 1d, say x hr ago
-    // else say x days ago
-    if (service.meta.subscribers.length > 0) {
-      return `now`;
-    }
-    if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)} hr ago`;
-    // if its older than 2yrs, say its old
-    if (diff > 7307200000) return `old`;
-    return `${Math.floor(diff / 86400000)} days ago`;
   }
 
   return (
@@ -178,7 +156,7 @@ const ServiceList = ({ }) => {
                 {getProcessText(service.id.address)}
               </div>
               <div style={{ flex: "1" }}>
-                {getRecencyText(service)}
+                {getServiceRecencyText(service)}
               </div>
               <div style={{ flex: "1" }}>
                 {service.meta.subscribers.length} online

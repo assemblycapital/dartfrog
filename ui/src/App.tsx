@@ -16,7 +16,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 function App() {
 
-  const {setApi, closeApi, setIsClientConnected, setProfile, setActivitySetting, peerMap, putPeerMap, localServices, setLocalServices } = useDartStore();
+  const {setApi, closeApi, setIsClientConnected, setProfile, localFwdAllPeerRequests, setActivitySetting, peerMap, putPeerMap, localServices, setLocalServices } = useDartStore();
 
   useEffect(() => {
     const newApi = new KinodeClientApi({
@@ -26,6 +26,7 @@ function App() {
       onOpen: (event, api) => {
         console.log("Connected to Kinode");
         setIsClientConnected(true);
+        localFwdAllPeerRequests();
         // api.send({data:{
         //   "CreateService": ["foo", "bar:baz:bop.os"]
 

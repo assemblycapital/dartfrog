@@ -83,20 +83,18 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
                     width:"100%",
                   }}
                 >
-                  <div
-                    style={{
-                      width:'15vh',
-                      height:'15vh',
-                      maxWidth:'15vh',
-                      maxHeight:'15vh',
-                      minWidth:'15vh',
-                      minHeight:'15vh',
-                    }}
-                  >
-                    <div className='profile-image'>
+                    <div className='profile-image'
+                      style={{
+                        width:'15vh',
+                        height:'15vh',
+                        maxWidth:'15vh',
+                        maxHeight:'15vh',
+                        minWidth:'15vh',
+                        minHeight:'15vh',
+                      }}
+                    >
                       <img src={profileImage} alt="profile" />
                     </div>
-                  </div>
                 </div>
                 <div
                   className={`profile-name ${nameColorClass}`}

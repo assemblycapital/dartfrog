@@ -87,9 +87,9 @@ pub enum ServiceVisibility {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PeerActivity {
-    Offline,
+    Online(u64),
+    Offline(u64),
     Private,
-    Active(u64),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -174,6 +174,7 @@ pub enum DartfrogInput {
     RequestLocalServiceList,
     // 
     LocalRequestPeer(String),
+    LocalDeletePeer(String),
     LocalRequestAllPeers,
     // 
     LocalFwdPeerRequest(String),

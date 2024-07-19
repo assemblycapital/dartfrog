@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import useDartStore from '../store/dart';
 
 const Home: React.FC = () => {
   return (
