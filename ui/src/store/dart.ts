@@ -2,7 +2,7 @@ import KinodeClientApi from "@kinode/client-api";
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { HUB_NODE } from '../utils';
-import { Peer, PeerMap, Service,  } from "@dartfrog/puddle/index";
+import { ActivitySetting, Peer, PeerMap, Profile, Service,  } from "@dartfrog/puddle/index";
 
 export const PACKAGE_ID = "dartfrog:herobrine.os";
 export const CHAT_PLUGIN = `chat:${PACKAGE_ID}`;
@@ -23,10 +23,6 @@ export interface DartStore {
   isClientConnected: boolean
   setIsClientConnected: (isClientConnected: boolean) => void
   // 
-  // chat stuff here until its properly abstracted later
-  nameColors: Map<string, string>
-  addNameColor: (name:string, color:string) => void
-  // 
   isSidebarOpen: boolean
   setIsSidebarOpen: (isSidebarOpen: boolean) => void
   // 
@@ -40,6 +36,12 @@ export interface DartStore {
   // 
   peerMap: PeerMap,
   putPeerMap: (peer:Peer) => void,
+  // 
+  profile: Profile | null,
+  setProfile: (profile) => void,
+  requestSetProfile: (profile) => void,
+  activitySetting: ActivitySetting | null,
+  setActivitySetting: (setting) => void,
   // 
   get: () => DartStore 
   set: (partial: DartStore | Partial<DartStore>) => void
@@ -62,13 +64,6 @@ const useDartStore = create<DartStore>()(
       },
       isClientConnected: false,
       setIsClientConnected: (isClientConnected) => set({ isClientConnected }),
-      // chat stuff
-      nameColors: new Map<string, string>(),
-      addNameColor: (name:string, color:string) => {
-        const { nameColors } = get()
-        nameColors[name] = color;
-        set({ nameColors: nameColors })
-      },
       // 
       isSidebarOpen: false,
       setIsSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
@@ -122,11 +117,28 @@ const useDartStore = create<DartStore>()(
       peerMap: new Map<string, Peer>(),
       putPeerMap: (peer) => {
         const { peerMap } = get();
-        console.log("putting in peer map", peer);
         const newPeerMap = new Map(peerMap);
         newPeerMap.set(peer.node, peer);
         set({ peerMap: newPeerMap });
       },
+      // 
+      profile: null,
+      setProfile: (profile) => set({ profile }),
+      requestSetProfile: (profile) => {
+        const { api } = get()
+        if (!(api)) return;
+        api.send({data:
+          {
+            "SetProfile": 
+              { pfp: profile.pfp,
+                bio: profile.bio,
+                name_color: profile.nameColor,
+              }
+          }
+        })
+      },
+      activitySetting: null,
+      setActivitySetting: (setting) => set({ activitySetting: setting }),
       // 
       get,
       set,

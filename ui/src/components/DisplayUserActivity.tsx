@@ -12,7 +12,7 @@ const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({}) => {
   // const { userActivity, nameColors, addNameColor } = useChatStore();
   const [groupedUsers, setGroupedUsers] = useState({ online: [], recentlyOnline: [], ever: [] });
 
-  const { nameColors, addNameColor } = useDartStore();
+  // const { nameColors, addNameColor } = useDartStore();
 
   const activityStatus = (isSubscribed, lastActivityTime, currentTime) => {
     const tenMinutes = 3 * 60 * 1000; // 3 minutes in milliseconds
@@ -56,17 +56,17 @@ const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({}) => {
     // });
   // }, [metadata]);
 
-  const getNameColor = useCallback(
-    (name: string) => {
-    let color = nameColors[name];
-    if (color) {
-      return color
-    }
-    color = computeColorForName(name);
-    addNameColor(name, color);
-    return color;
-  }
-  , [nameColors])
+  // const getNameColor = useCallback(
+  //   (name: string) => {
+  //   let color = nameColors[name];
+  //   if (color) {
+  //     return color
+  //   }
+  //   color = computeColorForName(name);
+  //   addNameColor(name, color);
+  //   return color;
+  // }
+  // , [nameColors])
 
   return (
     <div style={{color: '#ffffff77', fontSize: '0.8rem', cursor: 'default',
@@ -75,7 +75,7 @@ const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({}) => {
       <div>
         <span style={{fontSize: '0.8rem'}}>{groupedUsers.online.length} online: </span>
         {groupedUsers.online.map((userId, index) => (
-          <span key={index} style={{ color: getNameColor(userId), userSelect: 'text'}}>
+          <span key={index} style={{ userSelect: 'text'}}>
             {userId}
             {index < groupedUsers.online.length - 1 ? ', ' : ''}
           </span>

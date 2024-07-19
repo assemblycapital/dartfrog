@@ -89,8 +89,7 @@ pub enum ServiceVisibility {
 pub enum PeerActivity {
     Offline,
     Private,
-    Online(u64),
-    RecentlyOnline(u64),
+    Active(u64),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -169,6 +168,7 @@ impl Peer {
 pub enum DartfrogInput {
     CreateService(String, String),
     DeleteService(String),
+    SetProfile(Profile),
     //
     RequestLocalService(String),
     RequestLocalServiceList,

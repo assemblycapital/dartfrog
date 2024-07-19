@@ -8,37 +8,31 @@ import Invites from './Invites';
 import Settings from './Settings';
 import Friends from './Friends';
 import { XIcon } from '../icons/Icons';
-import profileImage from '../../assets/dartfrog256_nobg.png';
+import defaultProfileImage from '../../assets/dartfrog256_nobg.png';
 import { useNavigate } from 'react-router-dom';
 import { NameColor, getClassForNameColor } from '@dartfrog/puddle/index';
 
 interface SidebarProps {}
 
 const Sidebar: React.FC<SidebarProps> = ({ }) => {
-  const { isSidebarOpen, nameColors, addNameColor, setIsSidebarOpen, } = useDartStore();
-  const [activeComponent, setActiveComponent] = useState<string>('sidebar');
+  const { isSidebarOpen, setIsSidebarOpen, } = useDartStore();
+  const [profileImage, setProfileImage] = useState<string>(defaultProfileImage);
+  const [nameColorClass, setNameColorClass] = useState<string>('name-color-default');
   const navigate = useNavigate();
+
+  const {profile} = useDartStore();
+  useEffect(()=>{
+    if (profile && profile.pfp) {
+      setProfileImage(profile.pfp)
+    }
+    if (profile) {
+      setNameColorClass(getClassForNameColor(profile.nameColor))
+
+    }
+  },[profile]);
 
 
   const renderComponent = () => {
-    let component;
-    switch (activeComponent) {
-      case 'notifs':
-        component = <Notifs />;
-        break;
-      case 'messages':
-        component = <Messages />;
-        break;
-      case 'invites':
-        component = <Invites />;
-        break;
-      case 'friends':
-        component = <Friends />;
-        break;
-      case 'settings':
-        component = <Settings />;
-        break;
-      default:
         return (
           <div
             style={{
@@ -95,6 +89,8 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
                       height:'15vh',
                       maxWidth:'15vh',
                       maxHeight:'15vh',
+                      minWidth:'15vh',
+                      minHeight:'15vh',
                     }}
                   >
                     <div className='profile-image'>
@@ -103,7 +99,7 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
                   </div>
                 </div>
                 <div
-                  className={`profile-name ${getClassForNameColor(NameColor.Orange)}`}
+                  className={`profile-name ${nameColorClass}`}
                   style={{
                     flex: '1',
                     cursor: 'pointer',
@@ -145,71 +141,6 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
         );
     }
 
-    return (
-      <div
-        style={{
-          overflow: 'hidden',
-          height: '100%',
-          width: '100%',
-          display: "flex",
-          flexDirection: "column"
-        }}
-      >
-        <div 
-          style={{
-            backgroundColor: '#333',
-            color: '#b4b4b4',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '5px',
-            height: '26px',
-            gap: '1rem',
-            overflowX: 'hidden',
-            overflowY: 'hidden',
-            padding: '0px 10px',
-            position: 'relative',
-            fontSize: '0.8em',
-            userSelect: 'none',
-          }}
-        >
-          <div
-            onClick={() => setActiveComponent('sidebar')}
-            className='sidebar-back-button'
-            style={{ cursor: 'pointer',
-              flex:1,
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'absolute',
-              left: '0px',
-              padding: '0px 3px',
-              // color: '#808080',
-            }}
-          >
-            back
-          </div>
-          <div style={{ flex: 1, textAlign: 'center' }}>
-
-            {activeComponent}
-          </div>
-
-        </div>
-        <div
-          style={{
-            height:"100%",
-            width:"100%",
-            maxHeight:"100%",
-            flexGrow:"1",
-          }}
-        >
-
-          {component}
-        </div>
-      </div>
-    );
-  };
 
   return renderComponent();
 };

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import useDartStore from '../../store/dart';
-import { Peer, getClassForNameColor, NameColor } from '@dartfrog/puddle/index';
+import { Peer, getClassForNameColor, NameColor, Profile } from '@dartfrog/puddle/index';
+import { useNavigate } from 'react-router-dom';
 
 import { useParams } from 'react-router-dom';
 import defaultProfileImage from '../../assets/dartfrog256_nobg.png';
@@ -20,6 +21,7 @@ const renderConnectionStatus = (peer: Peer | null, isBadConnection: boolean) => 
         gap: "1rem",
         color: "gray",
         fontSize: "0.8rem",
+        cursor:"default",
       }}
     >
       <div>connection:</div>
@@ -40,13 +42,19 @@ const renderConnectionStatus = (peer: Peer | null, isBadConnection: boolean) => 
 
 const NodeProfile: React.FC<NodeProps> = ({ }) => {
     const { node } = useParams<{ node: string }>();
-    const { peerMap, localFwdPeerRequest } = useDartStore();
+    const { peerMap, localFwdPeerRequest, requestSetProfile } = useDartStore();
     const [peer, setPeer] = useState<Peer|null>(null);
     const [profileImage, setProfileImage] = useState<string>(defaultProfileImage);
+    const [selectedProfileImage, setSelectedProfileImage] = useState<string | null>(null);
     const [nameColorClass, setNameColorClass] = useState<string>('name-color-default');
     const [isBadConnection, setIsBadConnection] = useState(false);
     const [isOurProfile, setIsOurProfile] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
+    const [selectedBio, setSelectedBio] = useState<string>('');
+    const [selectedNameColor, setSelectedNameColor] = useState<NameColor>(NameColor.Default);
+    const [isLoadingImage, setIsLoadingImage] = useState(false);
+
+    const navigate = useNavigate();
 
     useEffect(()=>{
       const nodeOur = node===window.our?.node
@@ -56,54 +64,74 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
     const checkImageURL = async (url: string) => {
         try {
             const response = await fetch(url);
-            if (response.ok) {
-                return url;
-            } else {
-                return defaultProfileImage;
-            }
+            return (response.ok)
         } catch (error) {
-            return defaultProfileImage;
+            return false
         }
     };
 
     const handleProfileImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const imageUrl = event.target.value;
-        const validImageUrl = await checkImageURL(imageUrl);
-        setProfileImage(validImageUrl);
-        // Here you might want to upload the image to your server
+        const valid  = checkImageURL(imageUrl)
+        if (valid) {
+          setSelectedProfileImage(imageUrl);
+          setProfileImage(imageUrl);
+        }
     };
 
     const handleColorChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedColor = event.target.value as NameColor;
+        setSelectedNameColor(selectedColor);
         const gotClass = getClassForNameColor(selectedColor);
         setNameColorClass(gotClass);
-        // Here you might want to update the color on your server
     };
+
+    const handleBioChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setSelectedBio(event.target.value);
+    };
+
+    const handleSave = useCallback(() => {
+        setIsEditMode(false);
+        const newProfile = new Profile(selectedBio, selectedNameColor, selectedProfileImage)
+        requestSetProfile(newProfile);
+        localFwdPeerRequest(node);
+    }, [selectedBio, selectedNameColor, selectedProfileImage]);
+
+
+    useEffect(() => {
+      localFwdPeerRequest(node);
+    }, [node]);
 
     useEffect(() => {
         if (peerMap && node) {
             const gotPeer = peerMap.get(node);
-            if (!(gotPeer)) {
-              localFwdPeerRequest(node);
-            } else {
+            if (gotPeer) {
               setPeer(gotPeer);
             }
         }
     }, [peerMap, node]);
 
-    useEffect(() => {
-        const updateProfileImage = async () => {
-            if (peer && peer.peerData && peer.peerData.profile.pfp) {
-                const validImageUrl = await checkImageURL(peer.peerData.profile.pfp);
-                setProfileImage(validImageUrl);
+    const updateProfileImage = async () => {
+        if (peer && peer.peerData && peer.peerData.profile.pfp) {
+            setIsLoadingImage(true); // Set loading to true before the fetch
+            const valid = await checkImageURL(peer.peerData.profile.pfp);
+            if (valid) {
+                setProfileImage(peer.peerData.profile.pfp);
+                setSelectedProfileImage(peer.peerData.profile.pfp);
             }
-        };
-        setProfileImage(defaultProfileImage); 
+            setTimeout(() => {
+              setIsLoadingImage(false);
+          }, 500);
+        }
+    };
+
+    useEffect(() => {
         updateProfileImage();
         if (peer && peer.peerData) {
           const gotClass = getClassForNameColor(peer.peerData.profile.nameColor);
-          // console.log("gotnameclass", gotClass)
           setNameColorClass(gotClass);
+          setSelectedNameColor(peer.peerData.profile.nameColor); // Set the initial selected color
+          setSelectedBio(peer.peerData.profile.bio); // Set the initial bio
         }
     }, [peer]);
 
@@ -128,6 +156,7 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
           style={{
             display:"flex",
             flexDirection:"column",
+            gap:"0.6rem",
             // height:"100%"
           }}
         >
@@ -147,52 +176,78 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                   display:"flex",
                   flexDirection:"column",
                   textAlign:"center",
+                  gap:"0.6rem",
 
                 }}
               >
-                  {renderConnectionStatus(peer, isBadConnection)}
-                  {isOurProfile && 
+                  <div
+                    style={{ 
+                      display:"flex",
+                      flexDirection:"row",
+                      alignItems: "center",
+                      gap:"1rem",
+                     }}
+                  >
                     <button
                       onClick={()=>{
-                        setIsEditMode(!isEditMode);
+                        navigate("/nodes")
+                      
+                      }}
+                      style={{
+                        cursor:"pointer",
+                        fontSize: "0.8rem",
+                        width:"auto",
                       }}
                     >
-                      {isEditMode ? 'cancel' : 'edit'}
+                      <div>
+                        back to all nodes
+
+                      </div>
                     </button>
-                  }
+                    {isOurProfile && 
+                      <button
+                        onClick={()=>{
+                          setIsEditMode(!isEditMode);
+                        }}
+                      >
+                        {isEditMode ? 'cancel' : 'edit'}
+                      </button>
+                    }
+                    {renderConnectionStatus(peer, isBadConnection)}
+                  </div>
+                 
                   <div>
                     <div
                       className="node-profile-image"
                       style={{
                         height:"30vh",
                         width:"30vh",
-
                       }}
                       onClick={()=>{
                         if (isOurProfile) {
                           setIsEditMode(true);
                         }
-                      }
-                      }
+                      }}
                     >
                       <img 
                         src={profileImage} 
                         alt="profile image" 
+                        style={{
+                          opacity: isLoadingImage ? 0 : 1, // Set opacity based on loading state
+                        }}
                       />
                     </div>
-
                   </div>
                       {isEditMode && (
                         <div>
-
-                        <input 
-                          style={{
-                            margin:'0'
-                          }}
-                          type="text" 
-                          placeholder="Enter image URL" 
-                          onChange={handleProfileImageChange} 
-                        />
+                          <input 
+                            style={{
+                              margin:'0'
+                            }}
+                            type="text" 
+                            placeholder="Enter image URL" 
+                            onChange={handleProfileImageChange} 
+                          />
                         </div>
                       )}
 
@@ -207,28 +262,45 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                         if (isOurProfile) {
                           setIsEditMode(true);
                         }
-                      }
-                      }
+                      }}
                     >
                       {peer.node}
                     </div>
                       {isEditMode && (
                         <div>
-                          <select onChange={handleColorChange}>
+                          <select onChange={handleColorChange} value={selectedNameColor}>
                             {Object.values(NameColor).map((color) => (
                                 <option key={color} value={color}>{color.toLowerCase()}</option>
                             ))}
                           </select>
                         </div>
                       )}
-                    <div
-                      style={{
-                        flex: '1',
-                        fontSize:"1rem",
-                      }}
-                    >
-                      {peer.peerData && peer.peerData.profile.bio}
-                    </div>
+                    {isEditMode ? (
+                        <div>
+                          <textarea
+                            value={selectedBio}
+                            onChange={handleBioChange}
+                          />
+                        </div>
+                      ): (
+                        <div
+                          style={{
+                            flex: '1',
+                            fontSize:"1rem",
+                          }}
+                        >
+                          {peer.peerData ? peer.peerData.profile.bio : ''}
+                        </div>
+                      )}
+                    {isEditMode && (
+                      <div>
+                        <button
+                          onClick={handleSave}
+                        >
+                          save
+                        </button>
+                      </div>
+                    )}
               </div>
             )}
         </div>

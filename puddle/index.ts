@@ -392,12 +392,21 @@ export enum NameColor {
   Green = "Green",
   Orange = "Orange",
   Purple = "Purple",
+  Default = "Default",
 }
 
 export interface Profile {
   bio: string;
   nameColor: NameColor;
   pfp?: string; // url
+}
+
+export function profileFromJson(jsonProfile: any): Profile {
+  return new Profile(
+    jsonProfile.bio,
+    jsonProfile.name_color,
+    jsonProfile.pfp
+  );
 }
 
 export class Profile {
@@ -435,11 +444,7 @@ export class Peer {
 export function peerFromJson(json: any): Peer {
   const peerData: PeerData | null = json.peer_data ? {
     hostedServices: json.peer_data.hosted_services.map((service: any) => serviceFromJson(service)),
-    profile: new Profile(
-      json.peer_data.profile.bio,
-      json.peer_data.profile.name_color,
-      json.peer_data.profile.pfp
-    ),
+    profile: profileFromJson(json.peer_data.profile),
     activity: json.peer_data.activity
   } : null;
 

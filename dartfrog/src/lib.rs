@@ -141,6 +141,7 @@ fn handle_http_server_request(
             state.consumers.retain(|_, consumer| {
                 get_now() - consumer.last_active <= CONSUMER_TIMEOUT
             });
+            state.activity = PeerActivity::Active(get_now());
 
             if message_type == WsMessageType::Close {
                 state.consumers.remove(&channel_id);
@@ -158,6 +159,11 @@ fn handle_http_server_request(
             };
 
             match serde_json::from_slice(&blob.bytes)? {
+                DartfrogInput::SetProfile(profile) => {
+                    state.profile = profile;
+                    let local_user = DartfrogOutput::LocalUser(state.profile.clone(), state.activity.clone(), state.activity_setting.clone());
+                    update_consumer(channel_id, local_user)?;
+                },
                 DartfrogInput::CreateService(service_name, process_name) => {
                     let address_str = format!("{}@{}", our.node, process_name);
                     let address = Address::from_str(address_str.as_str());
