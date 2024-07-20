@@ -74,7 +74,7 @@ button {
   border: none;
   border-radius: 4px;
   /* padding-top: 2px 10px; */
-  background-color: #00000022;
+  background-color: #171717;
   color: #ffffff66;
   cursor: pointer;
   transition: background-color 0.25s;
@@ -100,7 +100,7 @@ label {
 }
 
 button:hover {
-  background-color: #00000055;
+  background-color: #040404;
 }
 
 textarea, input[type="text"] {

@@ -21,7 +21,7 @@ const JoinPage = () => {
   const serviceIdString = id;
 
   const serviceId = ServiceID.fromString(serviceIdString);
-  const {peerMap, localServices} = useDartStore();
+  const {peerMap, localServices, localFwdPeerRequest} = useDartStore();
 
   const [serviceMetadata, setServiceMetadata] = useState<ServiceMetadata | null>(null)
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(null);
@@ -49,12 +49,20 @@ const JoinPage = () => {
       console.log("not our")
       let gotPeer = peerMap.get(serviceId.hostNode());
       if (!(gotPeer)) {
+        console.log("no peer")
         // TODO
-        // requestServiceList(parsedServiceId.node);
+        localFwdPeerRequest(serviceId.hostNode());
         setServiceStatus(ServiceStatus.CONTACTING_HOST)
         return;
       }
-      // gotService = gotPeer.hostedServices.find(service => service.id === serviceId);
+      if (!(gotPeer.peerData)) {
+        console.log("no peer data")
+        setServiceStatus(ServiceStatus.CONTACTING_HOST)
+        return;
+      }
+      console.log("got peer data", gotPeer.peerData.hostedServices, serviceId)
+      gotService = gotPeer.peerData.hostedServices.find(service => service.id.toString() === serviceId.toString());
+      console.log("got service", gotService);
 
     }
 

@@ -7,6 +7,7 @@ import { useParams } from 'react-router-dom';
 import defaultProfileImage from '../../assets/dartfrog256_nobg.png';
 
 import './NodeProfile.css';
+import ServiceList from '../Services/ServiceList';
 
 
 interface NodeProps {
@@ -342,6 +343,14 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                         </button>
                       </div>
                     )}
+                <div
+                  style={{
+                    margin:"1rem",
+                    fontSize:"0.8rem",
+                  }}
+                >
+                  <ServiceList services={peer.peerData ? peer.peerData.hostedServices : []} />
+                </div>
               </div>
             )}
         </div>

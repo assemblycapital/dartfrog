@@ -11,6 +11,7 @@ import Home from './Home';
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Services from './Services/Services';
 import NodeProfile from './Nodes/NodeProfile';
+import Messages from './Messages/Messages';
 
 interface MiddleProps {
 }
@@ -48,15 +49,13 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
               <div>
               <Routes>
                 <Route path="/" element={
-                  <Home />
+                    <Home />
                 } />
                 <Route path="/services" element={
-                      <Services />
+                    <Services />
                 } />
                 <Route path="/messages" element={
-                      <div>
-                        TODO messages
-                      </div>
+                    <Messages />
                 } />
                 <Route path="/nodes" element={
                   <Nodes />

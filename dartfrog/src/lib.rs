@@ -129,6 +129,17 @@ fn handle_http_server_request(
                 },
             );
             state.activity = PeerActivity::Online(get_now());
+            let my_peer_data = PeerData {
+                profile: state.profile.clone(),
+                hosted_services: state.local_services.values().cloned().collect(),
+                activity: state.activity.clone(),
+            };
+            state.peers.insert(our.node.clone(), Peer {
+                node: our.node.clone(),
+                peer_data: Some(my_peer_data),
+                outstanding_request: None,
+                last_updated: Some(get_now()),
+            });
             let services: Vec<Service> = state.local_services.values().cloned().collect();
             update_consumer(channel_id, DartfrogOutput::LocalServiceList(services))?;
             let peers: Vec<Peer> = state.peers.values().cloned().collect();
@@ -354,6 +365,7 @@ fn handle_dartfrog_input(
             let Some(local_peer) = state.peers.get_mut(source.node()) else {
                 return Ok(());
             };
+            println!("peer response {:?} {:?}", source.node(), peer_data);
             match local_peer.outstanding_request {
                 None => {
                 }

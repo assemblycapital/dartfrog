@@ -2,7 +2,7 @@ import DisplayUserActivity from "../DisplayUserActivity";
 import { useCallback, useEffect, useState } from "react";
 import Spinner from "../Spinner";
 import useDartStore from "../../store/dart";
-import {ServiceConnectionStatus, ServiceConnectionStatusType, } from "@dartfrog/puddle";
+import {ServiceConnectionStatus, ServiceConnectionStatusType, getAllServicesFromPeerMap, getUniqueServices, } from "@dartfrog/puddle";
 import './Services.css'
 import { createSecretKey } from "crypto";
 import CreateService from "./CreateService";
@@ -45,6 +45,8 @@ const Services: React.FC<ServicesProps> = ({ }) => {
 
   const navigate = useNavigate();
 
+  const {localServices, peerMap} = useDartStore();
+
   const handleJoinServiceNameInputChange = (e) => {
     const value = e.target.value;
     setInputJoinServiceName(value);
@@ -76,6 +78,8 @@ const Services: React.FC<ServicesProps> = ({ }) => {
     }
   }, [inputJoinServiceLink]);
 
+  const allServices = getUniqueServices([...localServices, ...getAllServicesFromPeerMap(peerMap)]);
+
   return (
     <div
       style={{
@@ -95,6 +99,7 @@ const Services: React.FC<ServicesProps> = ({ }) => {
       </div>
 
       <ServiceList
+        services={allServices}
       />
 
       <CreateService />

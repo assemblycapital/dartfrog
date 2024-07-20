@@ -68,7 +68,7 @@ const useDartStore = create<DartStore>()(
       isClientConnected: false,
       setIsClientConnected: (isClientConnected) => set({ isClientConnected }),
       // 
-      isSidebarOpen: false,
+      isSidebarOpen: true,
       setIsSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
       // 
       requestLocalServiceList: () => {

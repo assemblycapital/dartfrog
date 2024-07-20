@@ -226,6 +226,7 @@ export class ServiceApi {
   }
 }
 
+
 export type PeerMap = Map<string, Peer>;
 
 export type Address = string;
@@ -520,7 +521,7 @@ export function getServiceRecencyText(service: Service) {
   if (service.meta.subscribers.length > 0) {
     return `now`;
   }
-  getRecencyText(diff);
+  return getRecencyText(diff);
 }
 
 export function getRecencyText(diff:number) {
@@ -533,3 +534,33 @@ export function getRecencyText(diff:number) {
   }
   return `${Math.floor(diff / 86400000)} days ago`;
 }
+
+export function getAllServicesFromPeerMap(peerMap: PeerMap): Service[] {
+  const allServices: Service[] = [];
+  
+  peerMap.forEach(peer => {
+    if (peer.peerData && peer.peerData.hostedServices) {
+      allServices.push(...peer.peerData.hostedServices);
+    }
+  });
+
+  return allServices;
+}
+
+export function sortServices(services) {
+  return services.sort((a, b) => {
+    const subDiff = b.meta.subscribers.length - a.meta.subscribers.length;
+    if (subDiff !== 0) return subDiff;
+
+    const aMaxTime = a.meta.last_sent_presence ?? 0;
+    const bMaxTime = b.meta.last_sent_presence ?? 0;
+
+    return bMaxTime - aMaxTime;
+  });
+}
+
+export const getUniqueServices = (services) => {
+  return Array.from(new Set(services.map(service => service.id.toString())))
+    .map(id => services.find(service => service.id.toString() === id));
+};
+

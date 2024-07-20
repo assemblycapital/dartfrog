@@ -20,6 +20,7 @@
 
 .control-header-right {
   display: flex;
+  gap: 0.8rem;
   justify-content: flex-end;
   align-items: center;
 }

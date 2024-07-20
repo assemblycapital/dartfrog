@@ -759,6 +759,7 @@ where
                         // println!("Service {} subscribed", service_id);
                         sw.service.meta.subscribers.insert(source.node.clone());
                         sw.service.meta.user_presence.insert(source.node.clone(), get_now());
+                        sw.service.meta.last_sent_presence = Some(get_now());
                         poke_client(source, service_id.clone(), UpdateFromService::SubscribeAck)?;
                         publish_metadata(our, &sw.service)?;
                         sw.state.handle_subscribe(source.node.clone(), our, &sw.service)?;

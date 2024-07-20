@@ -3,22 +3,18 @@ import useDartStore from '../../store/dart';
 import Spinner from '../Spinner';
 // import { Presence, ServiceAccess } from '@dartfrog/puddle/index';
 import { useNavigate } from 'react-router-dom';
-import { Service, ServiceID, ServiceVisibility, getServiceRecencyText } from '@dartfrog/puddle/index';
+import { Service, ServiceID, ServiceVisibility, getAllServicesFromPeerMap, getServiceRecencyText, sortServices } from '@dartfrog/puddle/index';
 
-const ServiceList = ({ }) => {
-  const { localServices, deleteService, requestLocalServiceList } = useDartStore();
+const ServiceList = ({services }) => {
+  const { localServices, deleteService, requestLocalServiceList, peerMap, localFwdAllPeerRequests } = useDartStore();
   const navigate = useNavigate();
 
-  // Sort the flattened array by the number of subscribers, and for those with zero subscribers, sort by recency
-  const sortedServices = localServices.sort((a, b) => {
-    const subDiff = b.meta.subscribers.length - a.meta.subscribers.length;
-    if (subDiff !== 0) return subDiff;
+  // const allServices = [...localServices, ...getAllServicesFromPeerMap(peerMap)];
+  // const uniqueServices = Array.from(new Set(allServices.map(service => service.id.toString())))
+  //   .map(id => allServices.find(service => service.id.toString() === id));
 
-    const aMaxTime = a.meta.last_sent_presence ?? 0;
-    const bMaxTime = b.meta.last_sent_presence ?? 0;
-
-    return bMaxTime - aMaxTime;
-  });
+  // // Sort the flattened array by the number of subscribers, and for those with zero subscribers, sort by recency
+  const sortedServices = sortServices(services);
 
   const knownProcesses = {
     "chat:dartfrog:herobrine.os": "chat",
@@ -138,7 +134,7 @@ const ServiceList = ({ }) => {
                     className="delete-button"
                     onClick={() => {
                       deleteService(service.id.toString());
-                      // requestLocalServiceList(window.our?.node);
+                      requestLocalServiceList();
                     }}
                   >
                     delete
