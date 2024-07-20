@@ -3,15 +3,14 @@ import './Sidebar.css';
 import useDartStore from '../../store/dart';
 import { computeColorForName } from '@dartfrog/puddle/utils';
 import { XIcon } from '../icons/Icons';
-import defaultProfileImage from '../../assets/dartfrog256_nobg.png';
 import { useNavigate } from 'react-router-dom';
-import { NameColor, getClassForNameColor } from '@dartfrog/puddle/index';
+import { DEFAULT_PFP, NameColor, getClassForNameColor } from '@dartfrog/puddle/index';
 
 interface SidebarProps {}
 
 const Sidebar: React.FC<SidebarProps> = ({ }) => {
   const { isSidebarOpen, setIsSidebarOpen, } = useDartStore();
-  const [profileImage, setProfileImage] = useState<string>(defaultProfileImage);
+  const [profileImage, setProfileImage] = useState<string>(DEFAULT_PFP);
   const [nameColorClass, setNameColorClass] = useState<string>('name-color-default');
   const navigate = useNavigate();
 

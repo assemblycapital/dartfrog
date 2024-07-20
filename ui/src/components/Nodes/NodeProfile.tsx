@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import useDartStore from '../../store/dart';
-import { Peer, getClassForNameColor, NameColor, Profile, getRecencyText } from '@dartfrog/puddle/index';
+import { Peer, getClassForNameColor, NameColor, Profile, getRecencyText, DEFAULT_PFP } from '@dartfrog/puddle/index';
 import { useNavigate } from 'react-router-dom';
 
 import { useParams } from 'react-router-dom';
-import defaultProfileImage from '../../assets/dartfrog256_nobg.png';
 
 import './NodeProfile.css';
 import ServiceList from '../Services/ServiceList';
@@ -47,7 +46,7 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
     const { peerMap, delPeerMap, localFwdPeerRequest, requestSetProfile, localDeletePeer } = useDartStore();
 
     const [peer, setPeer] = useState<Peer|null>(null);
-    const [profileImage, setProfileImage] = useState<string>(defaultProfileImage);
+    const [profileImage, setProfileImage] = useState<string>(DEFAULT_PFP);
     const [selectedProfileImage, setSelectedProfileImage] = useState<string | null>(null);
     const [nameColorClass, setNameColorClass] = useState<string>('name-color-default');
     const [isBadConnection, setIsBadConnection] = useState(false);

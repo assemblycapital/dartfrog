@@ -475,7 +475,7 @@ export function dfLinkToRealLink(dfLink: string, baseOrigin:string) {
 }
 
 
-export const DEFAULT_PFP = 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/dartfrog256_nobg.png';
+export const DEFAULT_PFP = 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/dartfrog256_small_nobg.png'
 export function getPeerPfp(peer: Peer): string {
   if (peer.peerData && peer.peerData.profile.pfp) {
     return peer.peerData.profile.pfp
