@@ -41,13 +41,22 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
               display:"flex",
               flexDirection:"column",
               alignItems:"center",
-
+              overflow:"hidden",
+              flexShrink: 1,
+              minWidth: 0,
             }}
           >
             <div
+              style={{
+              }}
             >
               <span
                 className={''}
+                style={{
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
               >
               {service.id.toShortString()}
               </span>
@@ -56,6 +65,9 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
               style={{
                 color:'gray',
                 fontSize:'0.6rem',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
             >
               {service.id.process()}

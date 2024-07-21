@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import './Sidebar.css';
 import useDartStore from '../../store/dart';
 import { computeColorForName } from '@dartfrog/puddle/utils';
-import { XIcon } from '../icons/Icons';
+import { AssemblyCapitalLogo, XIcon } from '../icons/Icons';
 import { useNavigate } from 'react-router-dom';
 import { DEFAULT_PFP, NameColor, getClassForNameColor } from '@dartfrog/puddle/index';
 import { PROCESS_NAME } from '../../utils';
@@ -36,6 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          height:"100%",
         }}
       >
         <div
@@ -71,7 +72,9 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
               cursor: "pointer",
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center'
+              alignItems: 'center',
+              justifyContent: 'center', // Center vertically
+              height: '100%' // Ensure the anchor takes full height
             }}
             onClick={(event) => {
               event.preventDefault();
@@ -81,8 +84,10 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
             <div
               style={{
                 width: "100%",
+                flexGrow:"1",
                 display: 'flex',
-                justifyContent: 'center'
+                alignItems: 'center', // Center text vertically
+                justifyContent: 'center' // Center text horizontally
               }}
             >
               <div className='profile-image'
@@ -103,6 +108,10 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
               style={{
                 flex: '1',
                 cursor: 'pointer',
+                textAlign: 'center', // Center text horizontally
+                display: 'flex', // Use Flexbox
+                alignItems: 'center', // Center text vertically
+                justifyContent: 'center' // Center text horizontally
               }}
             >
               {window.our?.node}
@@ -144,6 +153,29 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
           >
             nodes
           </a>
+          <div
+            style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              marginTop: 'auto', 
+              flexGrow: '1', 
+              height: "100%",
+              color:'#818181',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap:"0.6rem",
+            }}
+          >
+            <AssemblyCapitalLogo color={'#818181'} />
+            <span
+              style={{
+                fontSize:'0.5rem',
+                cursor:"default"
+              }}
+            >
+              dartfrog v0.3.0
+            </span>
+          </div>
         </div>
       </div>
     );

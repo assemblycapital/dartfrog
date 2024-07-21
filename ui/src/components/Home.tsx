@@ -66,7 +66,19 @@ const Home: React.FC = () => {
                 alignItems: "center",
               }}
             >
-              join the hub
+              <a href={`/${PROCESS_NAME}/join/`}
+                className='join-the-hub color-white'
+                  onClick={(event) => {
+                    event.preventDefault();
+                    navigate('/services')
+                  }}
+                  style={{
+                    padding:"2rem",
+                    cursor:"pointer",
+                  }}
+              >
+                join the hub
+              </a>
             </div>
             <div
               style={{
@@ -92,7 +104,7 @@ const Home: React.FC = () => {
                     flexDirection: "column",
                   }}
                 >
-                  {allServices.slice(0, 3).map((service, index) => (
+                  {allServices.slice(0, 4).map((service, index) => (
                     <ServiceCard key={index} service={service} />
                   ))}
                   <a
