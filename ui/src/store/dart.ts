@@ -13,6 +13,8 @@ export const INBOX_PLUGIN = `inbox:${PACKAGE_ID}`;
 
 export const STANDARD_PLUGINS = [CHAT_PLUGIN, PIANO_PLUGIN, PAGE_PLUGIN, CHESS_PLUGIN, INBOX_PLUGIN];
 
+export type DartfrogWebpageType = 'home' | 'nodes' | 'messages' | 'services';
+
 export interface DartStore {
   api: KinodeClientApi | null,
   setApi: (api: KinodeClientApi) => void
@@ -45,6 +47,9 @@ export interface DartStore {
   requestSetProfile: (profile) => void,
   activitySetting: ActivitySetting | null,
   setActivitySetting: (setting) => void,
+  // 
+  currentPage: DartfrogWebpageType,
+  setCurrentPage: (page: DartfrogWebpageType) => void,
   // 
   get: () => DartStore 
   set: (partial: DartStore | Partial<DartStore>) => void
@@ -166,6 +171,9 @@ const useDartStore = create<DartStore>()(
       },
       activitySetting: null,
       setActivitySetting: (setting) => set({ activitySetting: setting }),
+      // 
+      currentPage: 'home',
+      setCurrentPage: (page) => set({ currentPage: page }),
       // 
       get,
       set,

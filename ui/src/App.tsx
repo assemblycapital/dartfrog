@@ -96,13 +96,13 @@ function App() {
       flexDirection: 'column',
       padding: '20px',
     }}>
-      <div
+      {/* <div
         style={{
           flexShrink: 0,
         }}
       >
         <ControlHeader />
-      </div>
+      </div> */}
       <div
         style={{
           flexGrow: 1,

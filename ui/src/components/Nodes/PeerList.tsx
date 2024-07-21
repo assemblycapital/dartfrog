@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import useDartStore from '../../store/dart';
 import ProfilePicture from '../ProfilePicture';
 import { getPeerNameColor } from '@dartfrog/puddle/index';
+import { PROCESS_NAME } from '../../utils';
 
 const PeerList = () => {
   const { peerMap } = useDartStore();
@@ -39,9 +40,13 @@ const PeerList = () => {
 
   const renderPeerList = (peers) => (
     peers.map(([node, peer]) => (
-      <div key={node}
+      <a key={node}
         className="nodes-node-row hover-dark-gray"
-        onClick={() => navigate(`/nodes/${node}`)}
+        href={`/${PROCESS_NAME}/nodes/${node}`}
+        onClick={(event) => {
+          event.preventDefault()
+          navigate(`/nodes/${node}`);
+        }}
       >
         <div
           style={{
@@ -65,7 +70,7 @@ const PeerList = () => {
                 gap: "4px",
               }}
             >
-              <span className={peer.peerData ? getPeerNameColor(peer) : 'gray'}>
+              <span className={peer.peerData ? getPeerNameColor(peer) : 'color-gray'}>
                 {node}
               </span>
               {peer.peerData?.profile.bio &&
@@ -75,7 +80,8 @@ const PeerList = () => {
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
-                    maxWidth: "100px"
+                    maxWidth: "100px",
+                    color:'gray',
                   }}
                 >
                   {peer.peerData.profile.bio}
@@ -84,7 +90,7 @@ const PeerList = () => {
             </div>
           </div>
         </div>
-      </div>
+      </a>
     ))
   );
 

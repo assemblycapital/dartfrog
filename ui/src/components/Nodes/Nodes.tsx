@@ -1,17 +1,26 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PeerList from './PeerList'; // Import the new component
+import PeerList from './PeerList';
 import './Nodes.css';
+import CurrentPageHeader from '../CurrentPageHeader';
+import useDartStore from '../../store/dart';
 
 const Nodes: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
 
   const navigate = useNavigate();
 
+  const {setCurrentPage} = useDartStore();
+
   const handleSubmit = useCallback(() => {
     if (inputValue === "") return;
     navigate(`/nodes/${inputValue}`)
   }, [inputValue]);
+
+
+  useEffect(()=>{
+    setCurrentPage('nodes')
+  }, [])
 
   return (
     <div
@@ -21,9 +30,7 @@ const Nodes: React.FC = () => {
         flexDirection: "column",
       }}
     >
-      <div className="current-page-header">
-        nodes
-      </div>
+      <CurrentPageHeader />
 
       <div style={{ marginTop: "1rem"}}>
         <input 

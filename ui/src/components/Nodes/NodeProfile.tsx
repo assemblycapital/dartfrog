@@ -7,6 +7,7 @@ import { useParams } from 'react-router-dom';
 
 import './NodeProfile.css';
 import ServiceList from '../Services/ServiceList';
+import CurrentPageHeader from '../CurrentPageHeader';
 
 
 interface NodeProps {
@@ -43,7 +44,7 @@ const renderConnectionStatus = (peer: Peer | null, isBadConnection: boolean) => 
 const NodeProfile: React.FC<NodeProps> = ({ }) => {
     const { node } = useParams<{ node: string }>();
 
-    const { peerMap, delPeerMap, localFwdPeerRequest, requestSetProfile, localDeletePeer } = useDartStore();
+    const { peerMap, delPeerMap, localFwdPeerRequest, requestSetProfile, localDeletePeer, setCurrentPage } = useDartStore();
 
     const [peer, setPeer] = useState<Peer|null>(null);
     const [profileImage, setProfileImage] = useState<string>(DEFAULT_PFP);
@@ -163,6 +164,9 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
       return ''
     }
 
+    useEffect(()=>{
+      setCurrentPage('nodes')
+    }, [])
     return (
         <div
           style={{
@@ -172,11 +176,7 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
             // height:"100%"
           }}
         >
-            <div
-              className="current-page-header"
-            >
-              profile: {node}
-            </div>
+            <CurrentPageHeader />
             {!peer ? (
               <div>
                 loading...
@@ -221,7 +221,7 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                           setIsEditMode(!isEditMode);
                         }}
                       >
-                        {isEditMode ? 'cancel' : 'edit'}
+                        {isEditMode ? 'cancel' : 'edit profile'}
                       </button>
                     }
                     {renderConnectionStatus(peer, isBadConnection)}

@@ -4,6 +4,7 @@ import React from 'react';
 
 import './ServiceCard.css'
 import ProfilePicture from '../ProfilePicture';
+import { PROCESS_NAME } from '../../utils';
 
 interface ServiceCard {
   service:Service
@@ -12,8 +13,8 @@ interface ServiceCard {
 const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
     const navigate = useNavigate();
     return (
-        <div
-          className="service-card hover-dark-gray"
+        <a
+          className="service-card hover-dark-gray color-white"
           style={{
             cursor:"pointer",
             padding:"1rem",
@@ -23,32 +24,32 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
             alignItems: "center",
             gap:"1rem",
           }}
-          onClick={()=>{
-            navigate(`/join/${service.id.toString()}`)
-
-          }}
+          href={`/${PROCESS_NAME}/join/${service.id.toString()}`}
         >
           <div
             style={{
+              flex:"1",
               display: "flex",
-              alignItems: "center",
+              justifyContent: "flex-end",
             }}
           >
             <ProfilePicture node={service.id.hostNode()} size={'24px'} />
           </div>
           <div
             style={{
+              flex:"2",
               display:"flex",
               flexDirection:"column",
+              alignItems:"center",
 
             }}
           >
             <div
             >
               <span
-                className={"link"}
+                className={''}
               >
-              {'df://'}{service.id.toShortString()}
+              {service.id.toShortString()}
               </span>
             </div>
             <div
@@ -63,8 +64,9 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
           </div>
           <div
             style={{
+              flex:"1",
               display: "flex",
-              alignItems: "center",
+              justifyContent: "flex-start",
             }}
           >
             {service.meta.subscribers.length === 0 ? (
@@ -78,7 +80,7 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
               </span>
             )}
           </div>
-        </div>
+        </a>
     );
 };
 

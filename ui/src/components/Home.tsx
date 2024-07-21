@@ -4,10 +4,20 @@ import { getAllServicesFromPeerMap, getUniqueServices, sortServices } from '@dar
 import ServiceList from './Services/ServiceList';
 import PeerList from './Nodes/PeerList';
 import ServiceCard from './Services/ServiceCard';
+import { HomeIcon } from './icons/Icons';
+import CurrentPageHeader from './CurrentPageHeader';
+import { PROCESS_NAME } from '../utils';
+import { useNavigate } from 'react-router-dom';
 
 const Home: React.FC = () => {
-  const {localServices, peerMap} = useDartStore();
+  const {localServices, peerMap, setCurrentPage} = useDartStore();
+  const navigate = useNavigate();
   const allServices = sortServices(getUniqueServices([...localServices, ...getAllServicesFromPeerMap(peerMap)]));
+
+  useEffect(()=>{
+    setCurrentPage('home')
+  }, [])
+
   return (
     <div
       style={{
@@ -18,11 +28,7 @@ const Home: React.FC = () => {
         flexDirection: "column",
       }}
     >
-      <div
-        className="current-page-header"
-      >
-        home
-      </div>
+      <CurrentPageHeader />
       <div
         style={{
           flexGrow: "1",
@@ -82,20 +88,30 @@ const Home: React.FC = () => {
                 <div
                   style={{
                     width: "100%",
+                    display: "flex",
+                    flexDirection: "column",
                   }}
                 >
-                  <ServiceCard service={allServices[0]} />
-                  <div
+                  {allServices.slice(0, 3).map((service, index) => (
+                    <ServiceCard key={index} service={service} />
+                  ))}
+                  <a
+                    href={`/${PROCESS_NAME}/services`}
                     className='hover-dark-gray'
                     style={{
                       color: 'gray',
                       textAlign: 'center',
                       cursor: "pointer",
                       padding: "0.5rem 1rem",
+                      width:"100%",
+                    }}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      navigate('/services')
                     }}
                   >
                     see all
-                  </div>
+                  </a>
                 </div>
               )}
             </div>

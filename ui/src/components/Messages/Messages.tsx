@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import CurrentPageHeader from '../CurrentPageHeader';
+import useDartStore from '../../store/dart';
 
 const Messages: React.FC = () => {
+    const {setCurrentPage} = useDartStore();
+    useEffect(()=>{
+        setCurrentPage('messages')
+    }, [])
     return (
         <div>
-            <div className="current-page-header">
-                messages
-            </div>
+            <CurrentPageHeader />
             <div>
 
                 todo messages

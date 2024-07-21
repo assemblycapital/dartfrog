@@ -8,6 +8,7 @@ import { createSecretKey } from "crypto";
 import CreateService from "./CreateService";
 import ServiceList from "./ServiceList";
 import { useNavigate } from 'react-router-dom';
+import CurrentPageHeader from "../CurrentPageHeader";
 
 export const validateServiceName = (value) => {
   if (value==='') return true;
@@ -45,7 +46,7 @@ const Services: React.FC<ServicesProps> = ({ }) => {
 
   const navigate = useNavigate();
 
-  const {localServices, peerMap} = useDartStore();
+  const {localServices, peerMap, setCurrentPage} = useDartStore();
 
   const handleJoinServiceNameInputChange = (e) => {
     const value = e.target.value;
@@ -80,6 +81,10 @@ const Services: React.FC<ServicesProps> = ({ }) => {
 
   const allServices = getUniqueServices([...localServices, ...getAllServicesFromPeerMap(peerMap)]);
 
+  useEffect(()=>{
+    setCurrentPage('services')
+  }, [])
+
   return (
     <div
       style={{
@@ -92,11 +97,7 @@ const Services: React.FC<ServicesProps> = ({ }) => {
         gap: "1rem",
       }}
     >
-      <div
-        className="current-page-header"
-      >
-        services 
-      </div>
+      <CurrentPageHeader />
 
       <ServiceList
         services={allServices}

@@ -3,6 +3,12 @@ import React from 'react';
 type IconProps = React.SVGProps<SVGSVGElement>;
 
 
+export const HomeIcon = ({size = '32px', color='#000000'}) => {
+  return (
+      <svg fill={color} width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21.71,10.29l-9-9a1,1,0,0,0-1.42,0l-9,9a1,1,0,0,0-.21,1.09A1,1,0,0,0,3,12H4v9a1,1,0,0,0,1,1H8a1,1,0,0,0,1-1V15a1,1,0,0,1,1-1h4a1,1,0,0,1,1,1v6a1,1,0,0,0,1,1h3a1,1,0,0,0,1-1V12h1a1,1,0,0,0,.92-.62A1,1,0,0,0,21.71,10.29Z"></path></svg>
+  )
+
+}
 export const AssemblyCapitalLogo = ({ width = '32', height = '32', color = 'white' }) => {
   return (
     <svg
