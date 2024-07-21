@@ -106,6 +106,9 @@ function App() {
       <div
         style={{
           flexGrow: 1,
+          height:"100%",
+          maxHeight:"100%",
+          overflow:"hidden",
         }}
       >
           <Middle />

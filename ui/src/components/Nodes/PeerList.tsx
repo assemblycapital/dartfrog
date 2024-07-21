@@ -40,7 +40,7 @@ const PeerList = () => {
   const renderPeerList = (peers) => (
     peers.map(([node, peer]) => (
       <div key={node}
-        className="nodes-node-row"
+        className="nodes-node-row hover-dark-gray"
         onClick={() => navigate(`/nodes/${node}`)}
       >
         <div
@@ -57,7 +57,7 @@ const PeerList = () => {
               alignItems: "center"
             }}
           >
-            <ProfilePicture size={"48px"} node={node} />
+            <ProfilePicture size={"36px"} node={node} />
             <div
               style={{
                 display: "flex",
@@ -89,17 +89,48 @@ const PeerList = () => {
   );
 
   return (
-    <div style={{ color: 'gray' }}>
+    <div
+      style={{
+        display:"flex",
+        flexDirection:"column",
+        gap:"0.6rem",
+        color: 'gray',
+        height:"100%",
+        overflowY:"scroll",
+      }}
+      >
       <div style={{ cursor: "default", fontSize:"0.8rem" }}>online: {activeLast5Minutes.length}</div>
-      {renderPeerList(activeLast5Minutes)}
+      <div
+        style={{
+          borderLeft: "1px solid #333",
+          marginLeft:"0.4rem",
+        }}
+      >
+
+        {renderPeerList(activeLast5Minutes)}
+      </div>
 
       <div style={{ cursor: "default", fontSize:"0.8rem" }}>recently online: {activeLast24Hours.length}</div>
-      {renderPeerList(activeLast24Hours)}
+      <div
+        style={{
+          borderLeft: "1px solid #333",
+          marginLeft:"0.4rem",
+        }}
+      >
+        {renderPeerList(activeLast24Hours)}
+      </div>
 
       <div style={{ cursor: "default", fontSize:"0.8rem" }}>others: {others.length + nullPeerData.length}</div>
-      {renderPeerList(others)}
-
-      {renderPeerList(nullPeerData)}
+      <div
+        style={{
+          borderLeft: "1px solid #333",
+          marginLeft:"0.4rem",
+          height:"100%",
+        }}
+      >
+        {renderPeerList(others)}
+        {renderPeerList(nullPeerData)}
+      </div>
     </div>
   );
 };

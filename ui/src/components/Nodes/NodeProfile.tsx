@@ -113,24 +113,13 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
         }
     }, [peerMap, node]);
 
-    const updateProfileImage = async () => {
-        if (peer && peer.peerData && peer.peerData.profile.pfp) {
-            setIsLoadingImage(true); // Set loading to true before the fetch
-            const valid = await checkImageURL(peer.peerData.profile.pfp);
-            if (valid) {
-                setProfileImage(peer.peerData.profile.pfp);
-                setSelectedProfileImage(peer.peerData.profile.pfp);
-            }
-            setTimeout(() => {
-              setIsLoadingImage(false);
-          }, 500);
-        }
-    };
-
     useEffect(() => {
-        updateProfileImage();
         if (peer && peer.peerData) {
           const gotClass = getClassForNameColor(peer.peerData.profile.nameColor);
+          if (peer.peerData.profile.pfp) {
+            setProfileImage(peer.peerData.profile.pfp);
+            setSelectedProfileImage(peer.peerData.profile.pfp);
+          }
           setNameColorClass(gotClass);
           setSelectedNameColor(peer.peerData.profile.nameColor); // Set the initial selected color
           setSelectedBio(peer.peerData.profile.bio); // Set the initial bio

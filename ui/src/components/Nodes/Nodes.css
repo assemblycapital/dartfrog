@@ -6,7 +6,3 @@
   display: flex;
   padding:8px;
 }
-.nodes-node-row:hover {
-  background-color: #ffffff11;
-  transition: background-color 0.2s;
-}

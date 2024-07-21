@@ -365,7 +365,7 @@ fn handle_dartfrog_input(
             let Some(local_peer) = state.peers.get_mut(source.node()) else {
                 return Ok(());
             };
-            println!("peer response {:?} {:?}", source.node(), peer_data);
+            // println!("peer response {:?} {:?}", source.node(), peer_data);
             match local_peer.outstanding_request {
                 None => {
                 }

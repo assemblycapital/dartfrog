@@ -21,7 +21,8 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
 
   return (
     
-    <div style={{ height: '100%',
+    <div style={{
+      height: '100%',
       flexGrow: 1,
       maxHeight: '100%',
       overflowY: 'hidden',
@@ -44,9 +45,18 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
                 display: 'flex',
                 flexDirection: 'row',
                 overflowX: 'hidden',
+                height:"100%",
+                maxHeight:"100%",
+                overflowY: 'hidden',
               }}
             >
-              <div>
+              <div
+                style={{
+                  height:"100%",
+                  maxHeight:"100%",
+                  overflowY: 'hidden',
+                }}
+              >
               <Routes>
                 <Route path="/" element={
                     <Home />

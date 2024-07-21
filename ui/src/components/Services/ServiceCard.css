@@ -1,0 +1,5 @@
+.service-card {
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+

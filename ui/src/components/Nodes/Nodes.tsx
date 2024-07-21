@@ -25,7 +25,7 @@ const Nodes: React.FC = () => {
         nodes
       </div>
 
-      <div style={{ marginTop: "1rem" }}>
+      <div style={{ marginTop: "1rem"}}>
         <input 
           type="text" 
           value={inputValue} 
@@ -34,7 +34,16 @@ const Nodes: React.FC = () => {
         <button onClick={handleSubmit}>find</button>
       </div>
 
-      <PeerList />
+      <div
+        style={{
+          margin:"1rem",
+          height:"100%",
+          maxHeight:"100%",
+          overflowY:"scroll",
+        }}
+      >
+        <PeerList />
+      </div>
     </div>
   );
 };
