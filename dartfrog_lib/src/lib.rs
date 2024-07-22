@@ -224,6 +224,8 @@ pub enum FrontendMetaRequest {
     CreateService(String),
     SetService(String),
     Unsubscribe,
+    RequestPeer(String),
+    RequestPeerList(Vec<String>),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -241,6 +243,8 @@ pub enum FrontendUpdate {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum FrontendMetaUpdate {
     MyServices(Vec<String>),
+    Peer(Peer),
+    PeerList(Vec<Peer>),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -257,7 +261,9 @@ pub enum FrontendChannelUpdate {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DartfrogToProvider {
     CreateService(String), // service_name
-    DeleteService(String) ,
+    DeleteService(String),
+    Peer(Peer),
+    PeerList(Vec<Peer>),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -312,7 +318,9 @@ pub enum UpdateFromService {
 pub enum ProviderOutput {
     Service(Service),
     ServiceList(Vec<Service>),
-    DeleteService(ServiceID)
+    DeleteService(ServiceID),
+    RequestPeer(String),
+    RequestPeerList(Vec<String>),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -486,6 +494,14 @@ where
                         let req = ProviderOutput::Service(service);
                         poke(&get_server_address(&our.node), req)?;
                     }
+                    FrontendMetaRequest::RequestPeer(node) => {
+                        let req = ProviderOutput::RequestPeer(node);
+                        poke(&get_server_address(&our.node), req)?;
+                    }
+                    FrontendMetaRequest::RequestPeerList(node_list) => {
+                        let req = ProviderOutput::RequestPeerList(node_list);
+                        poke(&get_server_address(&our.node), req)?;
+                    }
                 }
             }
             FrontendRequest::Channel(s_req) => {
@@ -600,6 +616,20 @@ where
     Ok(())
 }
 
+fn update_all_consumers<T, U>(
+    state: &ProviderState<T, U>,
+    update: FrontendUpdate,
+) -> anyhow::Result<()>
+where
+    T: AppServiceState,
+    U: AppClientState,
+{
+    for (&websocket_id, _) in &state.consumers {
+        update_consumer(websocket_id, update.clone())?;
+    }
+    Ok(())
+}
+
 pub fn handle_dartfrog_to_provider<T, U>(our: &Address, state: &mut ProviderState<T, U>, source: &Address, app_message: DartfrogToProvider) -> anyhow::Result<()> 
 where
     T: AppServiceState,
@@ -630,6 +660,14 @@ where
                 poke(&get_server_address(&our.node), req)?;
             } else {
             }
+        }
+        DartfrogToProvider::Peer(peer) => {
+            let update = FrontendUpdate::Meta(FrontendMetaUpdate::Peer(peer));
+            update_all_consumers(state, update)?;
+        }
+        DartfrogToProvider::PeerList(peers) => {
+            let update = FrontendUpdate::Meta(FrontendMetaUpdate::PeerList(peers));
+            update_all_consumers(state, update)?;
         }
     }
     Ok(())
@@ -741,7 +779,7 @@ where
         }
         ProviderInput::ProviderServiceInput(service_id, service_request) => {
             let Some(sw) = state.services.get_mut(&service_id) else {
-                println!("Service with id {} does not exist", service_id);
+                // println!("Service with id {} does not exist", service_id);
                 match service_request {
                     ProviderServiceInput::Subscribe => {
                         poke_client(source, service_id.clone(), UpdateFromService::SubscribeNack(SubscribeNack::ServiceDoesNotExist))?;

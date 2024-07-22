@@ -12,7 +12,7 @@ const ServiceView = () => {
   const { id } = useParams<{ id: string }>();
   const paramServiceId = id
 
-  const {setApi, api, serviceId, setServiceId, setChatHistory, addChatMessage, chatState, setServiceConnectionStatus, serviceConnectionStatus, setServiceMetadata, serviceMetadata} = useChatStore();
+  const {setApi, api, serviceId, requestPeer, setPeerMap, setServiceId, setChatHistory, addChatMessage, chatState, setServiceConnectionStatus, serviceConnectionStatus, setServiceMetadata, serviceMetadata} = useChatStore();
 
   useEffect(()=>{
     setServiceId(paramServiceId);
@@ -33,10 +33,12 @@ const ServiceView = () => {
       onServiceMetadataChange(api) {
         setServiceMetadata(api.serviceMetadata)
       },
+      onPeerMapChange(api) {
+        setPeerMap(api.peerMap);
+      },
       onServiceMessage(msg) {
         if (msg.FullMessageHistory) {
           setChatHistory(msg.FullMessageHistory)
-          
         } else if (msg.Message) {
           addChatMessage(msg.Message);
         }

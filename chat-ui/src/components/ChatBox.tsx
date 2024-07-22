@@ -4,7 +4,7 @@ import ChatHeader from './ChatHeader';
 import useChatStore, { ChatState, ChatMessage} from '../store/chat';
 import Split from 'react-split';
 import './ChatBox.css';
-import { dfLinkRegex, dfLinkToRealLink } from '@dartfrog/puddle';
+import { dfLinkRegex, dfLinkToRealLink, getPeerNameColor } from '@dartfrog/puddle';
 
 interface ChatBoxProps {
   chatState: ChatState;
@@ -15,6 +15,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
   const chatInputRef = useRef<HTMLDivElement | null>(null);
   const [inputHeight, setInputHeight] = useState(0);
   const [chatMessageList, setChatMessageList] = useState<Array<ChatMessage>>([]);
+
+  const {peerMap} = useChatStore();
 
   useEffect(() => {
     const updateInputHeight = () => {
@@ -170,7 +172,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                     <div style={{ color: "#ffffff77", fontSize: "0.8rem", display: "inline-block", marginRight: "5px", cursor: "default" }}>
                       <span>{formatTimestamp(message.time)}</span>
                     </div>
-                    <div style={{ display: "inline-block", marginRight: "5px", cursor: "default" }}>
+                    <div style={{ display: "inline-block", marginRight: "5px", cursor: "default" }}
+                      className={getPeerNameColor(peerMap.get(message.from))}
+
+                    >
                       <span>{message.from}:</span>
                     </div>
                   </div>

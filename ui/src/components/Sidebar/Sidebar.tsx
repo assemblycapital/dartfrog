@@ -42,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
         <div
           style={{
             backgroundColor: '#333',
-            color: '#b4b4b4',
+            color: '#9d9d9d',
             height: '26px',
             width: '100%',
             textAlign: 'center',

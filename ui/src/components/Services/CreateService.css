@@ -5,7 +5,7 @@
   padding: 0.3rem;
   border: none;
   width:5rem;
-  background-color: #1f1f1f;
+  background-color: #171717;
   color: #999;
   cursor: pointer;
   padding: 4px 8px;
@@ -23,7 +23,7 @@
 }
 .service-create-shortcut:hover {
   transition: background-color 0.25s;
-  background-color: #181818;
+  background-color: #040404;
 }
 .remove-plugin-selector {
   display: inline-block;

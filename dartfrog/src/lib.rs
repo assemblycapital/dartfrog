@@ -48,6 +48,7 @@ const NETWORK_HUB: &str = if IS_FAKE { "fake.dev" } else { "waterhouse.os" };
 pub struct DartfrogState {
     pub network_hub: Option<String>,
     pub consumers: HashMap<u32, Consumer>,
+    pub provider_consumers: HashMap<Address, Consumer>,
     pub local_services: HashMap<String, Service>,
     pub peers: HashMap<String, Peer>,
     pub profile: Profile,
@@ -60,6 +61,7 @@ impl DartfrogState {
         DartfrogState {
             network_hub: None,
             consumers: HashMap::new(),
+            provider_consumers: HashMap::new(),
             local_services: HashMap::new(),
             peers: HashMap::new(),
             profile : Profile::new(our.node.clone()),
@@ -92,12 +94,53 @@ fn update_consumer (
     Ok(())
 }
 
+fn update_all_of_new_peer(
+    state: &DartfrogState,
+    peer: Peer,
+) -> anyhow::Result<()> {
+    for consumer in state.consumers.values() {
+        update_consumer(consumer.ws_channel_id, DartfrogOutput::Peer(peer.clone()))?;
+    }
+    for address in state.provider_consumers.keys() {
+        let req = ProviderInput::DartfrogRequest(DartfrogToProvider::Peer(peer.clone()));
+        poke(address, req)?;
+    }
+    Ok(())
+}
+
 fn update_all_consumers(
     state: &DartfrogState,
     update: DartfrogOutput,
 ) -> anyhow::Result<()> {
     for consumer in state.consumers.values() {
         update_consumer(consumer.ws_channel_id, update.clone())?;
+    }
+    Ok(())
+}
+
+fn update_provider_consumer(
+    source: &Address,
+    state: &mut DartfrogState,
+    update: DartfrogToProvider,
+) -> anyhow::Result<()> {
+    let consumer = state.provider_consumers.entry(source.clone()).or_insert_with(|| {
+        Consumer {
+            ws_channel_id: 0,
+            last_active: get_now(),
+        }
+    });
+    let req = ProviderInput::DartfrogRequest(update);
+    poke(source, req)?;
+    Ok(())
+}
+
+fn update_all_provider_consumers(
+    state: &DartfrogState,
+    update: DartfrogToProvider,
+) -> anyhow::Result<()> {
+    for address in state.provider_consumers.keys() {
+        let req = ProviderInput::DartfrogRequest(update.clone());
+        poke(address, req)?;
     }
     Ok(())
 }
@@ -227,7 +270,7 @@ fn handle_http_server_request(
                         None => {
                         }
                     }
-                }
+                },
                 DartfrogInput::LocalRequestPeer(node) => {
                     match state.peers.get(&node) {
                         Some(peer) => {
@@ -271,6 +314,34 @@ fn handle_http_server_request(
         }
     };
 
+    Ok(())
+}
+
+fn handle_request_peer(
+    our: &Address,
+    state: &mut DartfrogState,
+    source: &Address,
+    node: &String,
+) -> anyhow::Result<()> {
+    if our.node != source.node {
+        return Ok(());
+    }
+    // If we have it, send our current version of the peer
+    if let Some(peer) = state.peers.get_mut(node) {
+        peer.outstanding_request = Some(get_now());
+        let update = DartfrogToProvider::Peer(peer.clone());
+        update_provider_consumer(source, state, update)?;
+    } else {
+        // Insert a new peer if we don't have it
+        let mut new_peer = Peer::new(node.clone());
+        new_peer.outstanding_request = Some(get_now());
+        state.peers.insert(node.clone(), new_peer.clone());
+        let update = DartfrogToProvider::Peer(new_peer);
+        update_provider_consumer(source, state, update)?;
+    }
+    // Either way, send a remote request to the peer for its latest peer data
+    let address = get_server_address(node);
+    poke(&address, DartfrogInput::RemoteRequestPeer)?;
     Ok(())
 }
 
@@ -319,6 +390,21 @@ fn handle_provider_output(
             }
             let update = DartfrogOutput::LocalServiceList(state.local_services.values().cloned().collect());
             update_all_consumers(state, update)?;
+        },
+        ProviderOutput::RequestPeer(node) => {
+            if our.node != source.node {
+                return Ok(());
+            }
+            handle_request_peer(our, state, source, &node)?;
+        }
+        ProviderOutput::RequestPeerList(nodes) => {
+            if our.node != source.node {
+                return Ok(());
+            }
+            for node in nodes {
+                // TODO more efficient to respond with a peerlist instead of one at a time.
+                handle_request_peer(our, state, source, &node)?;
+            }
         }
     }
     Ok(())
@@ -373,8 +459,8 @@ fn handle_dartfrog_input(
                     local_peer.peer_data = Some(peer_data);
                     local_peer.outstanding_request = None;
                     local_peer.last_updated = Some(get_now());
-                    let update = DartfrogOutput::Peer(local_peer.clone());
-                    update_all_consumers(state, update)?;
+                    let local_peer_clone = local_peer.clone();
+                    update_all_of_new_peer(state, local_peer_clone)?;
                 }
             }
         }

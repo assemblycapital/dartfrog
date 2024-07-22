@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import {ServiceApi, ServiceConnectionStatus, ServiceMetadata} from '@dartfrog/puddle';
+import {Peer, PeerMap, ServiceApi, ServiceConnectionStatus, ServiceMetadata} from '@dartfrog/puddle';
 
 export const PLUGIN_NAME = "chat:dartfrog:herobrine.os";
 
@@ -24,10 +24,15 @@ export interface ChatStore {
   serviceConnectionStatus: ServiceConnectionStatus | null,
   setServiceConnectionStatus: (status: ServiceConnectionStatus) => void,
   //
+  peerMap: PeerMap,
+  setPeerMap: (newPeerMap:PeerMap) => void,
+  newPeer: (node:string) => void,
+  //
   api: ServiceApi | null,
   setApi: (api: ServiceApi) => void
   //
   createService: (name: string) => void
+  requestPeer: (node:string) => void
   requestMyServices: () => void
   //
   chatState: ChatState,
@@ -63,6 +68,11 @@ const useChatStore = create<ChatStore>((set, get) => ({
     if (!api) { return; }
     api.requestMyServices();
   },
+  requestPeer: (node:string) => {
+    const { api } = get();
+    if (!api) { return; }
+    api.requestPeer(node);
+  },
   chatState: { messages: new Map(), lastUpdateType: "history" as "history" },
   setChatState: (chatState) => {  set({ chatState: chatState }) },
   addChatMessage: (message) => {
@@ -81,6 +91,16 @@ const useChatStore = create<ChatStore>((set, get) => ({
     if (!api) { return; }
     if (!serviceId) { return; }
     api.sendToService({SendMessage: text})
+  },
+  //
+  peerMap: new Map(),
+  setPeerMap: (newPeerMap) => {
+    set({ peerMap: newPeerMap });
+  },
+  newPeer: (node) => {
+    const { api } = get();
+    if (!api) { return; }
+    api.requestPeer(node);
   },
   //
   get,

@@ -57,6 +57,7 @@ interface ConstructorArgs {
   onServiceMetadataChange?: (api) => void;
   onServiceMessage?: (message: any) => void;
   onClientMessage?: (message: any) => void;
+  onPeerMapChange?: (api) => void;
 }
 
 export class ServiceApi {
@@ -68,6 +69,7 @@ export class ServiceApi {
   public serviceId: string | null;
   public serviceMetadata: ServiceMetadata | null;
   public serviceConnectionStatus: ServiceConnectionStatus | null;
+  public peerMap: PeerMap = new Map();
 
   private onOpen: (api) => void;
   private onClose: () => void;
@@ -75,6 +77,7 @@ export class ServiceApi {
   private onServiceMetadataChange: (api) => void;
   private onServiceMessage: (message: any) => void;
   private onClientMessage: (message: any) => void;
+  private onPeerMapChange: (api) => void;
 
   constructor({
     our,
@@ -86,6 +89,7 @@ export class ServiceApi {
     onServiceMetadataChange = (api) => {},
     onServiceMessage = (message) => {},
     onClientMessage = (message) => {},
+    onPeerMapChange = (api) => {},
   }: ConstructorArgs) {
     this.onOpen = onOpen;
     this.onClose = onClose;
@@ -94,6 +98,7 @@ export class ServiceApi {
     this.onServiceMetadataChange = onServiceMetadataChange;
     this.onServiceMessage = onServiceMessage;
     this.onClientMessage = onClientMessage;
+    this.onPeerMapChange = onPeerMapChange;
     this.initialize(our, websocket_url);
   }
   private initialize(our, websocket_url) {
@@ -191,12 +196,39 @@ export class ServiceApi {
     this.sendRequest(req);
   }
 
+  public requestPeer(node:string) {
+    let req = {"Meta": {
+      "RequestPeer":
+        node
+      }
+    }
+    this.sendRequest(req);
+  }
+
+  public requestPeerList(nodeList: string[] ) {
+    let req = {"Meta": {
+      "RequestPeerList":
+        nodeList
+      }
+    }
+    this.sendRequest(req);
+  }
+
   private updateHandler(jsonString: any) {
     const data = JSON.parse(jsonString)
 
     if (data["Meta"]) {
       const metaUpd = data["Meta"]
       // TODO
+      if (metaUpd["Peer"]) {
+        const jsonPeer = metaUpd["Peer"]
+        let peer = peerFromJson(jsonPeer);
+        this.peerMap.set(peer.node, peer)
+        this.onPeerMapChange(this);
+
+      } else {
+        console.log("todo handle metaupdate'", metaUpd)
+      }
     } else if (data["Channel"]) {
       const channelUpd = data["Channel"]
       if (channelUpd === "SubscribeAck") {
@@ -214,13 +246,26 @@ export class ServiceApi {
         const parsedMeta = serviceMetadataFromJson(meta);
         this.serviceMetadata = parsedMeta;
         this.onServiceMetadataChange(this);
+        // Collect nodes into a list and request them in a batch
+        const nodesToRequest: string[] = [];
+        parsedMeta.user_presence.forEach((_, node) => {
+          if (!this.peerMap.has(node)) {
+            this.peerMap.set(node, Peer.new(node));
+            nodesToRequest.push(node);
+          }
+        });
+        if (nodesToRequest.length > 0) {
+          this.requestPeerList(nodesToRequest);
+        }
       } else if (channelUpd["FromClient"]) {
         const msg = JSON.parse(channelUpd["FromClient"])
         this.onClientMessage(msg)
       } else if (channelUpd["FromServer"]) {
         const msg = JSON.parse(channelUpd["FromServer"])
         this.onServiceMessage(msg)
-      } 
+      } else {
+        console.log('unhandled update', data)
+      }
 
     }
   }
@@ -476,14 +521,14 @@ export function dfLinkToRealLink(dfLink: string, baseOrigin:string) {
 
 
 export const DEFAULT_PFP = 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/dartfrog256_small_nobg.png'
-export function getPeerPfp(peer: Peer): string {
-  if (peer.peerData && peer.peerData.profile.pfp) {
+export function getPeerPfp(peer: Peer | undefined): string {
+  if (peer && peer.peerData && peer.peerData.profile.pfp) {
     return peer.peerData.profile.pfp
   }
   return DEFAULT_PFP;
 }
-export function getPeerNameColor(peer: Peer): string {
-  if (peer.peerData) {
+export function getPeerNameColor(peer: Peer | undefined): string {
+  if (peer && peer.peerData) {
     return getClassForNameColor(peer.peerData.profile.nameColor)
   }
   return 'name-color-default';
