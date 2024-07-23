@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './Sidebar.css';
 import useDartStore from '../../store/dart';
-import { computeColorForName } from '@dartfrog/puddle/utils';
 import { AssemblyCapitalLogo, XIcon } from '../icons/Icons';
 import { useNavigate } from 'react-router-dom';
 import { DEFAULT_PFP, NameColor, getClassForNameColor } from '@dartfrog/puddle/index';

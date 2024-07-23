@@ -4,9 +4,10 @@ import { HamburgerIcon } from './Icons';
 import TopBar from './TopBar';
 import { ServiceApi, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceMetadata } from '@dartfrog/puddle';
 import { PROCESS_NAME } from '../App';
-import { WEBSOCKET_URL, maybePlaySoundEffect, maybePlayTTS } from '../utils';
-import useChatStore from '../store/chat';
-import ChatBox from './ChatBox';
+import { WEBSOCKET_URL, } from '../utils';
+import useChatStore, { ChatState, ChatMessage} from '@dartfrog/puddle/store/chat';
+import ChatBox from '@dartfrog/puddle/components/ChatBox';
+import { maybePlaySoundEffect, maybePlayTTS } from '@dartfrog/puddle/utils';
 
 const ServiceView = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,10 +38,13 @@ const ServiceView = () => {
         setPeerMap(api.peerMap);
       },
       onServiceMessage(msg) {
-        if (msg.FullMessageHistory) {
-          setChatHistory(msg.FullMessageHistory)
-        } else if (msg.Message) {
-          addChatMessage(msg.Message);
+        if (msg.Chat) {
+          if (msg.Chat.FullMessageHistory) {
+            setChatHistory(msg.Chat.FullMessageHistory)
+          } else if (msg.Chat.Message) {
+            const chatMessage = msg.Chat.Message;
+            addChatMessage(chatMessage);
+          }
         }
       },
       onClientMessage(msg) {

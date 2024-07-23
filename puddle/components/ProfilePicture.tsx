@@ -1,6 +1,7 @@
 
-import React, { useEffect, useState } from 'react';
-import useChatStore from '../store/chat';
+import * as React from 'react';
+import { useEffect, useState } from 'react';
+import useChatStore from '@dartfrog/puddle/store/chat';
 import { DEFAULT_PFP, Peer } from '@dartfrog/puddle/index';
 
 const ProfilePicture: React.FC<{ size: string; node: string }> = ({ size, node }) => {

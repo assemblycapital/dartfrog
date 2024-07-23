@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { computeColorForName } from '@dartfrog/puddle';
 import useDartStore from '../store/dart';
 
 interface DisplayUserActivityProps {

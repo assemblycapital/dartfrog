@@ -1,6 +1,7 @@
-import React, { useCallback, useState } from 'react';
-import useChatStore, { PLUGIN_NAME } from '../store/chat';
-import { maybeReplaceWithImage } from '../utils';
+import * as React from 'react';
+import { useCallback, useState } from 'react';
+import useChatStore from '@dartfrog/puddle/store/chat';
+import { maybeReplaceWithImage } from '@dartfrog/puddle/utils';
 
 interface ChatInputProps {
 }

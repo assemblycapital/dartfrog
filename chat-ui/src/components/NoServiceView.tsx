@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { ServiceApi }from "@dartfrog/puddle";
 import { PROCESS_NAME } from '../App';
 import { WEBSOCKET_URL } from '../utils';
-import useChatStore from '../store/chat';
+import useChatStore from '@dartfrog/puddle/store/chat';
 
 const NoServiceView = () => {
   const {api, setApi, createService, requestMyServices} = useChatStore();

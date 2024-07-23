@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
+import {useRef, useState, useEffect, useCallback} from 'react';
 import ChatInput from './ChatInput';
 import ChatHeader from './ChatHeader';
-import useChatStore, { ChatState, ChatMessage} from '../store/chat';
+import useChatStore, { ChatState, ChatMessage } from '@dartfrog/puddle/store/chat';
 import Split from 'react-split';
 import './ChatBox.css';
 import { dfLinkRegex, dfLinkToRealLink, getPeerNameColor, nodeProfileLink } from '@dartfrog/puddle';
@@ -10,6 +11,8 @@ import ProfilePicture from './ProfilePicture';
 interface ChatBoxProps {
   chatState: ChatState;
 }
+
+const SplitComponent = Split as unknown as React.FC<any>;
 
 const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -141,7 +144,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
           overflow:"hidden",
         }}
       >
-        <Split
+        <SplitComponent
           sizes={[95, 5]}
           minSize={45}
           direction="vertical"
@@ -236,7 +239,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
           >
             <ChatInput />
           </div>
-        </Split>
+        </SplitComponent>
 
       </div>
     </div>

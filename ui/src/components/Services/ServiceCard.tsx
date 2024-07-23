@@ -33,7 +33,7 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
               justifyContent: "flex-end",
             }}
           >
-            <ProfilePicture node={service.id.hostNode()} size={'24px'} />
+            <ProfilePicture node={service.id.hostNode()} size={'36px'} />
           </div>
           <div
             style={{

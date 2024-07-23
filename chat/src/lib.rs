@@ -16,12 +16,21 @@ pub struct ChatMessage {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum AppUpdate {
+    Chat(ChatUpdate),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ChatUpdate {
     Message(ChatMessage),
     FullMessageHistory(Vec<ChatMessage>),
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum AppRequest {
+    Chat(ChatRequest),
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ChatRequest {
     SendMessage(String),
 }
@@ -38,7 +47,6 @@ pub fn new_chat_service() -> ChatService {
         messages: Vec::new(),
     }
 }
-
 
 #[derive(Debug, Clone)]
 pub struct AppState {
@@ -67,38 +75,43 @@ impl AppServiceState for ChatService {
 
     fn handle_subscribe(&mut self, subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
         let chat_history = ChatUpdate::FullMessageHistory(self.messages.clone());
-        // update_subscriber_client(chat_history.clone(), &subscriber_node, our, service)?;
-        update_subscriber(chat_history, &subscriber_node, our, service)?;
+        let update = AppUpdate::Chat(chat_history);
+        update_subscriber(update, &subscriber_node, our, service)?;
         Ok(())
     }
 
     fn handle_request(&mut self, from: String, req: String, our: &Address, service: &Service) -> anyhow::Result<()> {
-        let request = serde_json::from_str::<ChatRequest>(&req)?;
+        let request = serde_json::from_str::<AppRequest>(&req)?;
         match request {
-            ChatRequest::SendMessage(msg) => {
-                const MAX_CHAT_MESSAGE_LENGTH: usize = 2048;
-                let msg = if msg.len() > MAX_CHAT_MESSAGE_LENGTH {
-                    msg[..MAX_CHAT_MESSAGE_LENGTH].to_string()
-                } else {
-                    msg
-                };
+            AppRequest::Chat(chat_request) => {
+                match chat_request {
+                    ChatRequest::SendMessage(msg) => {
+                        const MAX_CHAT_MESSAGE_LENGTH: usize = 2048;
+                        let msg = if msg.len() > MAX_CHAT_MESSAGE_LENGTH {
+                            msg[..MAX_CHAT_MESSAGE_LENGTH].to_string()
+                        } else {
+                            msg
+                        };
 
-                let chat_msg = ChatMessage {
-                    id: self.last_message_id,
-                    time: get_now(),
-                    from: from.clone(),
-                    msg: msg,
-                };
+                        let chat_msg = ChatMessage {
+                            id: self.last_message_id,
+                            time: get_now(),
+                            from: from.clone(),
+                            msg: msg,
+                        };
 
-                const MAX_CHAT_HISTORY: usize = 64;
-                if self.messages.len() > MAX_CHAT_HISTORY {
-                    self.messages = self.messages.split_off(self.messages.len() - MAX_CHAT_HISTORY);
+                        const MAX_CHAT_HISTORY: usize = 64;
+                        if self.messages.len() > MAX_CHAT_HISTORY {
+                            self.messages = self.messages.split_off(self.messages.len() - MAX_CHAT_HISTORY);
+                        }
+
+                        self.last_message_id += 1;
+                        self.messages.push(chat_msg.clone());
+                        let chat_update = ChatUpdate::Message(chat_msg.clone());
+                        let update = AppUpdate::Chat(chat_update);
+                        update_subscribers(update, our, service)?;
+                    }
                 }
-
-                self.last_message_id += 1;
-                self.messages.push(chat_msg.clone());
-                let chat_upd = ChatUpdate::Message(chat_msg.clone());
-                update_subscribers(chat_upd,our,service)?;
             }
         }
         Ok(())
