@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import {Peer, PeerMap, ServiceApi, ServiceConnectionStatus, ServiceMetadata} from '@dartfrog/puddle';
+import { maybePlaySoundEffect, maybePlayTTS } from '../utils';
 
 export const PLUGIN_NAME = "chat:dartfrog:herobrine.os";
 
@@ -79,6 +80,8 @@ const useChatStore = create<ChatStore>((set, get) => ({
     const { chatState } = get();
     const newMessages = new Map(chatState.messages);
     newMessages.set(message.id, message);
+    maybePlaySoundEffect(message.msg);
+    maybePlayTTS(message.msg);
     set({ chatState: { messages: newMessages, lastUpdateType: "message" } });
   },
   setChatHistory: (history) => {

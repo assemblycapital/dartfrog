@@ -4,7 +4,8 @@ import ChatHeader from './ChatHeader';
 import useChatStore, { ChatState, ChatMessage} from '../store/chat';
 import Split from 'react-split';
 import './ChatBox.css';
-import { dfLinkRegex, dfLinkToRealLink, getPeerNameColor } from '@dartfrog/puddle';
+import { dfLinkRegex, dfLinkToRealLink, getPeerNameColor, nodeProfileLink } from '@dartfrog/puddle';
+import ProfilePicture from './ProfilePicture';
 
 interface ChatBoxProps {
   chatState: ChatState;
@@ -58,6 +59,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
     scrollDownChat();
   }, [chatMessageList, scrollDownChat]);
 
+  const baseOrigin = window.origin.split(".").slice(1).join(".")
   const getMessageInnerText = useCallback(
     (message: string) => {
       if (isImageUrl(message)) {
@@ -78,6 +80,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
         return (
           <span>
             <a
+              className="link"
               style={{
                 textDecoration: "underline",
                 cursor: "pointer",
@@ -90,7 +93,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
           </span>
         );
       } else if (dfLinkRegex.test(message)) {
-        const baseOrigin = window.origin.split(".").slice(1).join(".")
         const realLink = dfLinkToRealLink(message, baseOrigin)
         return (
           <span>
@@ -101,6 +103,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                 fontSize: "1rem",
               }}
               href={realLink}
+              className="link"
             >
               {message}
             </a>
@@ -155,6 +158,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
               overflowY: "scroll",
               width:"100%",
               maxWidth:"100%",
+              height:"100%",
+              maxHeight:"100%",
+              justifyContent: "flex-end",
+              alignContent: "flex-end",
+              alignItems: "flex-end",
+              justifyItems: "flex-end",
             }}
           >
             <div
@@ -162,26 +171,57 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                 display: "flex",
                 flexGrow: 1,
                 flexDirection:"column",
-                justifyContent: "flex-end",
-                height:"100%",
+                gap:"1rem",
+                overflowY:"auto",
+                paddingTop:"0.8rem",
               }}
             >
               {chatMessageList.map((message, index) => (
-                <div key={index} className='chat-message' >
-                  <div style={{ display: "inline-block", verticalAlign: "top" }}>
-                    <div style={{ color: "#ffffff77", fontSize: "0.8rem", display: "inline-block", marginRight: "5px", cursor: "default" }}>
-                      <span>{formatTimestamp(message.time)}</span>
-                    </div>
-                    <div style={{ display: "inline-block", marginRight: "5px", cursor: "default" }}
-                      className={getPeerNameColor(peerMap.get(message.from))}
-
+                <div key={index}
+                  className='chat-message'
+                  style={{
+                    display:"flex",
+                    flexDirection:"row",
+                    width:"100%",
+                    gap:"8px",
+                    padding: "6px 0rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      userSelect:"none",
+                    }}
+                  >
+                    <a
+                      href={nodeProfileLink(message.from, baseOrigin)}
                     >
-                      <span>{message.from}:</span>
-                    </div>
+                    <ProfilePicture size="40px" node={message.from} />
+                    </a>
                   </div>
-                  <span style={{ cursor: "default", wordWrap: "break-word", overflowWrap: "break-word", whiteSpace: "pre-wrap" }}>
-                    {getMessageInnerText(message.msg)}
-                  </span>
+                  <div
+                    style={{
+                      display:"flex",
+                      flexDirection:"column",
+                      width:"100%",
+                    }}
+                  >
+                    <div style={{ verticalAlign: "top", userSelect: "none", }}>
+                      <a style={{ display: "inline-block", marginRight: "8px", cursor: "pointer" }}
+                        className={getPeerNameColor(peerMap.get(message.from))}
+                        href={nodeProfileLink(message.from, baseOrigin)}
+                      >
+                        <span>{message.from}:</span>
+                      </a>
+                      <div style={{ color: "#ffffff77", fontSize: "0.7rem", display: "inline-block", marginRight: "5px", cursor: "default" }}>
+                        <span>{formatTimestamp(message.time)}</span>
+                      </div>
+                    </div>
+                    <span style={{ cursor: "default", wordWrap: "break-word", overflowWrap: "break-word", whiteSpace: "pre-wrap" }}>
+                      {getMessageInnerText(message.msg)}
+                    </span>
+
+                  </div>
+
                 </div>
               ))}
               <div id="messages-end-ref" ref={messagesEndRef} style={{ display: "inline" }} />
@@ -217,14 +257,17 @@ export function formatTimestamp(timestamp: number): string {
   const date = new Date(timestamp * 1000); // convert from seconds to milliseconds
   const now = new Date();
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
   if (date < oneWeekAgo) {
     const month = date.getMonth() + 1; // getMonth() is zero-based
     const year = date.getFullYear().toString().slice(-2); // get last two digits of the year
     return `${month}/${year}`;
   } else {
-    const day = date.toLocaleDateString('en-US', { weekday: 'short' });
-    const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const isToday = date.toDateString() === now.toDateString();
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+    const day = isToday ? 'Today' : isYesterday ? 'Yesterday' : date.toLocaleDateString('en-US', { weekday: 'short' });
+    const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }); // use 12-hour format with AM/PM and no leading zero
     return `${day} ${time}`;
   }
 }

@@ -4,7 +4,7 @@ import { HamburgerIcon } from './Icons';
 import TopBar from './TopBar';
 import { ServiceApi, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceMetadata } from '@dartfrog/puddle';
 import { PROCESS_NAME } from '../App';
-import { WEBSOCKET_URL } from '../utils';
+import { WEBSOCKET_URL, maybePlaySoundEffect, maybePlayTTS } from '../utils';
 import useChatStore from '../store/chat';
 import ChatBox from './ChatBox';
 
@@ -66,29 +66,42 @@ const ServiceView = () => {
       style={{
         height: '100vh',
         maxHeight: '100vh',
-        overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         padding: '20px',
         boxSizing:"border-box",
       }}
     >
-      <TopBar serviceId={paramServiceId}/>
-      {!serviceConnectionStatus ? (
-          "loading..."
-        ):(
-          <>
-            {serviceConnectionStatus.status !== ServiceConnectionStatusType.Connected ? (
+      <div
+        style={{ flex: '0 1 auto' }}
+      >
 
-              <div>
-                {serviceConnectionStatus.toString()}
-              </div>
-            ) : ( 
-              <ChatBox chatState={chatState} />
-            )
-            }
-          </>
-      )}
+        <TopBar serviceId={paramServiceId} />
+      </div>
+      <div
+        style={{
+          flex: '1 1 100%',
+          maxHeight:"100%",
+          overflow: 'auto',
+        }}
+      >
+        {!serviceConnectionStatus ? (
+            "loading..."
+          ):(
+            <>
+              {serviceConnectionStatus.status !== ServiceConnectionStatusType.Connected ? (
+
+                <div>
+                  {serviceConnectionStatus.toString()}
+                </div>
+              ) : ( 
+                <ChatBox chatState={chatState} />
+              )
+              }
+            </>
+        )}
+
+      </div>
     </div>
   );
 };

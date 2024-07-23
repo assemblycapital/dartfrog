@@ -1,5 +1,5 @@
 import KinodeClientApi from "@kinode/client-api";
-export * from './utils';
+// export * from './utils';
 
 export enum ConnectionStatusType {
   Connecting,
@@ -518,6 +518,11 @@ export const dfLinkRegex = /^df:\/\/([a-zA-Z0-9\-]+):([a-zA-Z0-9\-]+\.[a-zA-Z0-9
 export function dfLinkToRealLink(dfLink: string, baseOrigin:string) {
   return `http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/join/${dfLink.slice(5)}`
 }
+
+export function nodeProfileLink(node: string, baseOrigin:string) {
+  return `http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/nodes/${node}`
+}
+
 
 
 export const DEFAULT_PFP = 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/dartfrog256_small_nobg.png'

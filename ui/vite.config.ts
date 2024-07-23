@@ -63,7 +63,7 @@ export default defineConfig({
         rewrite: (path) => path.replace(BASE_URL, ''),
       },
       // This route will match all other HTTP requests to the backend
-      // [`^${BASE_URL}/(?!(@vite/client|src/.*|node_modules/.*|@react-refresh|$))`]: {
+      // [`^${BASE_URL}/(?!(@vite/client|src/.*|node_modules/.*|@react-refresh|.*\.ts$))`]: {
       //   target: PROXY_URL,
       //   changeOrigin: true,
       // },

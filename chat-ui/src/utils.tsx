@@ -14,16 +14,22 @@ export const WEBSOCKET_URL = import.meta.env.DEV
   ? `${PROXY_TARGET.replace('http', 'ws')}`
   : undefined;
 
-export const soundEffectCommands = {
-  '/fart': 'assets/wet.mp3',
-  '/no': 'assets/hell-naw-dog.mp3',
-  '/yes': 'assets/oh-yes.mp3',
-  '/why': 'assets/why.mp3',
-  '/people': 'assets/the-people.mp3',
-  '/robust': 'assets/robust-josh.mp3',
-  '/robustness': 'assets/robust-basile.mp3',
-}
+const soundEffectFiles = {
+  '/fart': 'wet.mp3',
+  '/no': 'hell-naw-dog.mp3',
+  '/yes': 'oh-yes.mp3',
+  '/why': 'why.mp3',
+  '/people': 'the-people.mp3',
+  '/robust': 'robust-josh.mp3',
+  '/robustness': 'robust-basile.mp3',
+};
 
+export const soundEffectCommands = Object.fromEntries(
+  Object.entries(soundEffectFiles).map(([command, fileName]) => [
+    command,
+    `/${PROCESS_NAME}/assets/${fileName}`,
+  ])
+);
 
 export const maybePlayTTS = (msg: string) => {
   const mute = sessionStorage.getItem("mute") === "true";
@@ -37,15 +43,12 @@ export const maybePlayTTS = (msg: string) => {
   }
 }
 export const maybePlaySoundEffect = (msg: string) => {
-  // check for mute in session storage
-  const muteSoundEffects = sessionStorage.getItem("mute") === "true";
-  if (muteSoundEffects) {
-    return;
-  }
+
   if (msg in soundEffectCommands) {
     const sound = new Audio(soundEffectCommands[msg]);
     sound.play();
   }
+
 }
 
 
