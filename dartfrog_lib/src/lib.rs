@@ -1055,3 +1055,81 @@ impl AppClientState for DefaultAppClientState {
         Ok(())
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ChatUpdate {
+    Message(ChatMessage),
+    FullMessageHistory(Vec<ChatMessage>),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum WrapChatUpdate {
+    Chat(ChatUpdate),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatMessage {
+    pub id: u64,
+    pub time: u64,
+    pub from: String,
+    pub msg: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ChatRequest {
+    SendMessage(String),
+}
+
+#[derive(Debug, Clone)]
+pub struct ChatServiceState {
+    pub last_message_id: u64,
+    pub messages: Vec<ChatMessage>,
+}
+
+impl ChatServiceState {
+    pub fn new() -> Self {
+        ChatServiceState {
+            last_message_id: 0,
+            messages: Vec::new(),
+        }
+    }
+
+    pub fn handle_subscribe(&self, subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
+        let chat_history = ChatUpdate::FullMessageHistory(self.messages.clone());
+        let update = WrapChatUpdate::Chat(chat_history);
+        update_subscriber(update, &subscriber_node, our, service)?;
+        Ok(())
+    }
+
+    pub fn handle_request(&mut self, from: String, req: ChatRequest, our: &Address, service: &Service) -> anyhow::Result<()> {
+        match req {
+            ChatRequest::SendMessage(msg) => {
+                const MAX_CHAT_MESSAGE_LENGTH: usize = 2048;
+                let msg = if msg.len() > MAX_CHAT_MESSAGE_LENGTH {
+                    msg[..MAX_CHAT_MESSAGE_LENGTH].to_string()
+                } else {
+                    msg
+                };
+
+                let chat_msg = ChatMessage {
+                    id: self.last_message_id,
+                    time: get_now(),
+                    from: from.clone(),
+                    msg: msg,
+                };
+
+                const MAX_CHAT_HISTORY: usize = 64;
+                if self.messages.len() > MAX_CHAT_HISTORY {
+                    self.messages = self.messages.split_off(self.messages.len() - MAX_CHAT_HISTORY);
+                }
+
+                self.last_message_id += 1;
+                self.messages.push(chat_msg.clone());
+                let chat_update = ChatUpdate::Message(chat_msg.clone());
+                let update = WrapChatUpdate::Chat(chat_update);
+                update_subscribers(update, our, service)?;
+            }
+        }
+        Ok(())
+    }
+}
