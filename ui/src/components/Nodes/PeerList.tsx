@@ -67,7 +67,7 @@ const PeerList = () => {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: "4px",
+                gap: "1px",
               }}
             >
               <span className={peer.peerData ? getPeerNameColor(peer) : 'color-gray'}>

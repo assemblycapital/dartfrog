@@ -313,6 +313,13 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                         </div> */}
                         {!isOurProfile &&
                           <button
+                            style={{
+                              width:"auto",
+                              height:"auto",
+                              padding:"0.5rem 1rem",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
                           >
                             message
                           </button>
@@ -321,6 +328,13 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                           <button
                             onClick={()=>{
                               setIsEditMode(!isEditMode);
+                            }}
+                            style={{
+                              width:"auto",
+                              height:"auto",
+                              padding:"0.5rem 1rem",
+                              alignItems: "center",
+                              justifyContent: "center",
                             }}
                           >
                             {isEditMode ? 'cancel profile edit' : 'edit profile'}
@@ -344,16 +358,16 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                           flex: '1',
                           fontSize:"1.5rem",
                         }}
-                        onClick={()=>{
-                          if (isOurProfile) {
-                            setIsEditMode(true);
-                          }
-                        }}
                       >
                         <div
                           style={{
                             display:"inline-block",
                             cursor: isOurProfile ? 'pointer' : 'default',
+                          }}
+                          onClick={()=>{
+                            if (isOurProfile) {
+                              setIsEditMode(true);
+                            }
                           }}
                         >
                           {peer.node}
@@ -425,7 +439,7 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                       style={{
                         margin:"1rem",
                         fontSize:"0.8rem",
-                        marginTop: "4rem",
+                        marginTop: "2rem",
                       }}
                     >
                       <ServiceList services={peer.peerData ? peer.peerData.hostedServices : []} />
