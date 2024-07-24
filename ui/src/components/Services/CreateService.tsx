@@ -45,10 +45,11 @@ const CreateService: React.FC<{ }> = ({ }) => {
 
   const handleInputCreateClick = useCallback(() => {
     if (isCreateInputValid && inputCreateServiceName !== '') {
-      let serviceId = `${inputCreateServiceName}.${window.our?.node}`;
-      createService(serviceId, selectedPlugin, selectedVisibility, selectedAccess, []);
+      let serviceId = `${inputCreateServiceName}:${window.our?.node}@${selectedPlugin}`;
+      createService(inputCreateServiceName, selectedPlugin, selectedVisibility, selectedAccess, []);
+      console.log("service create settings", serviceId, selectedPlugin, selectedVisibility, selectedAccess)
       setInputCreateServiceName('');
-      navigate(`/join/${serviceId}`);
+      // navigate(`/join/${serviceId}`);
       setTimeout(() => {
         requestLocalServiceList();
       }, 100);
@@ -157,12 +158,12 @@ const CreateService: React.FC<{ }> = ({ }) => {
                 <select
                   name="serviceVisibilityOption"
                   id="serviceVisibilityOption"
-                  // value={selectedVisibility}
-                  // onChange={handleVisibilityChange}
+                  value={selectedVisibility}
+                  onChange={handleVisibilityChange}
                 >
                   <option value="Visible">Visible</option>
                   <option value="VisibleToHost">Invisible</option>
-                  {/* <option value="Hidden">Hidden</option> */}
+                  <option value="Hidden">Hidden</option>
                 </select>
               </div>
               <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>

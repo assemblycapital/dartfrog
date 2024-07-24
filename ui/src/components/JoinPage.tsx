@@ -41,46 +41,27 @@ const JoinPage = () => {
 
     let gotService = null;
     if (serviceId.hostNode() === window.our?.node) {
-
-      console.log("our")
       gotService = localServices.find(service => service.id.toString() === serviceId.toString());
 
     } else {
-      console.log("not our")
       let gotPeer = peerMap.get(serviceId.hostNode());
       if (!(gotPeer)) {
-        console.log("no peer")
         // TODO
         localFwdPeerRequest(serviceId.hostNode());
         setServiceStatus(ServiceStatus.CONTACTING_HOST)
         return;
       }
       if (!(gotPeer.peerData)) {
-        console.log("no peer data")
         setServiceStatus(ServiceStatus.CONTACTING_HOST)
         return;
       }
-      console.log("got peer data", gotPeer.peerData.hostedServices, serviceId)
       gotService = gotPeer.peerData.hostedServices.find(service => service.id.toString() === serviceId.toString());
-      console.log("got service", gotService);
-
     }
-
-
-    if (!(gotService)) {
-      setServiceStatus(ServiceStatus.SERVICE_DOES_NOT_EXIST);
-      // setTimeout(() => {
-      //   requestServiceList(parsedServiceId.node);
-      // }, 300);
-      return;
-    }
-
-    setServiceMetadata(gotService.meta);
 
     setServiceStatus(ServiceStatus.CHECKING_PLUGIN)
 
     const checkProcessAvailability = async () => {
-      const process = gotService.id.process();
+      const process = serviceId.process();
       try {
         const response = await fetch(`/${process}/?service=${serviceId}`);
         if (!response.ok) {
@@ -100,6 +81,17 @@ const JoinPage = () => {
       }
     };
     checkProcessAvailability();
+
+    if (!(gotService)) {
+      // setServiceStatus(ServiceStatus.SERVICE_DOES_NOT_EXIST);
+      // setTimeout(() => {
+      //   requestServiceList(parsedServiceId.node);
+      // }, 300);
+      return;
+    }
+
+    setServiceMetadata(gotService.meta);
+
 
   }, [peerMap, localServices])
 
@@ -121,7 +113,7 @@ const JoinPage = () => {
   }
 
   useEffect(() => {
-    if (serviceStatus === ServiceStatus.PLUGIN_READY && serviceMetadata) {
+    if (serviceStatus === ServiceStatus.PLUGIN_READY) {
       const process = serviceId.process();
       const packageName = getPackageName(process)
       if (packageName !== "dartfrog:herobrine.os") {
@@ -133,7 +125,7 @@ const JoinPage = () => {
       let url = `http://${packageSubdomain}.${baseOrigin}/${process}/df/service/${serviceId}`;
       window.location.replace(url);
     }
-  }, [serviceStatus, serviceMetadata, baseOrigin, serviceId]);
+  }, [serviceStatus, baseOrigin, serviceId]);
 
   const renderServiceStatus = useCallback((status) => {
     if (!(status)) {
@@ -188,6 +180,7 @@ const JoinPage = () => {
         width:'100%',
         height:'100%',
         gap: "0.4rem",
+        marginTop:"1rem",
       }}
     >
       <div

@@ -129,7 +129,10 @@ const useDartStore = create<DartStore>()(
           {
             "CreateService": [
               serviceName,
-              processName
+              processName,
+              access,
+              visibility,
+              whitelist
             ]
           }
         })

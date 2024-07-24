@@ -174,7 +174,9 @@ fn handle_http_server_request(
             state.activity = PeerActivity::Online(get_now());
             let my_peer_data = PeerData {
                 profile: state.profile.clone(),
-                hosted_services: state.local_services.values().cloned().collect(),
+                hosted_services: state.local_services.values()
+                    .cloned()
+                    .collect(),
                 activity: state.activity.clone(),
             };
             state.peers.insert(our.node.clone(), Peer {
@@ -219,13 +221,13 @@ fn handle_http_server_request(
                     let local_user = DartfrogOutput::LocalUser(state.profile.clone(), state.activity.clone(), state.activity_setting.clone());
                     update_consumer(channel_id, local_user)?;
                 },
-                DartfrogInput::CreateService(service_name, process_name) => {
+                DartfrogInput::CreateService(service_name, process_name, access, visibility, whitelist) => {
                     let address_str = format!("{}@{}", our.node, process_name);
                     let address = Address::from_str(address_str.as_str());
                     match address {
                         Ok(address) => {
                             // forward the request
-                            let req = ProviderInput::DartfrogRequest(DartfrogToProvider::CreateService(service_name));
+                            let req = ProviderInput::DartfrogRequest(DartfrogToProvider::CreateService(service_name, access, visibility, whitelist));
                             poke(&address, req)?;
                         }
                         _ => {
@@ -443,7 +445,10 @@ fn handle_dartfrog_input(
             let address = get_server_address(&source.node());
             let my_peer_data = PeerData {
                 profile: state.profile.clone(),
-                hosted_services: state.local_services.values().cloned().collect(),
+                hosted_services: state.local_services.values()
+                    .filter(|service| matches!(service.meta.visibility, ServiceVisibility::Visible))
+                    .cloned()
+                    .collect(),
                 activity: state.activity.clone(),
             };
             poke(&address, DartfrogInput::RemoteResponsePeer(my_peer_data))?;

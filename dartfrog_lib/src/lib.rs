@@ -1,4 +1,5 @@
 use kinode_process_lib::http::{send_ws_push, HttpServerRequest, WsMessageType};
+use serde::de::Visitor;
 use serde::{Serialize, Deserialize};
 
 use std::collections::{HashMap, HashSet};
@@ -81,7 +82,7 @@ pub enum ServiceAccess {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ServiceVisibility {
     Visible,
-    HostOnly,
+    VisibleToHost,
     Hidden,
 }
 
@@ -166,7 +167,7 @@ impl Peer {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DartfrogInput {
-    CreateService(String, String),
+    CreateService(String, String, ServiceAccess, ServiceVisibility, Vec<String>), // service_name, process_name, access, visibility, whitelist
     DeleteService(String),
     SetProfile(Profile),
     //
@@ -221,7 +222,7 @@ pub enum FrontendRequest {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum FrontendMetaRequest {
     RequestMyServices,
-    CreateService(String),
+    CreateService(String, ServiceAccess, ServiceVisibility, Vec<String>), // service_name, access, visibility, whitelist,
     DeleteService(String),
     SetService(String),
     Unsubscribe,
@@ -261,7 +262,7 @@ pub enum FrontendChannelUpdate {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DartfrogToProvider {
-    CreateService(String), // service_name
+    CreateService(String, ServiceAccess, ServiceVisibility, Vec<String>), // service_name, access, visibility, whitelist
     DeleteService(String),
     Peer(Peer),
     PeerList(Vec<Peer>),
@@ -488,8 +489,11 @@ where
                         let response_message = FrontendUpdate::Meta(FrontendMetaUpdate::MyServices(services));
                         update_consumer(channel_id, response_message)?;
                     }
-                    FrontendMetaRequest::CreateService(name) => {
-                        let service = Service::new(&name, our.clone());
+                    FrontendMetaRequest::CreateService(name, access, visibility, whitelist) => {
+                        let mut service = Service::new(&name, our.clone());
+                        service.meta.access = access;
+                        service.meta.visibility = visibility;
+                        service.meta.whitelist = whitelist.into_iter().collect();
                         state.services.insert(service.id.to_string(), AppServiceStateWrapper {
                             service: service.clone(),
                             state: T::new(),
@@ -678,11 +682,14 @@ where
     U: AppClientState,
 {
     match app_message {
-        DartfrogToProvider::CreateService(service_name) => {
+        DartfrogToProvider::CreateService(service_name, access, visibility, whitelist) => {
             if source != &get_server_address(&our.node) {
                 return Ok(());
             }
-            let service = Service::new(&service_name, our.clone());
+            let mut service = Service::new(&service_name, our.clone());
+            service.meta.access = access;
+            service.meta.visibility = visibility;
+            service.meta.whitelist = whitelist.into_iter().collect();
             state.services.insert(service.id.to_string(), AppServiceStateWrapper {
                 service: service.clone(),
                 state: T::new(),

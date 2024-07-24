@@ -29,7 +29,6 @@ const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({metadata}) => 
 
   useEffect(() => {
     if (!metadata) return;
-    console.log(metadata)
     const time = Date.now();
 
     const newGroupedUsers = Array.from(metadata.user_presence).reduce(
