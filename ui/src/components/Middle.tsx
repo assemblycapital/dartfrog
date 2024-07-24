@@ -12,12 +12,58 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Services from './Services/Services';
 import NodeProfile from './Nodes/NodeProfile';
 import Messages from './Messages/Messages';
+import Spinner from './Spinner';
+import CurrentPageHeader from './CurrentPageHeader';
 
 interface MiddleProps {
 }
 
+export const renderLoading = () => {
+    return (
+      <div
+      style={{
+        height: "100%",
+        display: "flex",
+        flexDirection:"column",
+        justifyContent: "center",
+        alignItems: "center",
+        gap:"1rem",
+        color:"gray",
+        userSelect:"none",
+      }}
+    >
+      <div>
+        loading...
+      </div>
+      <Spinner />
+    </div>
+    )
+  }
 const Middle: React.FC<MiddleProps> = ({ }) => {
   const { isSidebarOpen, isClientConnected } = useDartStore();
+
+
+  const renderPage = (page, isLoaded) => {
+    return (
+      <div
+      style={{
+        height: "100%",
+        maxHeight: "100%",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <CurrentPageHeader />
+      {!isLoaded ? (
+        renderLoading()
+      ) : (
+        page()
+      )}
+    </div>
+
+    )
+  }
 
   return (
     
@@ -31,61 +77,58 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
       flexDirection: 'column',
     }}>
 
-       {!isClientConnected ? (
+      <Split
+        sizes={isSidebarOpen ? [80, 20] : [100, 0]}
+        minSize={isSidebarOpen ? [60, 60] : [0, 0]}
+        direction="horizontal"
+        gutterSize={10}
+        style={{
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'row',
+          overflowX: 'hidden',
+          height:"100%",
+          maxHeight:"100%",
+          overflowY: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            height:"100%",
+            maxHeight:"100%",
+            overflowY: 'hidden',
+          }}
+        >
+        <Routes>
+          <Route path="/" element={
+              renderPage(() => <Home />, isClientConnected)
+          } />
+          <Route path="/services" element={
+              renderPage(() => <Services />, isClientConnected)
+          } />
+          <Route path="/messages" element={
+              renderPage(() => <Messages />, isClientConnected)
+          } />
+          <Route path="/nodes" element={
+              renderPage(() => <Nodes />, isClientConnected)
+          } />
+          <Route path="/nodes/:node" element={
+              renderPage(() => <NodeProfile />, isClientConnected)
+          } />
+          <Route path="/join/:id" element={
+              renderPage(() => <JoinPage />, isClientConnected)
+          } />
+        </Routes>
+        </div>
 
-        <div>loading</div>
-       ):(
-            <Split
-              sizes={isSidebarOpen ? [80, 20] : [100, 0]}
-              minSize={isSidebarOpen ? [60, 60] : [0, 0]}
-              direction="horizontal"
-              gutterSize={10}
-              style={{
-                flexGrow: 1,
-                display: 'flex',
-                flexDirection: 'row',
-                overflowX: 'hidden',
-                height:"100%",
-                maxHeight:"100%",
-                overflowY: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  height:"100%",
-                  maxHeight:"100%",
-                  overflowY: 'hidden',
-                }}
-              >
-              <Routes>
-                <Route path="/" element={
-                    <Home />
-                } />
-                <Route path="/services" element={
-                    <Services />
-                } />
-                <Route path="/messages" element={
-                    <Messages />
-                } />
-                <Route path="/nodes" element={
-                  <Nodes />
-                } />
-                <Route path="/nodes/:node" element={
-                    <NodeProfile />
-                } />
-                <Route path="/join/:id" element={<JoinPage />} />
-              </Routes>
-              </div>
-
-              {isSidebarOpen ? (
-                  <div>
-                    <Sidebar />
-                  </div>
-              ) : (
-                <div></div>
-              )}
-            </Split>
-       )}
+        {isSidebarOpen ? (
+            <div>
+              <Sidebar />
+            </div>
+        ) : (
+          <div></div>
+        )}
+      </Split>
     </div>
   );
 };

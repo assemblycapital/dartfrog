@@ -8,6 +8,7 @@ import { useParams } from 'react-router-dom';
 import './NodeProfile.css';
 import ServiceList from '../Services/ServiceList';
 import CurrentPageHeader from '../CurrentPageHeader';
+import { renderLoading } from '../Middle';
 
 
 interface NodeProps {
@@ -154,7 +155,7 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
         const now = Date.now();
 
         if (now - activityTime <= 5 * 60 * 1000 && activity.type === 'Online') {
-          return 'is online';
+          return 'online now';
         }
 
         const delta = now - activityTime;
@@ -173,15 +174,12 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
             display:"flex",
             flexDirection:"column",
             gap:"0.6rem",
+            marginTop:"1rem",
             // height:"100%"
           }}
         >
-            <CurrentPageHeader />
             {!peer ? (
-              <div>
-                loading...
-              </div>
-
+              renderLoading()
             ): (
               <div
                 style={{

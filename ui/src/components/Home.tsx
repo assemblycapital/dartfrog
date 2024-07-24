@@ -8,9 +8,10 @@ import { HomeIcon } from './icons/Icons';
 import CurrentPageHeader from './CurrentPageHeader';
 import { PROCESS_NAME } from '../utils';
 import { useNavigate } from 'react-router-dom';
+import Spinner from './Spinner';
 
 const Home: React.FC = () => {
-  const {localServices, peerMap, setCurrentPage} = useDartStore();
+  const {localServices, peerMap, setCurrentPage, isClientConnected} = useDartStore();
   const navigate = useNavigate();
   const allServices = sortServices(getUniqueServices([...localServices, ...getAllServicesFromPeerMap(peerMap)]));
 
@@ -28,7 +29,6 @@ const Home: React.FC = () => {
         flexDirection: "column",
       }}
     >
-      <CurrentPageHeader />
       <div
         style={{
           flexGrow: "1",
@@ -64,31 +64,84 @@ const Home: React.FC = () => {
                 flexDirection: "column",
                 justifyContent: "center",
                 alignItems: "center",
+                height:"100%",
+                maxHeight:"100%",
               }}
             >
               <div>
                 <div>
                   dartfrog v0.3.0
                 </div>
-                <div>
+                <div
+                  style={{
+                    fontSize:"0.8rem",
+                  }}
+                >
                   secure subdomains & custom profiles.
                 </div>
               </div>
             </div>
             <div
               style={{
-                flex: "1",
+                flex: "2",
                 display: "flex",
                 flexDirection: "column",
+                marginTop:"1rem",
                 justifyContent: "center",
                 alignItems: "center",
                 fontSize: "0.8rem",
                 width: "100%",
+                height:"100%",
+                maxHeight:"100%",
               }}
             >
               {allServices.length === 0 ? (
-                <div>
-                  no known services..
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap:"1rem",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height:"100%",
+                  }}
+                >
+                  <div
+                    style={{
+                      userSelect:"none",
+                      height:"10vh",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    no known services..
+                  </div>
+                  <a
+                    href={`/${PROCESS_NAME}/services`}
+                    className='hover-dark-gray'
+                    style={{
+                      color: 'gray',
+                      textAlign: 'center',
+                      cursor: "pointer",
+                      padding: "0.5rem 1rem",
+                      width:"100%",
+                      height:"10vh",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      border: "1px solid #333",
+                    }}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      navigate('/services')
+                    }}
+                  >
+                    create one
+                  </a>
+
                 </div>
 
               ) : (
@@ -99,9 +152,26 @@ const Home: React.FC = () => {
                     flexDirection: "column",
                   }}
                 >
-                  {allServices.slice(0, 4).map((service, index) => (
-                    <ServiceCard key={index} service={service} />
-                  ))}
+                  <div
+                    style={{
+                      textAlign:"center",
+                      color: '#9d9d9d',
+                      backgroundColor: '#333',
+                      userSelect:"none",
+                      padding:"5px",
+                    }}
+                  >
+                    join a service!
+                  </div>
+                  <div
+                    style={{
+                      overflowY:"scroll",
+                    }}
+                  >
+                    {allServices.slice(0,4).map((service, index) => (
+                      <ServiceCard key={index} service={service} />
+                    ))}
+                  </div>
                   <a
                     href={`/${PROCESS_NAME}/services`}
                     className='hover-dark-gray'
@@ -111,6 +181,7 @@ const Home: React.FC = () => {
                       cursor: "pointer",
                       padding: "0.5rem 1rem",
                       width:"100%",
+                      borderTop:"1px solid #333"
                     }}
                     onClick={(event) => {
                       event.preventDefault();

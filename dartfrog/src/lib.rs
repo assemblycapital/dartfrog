@@ -285,8 +285,9 @@ fn handle_http_server_request(
                     update_consumer(channel_id, DartfrogOutput::PeerList(peers))?;
                 },
                 DartfrogInput::LocalFwdAllPeerRequests => {
-                    for peer in state.peers.values() {
+                    for peer in state.peers.values_mut() {
                         let address = get_server_address(&peer.node);
+                        peer.outstanding_request = Some(get_now());
                         poke(&address, DartfrogInput::RemoteRequestPeer)?;
                     }
                 },
@@ -521,6 +522,8 @@ fn init(our: Address) {
 
     let mut state = DartfrogState::new(&our);
     state.network_hub = Some(NETWORK_HUB.to_string());
+    let network_hub_peer = Peer::new(NETWORK_HUB.to_string());
+    state.peers.insert(NETWORK_HUB.to_string(), network_hub_peer);
 
     loop {
         match handle_message(&our, &mut state) {

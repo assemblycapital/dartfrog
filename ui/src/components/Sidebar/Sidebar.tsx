@@ -9,7 +9,7 @@ import { PROCESS_NAME } from '../../utils';
 interface SidebarProps {}
 
 const Sidebar: React.FC<SidebarProps> = ({ }) => {
-  const { isSidebarOpen, setIsSidebarOpen, currentPage} = useDartStore();
+  const { isSidebarOpen, setIsSidebarOpen, currentPage, isClientConnected} = useDartStore();
   const [profileImage, setProfileImage] = useState<string>(DEFAULT_PFP);
   const [nameColorClass, setNameColorClass] = useState<string>('name-color-default');
   const navigate = useNavigate();
@@ -24,6 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
 
     }
   },[profile]);
+
 
 
   const renderComponent = () => {

@@ -63,6 +63,10 @@ function App() {
         } else if (data["Peer"]){
             let peer = peerFromJson(data["Peer"]);
             putPeerMap(peer)
+        } else if (data["LocalService"]) {
+          const localService = data["LocalService"]
+          // TODO this may be needed for private metadata later
+          // console.log(localService)
         } else {
           console.log("unhandled update", data)
         }

@@ -14,8 +14,14 @@ const PeerList = () => {
   const activeLast5Minutes = [];
   const activeLast24Hours = [];
   const others = [];
+  let selfPeer = null;
 
   peerMap.forEach((peer, node) => {
+    if (node === window.our?.node) {
+      selfPeer = [node, peer];
+      return;
+    }
+
     if (!peer.peerData) {
       nullPeerData.push([node, peer]);
     } else {
@@ -37,6 +43,11 @@ const PeerList = () => {
 
   // Sort activeLast24Hours by most recent activity
   activeLast24Hours.sort((a, b) => b[1].peerData.activity.timestamp - a[1].peerData.activity.timestamp);
+
+  // Add selfPeer to the beginning of activeLast5Minutes if it exists
+  if (selfPeer) {
+    activeLast5Minutes.unshift(selfPeer);
+  }
 
   const renderPeerList = (peers) => (
     peers.map(([node, peer]) => (

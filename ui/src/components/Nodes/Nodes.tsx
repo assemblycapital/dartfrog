@@ -30,7 +30,6 @@ const Nodes: React.FC = () => {
         flexDirection: "column",
       }}
     >
-      <CurrentPageHeader />
 
       <div style={{ marginTop: "1rem"}}>
         <input 

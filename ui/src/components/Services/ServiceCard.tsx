@@ -83,7 +83,11 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
           >
             {service.meta.subscribers.length === 0 ? (
 
-              <span>
+              <span
+                style={{
+                  color:"gray",
+                }}
+              >
                 {getServiceRecencyText(service)}
               </span>
             ):(

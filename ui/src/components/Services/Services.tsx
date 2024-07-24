@@ -2,7 +2,7 @@ import DisplayUserActivity from "../DisplayUserActivity";
 import { useCallback, useEffect, useState } from "react";
 import Spinner from "../Spinner";
 import useDartStore from "../../store/dart";
-import {ServiceConnectionStatus, ServiceConnectionStatusType, getAllServicesFromPeerMap, getUniqueServices, } from "@dartfrog/puddle";
+import {ServiceConnectionStatus, ServiceConnectionStatusType, dfLinkRegex, getAllServicesFromPeerMap, getUniqueServices, } from "@dartfrog/puddle";
 import './Services.css'
 import { createSecretKey } from "crypto";
 import CreateService from "./CreateService";
@@ -30,7 +30,7 @@ const parseServiceLink = (value) => {
 
 export const validateServiceLink = (value) => {
   if (value === '') return true;
-  const { serviceName, hostNode, isValid } = parseServiceLink(value);
+  const isValid = dfLinkRegex.test(value);
   return isValid;
 };
 
@@ -71,10 +71,8 @@ const Services: React.FC<ServicesProps> = ({ }) => {
 
   const handleLinkInputJoinClick = useCallback(() => {
     if (isJoinServiceLinkInputValid) {
-      if (inputJoinServiceLink === '') return;
-      const { serviceName, hostNode, isValid } = parseServiceLink(inputJoinServiceLink);
-      if (!isValid) return;
-      navigate(`/join/${serviceName}.${hostNode}`);
+      const serviceId = inputJoinServiceLink.slice(5,)
+      navigate(`/join/${serviceId}`);
 
     }
   }, [inputJoinServiceLink]);
@@ -95,10 +93,9 @@ const Services: React.FC<ServicesProps> = ({ }) => {
         display: "flex",
         flexDirection: "column",
         gap: "1rem",
+        marginTop:"1rem",
       }}
     >
-      <CurrentPageHeader />
-
       <ServiceList
         services={allServices}
       />
@@ -129,6 +126,9 @@ const Services: React.FC<ServicesProps> = ({ }) => {
             value={inputJoinServiceLink}
             onChange={handleJoinServiceLinkInputChange}
             className={`${isJoinServiceLinkInputValid ? '' : 'invalid'}`}
+            style={{
+              flexGrow:"1",
+            }}
           />
           <button
             style={{

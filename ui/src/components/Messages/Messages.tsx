@@ -9,9 +9,7 @@ const Messages: React.FC = () => {
     }, [])
     return (
         <div>
-            <CurrentPageHeader />
             <div>
-
                 todo messages
             </div>
         </div>
