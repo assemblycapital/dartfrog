@@ -1,6 +1,6 @@
 import React from 'react';
 import useDartStore from '../../store/dart';
-import Spinner from '../Spinner';
+import Spinner from '@dartfrog/puddle/components/Spinner';
 // import { Presence, ServiceAccess } from '@dartfrog/puddle/index';
 import { useNavigate } from 'react-router-dom';
 import { Service, ServiceID, ServiceVisibility, getAllServicesFromPeerMap, getServiceRecencyText, sortServices } from '@dartfrog/puddle/index';

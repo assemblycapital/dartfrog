@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { XIcon } from '../icons/Icons';
+import { XIcon } from '@dartfrog/puddle/components/Icons';
 
 
 const PACKAGE = "dartfrog:herobrine.os"

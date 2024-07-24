@@ -30,6 +30,8 @@ export class ServiceConnectionStatus {
         return "ServiceDoesNotExist";
       case ServiceConnectionStatusType.Kicked:
         return "Kicked";
+      case ServiceConnectionStatusType.ServiceDeleted:
+        return "ServiceDeleted";
       case ServiceConnectionStatusType.AccessDenied:
         return "AccessDenied";
       default:
@@ -44,6 +46,7 @@ export enum ServiceConnectionStatusType {
   Disconnected,
   ServiceDoesNotExist,
   Kicked,
+  ServiceDeleted,
   AccessDenied,
 }
 
@@ -58,6 +61,7 @@ interface ConstructorArgs {
   onServiceMessage?: (message: any) => void;
   onClientMessage?: (message: any) => void;
   onPeerMapChange?: (api) => void;
+  onLocalServicesChange?: (api) => void;
 }
 
 export class ServiceApi {
@@ -70,6 +74,7 @@ export class ServiceApi {
   public serviceMetadata: ServiceMetadata | null;
   public serviceConnectionStatus: ServiceConnectionStatus | null;
   public peerMap: PeerMap = new Map();
+  public localServices = [];
 
   private onOpen: (api) => void;
   private onClose: () => void;
@@ -78,6 +83,7 @@ export class ServiceApi {
   private onServiceMessage: (message: any) => void;
   private onClientMessage: (message: any) => void;
   private onPeerMapChange: (api) => void;
+  private onLocalServicesChange: (api) => void;
 
   constructor({
     our,
@@ -90,6 +96,7 @@ export class ServiceApi {
     onServiceMessage = (message) => {},
     onClientMessage = (message) => {},
     onPeerMapChange = (api) => {},
+    onLocalServicesChange = (api) => {},
   }: ConstructorArgs) {
     this.onOpen = onOpen;
     this.onClose = onClose;
@@ -99,6 +106,7 @@ export class ServiceApi {
     this.onServiceMessage = onServiceMessage;
     this.onClientMessage = onClientMessage;
     this.onPeerMapChange = onPeerMapChange;
+    this.onLocalServicesChange = onLocalServicesChange;
     this.initialize(our, websocket_url);
   }
   private initialize(our, websocket_url) {
@@ -190,6 +198,10 @@ export class ServiceApi {
     let req = {"Meta": {"CreateService": name}}
     this.sendRequest(req);
   }
+  public deleteService(name:string) {
+    let req = {"Meta": {"DeleteService": name}}
+    this.sendRequest(req);
+  }
 
   public requestMyServices() {
     let req = {"Meta": "RequestMyServices"}
@@ -226,6 +238,15 @@ export class ServiceApi {
         this.peerMap.set(peer.node, peer)
         this.onPeerMapChange(this);
 
+      } else if (metaUpd["MyServices"]) {
+        const myServices = metaUpd["MyServices"]
+        let parsedMyServices = []
+        for (const service of myServices) {
+          const parsedService = serviceFromJson(service);
+          parsedMyServices.push(parsedService)
+        }
+        this.localServices = parsedMyServices;
+        this.onLocalServicesChange(this);
       } else {
         console.log("todo handle metaupdate'", metaUpd)
       }
@@ -257,6 +278,11 @@ export class ServiceApi {
         if (nodesToRequest.length > 0) {
           this.requestPeerList(nodesToRequest);
         }
+      } else if (channelUpd["Kick"]) {
+        const kick = channelUpd["Kick"]
+        if (kick === "ServiceDeleted")
+        this.setServiceConnectionStatus(ServiceConnectionStatusType.ServiceDeleted);
+
       } else if (channelUpd["FromClient"]) {
         const msg = JSON.parse(channelUpd["FromClient"])
         this.onClientMessage(msg)

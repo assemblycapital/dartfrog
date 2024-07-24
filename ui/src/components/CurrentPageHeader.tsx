@@ -1,5 +1,5 @@
 import React from 'react';
-import { HomeIcon } from './icons/Icons';
+import { HomeIcon } from '@dartfrog/puddle/components/Icons';
 import { PROCESS_NAME } from '../utils';
 import { useNavigate } from 'react-router-dom';
 import useDartStore from '../store/dart';

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { AssemblyCapitalLogo } from "./icons/Icons";
+import { AssemblyCapitalLogo } from "@dartfrog/puddle/components/Icons";
 import { ConnectionStatusType, ServiceConnectionStatusType } from "@dartfrog/puddle/index";
 import useDartStore from "../store/dart";
-import DisplayUserActivity from "./DisplayUserActivity";
+import DisplayUserActivity from "@dartfrog/puddle/components/DisplayUserActivity";
 
 const Footer = () => {
 

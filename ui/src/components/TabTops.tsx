@@ -1,6 +1,6 @@
 import React from 'react';
 import TabTop from './TabTop';
-import { PlusIcon } from './icons/Icons';
+import { PlusIcon } from '@dartfrog/puddle/components/Icons';
 import useDartStore from '../store/dart';
 
 const TabTops = ({  }) => {

@@ -23,6 +23,7 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
             justifyContent: "center",
             alignItems: "center",
             gap:"1rem",
+            userSelect:"none",
           }}
           href={`/${PROCESS_NAME}/join/${service.id.toString()}`}
         >

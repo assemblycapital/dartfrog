@@ -222,6 +222,7 @@ pub enum FrontendRequest {
 pub enum FrontendMetaRequest {
     RequestMyServices,
     CreateService(String),
+    DeleteService(String),
     SetService(String),
     Unsubscribe,
     RequestPeer(String),
@@ -242,7 +243,7 @@ pub enum FrontendUpdate {
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum FrontendMetaUpdate {
-    MyServices(Vec<String>),
+    MyServices(Vec<Service>),
     Peer(Peer),
     PeerList(Vec<Peer>),
 }
@@ -481,8 +482,10 @@ where
                         }
                     }
                     FrontendMetaRequest::RequestMyServices => {
-                        let service_keys: Vec<String> = state.services.keys().map(|id| id.to_string()).collect();
-                        let response_message = FrontendUpdate::Meta(FrontendMetaUpdate::MyServices(service_keys));
+                        let services: Vec<Service> = state.services.values()
+                            .map(|wrapper| wrapper.service.clone())
+                            .collect();
+                        let response_message = FrontendUpdate::Meta(FrontendMetaUpdate::MyServices(services));
                         update_consumer(channel_id, response_message)?;
                     }
                     FrontendMetaRequest::CreateService(name) => {
@@ -493,6 +496,45 @@ where
                         });
                         let req = ProviderOutput::Service(service);
                         poke(&get_server_address(&our.node), req)?;
+                        let services: Vec<Service> = state.services.values()
+                            .map(|wrapper| wrapper.service.clone())
+                            .collect();
+                        let response_message = FrontendUpdate::Meta(FrontendMetaUpdate::MyServices(services));
+                        update_consumer(channel_id, response_message)?;
+                    }
+                    FrontendMetaRequest::DeleteService(name) => {
+                        let dummy_service = Service::new(&name, our.clone());
+                        if let Some(service) = state.services.remove(&dummy_service.id.to_string()) {
+                            let service_id = service.service.id.to_string();
+                            
+                            // Notify dartfrog about the deletion
+                            let req = ProviderOutput::DeleteService(service.service.id);
+                            poke(&get_server_address(&our.node), req)?;
+                            
+                            // Notify all consumers about the updated service list
+                            let services: Vec<Service> = state.services.values()
+                                .map(|wrapper| wrapper.service.clone())
+                                .collect();
+                            let response_message = FrontendUpdate::Meta(FrontendMetaUpdate::MyServices(services));
+                            update_all_consumers(state, response_message)?;
+                            
+                            // Notify local consumers about the service deletion
+                            let kick_message = FrontendUpdate::Channel(FrontendChannelUpdate::Kick(KickReason::ServiceDeleted));
+                            update_all_consumers_with_service_id(state, service_id.clone(), kick_message)?;
+                            
+                            // Notify remote subscribers about the service deletion
+                            for subscriber in service.service.meta.subscribers {
+                                let subscriber_address = Address {
+                                    node: subscriber,
+                                    process: our.process.clone(),
+                                };
+                                let kick_request = ProviderInput::ProviderUserInput(
+                                    service_id.clone(),
+                                    ProviderUserInput::FromService(UpdateFromService::Kick(KickReason::ServiceDeleted))
+                                );
+                                poke(&subscriber_address, kick_request)?;
+                            }
+                        }
                     }
                     FrontendMetaRequest::RequestPeer(node) => {
                         let req = ProviderOutput::RequestPeer(node);
@@ -809,7 +851,6 @@ where
                     // println!("Service {} unsubscribed", service_id);
                     if sw.service.meta.subscribers.contains(&source.node) {
                         sw.service.meta.subscribers.remove(&source.node);
-                        sw.service.meta.user_presence.remove(&source.node);
                         publish_metadata(our, &sw.service)?;
                         sw.state.handle_unsubscribe(source.node.clone(), our, &sw.service)?;
                     }

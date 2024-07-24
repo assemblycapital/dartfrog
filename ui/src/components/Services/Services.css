@@ -35,7 +35,7 @@ button {
   transition: background-color 0.2s;
 }
 .join-button:hover {
-  background-color: #3c3f66;
+  background-color: #2e304a;
   transition: background-color 0.2s;
 }
 .delete-button {
@@ -45,7 +45,7 @@ button {
   transition: background-color 0.2s;
 }
 .delete-button:hover {
-  background-color: #5b3535;
+  background-color: #473030;
   transition: background-color 0.2s;
 }
 

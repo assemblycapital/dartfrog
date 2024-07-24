@@ -7,6 +7,7 @@ import Split from 'react-split';
 import './ChatBox.css';
 import { dfLinkRegex, dfLinkToRealLink, getPeerNameColor, nodeProfileLink } from '@dartfrog/puddle';
 import ProfilePicture from './ProfilePicture';
+import DisplayUserActivity from './DisplayUserActivity';
 
 interface ChatBoxProps {
   chatState: ChatState;
@@ -240,7 +241,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
             <ChatInput />
           </div>
         </SplitComponent>
-
       </div>
     </div>
   );

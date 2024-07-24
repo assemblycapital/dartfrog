@@ -12,7 +12,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Services from './Services/Services';
 import NodeProfile from './Nodes/NodeProfile';
 import Messages from './Messages/Messages';
-import Spinner from './Spinner';
+import Spinner from '@dartfrog/puddle/components/Spinner';
 import CurrentPageHeader from './CurrentPageHeader';
 
 interface MiddleProps {

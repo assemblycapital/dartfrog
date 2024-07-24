@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import ServiceTab from './ServiceTab';
 import useDartStore from '../store/dart';
 import './TabbedWindowManager.css';
-import { PlusIcon } from './icons/Icons';
+import { PlusIcon } from '@dartfrog/puddle/components/Icons';
 import { HUB_NODE } from '../utils';
 import TabTop from './TabTop';
 import TabTops from './TabTops';

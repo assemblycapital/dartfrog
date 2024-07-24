@@ -1,21 +1,26 @@
 import React, { useEffect } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
-import { HamburgerIcon } from './Icons';
 import TopBar from './TopBar';
 import { ServiceApi, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceMetadata } from '@dartfrog/puddle';
 import { PROCESS_NAME } from '../App';
 import { WEBSOCKET_URL, } from '../utils';
-import useChatStore, { ChatState, ChatMessage} from '@dartfrog/puddle/store/chat';
+import useChatStore, { ChatState, ChatMessage } from '@dartfrog/puddle/store/chat';
 import ChatBox from '@dartfrog/puddle/components/ChatBox';
+import Spinner from '@dartfrog/puddle/components/Spinner';
 import { maybePlaySoundEffect, maybePlayTTS } from '@dartfrog/puddle/utils';
+import DisplayUserActivity from '@dartfrog/puddle/components/DisplayUserActivity';
 
 const ServiceView = () => {
   const { id } = useParams<{ id: string }>();
   const paramServiceId = id
 
-  const {setApi, api, serviceId, requestPeer, setPeerMap, setServiceId, setChatHistory, addChatMessage, chatState, setServiceConnectionStatus, serviceConnectionStatus, setServiceMetadata, serviceMetadata} = useChatStore();
+  const {
+    setApi, api, serviceId, requestPeer, setPeerMap, setServiceId, setChatHistory,
+    addChatMessage, chatState, setServiceConnectionStatus, serviceConnectionStatus,
+    setServiceMetadata, serviceMetadata
+  } = useChatStore();
 
-  useEffect(()=>{
+  useEffect(() => {
     setServiceId(paramServiceId);
     const newApi = new ServiceApi({
       our: {
@@ -25,8 +30,7 @@ const ServiceView = () => {
       serviceId: paramServiceId,
       websocket_url: WEBSOCKET_URL,
       onOpen: (api) => {
-        // requestMyServices();
-        // console.log("connected to kinode", api.serviceId)
+        // 
       },
       onServiceConnectionStatusChange(api) {
         setServiceConnectionStatus(api.serviceConnectionStatus)
@@ -48,9 +52,7 @@ const ServiceView = () => {
         }
       },
       onClientMessage(msg) {
-        // no client messages in chat
       },
-
     });
     setApi(newApi);
 
@@ -73,38 +75,72 @@ const ServiceView = () => {
         display: 'flex',
         flexDirection: 'column',
         padding: '20px',
-        boxSizing:"border-box",
+        boxSizing: "border-box",
       }}
     >
-      <div
-        style={{ flex: '0 1 auto' }}
-      >
-
+      <div style={{ flex: '0 1 auto' }}>
         <TopBar serviceId={paramServiceId} />
       </div>
       <div
         style={{
           flex: '1 1 100%',
-          maxHeight:"100%",
+          maxHeight: "100%",
           overflow: 'auto',
         }}
       >
         {!serviceConnectionStatus ? (
-            "loading..."
-          ):(
-            <>
-              {serviceConnectionStatus.status !== ServiceConnectionStatusType.Connected ? (
-
-                <div>
-                  {serviceConnectionStatus.toString()}
+          <div
+            style={{
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "1rem",
+              color: "gray",
+              userSelect: "none",
+            }}
+          >
+            <div>
+              loading...
+            </div>
+            <Spinner />
+          </div>
+        ) : (
+          <>
+            {serviceConnectionStatus.status !== ServiceConnectionStatusType.Connected ? (
+              <div
+                style={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: "1rem",
+                  userSelect: "none",
+                }}
+              >
+                {serviceConnectionStatus.toString()}
+              </div>
+            ) : (
+              <div
+                style={{
+                  height: "100%",
+                  maxHeight: "100%",
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
+                  gap: "6px",
+                }}
+              >
+                <div style={{ flex: 1, overflow: 'auto' }}>
+                  <ChatBox chatState={chatState} />
                 </div>
-              ) : ( 
-                <ChatBox chatState={chatState} />
-              )
-              }
-            </>
+                <DisplayUserActivity metadata={serviceMetadata} />
+              </div>
+            )}
+          </>
         )}
-
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
-import DisplayUserActivity from "../DisplayUserActivity";
+import DisplayUserActivity from "@dartfrog/puddle/components/DisplayUserActivity";
 import { useCallback, useEffect, useState } from "react";
-import Spinner from "../Spinner";
+import Spinner from "@dartfrog/puddle/components/Spinner";
 import useDartStore from "../../store/dart";
 import {ServiceConnectionStatus, ServiceConnectionStatusType, dfLinkRegex, getAllServicesFromPeerMap, getUniqueServices, } from "@dartfrog/puddle";
 import './Services.css'

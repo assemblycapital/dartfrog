@@ -1,42 +1,60 @@
 import React, { useState } from 'react';
-import { HamburgerIcon } from './Icons';
+import { HamburgerIcon, HomeIcon } from '@dartfrog/puddle/components/Icons';
 
 const TopBar = ({ serviceId }) => {
   const [serviceIdDisplayText, setServiceIdDisplayText] = useState(serviceId);
 
   const handleCopyClick = () => {
     navigator.clipboard.writeText(`df://${serviceId}`);
-    setServiceIdDisplayText("copied to clipboard!");
+    setServiceIdDisplayText("copied link to clipboard!");
     setTimeout(() => {
       setServiceIdDisplayText(serviceId);
     }, 2000); // Revert back after 2 seconds
   };
 
+  const baseOrigin = window.origin.split(".").slice(1).join(".")
   return (
     <div
+    style={{
+      fontSize: '0.8rem',
+      color: '#9d9d9d',
+      backgroundColor: '#333',
+      textAlign: 'center',
+      width: '100%',
+      padding: '0 8px',
+      height: '26px',
+      flexShrink: 0,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'default',
+      position: 'relative',
+      userSelect:'none',
+    }}
+  >
+    <a
       style={{
-        fontSize: "0.8rem",
-        display: "flex",
-        flexDirection: "row",
-        gap: "4px",
-        height:"26px",
-        maxHeight:"26px",
-        maxWidth:"100%",
-        alignItems: "center", // Center items vertically
+        position: 'absolute',
+        left: '0px',
+        display: 'flex',
+        alignItems: 'center',
+        height: '100%',
+        cursor: 'pointer',
+        padding: '0px 10px'
+
+      }}
+      className="hover-dark-gray"
+      href={`http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/`}
+    >
+        <HomeIcon size='15px' color='#9d9d9d' />
+    </a>
+    <div
+      style={{
+        width:"40px"
       }}
     >
-      <div
-        className='home-link'
-        style={{
-          display: "inline-block",
-          cursor: "pointer"
-        }}
-        onClick={() => {
-          window.location.href = "/dartfrog:dartfrog:herobrine.os/"
-        }}
-      >
-        home
-      </div>
+    </div>
       <div
         style={{
           flexGrow: "1",
@@ -69,9 +87,6 @@ const TopBar = ({ serviceId }) => {
           alignItems: 'center',
         }}
       >
-        <div>
-          {window.our?.node}
-        </div>
         <HamburgerIcon height='1em' width='1em' color='#b4b4b4' />
       </div>
     </div>

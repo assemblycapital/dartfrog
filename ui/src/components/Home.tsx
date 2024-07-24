@@ -4,11 +4,11 @@ import { getAllServicesFromPeerMap, getUniqueServices, sortServices } from '@dar
 import ServiceList from './Services/ServiceList';
 import PeerList from './Nodes/PeerList';
 import ServiceCard from './Services/ServiceCard';
-import { HomeIcon } from './icons/Icons';
+import { HomeIcon } from '@dartfrog/puddle/components/Icons';
 import CurrentPageHeader from './CurrentPageHeader';
 import { PROCESS_NAME } from '../utils';
 import { useNavigate } from 'react-router-dom';
-import Spinner from './Spinner';
+import Spinner from '@dartfrog/puddle/components/Spinner';
 
 const Home: React.FC = () => {
   const {localServices, peerMap, setCurrentPage, isClientConnected} = useDartStore();
@@ -87,8 +87,8 @@ const Home: React.FC = () => {
                 display: "flex",
                 flexDirection: "column",
                 marginTop:"1rem",
-                justifyContent: "center",
-                alignItems: "center",
+                // justifyContent: "center",
+                // alignItems: "center",
                 fontSize: "0.8rem",
                 width: "100%",
                 height:"100%",

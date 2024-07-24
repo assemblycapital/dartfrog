@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import {Peer, PeerMap, ServiceApi, ServiceConnectionStatus, ServiceMetadata} from '@dartfrog/puddle';
+import {Peer, PeerMap, Service, ServiceApi, ServiceConnectionStatus, ServiceMetadata} from '@dartfrog/puddle';
 import { maybePlaySoundEffect, maybePlayTTS } from '../utils';
 
 export type ChatState = {
@@ -22,6 +22,9 @@ export interface ChatStore {
   serviceConnectionStatus: ServiceConnectionStatus | null,
   setServiceConnectionStatus: (status: ServiceConnectionStatus) => void,
   //
+  localServices: Service[],
+  setLocalServices: (services:Service[]) => void,
+  // 
   peerMap: PeerMap,
   setPeerMap: (newPeerMap:PeerMap) => void,
   newPeer: (node:string) => void,
@@ -30,6 +33,7 @@ export interface ChatStore {
   setApi: (api: ServiceApi) => void
   //
   createService: (name: string) => void
+  deleteService: (name: string) => void
   requestPeer: (node:string) => void
   requestMyServices: () => void
   //
@@ -53,6 +57,9 @@ const useChatStore = create<ChatStore>((set, get) => ({
   serviceConnectionStatus: null,
   setServiceConnectionStatus: (serviceConnectionStatus) => set({serviceConnectionStatus}),
   //
+  localServices: [],
+  setLocalServices: (localServices) => set({localServices}),
+  //
   api: null,
   setApi: (api) => set({ api }),
   //
@@ -60,6 +67,11 @@ const useChatStore = create<ChatStore>((set, get) => ({
     const { api } = get();
     if (!api) { return; }
     api.createService(name);
+  },
+  deleteService: (name) => {
+    const { api } = get();
+    if (!api) { return; }
+    api.deleteService(name);
   },
   requestMyServices: () => {
     const { api } = get();
