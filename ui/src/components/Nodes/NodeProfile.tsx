@@ -187,7 +187,7 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                 style={{
                   display:"flex",
                   flexDirection:"column",
-                  textAlign:"center",
+                  // textAlign:"center",
                   gap:"0.6rem",
 
                 }}
@@ -215,15 +215,6 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                         all nodes
                       </div>
                     </button>
-                    {isOurProfile && 
-                      <button
-                        onClick={()=>{
-                          setIsEditMode(!isEditMode);
-                        }}
-                      >
-                        {isEditMode ? 'cancel' : 'edit profile'}
-                      </button>
-                    }
                     {renderConnectionStatus(peer, isBadConnection)}
                     {isBadConnection &&
                       <button
@@ -238,14 +229,28 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                     }
                   </div>
                  
-                  <div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      position: "relative",
+                      height:"40vh",
+                      minHeight: "40vh",
+                    }}
+                  >
                     <div
                       className="node-profile-image"
                       style={{
-                        height:"30vh",
-                        width:"30vh",
+                        position: "absolute",
+                        marginLeft:"1rem",
+                        top: "50%",
+                        left: "0",
+                        transform: "translate(0, -50%)",
+                        height: "20vh",
+                        width: "20vh",
+                        zIndex: 1,
                       }}
-                      onClick={()=>{
+                      onClick={() => {
                         if (isOurProfile) {
                           setIsEditMode(true);
                         }
@@ -255,16 +260,77 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                         src={profileImage} 
                         alt="profile image" 
                         style={{
-                          opacity: isLoadingImage ? 0 : 1, // Set opacity based on loading state
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          opacity: isLoadingImage ? 0 : 1,
                         }}
                       />
                     </div>
-                  </div>
+
+                    <div
+                      id="dark-profile-bg"
+                      style={{
+                        flex: "1",
+                        // flexGrow:"0",
+                        maxHeight:"20vh",
+                        minHeight:"20vh",
+                        backgroundColor: "#1f1f1f",
+                      }}
+                    />
+                    <div
+                      id="light-profile-bg"
+                      style={{
+                        flex: "1",
+                        display: "flex",
+                        flexDirection: "column",
+                      }}
+                    >
+                      <div
+                       style={{
+                        height:"10vh",
+                        maxHeight:"10vh",
+                        display:"flex",
+                        flexDirection:"row",
+                        alignItems: "center",
+                      }}
+                      >
+                        {/* row that shares space with profile */}
+                        <div
+                          style={{
+                            display:"inline-block",
+                            height:"10vh",
+                            width:"23vh",
+                          }}
+                        >
+                          {/* cover the bottom of the profile */}
+                        </div>
+                        {/* <div
+                          style={{
+                            flexGrow:"1"
+                          }}
+                        >
+                        </div> */}
+                        {!isOurProfile &&
+                          <button
+                          >
+                            message
+                          </button>
+                        }
+                        {isOurProfile &&
+                          <button
+                            onClick={()=>{
+                              setIsEditMode(!isEditMode);
+                            }}
+                          >
+                            {isEditMode ? 'cancel profile edit' : 'edit profile'}
+                          </button>
+                        }
+                      </div>
                       {isEditMode && (
-                        <div>
+                        <div style={{ marginTop: "1rem", marginBottom:"1rem", }}>
                           <input 
                             style={{
-                              margin:'0'
                             }}
                             type="text" 
                             placeholder="Enter image URL" 
@@ -272,73 +338,99 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                           />
                         </div>
                       )}
-
-                    <div
-                      className={`${nameColorClass}`}
-                      style={{
-                        flex: '1',
-                        fontSize:"1.5rem",
-                        cursor: isOurProfile ? 'pointer' : 'default',
-                      }}
-                      onClick={()=>{
-                        if (isOurProfile) {
-                          setIsEditMode(true);
-                        }
-                      }}
-                    >
-                      {peer.node}
-                    </div>
-                    {isEditMode && (
-                      <div>
-                        <select onChange={handleColorChange} value={selectedNameColor}>
-                          {Object.values(NameColor).map((color) => (
-                              <option key={color} value={color}>{color.toLowerCase()}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                    <div
-                      style={{
-                        color:'gray',
-                        cursor:'default',
-                      }}
-                    >
-                      {getActivityMessage()}
-                    </div>
-                    {isEditMode ? (
-                        <div>
-                          <textarea
-                            value={selectedBio}
-                            onChange={handleBioChange}
-                          />
-                        </div>
-                      ): (
+                      <div
+                        className={`${nameColorClass}`}
+                        style={{
+                          flex: '1',
+                          fontSize:"1.5rem",
+                        }}
+                        onClick={()=>{
+                          if (isOurProfile) {
+                            setIsEditMode(true);
+                          }
+                        }}
+                      >
                         <div
                           style={{
-                            flex: '1',
-                            fontSize:"1rem",
+                            display:"inline-block",
+                            cursor: isOurProfile ? 'pointer' : 'default',
                           }}
                         >
-                          {peer.peerData ? peer.peerData.profile.bio : ''}
+                          {peer.node}
                         </div>
-                      )}
-                    {isEditMode && (
-                      <div>
-                        <button
-                          onClick={handleSave}
-                        >
-                          save
-                        </button>
+                        {isEditMode && (
+                          <div
+                            style={{
+                              display:"inline-block",
+                              marginLeft:"1rem",
+                            }}
+                          >
+                            <select onChange={handleColorChange} value={selectedNameColor}>
+                              {Object.values(NameColor).map((color) => (
+                                  <option key={color} value={color}>{color.toLowerCase()}</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
                       </div>
-                    )}
-                <div
-                  style={{
-                    margin:"1rem",
-                    fontSize:"0.8rem",
-                  }}
-                >
-                  <ServiceList services={peer.peerData ? peer.peerData.hostedServices : []} />
-                </div>
+                      <div
+                        style={{
+                          color:'gray',
+                          cursor:'default',
+                        }}
+                      >
+                        {getActivityMessage()}
+                      </div>
+                      {isEditMode ? (
+                          <div style={{ marginTop: "1rem" }}>
+                            <textarea
+                              value={selectedBio}
+                              onChange={handleBioChange}
+                            />
+                          </div>
+                        ): (
+                          <div
+                            style={{
+                              flex: '1',
+                              fontSize: "1rem",
+                              marginTop: "1rem",
+                            }}
+                          >
+                            {peer.peerData ? peer.peerData.profile.bio : ''}
+                          </div>
+                        )}
+                      {isEditMode &&
+                        <div
+                          style={{
+                            marginTop: "1rem",
+                            display:"flex",
+                            gap:"1rem",
+                            }}
+                          >
+                          <button
+                            onClick={()=>{
+                              setIsEditMode(!isEditMode);
+                            }}
+                          >
+                            cancel
+                          </button>
+                          <button onClick={handleSave}>
+                            save
+                          </button>
+                        </div>
+                      }
+
+                    </div>
+                    <div
+                      style={{
+                        margin:"1rem",
+                        fontSize:"0.8rem",
+                        marginTop: "4rem",
+                      }}
+                    >
+                      <ServiceList services={peer.peerData ? peer.peerData.hostedServices : []} />
+                    </div>
+                  </div>
               </div>
             )}
         </div>

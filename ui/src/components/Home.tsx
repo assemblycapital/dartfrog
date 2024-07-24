@@ -66,19 +66,14 @@ const Home: React.FC = () => {
                 alignItems: "center",
               }}
             >
-              <a href={`/${PROCESS_NAME}/join/`}
-                className='join-the-hub color-white'
-                  onClick={(event) => {
-                    event.preventDefault();
-                    navigate('/services')
-                  }}
-                  style={{
-                    padding:"2rem",
-                    cursor:"pointer",
-                  }}
-              >
-                join the hub
-              </a>
+              <div>
+                <div>
+                  dartfrog v0.3.0
+                </div>
+                <div>
+                  secure subdomains & custom profiles.
+                </div>
+              </div>
             </div>
             <div
               style={{
