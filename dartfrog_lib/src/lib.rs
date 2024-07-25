@@ -185,6 +185,8 @@ pub enum DartfrogInput {
     // 
     RemoteRequestPeer,
     RemoteResponsePeer(PeerData),
+    RemoteRequestAllPeerNodes,
+    RemoteResponseAllPeerNodes(Vec<String>),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -78,7 +78,7 @@ const TopBar = ({ serviceId }) => {
           {serviceIdDisplayText}
         </div>
       </div>
-      <div
+      {/* <div
         style={{
           display: "flex",
           flexDirection: "row",
@@ -88,7 +88,7 @@ const TopBar = ({ serviceId }) => {
         }}
       >
         <HamburgerIcon height='1em' width='1em' color='#b4b4b4' />
-      </div>
+      </div> */}
     </div>
   );
 };

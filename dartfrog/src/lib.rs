@@ -499,6 +499,37 @@ fn handle_dartfrog_input(
                 }
             }
         }
+        DartfrogInput::RemoteRequestAllPeerNodes => {
+            // Add the source.node as a new peer if it doesn't exist
+            if !state.peers.contains_key(&source.node) {
+                let new_peer = Peer::new(source.node.clone());
+                state.peers.insert(source.node.clone(), new_peer);
+                state.save(); // Save after adding a new peer
+            }
+
+            // Now collect all peer nodes, including the newly added one
+            let peer_nodes: Vec<String> = state.peers.keys().cloned().collect();
+            let address = get_server_address(&source.node());
+            poke(&address, DartfrogInput::RemoteResponseAllPeerNodes(peer_nodes))?;
+        }
+        DartfrogInput::RemoteResponseAllPeerNodes(nodes) => {
+            if Some(source.node.clone()) != state.network_hub { return Ok(()); }
+            
+            for node in nodes {
+                if !state.peers.contains_key(&node) {
+                    // Add new blank peer
+                    let mut new_peer = Peer::new(node.clone());
+                    new_peer.outstanding_request = Some(get_now());
+                    state.peers.insert(node.clone(), new_peer);
+                    
+                    // Contact the new peer
+                    let address = get_server_address(&node);
+                    poke(&address, DartfrogInput::RemoteRequestPeer)?;
+                }
+            }
+            
+            state.save(); // Save after adding new peers
+        }
         _ => {
             println!("unhandled DartfrogInput: {:?}", dartfrog_input);
         }
@@ -562,6 +593,10 @@ fn init(our: Address) {
         let network_hub_peer = Peer::new(NETWORK_HUB.to_string());
         state.peers.insert(NETWORK_HUB.to_string(), network_hub_peer);
     }
+
+    let network_hub_address = get_server_address(NETWORK_HUB);
+    poke(&network_hub_address, DartfrogInput::RemoteRequestAllPeerNodes).unwrap();
+
     state.save(); // Save initial state if changes were made
 
     loop {
