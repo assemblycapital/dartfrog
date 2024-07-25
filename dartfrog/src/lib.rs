@@ -12,6 +12,7 @@ use kinode_process_lib::{http, await_message, call_init, println, Address, Reque
         send_ws_push, HttpServerRequest,
         WsMessageType,
     },
+    set_state, get_typed_state,
 };
 use serde::{Deserialize, Serialize};
 
@@ -44,7 +45,7 @@ impl Hash for Consumer{
 const IS_FAKE: bool = !cfg!(feature = "prod");
 const NETWORK_HUB: &str = if IS_FAKE { "fake.dev" } else { "waterhouse.os" };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DartfrogState {
     pub network_hub: Option<String>,
     pub consumers: HashMap<u32, Consumer>,
@@ -67,6 +68,17 @@ impl DartfrogState {
             profile : Profile::new(our.node.clone()),
             activity_setting: ActivitySetting::Public,
             activity: PeerActivity::Offline(get_now()),
+        }
+    }
+
+    pub fn save(&self) {
+        set_state(&bincode::serialize(self).unwrap());
+    }
+
+    pub fn load(our: &Address) -> Self {
+        match get_typed_state(|bytes| Ok(bincode::deserialize::<DartfrogState>(bytes)?)) {
+            Some(state) => state,
+            None => DartfrogState::new(our)
         }
     }
 }
@@ -191,6 +203,7 @@ fn handle_http_server_request(
             update_consumer(channel_id, DartfrogOutput::PeerList(peers))?;
             let local_user = DartfrogOutput::LocalUser(state.profile.clone(), state.activity.clone(), state.activity_setting.clone());
             update_consumer(channel_id, local_user)?;
+            state.save(); // Save after adding a new consumer
         }
         HttpServerRequest::WebSocketPush { channel_id, message_type} => {
             // take the opportunity to kill any old consumers
@@ -202,6 +215,7 @@ fn handle_http_server_request(
 
             if message_type == WsMessageType::Close {
                 state.consumers.remove(&channel_id);
+                state.save(); // Save after removing a consumer
                 return Ok(());
             }
             if message_type != WsMessageType::Binary {
@@ -220,6 +234,7 @@ fn handle_http_server_request(
                     state.profile = profile;
                     let local_user = DartfrogOutput::LocalUser(state.profile.clone(), state.activity.clone(), state.activity_setting.clone());
                     update_consumer(channel_id, local_user)?;
+                    state.save(); // Save after updating profile
                 },
                 DartfrogInput::CreateService(service_name, process_name, access, visibility, whitelist) => {
                     let address_str = format!("{}@{}", our.node, process_name);
@@ -239,15 +254,23 @@ fn handle_http_server_request(
                     let maybe_service_id = ServiceID::from_string(&id);
                     match maybe_service_id {
                         Some(service_id) => {
-                            // forward the request
+                            // Delete the service locally
+                            state.local_services.remove(&id);
+                            
+                            // Forward the request
                             let req = ProviderInput::DartfrogRequest(DartfrogToProvider::DeleteService(id));
                             poke(&service_id.address, req)?;
+                            
+                            // Update all consumers with the new service list
+                            let services: Vec<Service> = state.local_services.values().cloned().collect();
+                            update_all_consumers(state, DartfrogOutput::LocalServiceList(services))?;
+                            
+                            state.save(); // Save after deleting a service
                         }
                         _ => {
                             println!("failed to parse {:?}", id);
                         }
                     }
-
                 }
                 DartfrogInput::RequestLocalService(id) => {
                     match state.local_services.get(&id) {
@@ -268,6 +291,7 @@ fn handle_http_server_request(
                             state.peers.remove(&node);
                             let peers: Vec<Peer> = state.peers.values().cloned().collect();
                             update_consumer(channel_id, DartfrogOutput::PeerList(peers))?;
+                            state.save(); // Save after deleting a peer
                         }
                         None => {
                         }
@@ -312,6 +336,7 @@ fn handle_http_server_request(
         }
         HttpServerRequest::WebSocketClose(channel_id) => {
             state.consumers.remove(&channel_id);
+            state.save(); // Save after removing a consumer
         }
         HttpServerRequest::Http(_request) => {
         }
@@ -369,6 +394,7 @@ fn handle_provider_output(
             if let Some(service) = state.local_services.remove(&id.to_string()) {
                 let update = DartfrogOutput::LocalServiceList(state.local_services.values().cloned().collect());
                 update_all_consumers(state, update)?;
+                state.save(); // Save after deleting a service
             }
         },
         ProviderOutput::Service(service) => {
@@ -382,6 +408,7 @@ fn handle_provider_output(
             state.local_services.insert(service.id.to_string(), service.clone());
             let update = DartfrogOutput::LocalService(service);
             update_all_consumers(state, update)?;
+            state.save(); // Save after adding or updating a service
         },
         ProviderOutput::ServiceList(services) => {
             for service in services {
@@ -393,6 +420,7 @@ fn handle_provider_output(
             }
             let update = DartfrogOutput::LocalServiceList(state.local_services.values().cloned().collect());
             update_all_consumers(state, update)?;
+            state.save(); // Save after updating service list
         },
         ProviderOutput::RequestPeer(node) => {
             if our.node != source.node {
@@ -467,6 +495,7 @@ fn handle_dartfrog_input(
                     local_peer.last_updated = Some(get_now());
                     let local_peer_clone = local_peer.clone();
                     update_all_of_new_peer(state, local_peer_clone)?;
+                    state.save(); // Save after updating peer data
                 }
             }
         }
@@ -525,17 +554,19 @@ fn init(our: Address) {
         .send()
         .unwrap();
 
-    let mut state = DartfrogState::new(&our);
-    state.network_hub = Some(NETWORK_HUB.to_string());
-    let network_hub_peer = Peer::new(NETWORK_HUB.to_string());
-    state.peers.insert(NETWORK_HUB.to_string(), network_hub_peer);
+    let mut state = DartfrogState::load(&our);
+    if state.network_hub.is_none() {
+        state.network_hub = Some(NETWORK_HUB.to_string());
+    }
+    if !state.peers.contains_key(NETWORK_HUB) {
+        let network_hub_peer = Peer::new(NETWORK_HUB.to_string());
+        state.peers.insert(NETWORK_HUB.to_string(), network_hub_peer);
+    }
+    state.save(); // Save initial state if changes were made
 
     loop {
-        match handle_message(&our, &mut state) {
-            Ok(()) => {}
-            Err(e) => {
-                println!("handle_message error: {:?}", e);
-            }
-        };
+        if let Err(e) = handle_message(&our, &mut state) {
+            println!("handle_message error: {:?}", e);
+        }
     }
 }

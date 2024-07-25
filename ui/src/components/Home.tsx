@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import useDartStore from '../store/dart';
 import { getAllServicesFromPeerMap, getUniqueServices, sortServices } from '@dartfrog/puddle/index';
 import ServiceList from './Services/ServiceList';
@@ -13,11 +13,22 @@ import Spinner from '@dartfrog/puddle/components/Spinner';
 const Home: React.FC = () => {
   const {localServices, peerMap, setCurrentPage, isClientConnected} = useDartStore();
   const navigate = useNavigate();
-  const allServices = sortServices(getUniqueServices([...localServices, ...getAllServicesFromPeerMap(peerMap)]));
+  const [allServices, setAllServices] = useState([]);
 
-  useEffect(()=>{
-    setCurrentPage('home')
-  }, [])
+  useEffect(() => {
+    setCurrentPage('home');
+
+    const updateServices = () => {
+      const updatedServices = sortServices(getUniqueServices([...localServices, ...getAllServicesFromPeerMap(peerMap)]));
+      setAllServices(updatedServices);
+    };
+
+    updateServices(); // Initial update
+
+    const intervalId = setInterval(updateServices, 60000); // Update every 60 seconds
+
+    return () => clearInterval(intervalId); // Cleanup on component unmount
+  }, [localServices, peerMap]);
 
   return (
     <div

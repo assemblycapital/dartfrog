@@ -77,7 +77,10 @@ const Services: React.FC<ServicesProps> = ({ }) => {
     }
   }, [inputJoinServiceLink]);
 
-  const allServices = getUniqueServices([...localServices, ...getAllServicesFromPeerMap(peerMap)]);
+  const allServices = getUniqueServices([
+    ...localServices,
+    ...getAllServicesFromPeerMap(peerMap).filter(service => service.id.hostNode() !== window.our?.node)
+  ]);
 
   useEffect(()=>{
     setCurrentPage('services')

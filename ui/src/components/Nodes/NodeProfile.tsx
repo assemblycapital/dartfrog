@@ -174,7 +174,7 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
             display:"flex",
             flexDirection:"column",
             gap:"0.6rem",
-            marginTop:"1rem",
+            marginTop:"0.6rem",
             // height:"100%"
           }}
         >
@@ -440,7 +440,10 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                         marginTop: "2rem",
                       }}
                     >
-                      <ServiceList services={peer.peerData ? peer.peerData.hostedServices : []} />
+                      {peer.peerData && peer.peerData.hostedServices.length > 0 &&
+
+                        <ServiceList services={peer.peerData ? peer.peerData.hostedServices : []} />
+                      }
                     </div>
                   </div>
               </div>

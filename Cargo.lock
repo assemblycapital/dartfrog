@@ -609,6 +609,7 @@ name = "dartfrog_lib"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bincode",
  "kinode_process_lib",
  "serde",
  "serde_json",

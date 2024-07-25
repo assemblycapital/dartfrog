@@ -1,13 +1,15 @@
 use kinode_process_lib::http::{send_ws_push, HttpServerRequest, WsMessageType};
-use serde::de::Visitor;
+use kinode_process_lib::vfs::{create_drive, open_file};
+use serde::de::DeserializeOwned;
 use serde::{Serialize, Deserialize};
 
 use std::collections::{HashMap, HashSet};
+use std::fs::{create_dir, create_dir_all};
 use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use std::hash::{Hash, Hasher};
-use kinode_process_lib::{await_message, get_blob, println, Address, LazyLoadBlob, ProcessId, Request};
+use kinode_process_lib::{await_message, get_blob, println, Address, LazyLoadBlob, ProcessId, Request, get_typed_state, set_state};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct ServiceID {
@@ -347,7 +349,7 @@ impl Hash for Consumer{
     }
 }
 
-const CONSUMER_TIMEOUT : u64 = 10*60; //10 minutes
+const CONSUMER_TIMEOUT : u64 = 10*60; // 10 minutes
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Client {
@@ -356,30 +358,165 @@ pub struct Client {
     pub last_visited: u64,
     pub last_heard_from_host: Option<u64>,
 }
-
+pub fn get_drive_path(our: &Address) -> String {
+    format!("/{}/{}", our.package_id().to_string(), "dartfrog-provider")
+}
 
 #[derive(Debug, Clone)]
-pub struct ProviderState<T, U> 
+pub struct ProviderState<T, U>
 where
     T: AppServiceState,
-    U: AppClientState,
+    U: AppClientState
 {
     pub services: HashMap<String, AppServiceStateWrapper<T>>,
     pub clients: HashMap<String, AppClientStateWrapper<U>>,
     pub consumers: HashMap<u32, Consumer>,
 }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProviderSaveState {
+    pub services: HashMap<String, Service>,
+    pub clients: HashMap<String, Client>,
+    pub consumers: HashMap<u32, Consumer>,
+}
 
 impl<T, U> ProviderState<T, U>
 where
-    T: AppServiceState,
-    U: AppClientState,
+    T: AppServiceState + Serialize + serde::de::DeserializeOwned,
+    U: AppClientState + Serialize + serde::de::DeserializeOwned
 {
-    pub fn new() -> Self {
+    pub fn new(our: &Address) -> Self {
+        let _ = create_drive(our.package_id(), "dartfrog-provider", None);
+
+        // 
         ProviderState {
             services: HashMap::new(),
             clients: HashMap::new(),
             consumers: HashMap::new(),
         }
+    }
+
+    /// Helper function to serialize and save the process state.
+    pub fn save(&self, our:&Address) -> anyhow::Result<()> {
+        // println!("saving");
+        let mut services = HashMap::new();
+        let mut clients = HashMap::new();
+    
+        // Save services
+        for (service_id, wrapper) in &self.services {
+            services.insert(service_id.clone(), wrapper.service.clone());
+            let file_path = format!("{}/service.{}", &get_drive_path(our), service_id);
+            match open_file(&file_path, true, None) {
+                Ok(mut file) => {
+                    if let Ok(buffer) = serde_json::to_vec(&wrapper.state) {
+                        if let Err(e) = file.write_all(&buffer) {
+                            // eprintln!("Failed to write state to file: {}", e);
+                        }
+                    } else {
+                        // eprintln!("Failed to serialize state");
+                    }
+                }
+                Err(e) => {
+                    // eprintln!("Failed to open file: {}", e);
+                }
+            }
+        }
+    
+        // Save clients
+        for (client_id, wrapper) in &self.clients {
+            clients.insert(client_id.clone(), wrapper.client.clone());
+            let file_path = format!("{}/client.{}", &get_drive_path(our), client_id);
+            match open_file(&file_path, true, None) {
+                Ok(mut file) => {
+                    if let Ok(buffer) = serde_json::to_vec(&wrapper.state) {
+                        if let Err(e) = file.write_all(&buffer) {
+                            // eprintln!("Failed to write state to file: {}", e);
+                        }
+                    } else {
+                        // eprintln!("Failed to serialize state");
+                    }
+                }
+                Err(e) => {
+                    // eprintln!("Failed to open file: {}", e);
+                }
+            }
+        }
+    
+        // Convert to ProviderSaveState
+        let save_state = ProviderSaveState {
+            services,
+            clients,
+            consumers: self.consumers.clone(),
+        };
+        // Save the state
+        // set_state(&bincode::serialize(&save_state)?);
+        set_state(&bincode::serialize(&save_state)?);
+
+        Ok(())
+    }
+
+    /// Helper function to deserialize the process state.
+    pub fn load(our: &Address) -> Self {
+        let saved_state = match get_typed_state(|bytes| Ok(bincode::deserialize::<ProviderSaveState>(bytes)?)) {
+            Some(loaded) => {
+                loaded
+            }
+            _ => {
+                // println!("failed load");
+                return Self::new(our);
+            }
+        };
+
+        let mut provider_state = ProviderState {
+            services: HashMap::new(),
+            clients: HashMap::new(),
+            consumers: saved_state.consumers,
+        };
+
+        // Load services
+        for (service_id, service) in saved_state.services {
+            let file_path = format!("{}/service.{}", &get_drive_path(our), service_id);
+            let app_state = match open_file(&file_path, true, None) {
+                Ok(mut file) => match file.read() {
+                    Ok(buf) => {
+                        serde_json::from_slice::<T>(&buf).ok()
+                    }
+                    Err(_) => None,
+                },
+                Err(_) => None,
+            };
+
+            let state = app_state.unwrap_or_else(|| {
+                T::new()
+            });
+
+            provider_state.services.insert(service_id, AppServiceStateWrapper {
+                service,
+                state,
+            });
+        }
+
+        // Load clients
+        for (client_id, client) in saved_state.clients {
+            let file_path = format!("{}/client.{}", &get_drive_path(our), client_id);
+            let app_state = match open_file(&file_path, true, None) {
+                Ok(mut file) => match file.read() {
+                    Ok(buf) => serde_json::from_slice::<U>(&buf).ok(),
+                    Err(_) => None,
+                },
+                Err(_) => None,
+            };
+
+            let state = app_state.unwrap_or_else(|| {
+                U::new()
+            });
+
+            provider_state.clients.insert(client_id, AppClientStateWrapper {
+                client,
+                state,
+            });
+        }
+
+        provider_state
     }
 }
 
@@ -1020,8 +1157,8 @@ pub fn publish_metadata(our: &Address, service: &Service) -> anyhow::Result<()> 
 
 pub fn provider_handle_message<T, U>(our: &Address, state: &mut ProviderState<T, U>) -> anyhow::Result<()>
 where
-    T: AppServiceState,
-    U: AppClientState,
+    T: AppServiceState + Serialize + DeserializeOwned,
+    U: AppClientState + Serialize + DeserializeOwned,
 {
     let message = await_message()?;
 
@@ -1035,9 +1172,11 @@ where
     if message.source().node == our.node
     && message.source().process == "http_server:distro:sys" {
         handle_provider_http(our, state, source, body)?;
+        // state.save(our);
     } else {
         if let Ok(provider_input) = serde_json::from_slice::<ProviderInput>(&body) {
             handle_provider_input(our, state, source, provider_input)?;
+            state.save(our)?;
         }
     }
     Ok(())
@@ -1128,7 +1267,7 @@ pub enum ChatRequest {
     SendMessage(String),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatServiceState {
     pub last_message_id: u64,
     pub messages: Vec<ChatMessage>,

@@ -6,7 +6,10 @@ wit_bindgen::generate!({
     path: "target/wit",
     world: "process-v0",
 });
-#[derive(Debug, Clone)]
+
+type AppProviderState = ProviderState<AppService, DefaultAppClientState>;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppService {
     pub chat: ChatServiceState,
 }
@@ -22,13 +25,13 @@ pub enum AppRequest {
 
 #[derive(Debug, Clone)]
 pub struct AppState {
-    pub provider: ProviderState<AppService, DefaultAppClientState>,
+    pub provider: AppProviderState,
 }
 
 impl AppState {
-    pub fn new() -> Self {
+    pub fn new(our:&Address) -> Self {
         AppState {
-            provider: ProviderState::<AppService, DefaultAppClientState>::new(),
+            provider: AppProviderState::new(our),
         }
     }
 }
@@ -61,7 +64,9 @@ impl AppServiceState for AppService {
 call_init!(init);
 fn init(our: Address) {
     println!("init chat");
-    let mut state = AppState::new();
+    let mut state = AppState::new(&our);
+    let loaded_provider = AppProviderState::load(&our);
+    state.provider = loaded_provider;
 
     let try_ui = http::secure_serve_ui(&our, "chat-ui", vec!["/", "*"]);
     http::secure_bind_ws_path("/", true).unwrap();

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useDartStore from '../../store/dart';
 import ProfilePicture from '../ProfilePicture';
@@ -6,6 +6,16 @@ import { getPeerNameColor } from '@dartfrog/puddle/index';
 import { PROCESS_NAME } from '../../utils';
 
 const PeerList = () => {
+  const [, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setRefreshKey(prevKey => prevKey + 1);
+    }, 60000); // 60 seconds
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   const { peerMap } = useDartStore();
   const navigate = useNavigate();
   const now = Date.now();

@@ -19,76 +19,90 @@ function App() {
   const {setApi, closeApi, setIsClientConnected, setProfile, localFwdAllPeerRequests, setActivitySetting, peerMap, putPeerMap, localServices, setLocalServices } = useDartStore();
 
   useEffect(() => {
-    const newApi = new KinodeClientApi({
-      uri: WEBSOCKET_URL,
-      nodeId: window.our?.node,
-      processId: PROCESS_NAME,
-      onOpen: (event, api) => {
-        console.log("Connected to Kinode");
-        setIsClientConnected(true);
-        localFwdAllPeerRequests();
-        // api.send({data:{
-        //   "CreateService": ["foo", "bar:baz:bop.os"]
+    let reconnectInterval: ReturnType<typeof setInterval> | null = null;
 
-        // }})
-        // this.onOpen();
-        // this.setConnectionStatus(ConnectionStatusType.Connected);
-        // if (this.reconnectIntervalId) {
-        //   clearInterval(this.reconnectIntervalId);
-        //   this.reconnectIntervalId = undefined;
-        // }
-      },
-      onMessage: (json, api) => {
-        const data = JSON.parse(json)
-
-        if (data["LocalServiceList"]) {
-          let localServiceList = data["LocalServiceList"];
-          let parsedServices = [];
-          for (let jsonService of localServiceList) {
-            let service = serviceFromJson(jsonService);
-            parsedServices.push(service);
+    const connectToKinode = () => {
+      const newApi = new KinodeClientApi({
+        uri: WEBSOCKET_URL,
+        nodeId: window.our?.node,
+        processId: PROCESS_NAME,
+        onOpen: (event, api) => {
+          console.log("Connected to Kinode");
+          setIsClientConnected(true);
+          localFwdAllPeerRequests();
+          if (reconnectInterval) {
+            clearInterval(reconnectInterval);
+            reconnectInterval = null;
           }
-          setLocalServices(parsedServices);
-        } else if (data["LocalUser"]) {
-          let [profile, activity, activity_setting] = data["LocalUser"]
-          setProfile(profileFromJson(profile))
-          setActivitySetting(activity_setting);
-        } else if (data["PeerList"]) {
-          let peerList = data["PeerList"]
-          for (let jsonPeer of peerList) {
-            let peer = peerFromJson(jsonPeer);
-            putPeerMap(peer)
-          }
-          // console.log("parsed peers", parsedPeers)
-        } else if (data["Peer"]){
-            let peer = peerFromJson(data["Peer"]);
-            putPeerMap(peer)
-        } else if (data["LocalService"]) {
-          const localService = data["LocalService"]
-          // TODO this may be needed for private metadata later
-          // console.log(localService)
-        } else {
-          console.log("unhandled update", data)
-        }
-        // this.setConnectionStatus(ConnectionStatusType.Connected);
-        // this.updateHandler(json);
-      },
-      onError: (event) => {
-        console.log("Kinode connection error", event);
-      },
-      onClose: (event) => {
-        console.log("Disconnected from Kinode");
-        setIsClientConnected(false);
-        // this.setConnectionStatus(ConnectionStatusType.Disconnected);
-        // this.onClose();
-        // // Set a timeout to attempt reconnection
-        // setTimeout(() => {
-        //   this.initialize(our, websocket_url);
-        // }, 5000); // Retry every 5 seconds
-      },
-    });
-    setApi(newApi);
+        },
+        onMessage: (json, api) => {
+          const data = JSON.parse(json)
 
+          if (data["LocalServiceList"]) {
+            let localServiceList = data["LocalServiceList"];
+            let parsedServices = [];
+            for (let jsonService of localServiceList) {
+              let service = serviceFromJson(jsonService);
+              parsedServices.push(service);
+            }
+            setLocalServices(parsedServices);
+          } else if (data["LocalUser"]) {
+            let [profile, activity, activity_setting] = data["LocalUser"]
+            setProfile(profileFromJson(profile))
+            setActivitySetting(activity_setting);
+          } else if (data["PeerList"]) {
+            let peerList = data["PeerList"]
+            for (let jsonPeer of peerList) {
+              let peer = peerFromJson(jsonPeer);
+              putPeerMap(peer)
+            }
+            // console.log("parsed peers", parsedPeers)
+          } else if (data["Peer"]){
+              let peer = peerFromJson(data["Peer"]);
+              putPeerMap(peer)
+          } else if (data["LocalService"]) {
+            const localService = serviceFromJson(data["LocalService"]);
+            // Check if there is a service with service.id in localServices
+            // If so, overwrite it with localService. Otherwise, add localService as a new service.
+            const existingServices = localServices;
+            const index = existingServices.findIndex(s => s.id === localService.id);
+            if (index !== -1) {
+              // Service exists, replace it
+              existingServices[index] = localService;
+              setLocalServices([...existingServices]);
+            } else {
+              // Service doesn't exist, add it
+              setLocalServices([...existingServices, localService]);
+            }
+          } else {
+            console.log("unhandled update", data)
+          }
+        },
+        onError: (event) => {
+          console.log("Kinode connection error", event);
+          setIsClientConnected(false);
+          if (!reconnectInterval) {
+            reconnectInterval = setInterval(connectToKinode, 5000);
+          }
+        },
+        onClose: (event) => {
+          console.log("Disconnected from Kinode");
+          setIsClientConnected(false);
+          if (!reconnectInterval) {
+            reconnectInterval = setInterval(connectToKinode, 5000);
+          }
+        },
+      });
+      setApi(newApi);
+    };
+
+    connectToKinode();
+
+    return () => {
+      if (reconnectInterval) {
+        clearInterval(reconnectInterval);
+      }
+    };
   }, []);
 
   return (
