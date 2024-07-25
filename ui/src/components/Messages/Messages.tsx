@@ -2,9 +2,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import CurrentPageHeader from '../CurrentPageHeader';
 import useDartStore from '../../store/dart';
 import { useNavigate } from 'react-router-dom';
+import ProfilePicture from '../ProfilePicture';
+import { getPeerNameColor } from '@dartfrog/puddle/index';
 
 const Messages: React.FC = () => {
-    const {setCurrentPage, messageStoreMap} = useDartStore();
+    const {setCurrentPage, messageStoreMap, peerMap} = useDartStore();
     useEffect(()=>{
         setCurrentPage('messages')
     }, [])
@@ -28,14 +30,59 @@ const Messages: React.FC = () => {
                 value={inputValue} 
                 onChange={(e) => setInputValue(e.target.value)} 
                 />
-                <button onClick={handleSubmit}>find</button>
+                <button onClick={handleSubmit}>new</button>
             </div>
 
-            <div>
-                {Array.from(messageStoreMap.entries()).map(([key, value]) => (
-                        <div key={key}>
-                            <h3>{key}</h3>
-                            <pre>{JSON.stringify(value, null, 2)}</pre>
+            <div
+              style={{
+                display:"flex",
+                flexDirection:"column",
+                width:"100%",
+              }}
+            >
+                {Array.from(messageStoreMap.entries()).map(([node, value]) => (
+                        <div key={node}
+                          style={{
+                            display:"flex",
+                            flexDirection:"row",
+                            width:"100%",
+                            cursor:"pointer",
+                            gap:"1rem",
+                            padding:"8px",
+                          }}
+                          className="hover-dark-gray"
+                          onClick={()=>{
+                            navigate(`/messages/${node}`)
+
+                          }}
+
+                        >
+                            <ProfilePicture size="48px" node={node} />
+                            <div
+                            >
+                                <div
+                                  className={getPeerNameColor(peerMap.get(node))}
+                                  style={{
+                                    display:"flex",
+                                    flexDirection:"row",
+                                    gap:"1rem",
+                                  }}
+                                >
+                                    <span>
+                                      {node}
+                                    </span>
+                                    <span
+                                      style={{color:"gray",}}
+                                    >
+                                      timestamp
+                                    </span>
+                                </div>
+                                <div
+                                  style={{color:"gray",}}
+                                >
+                                    message preview
+                                </div>
+                            </div>
                         </div>
                     ))}
 
