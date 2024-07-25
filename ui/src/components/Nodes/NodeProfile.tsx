@@ -318,6 +318,9 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                               alignItems: "center",
                               justifyContent: "center",
                             }}
+                            onClick={()=>{
+                              navigate(`/messages/${peer.node}`)
+                            }}
                           >
                             message
                           </button>

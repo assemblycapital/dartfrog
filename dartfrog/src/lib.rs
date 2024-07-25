@@ -45,6 +45,7 @@ impl Hash for Consumer{
 const IS_FAKE: bool = !cfg!(feature = "prod");
 const NETWORK_HUB: &str = if IS_FAKE { "fake.dev" } else { "waterhouse.os" };
 
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DartfrogState {
     pub network_hub: Option<String>,
@@ -55,6 +56,7 @@ pub struct DartfrogState {
     pub profile: Profile,
     pub activity_setting: ActivitySetting,
     pub activity: PeerActivity,
+    pub messages: HashMap<String, MessageStore>,
 }
 
 impl DartfrogState {
@@ -68,6 +70,7 @@ impl DartfrogState {
             profile : Profile::new(our.node.clone()),
             activity_setting: ActivitySetting::Public,
             activity: PeerActivity::Offline(get_now()),
+            messages: HashMap::new(),
         }
     }
 
@@ -201,6 +204,8 @@ fn handle_http_server_request(
             update_consumer(channel_id, DartfrogOutput::LocalServiceList(services))?;
             let peers: Vec<Peer> = state.peers.values().cloned().collect();
             update_consumer(channel_id, DartfrogOutput::PeerList(peers))?;
+            let messages : Vec<MessageStore> = state.messages.values().cloned().collect();
+            update_consumer(channel_id, DartfrogOutput::MessageStoreList(messages))?;
             let local_user = DartfrogOutput::LocalUser(state.profile.clone(), state.activity.clone(), state.activity_setting.clone());
             update_consumer(channel_id, local_user)?;
             state.save(); // Save after adding a new consumer
@@ -329,7 +334,55 @@ fn handle_http_server_request(
 
                     let address = get_server_address(&node);
                     poke(&address, DartfrogInput::RemoteRequestPeer)?;
-                },
+                }
+                DartfrogInput::LocalDirectMessages(dm_request) => {
+                    match dm_request {
+                        LocalDirectMessagePoke::CreateMessageStore(node) => {
+                            if !state.messages.contains_key(&node) {
+                                let new_store = MessageStore::new(node.clone());
+                                state.messages.insert(node.clone(), new_store);
+                                update_all_consumers(state, DartfrogOutput::MessageStoreList(state.messages.values().cloned().collect()))?;
+                                state.save(); // Save after creating a new message store
+                            }
+                        },
+                        LocalDirectMessagePoke::SendMessage(node, message) => {
+                            let message_store = state.messages.entry(node.clone())
+                                .or_insert_with(|| MessageStore::new(node.clone()));
+                            
+                            let new_message = DirectMessage {
+                                id: SystemTime::now()
+                                    .duration_since(UNIX_EPOCH)
+                                    .unwrap()
+                                    .as_nanos()
+                                    .to_string(),
+                                from: our.node.clone(),
+                                is_unread: false,
+                                contents: message,
+                            };
+                            
+                            message_store.history.push(new_message.clone());
+                            
+                            // Update local consumers
+                            update_all_consumers(state, DartfrogOutput::MessageStoreList(state.messages.values().cloned().collect()))?;
+                            
+                            // Send message to remote peer
+                            let remote_poke = RemoteDirectMessagePoke::SendMessage(new_message.id, new_message.contents);
+                            let address = get_server_address(&node);
+                            poke(&address, DartfrogInput::RemoteDirectMessages(remote_poke))?;
+                            
+                            state.save(); // Save after sending a message
+                        },
+                        LocalDirectMessagePoke::ClearUnreadMessageStore(node) => {
+                            if let Some(message_store) = state.messages.get_mut(&node) {
+                                for message in &mut message_store.history {
+                                    message.is_unread = false;
+                                }
+                                update_all_consumers(state, DartfrogOutput::MessageStoreList(state.messages.values().cloned().collect()))?;
+                                state.save(); // Save after clearing unread messages
+                            }
+                        },
+                    }
+                }
                 _ => {
                 }
             }
@@ -529,6 +582,28 @@ fn handle_dartfrog_input(
             }
             
             state.save(); // Save after adding new peers
+        }
+        DartfrogInput::RemoteDirectMessages(dm_request) => {
+            match dm_request {
+                RemoteDirectMessagePoke::SendMessage(id, text) => {
+                    let message_store = state.messages.entry(source.node.clone())
+                        .or_insert_with(|| MessageStore::new(source.node.clone()));
+                    
+                    let new_message = DirectMessage {
+                        id: id,
+                        from: source.node.clone(),
+                        is_unread: true,
+                        contents: text,
+                    };
+                    
+                    message_store.history.push(new_message);
+                    // Update all consumers with the new message
+                    let message_store_clone = message_store.clone();
+                    update_all_consumers(state, DartfrogOutput::MessageStore(message_store_clone))?;
+                    
+                    state.save(); // Save after adding a new message
+                }
+            }
         }
         _ => {
             println!("unhandled DartfrogInput: {:?}", dartfrog_input);

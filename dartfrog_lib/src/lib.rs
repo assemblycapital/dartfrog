@@ -187,6 +187,44 @@ pub enum DartfrogInput {
     RemoteResponsePeer(PeerData),
     RemoteRequestAllPeerNodes,
     RemoteResponseAllPeerNodes(Vec<String>),
+    // 
+    LocalDirectMessages(LocalDirectMessagePoke),
+    RemoteDirectMessages(RemoteDirectMessagePoke),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MessageStore {
+    pub peer_node: String,
+    pub history: Vec<DirectMessage>
+}
+
+impl MessageStore {
+    pub fn new(peer_node : String) -> Self {
+        MessageStore {
+            peer_node: peer_node,
+            history: Vec::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DirectMessage {
+    pub id: String,
+    pub from: String,
+    pub is_unread: bool,
+    pub contents: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum LocalDirectMessagePoke {
+    CreateMessageStore(String), // node
+    SendMessage(String, String), // node, message
+    ClearUnreadMessageStore(String), // node
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum RemoteDirectMessagePoke {
+    SendMessage(String, String), // text message content
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -198,8 +236,11 @@ pub enum DartfrogOutput {
     Peer(Peer),
     PeerList(Vec<Peer>),
     // 
-    NodeList(Vec<String>),
     Node(String),
+    NodeList(Vec<String>),
+    //
+    MessageStore(MessageStore),
+    MessageStoreList(Vec<MessageStore>),
 }
 
 pub fn check_subscribe_permission(service: &Service, source: &Address) -> bool {

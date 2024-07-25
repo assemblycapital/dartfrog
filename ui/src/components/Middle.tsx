@@ -14,6 +14,7 @@ import NodeProfile from './Nodes/NodeProfile';
 import Messages from './Messages/Messages';
 import Spinner from '@dartfrog/puddle/components/Spinner';
 import CurrentPageHeader from './CurrentPageHeader';
+import MessagesNode from './Messages/MessagesNode';
 
 interface MiddleProps {
 }
@@ -108,6 +109,9 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
           } />
           <Route path="/messages" element={
               renderPage(() => <Messages />, isClientConnected)
+          } />
+          <Route path="/messages/:node" element={
+              renderPage(() => <MessagesNode />, isClientConnected)
           } />
           <Route path="/nodes" element={
               renderPage(() => <Nodes />, isClientConnected)

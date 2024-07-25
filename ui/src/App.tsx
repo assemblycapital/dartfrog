@@ -5,7 +5,7 @@ import ControlHeader from "./components/ControlHeader";
 import { useEffect, useRef, useState } from "react";
 import { PROCESS_NAME, WEBSOCKET_URL, } from './utils';
 import { Service, ServiceConnectionStatusType, peerFromJson, profileFromJson, serviceFromJson, } from "@dartfrog/puddle";
-import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, INBOX_PLUGIN, PAGE_PLUGIN, PIANO_PLUGIN } from "./store/dart";
+import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, INBOX_PLUGIN, MessageStore, PAGE_PLUGIN, PIANO_PLUGIN } from "./store/dart";
 import BrowserBox from "./components/BrowserBox";
 import TabbedWindowManager from "./components/TabbedWindowManager";
 import Sidebar from "./components/Sidebar/Sidebar";
@@ -16,7 +16,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 function App() {
 
-  const {setApi, closeApi, setIsClientConnected, setProfile, localFwdAllPeerRequests, setActivitySetting, peerMap, putPeerMap, localServices, setLocalServices } = useDartStore();
+  const {setApi, closeApi, setIsClientConnected, setProfile, putMessageStoreMap, setMessageStoreMap, localFwdAllPeerRequests, setActivitySetting, peerMap, putPeerMap, localServices, setLocalServices } = useDartStore();
 
   useEffect(() => {
     let reconnectInterval: ReturnType<typeof setInterval> | null = null;
@@ -74,6 +74,14 @@ function App() {
               // Service doesn't exist, add it
               setLocalServices([...existingServices, localService]);
             }
+          } else if (data["MessageStoreList"]) {
+            const newMessageStoreMap = new Map<string, MessageStore>();
+            for (const messageStore of data["MessageStoreList"]) {
+              newMessageStoreMap.set(messageStore.peer_node, messageStore);
+            }
+            setMessageStoreMap(newMessageStoreMap);
+          } else if (data["MessageStore"]) {
+            putMessageStoreMap(data["MessageStore"])
           } else {
             console.log("unhandled update", data)
           }

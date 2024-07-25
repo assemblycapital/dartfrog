@@ -41,6 +41,11 @@ export interface DartStore {
   peerMap: PeerMap,
   putPeerMap: (peer:Peer) => void,
   delPeerMap: (node:string) => void,
+  //
+  messageStoreMap: Map<string, MessageStore>,
+  setMessageStoreMap: (messageStoreMap: Map<string, MessageStore>) => void,
+  putMessageStoreMap: (messageStore: MessageStore) => void,
+  requestNewMessageStore: (node: string) => void,
   // 
   profile: Profile | null,
   setProfile: (profile) => void,
@@ -56,136 +61,170 @@ export interface DartStore {
 }
 
 const useDartStore = create<DartStore>()(
-  // persist(
-    (set, get) => ({
-      api: null,
-      setApi: (api) => set({ api }),
-      closeApi: () => {
-        const { api } = get();
-        if (!api) { return; }
-        // api.close();
-      },
-      sendPoke: (data) => {
-        const { api } = get();
-        if (!api) { return; }
-        api.send({ data: data });
-      },
-      isClientConnected: false,
-      setIsClientConnected: (isClientConnected) => set({ isClientConnected }),
-      // 
-      isSidebarOpen: true,
-      setIsSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
-      // 
-      requestLocalServiceList: () => {
-        const { api } = get()
-        if (!(api)) return;
-        api.send({data:
-            "RequestLocalServiceList"
-        })
-      },
-      localFwdPeerRequest: (node:string) => {
-        const { api } = get()
-        if (!(api)) return;
-        api.send({data:
-            {
-              "LocalFwdPeerRequest":
-                node
+  (set, get) => ({
+    api: null,
+    setApi: (api) => set({ api }),
+    closeApi: () => {
+      const { api } = get();
+      if (!api) { return; }
+      // api.close();
+    },
+    sendPoke: (data) => {
+      const { api } = get();
+      if (!api) { return; }
+      api.send({ data: data });
+    },
+    isClientConnected: false,
+    setIsClientConnected: (isClientConnected) => set({ isClientConnected }),
+    // 
+    isSidebarOpen: true,
+    setIsSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
+    // 
+    requestLocalServiceList: () => {
+      const { api } = get()
+      if (!(api)) return;
+      api.send({data:
+          "RequestLocalServiceList"
+      })
+    },
+    localFwdPeerRequest: (node:string) => {
+      const { api } = get()
+      if (!(api)) return;
+      api.send({data:
+          {
+            "LocalFwdPeerRequest":
+              node
+          }
+      })
+    },
+    localFwdAllPeerRequests: () => {
+      const { api } = get()
+      if (!(api)) return;
+      api.send({data:
+            "LocalFwdAllPeerRequests"
+      })
+    },
+    localDeletePeer: (node) => {
+      const { api } = get()
+      if (!(api)) return;
+      api.send({data:
+        {
+          "LocalDeletePeer":
+          node
+        }
+      })
+
+    },
+    deleteService: (serviceIdStr) => {
+      const { api } = get()
+      if (!(api)) return;
+      api.send({data:
+        {
+          "DeleteService":
+          serviceIdStr
+        }
+      })
+
+    },
+    createService: (serviceName, processName, visibility, access, whitelist) => {
+      const { api } = get()
+      if (!(api)) return;
+      api.send({data:
+        {
+          "CreateService": [
+            serviceName,
+            processName,
+            access,
+            visibility,
+            whitelist
+          ]
+        }
+      })
+    },
+    // 
+    localServices: [],
+    setLocalServices: (services) => {
+      set({localServices: services})
+    },
+    // 
+    peerMap: new Map<string, Peer>(),
+    putPeerMap: (peer) => {
+      const { peerMap } = get();
+      const newPeerMap = new Map(peerMap);
+      newPeerMap.set(peer.node, peer);
+      set({ peerMap: newPeerMap });
+    },
+    delPeerMap: (node:string) => {
+      const { peerMap } = get();
+      const newPeerMap = new Map(peerMap);
+      newPeerMap.delete(node)
+      set({ peerMap: newPeerMap });
+    },
+    // 
+    profile: null,
+    setProfile: (profile) => set({ profile }),
+    requestSetProfile: (profile) => {
+      const { api } = get()
+      if (!(api)) return;
+      api.send({data:
+        {
+          "SetProfile": 
+            { pfp: profile.pfp,
+              bio: profile.bio,
+              name_color: profile.nameColor,
             }
-        })
-      },
-      localFwdAllPeerRequests: () => {
-        const { api } = get()
-        if (!(api)) return;
-        api.send({data:
-              "LocalFwdAllPeerRequests"
-        })
-      },
-      localDeletePeer: (node) => {
-        const { api } = get()
-        if (!(api)) return;
-        api.send({data:
-          {
-            "LocalDeletePeer":
-            node
+        }
+      })
+    },
+    activitySetting: null,
+    setActivitySetting: (setting) => set({ activitySetting: setting }),
+    // 
+    currentPage: 'home',
+    setCurrentPage: (page) => set({ currentPage: page }),
+    // 
+    get,
+    set,
+    //
+    messageStoreMap: new Map<string, MessageStore>(),
+    setMessageStoreMap: (messageStoreMap) => set({ messageStoreMap }),
+    putMessageStoreMap: (messageStore) => {
+      const { messageStoreMap } = get();
+      const newMessageStoreMap = new Map(messageStoreMap);
+      newMessageStoreMap.set(messageStore.peer_node, messageStore);
+      set({ messageStoreMap: newMessageStoreMap });
+    },
+    requestNewMessageStore: (node) => {
+      const { api } = get()
+      if (!(api)) return;
+      console.log("requesting new message store")
+      api.send({data:
+        {
+          "LocalDirectMessages": 
+          { "CreateMessageStore": node
           }
-        })
-
-      },
-      deleteService: (serviceIdStr) => {
-        const { api } = get()
-        if (!(api)) return;
-        api.send({data:
-          {
-            "DeleteService":
-            serviceIdStr
-          }
-        })
-
-      },
-      createService: (serviceName, processName, visibility, access, whitelist) => {
-        const { api } = get()
-        if (!(api)) return;
-        api.send({data:
-          {
-            "CreateService": [
-              serviceName,
-              processName,
-              access,
-              visibility,
-              whitelist
-            ]
-          }
-        })
-      },
-      // 
-      localServices: [],
-      setLocalServices: (services) => {
-        set({localServices: services})
-      },
-      // 
-      peerMap: new Map<string, Peer>(),
-      putPeerMap: (peer) => {
-        const { peerMap } = get();
-        const newPeerMap = new Map(peerMap);
-        newPeerMap.set(peer.node, peer);
-        set({ peerMap: newPeerMap });
-      },
-      delPeerMap: (node:string) => {
-        const { peerMap } = get();
-        const newPeerMap = new Map(peerMap);
-        newPeerMap.delete(node)
-        set({ peerMap: newPeerMap });
-      },
-      // 
-      profile: null,
-      setProfile: (profile) => set({ profile }),
-      requestSetProfile: (profile) => {
-        const { api } = get()
-        if (!(api)) return;
-        api.send({data:
-          {
-            "SetProfile": 
-              { pfp: profile.pfp,
-                bio: profile.bio,
-                name_color: profile.nameColor,
-              }
-          }
-        })
-      },
-      activitySetting: null,
-      setActivitySetting: (setting) => set({ activitySetting: setting }),
-      // 
-      currentPage: 'home',
-      setCurrentPage: (page) => set({ currentPage: page }),
-      // 
-      get,
-      set,
-    }),
-    // {
-    //   name: 'dart', // unique name
-    //   storage: createJSONStorage(() => sessionStorage), // (optional) by default, 'localStorage' is used
-    // }
-  // )
+        }
+      })
+    },
+  })
 )
 
 export default useDartStore;
+
+export interface MessageStore {
+  peer_node: string;
+  history: DirectMessage[];
+}
+
+export interface DirectMessage {
+  id: string;
+  from: string;
+  is_unread: boolean;
+  contents: string;
+}
+
+export function createMessageStore(peer_node: string): MessageStore {
+  return {
+    peer_node,
+    history: [],
+  };
+}
