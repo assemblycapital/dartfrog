@@ -93,7 +93,9 @@ const ServiceView = () => {
         boxSizing: "border-box",
       }}
     >
-      <div style={{ flex: '0 1 auto' }}>
+      <div style={{ flex: '0 1 auto',
+        overflow:"hidden",
+      }}>
         <TopBar serviceId={paramServiceId} />
       </div>
       <div

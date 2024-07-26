@@ -29,7 +29,23 @@ const APPLET_PROXY_URL = (process.env.VITE_NODE_URL || `http://${PACKAGE_SUBDOMA
 console.log('process.env.VITE_NODE_URL', process.env.VITE_NODE_URL, PROXY_URL);
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'redirect-localhost',
+      transformIndexHtml(html) {
+        return html.replace(
+          /<head>/,
+          `<head>
+            <script>
+              if (window.location.hostname === 'localhost') {
+                window.location.hostname = '${PACKAGE_SUBDOMAIN}.localhost';
+              }
+            </script>`
+        );
+      },
+    },
+  ],
   resolve: {  // Add resolve configuration
     alias: {
       '@puddle': path.resolve(__dirname, '../puddle')  // Alias for "puddle" workspace
