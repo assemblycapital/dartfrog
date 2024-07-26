@@ -3,58 +3,48 @@ import useChessStore, { ChessState } from '../store/chess';
 import ChessQueue from './ChessQueue';
 import ChessGame from './ChessGame';
 import { ServiceID } from '@dartfrog/puddle';
+import useChatStore from '@dartfrog/puddle/store/chat';
 
 interface ChessPluginBoxProps {
-  chessState: ChessState;
 }
 
-const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ chessState }) => {
-  const { sendChessRequest, nameColors, addNameColor } = useChessStore();
+const ChessPluginBox: React.FC = ({ }) => {
+  const {api} = useChatStore();
+  const {serviceId} = useChatStore();
+  const { chessState, sendChessRequest, } = useChessStore();
 
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // useEffect(() => {
-  //   if (serviceId.hostNode() === window.our.node) {
-  //     setIsAdmin(true);
-  //   }
-  // }, [serviceId]);
-
   useEffect(() => {
-    // Precompute name colors for all messages
-    let players = Array<string>();
+    const parsedServiceId = ServiceID.fromString(serviceId);
+    if (!parsedServiceId) return;
+    setIsAdmin(parsedServiceId.hostNode() === window.our?.node);
+  }, [serviceId]);
 
-    if (chessState.queuedWhite) {
-      players.push(chessState.queuedWhite);
-    }
-    if (chessState.queuedBlack) {
-      players.push(chessState.queuedBlack);
-    }
-    if (chessState.game) {
-      players.push(chessState.game.white);
-      players.push(chessState.game.black);
-    }
 
-    for (let player of players) {
-      if (!nameColors[player]) {
-        const color = "todo"
-        addNameColor(player, color);
-      }
-    };
-
-  }, [chessState, nameColors, addNameColor]);
-
+  if (!chessState) {
+    return (
+      <div>
+        loading...
+      </div>
+    )
+  }
   return (
     <div
       style={{
         display: 'flex',
         flexDirection: 'column',
         gap: "0.8rem",
+        height:"100%",
+        overflow:"hidden",
+        justifyContent: "center",
+        alignItems: "center",
       }}
     >
       {chessState.game ? (
-        <ChessGame chessState={chessState} sendChessRequest={sendChessRequest} />
+        <ChessGame />
       ) : (
-        <ChessQueue chessState={chessState} sendChessRequest={sendChessRequest} />
+        <ChessQueue />
       )}
       {isAdmin &&
         <div
@@ -65,7 +55,7 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ chessState }) => {
             gap: '0.3rem',
           }}
         >
-          <button onClick={() => sendChessRequest("Reset")}
+          <button onClick={() => sendChessRequest(api, "Reset")}
             style={{
               justifySelf: 'flex-start',
               justifyContent: 'flex-start',

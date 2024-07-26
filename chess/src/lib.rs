@@ -12,16 +12,19 @@ type AppProviderState = ProviderState<AppService, DefaultAppClientState>;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppService {
     pub chess: ChessServiceState,
+    pub chat: ChatServiceState,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AppUpdate {
     Chess(ChessUpdate),
+    Chat(ChatUpdate),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AppRequest {
     Chess(ChessRequest),
+    Chat(ChatRequest),
 }
 
 #[derive(Debug, Clone)]
@@ -40,7 +43,8 @@ impl AppState {
 impl AppServiceState for AppService {
     fn new() -> Self {
         AppService {
-            chess: ChessServiceState::new()
+            chess: ChessServiceState::new(),
+            chat: ChatServiceState::new(),
         }
     }
 
@@ -49,7 +53,9 @@ impl AppServiceState for AppService {
     }
 
     fn handle_subscribe(&mut self, subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
-        self.chess.handle_subscribe(subscriber_node, our, service)
+        self.chess.handle_subscribe(subscriber_node.clone(), our, service)?;
+        self.chat.handle_subscribe(subscriber_node, our, service)?;
+        Ok(())
     }
 
     fn handle_request(&mut self, from: String, req: String, our: &Address, service: &Service) -> anyhow::Result<()> {
@@ -57,6 +63,9 @@ impl AppServiceState for AppService {
         match request {
             AppRequest::Chess(chess_request) => {
                 self.chess.handle_request(from, chess_request, our, service)
+            }
+            AppRequest::Chat(chat_request) => {
+                self.chat.handle_request(from, chat_request, our, service)
             }
         }
     }
@@ -121,7 +130,7 @@ impl ChessServiceState {
 
     fn handle_subscribe(&mut self, _subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
         let update = ChessUpdate::ChessState(self.clone());
-        update_subscriber_clients(our, AppUpdate::Chess(update), service)?;
+        update_subscribers(AppUpdate::Chess(update), our, service)?;
         Ok(())
     }
 
@@ -133,14 +142,14 @@ impl ChessServiceState {
                         if self.queued_white.is_none() {
                             self.queued_white = Some(from.clone());
                             let update = ChessUpdate::ChessState(self.clone());
-                            update_subscriber_clients(our, AppUpdate::Chess(update), service)?;
+                            update_subscribers(AppUpdate::Chess(update), our, service)?;
                         }
                     },
                     ChessColor::Black => {
                         if self.queued_black.is_none() {
                             self.queued_black = Some(from.clone());
                             let update = ChessUpdate::ChessState(self.clone());
-                            update_subscriber_clients(our, AppUpdate::Chess(update), service)?;
+                            update_subscribers(AppUpdate::Chess(update), our, service)?;
                         }
                     },
                 }
@@ -151,22 +160,22 @@ impl ChessServiceState {
                     self.queued_white = None;
 
                     let update = ChessUpdate::GameStart;
-                    update_subscriber_clients(our, AppUpdate::Chess(update), service)?;
+                    update_subscribers(AppUpdate::Chess(update), our, service)?;
                 }
                 let state_update = ChessUpdate::ChessState(self.clone());
-                update_subscriber_clients(our, AppUpdate::Chess(state_update), service)?;
+                update_subscribers(AppUpdate::Chess(state_update), our, service)?;
             }
             ChessRequest::UnQueue(color) => {
                 match color {
                     ChessColor::White => if self.queued_white == Some(from.clone()) {
                         self.queued_white = None;
                         let state_update = ChessUpdate::ChessState(self.clone());
-                        update_subscriber_clients(our, AppUpdate::Chess(state_update), service)?;
+                        update_subscribers(AppUpdate::Chess(state_update), our, service)?;
                     },
                     ChessColor::Black => if self.queued_black == Some(from.clone()) {
                         self.queued_black = None;
                         let state_update = ChessUpdate::ChessState(self.clone());
-                        update_subscriber_clients(our, AppUpdate::Chess(state_update), service)?;
+                        update_subscribers(AppUpdate::Chess(state_update), our, service)?;
                     },
                 }
             }
@@ -182,7 +191,7 @@ impl ChessServiceState {
                     game.is_white_turn = !game.is_white_turn;
                 }
                 let state_update = ChessUpdate::ChessState(self.clone());
-                update_subscriber_clients(our, AppUpdate::Chess(state_update), service)?;
+                update_subscribers(AppUpdate::Chess(state_update), our, service)?;
             }
             ChessRequest::Reset => {
                 if from == our.node() {
@@ -191,7 +200,7 @@ impl ChessServiceState {
                     self.queued_black = None;
                 }
                 let state_update = ChessUpdate::ChessState(self.clone());
-                update_subscriber_clients(our, AppUpdate::Chess(state_update), service)?;
+                update_subscribers(AppUpdate::Chess(state_update), our, service)?;
             }
         }
 

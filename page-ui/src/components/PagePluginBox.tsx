@@ -13,6 +13,7 @@ const PagePluginBox: React.FC = ({ }) => {
   const {page, sendPageEdit} = usePageStore();
   const [editableText, setEditableText] = useState(page);
 
+  const {api} = useChatStore();
   const {serviceId} = useChatStore();
 
   useEffect(() => {
@@ -27,9 +28,9 @@ const PagePluginBox: React.FC = ({ }) => {
   }, [page]);
 
   const handleSave = useCallback(() => {
-    sendPageEdit(editableText);
+    sendPageEdit(api, editableText);
     setEditMode(false);  // Exit edit mode after save
-  }, [editableText]);
+  }, [editableText, api]);
 
   const iframeView = (
     <iframe

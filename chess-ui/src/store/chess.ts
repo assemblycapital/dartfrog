@@ -69,44 +69,23 @@ export function handleChessUpdate(chessState: ChessState | null, update: any): C
 
 
 export interface ChessStore {
-  serviceId: string | null,
-  setServiceId: (service: string) => void
-  api: ServiceApi | null,
-  setApi: (api: ServiceApi) => void
-  //
   chessState: ChessState | null,
   setChessState: (chessState: ChessState) => void
   //
-  sendChessRequest: (req: any) => void
-  // 
-  nameColors: Map<string, string>
-  addNameColor: (name:string, color:string) => void
+  sendChessRequest: (api: ServiceApi, req: any) => void
   // 
   get: () => ChessStore 
   set: (partial: ChessStore | Partial<ChessStore>) => void
 }
 
 const useChessStore = create<ChessStore>((set, get) => ({
-  serviceId: null,
-  setServiceId: (serviceId) => set({ serviceId }),
-  api: null,
-  setApi: (api) => set({ api }),
-  // 
   chessState: null,
   setChessState: (chessState) => set({ chessState }),
   // 
-  sendChessRequest: (req) => {
-    const { api, serviceId } = get();
+  sendChessRequest: (api, req) => {
     if (!api) { return; }
-    if (!serviceId) { return; }
+    api.sendToService({"Chess":req})
     // api.pokePluginService(serviceId, PLUGIN_NAME, req);
-  },
-  // 
-  nameColors: new Map<string, string>(),
-  addNameColor: (name:string, color:string) => {
-    const { nameColors } = get()
-    nameColors[name] = color;
-    set({ nameColors: nameColors })
   },
   // 
   get,

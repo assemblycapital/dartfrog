@@ -1,49 +1,23 @@
-import { useCallback, useEffect, useState, useRef } from "react";
-import { useLocation } from "react-router-dom";
-import "./App.css";
-// import DartApi from "@dartfrog/puddle";
-import { WEBSOCKET_URL } from "./utils";
-import useChessStore, { PLUGIN_NAME, handleChessUpdate } from "./store/chess";
-import ChessPluginBox from "./components/ChessPluginBox";
+
+import "@dartfrog/puddle/components/App.css";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import NoServiceView from "@dartfrog/puddle/components/NoServiceView";
+import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
+import ServiceView from "./components/ServiceView";
 
 function App() {
-  const location = useLocation();
-  const {api, setApi, serviceId, setServiceId, chessState, setChessState} = useChessStore();
-
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const paramService = searchParams.get("service");
-
-    if (paramService) {
-      setServiceId(paramService);
-    } else {
-      setServiceId(null);
-    }
-
-  }, [location.search])
-
-  useEffect(() => {
-    if (!serviceId) {
-      return;
-    }
-
-  }, [serviceId]);
-
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100%' }}>
-      {serviceId ? (
-        <>
-        {chessState ? (
-          <ChessPluginBox chessState={chessState} />
-        ) : (
-          <p>loading chess state...</p>
-        )}
-        </>
-      ) : (
-        <p>No serviceId</p>
-      )}
-    </div>
+    <Router basename={`/${PROCESS_NAME}`}>
+      <Routes>
+        <Route path="/" element={
+          <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
+        } />
+        <Route path="/df/service/:id" element={
+          <ServiceView />
+        } />
+      </Routes>
+    </Router>
   );
 }
 
