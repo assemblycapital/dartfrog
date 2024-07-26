@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import "./App.css";
-import DartApi from "@dartfrog/puddle";
+// import DartApi from "@dartfrog/puddle";
 import { WEBSOCKET_URL } from "./utils";
 import usePageStore, { PLUGIN_NAME } from "./store/page";
 import PagePluginBox from "./components/PagePluginBox";
@@ -26,26 +26,26 @@ function App() {
     if (!serviceId) {
       return;
     }
-    const api = new DartApi({
-      our: window.our,
-      websocket_url: WEBSOCKET_URL,
-      pluginUpdateHandler: {
-          plugin:PLUGIN_NAME,
-          serviceId,
-          handler:(pluginUpdate, service, source) => {
-            // console.log("page pluginUpdate", pluginUpdate);
-            if (pluginUpdate["Page"]) {
-              setPage(pluginUpdate["Page"]);
-            }
-          }
-        },
-      onOpen: () => {
-        api.joinService(serviceId);
-        setApi(api);
-      },
-      onClose: () => {
-      },
-    });
+    // const api = new DartApi({
+    //   our: window.our,
+    //   websocket_url: WEBSOCKET_URL,
+    //   pluginUpdateHandler: {
+    //       plugin:PLUGIN_NAME,
+    //       serviceId,
+    //       handler:(pluginUpdate, service, source) => {
+    //         // console.log("page pluginUpdate", pluginUpdate);
+    //         if (pluginUpdate["Page"]) {
+    //           setPage(pluginUpdate["Page"]);
+    //         }
+    //       }
+    //     },
+    //   onOpen: () => {
+    //     api.joinService(serviceId);
+    //     setApi(api);
+    //   },
+    //   onClose: () => {
+    //   },
+    // });
 
   }, [serviceId]);
 
@@ -58,7 +58,7 @@ function App() {
       // border: '1px solid blue',
     }}>
       {page !== null ? (
-        <PagePluginBox serviceId={serviceId} page={page} />
+        <PagePluginBox page={page} />
       ) : (
         <p>loading...</p>
       )}

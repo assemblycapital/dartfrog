@@ -1,69 +1,23 @@
-import { useCallback, useEffect, useState, useRef } from "react";
-import { useLocation } from "react-router-dom";
-import Piano, { PianoState } from "./components/Piano/Piano";
-import "./App.css";
-import DartApi from "@dartfrog/puddle";
-import { WEBSOCKET_URL } from "./utils";
-import usePianoStore, { PLUGIN_NAME } from "./store/piano";
+import "@dartfrog/puddle/components/App.css";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import NoServiceView from "@dartfrog/puddle/components/NoServiceView";
+import ServiceView from "./components/ServiceView";
+import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
+
 
 function App() {
-  const location = useLocation();
-  const {api, setApi, serviceId, setServiceId} = usePianoStore();
-  const [pianoState, setPianoState] = useState<PianoState>(null);
-
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const paramService = searchParams.get("service");
-
-    if (paramService) {
-      setServiceId(paramService);
-    } else {
-      setServiceId(null);
-    }
-
-  }, [location.search])
-
-  useEffect(() => {
-    if (!serviceId) {
-      return;
-    }
-    const api = new DartApi({
-      our: window.our,
-      websocket_url: WEBSOCKET_URL,
-      pluginUpdateHandler: {
-          plugin:PLUGIN_NAME,
-          serviceId,
-          handler:(pluginUpdate, service, source) => {
-            if (pluginUpdate["PlayNote"]) {
-              
-              const note = pluginUpdate["PlayNote"];
-              const newPianoState: PianoState = {
-                notePlayed: {
-                  note: note[1],
-                  player: note[0],
-                  timestamp: Date.now(),
-                },
-              };
-              setPianoState(newPianoState);
-
-            }
-          }
-        },
-      onOpen: () => {
-        api.joinService(serviceId);
-        setApi(api);
-      },
-      onClose: () => {
-      },
-    });
-
-  }, [serviceId]);
-
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100%' }}>
-      <Piano serviceId={serviceId} pianoState={pianoState} />
-    </div>
+    <Router basename={`/${PROCESS_NAME}`}>
+      <Routes>
+        <Route path="/" element={
+          <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
+        } />
+        <Route path="/df/service/:id" element={
+          <ServiceView />
+        } />
+      </Routes>
+    </Router>
   );
 }
 

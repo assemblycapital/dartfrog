@@ -3,10 +3,12 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Howl } from 'howler';
 import PianoKey from './PianoKey';
 import './Piano.css';
-import { ServiceId, computeColorForName, parseServiceId } from '@dartfrog/puddle';
 import usePianoStore from '../../store/piano';
+import useChatStore from '@dartfrog/puddle/store/chat';
+import { PROCESS_NAME } from '../../utils';
+import { getPeerNameColor } from '@dartfrog/puddle';
 
-const PIANO_NOTES_FOLDER = 'assets/piano_notes';
+const PIANO_NOTES_FOLDER = `/${PROCESS_NAME}/assets/piano_notes`;
 
 const notes = [
   { note: 'A4', isSharp: false, fileName: 'a4.mp3', key: 'a' },
@@ -29,25 +31,15 @@ const notes = [
   { note: 'D5', isSharp: false, fileName: 'd5.mp3', key: "'" },
 ];
 
-export type PianoState = {
-  notePlayed: {
-    note: string;
-    player: string;
-    timestamp: number;
-  } | null;
-}
-
-interface PianoProps {
-  serviceId: ServiceId;
-  pianoState: PianoState;
-}
-
-const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
-  const {sendPlayNote, nameColors, addNameColor } = usePianoStore();
+const Piano: React.FC = () => {
+  const { api } = useChatStore();
+  const { peerMap } = useChatStore();
+  const {sendPlayNote, pianoState } = usePianoStore();
   const [sounds, setSounds] = useState<{ [key: string]: Howl }>({});
   const [pressedKeys, setPressedKeys] = useState<{ [key: string]: string | null}>({});
   const [userPressedKeys, setUserPressedKeys] = useState<{ [key: string]: boolean}>({});
   const pianoRef = useRef<HTMLDivElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
     if (pianoState == null) return;
@@ -62,16 +54,9 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
     }
 
     let from = pianoState.notePlayed.player;
-    let color;
-    if (!nameColors[from]) {
-      color = computeColorForName(from);
-      addNameColor(from, color);
-    } else {
-      color = nameColors[from];
-    }
+    let color = getPeerNameColor(peerMap.get(from))
     sound.play();
     setPressedKeys(prev => ({ ...prev, [pianoState.notePlayed.note]: color}));
-    // TODO: remove the color after 1 second
     setTimeout(() => {
       setPressedKeys(prev => ({ ...prev, [pianoState.notePlayed.note]: null}));
     }, 200);
@@ -89,18 +74,22 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (isFocused) {
         const note = notes.find(n => n.key === event.key);
         if (note && sounds[note.note] && !userPressedKeys[note.note]) {
           handlePlayNote(note.note);
-          setUserPressedKeys(prev => ({ ...prev, [note.note]: true})); // Mark the key as pressed
+          setUserPressedKeys(prev => ({ ...prev, [note.note]: true }));
         }
+      }
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
+      if (isFocused) {
         const note = notes.find(n => n.key === event.key);
         if (note) {
-          setUserPressedKeys(prev => ({ ...prev, [note.note]: false})); // Mark the key as pressed
+          setUserPressedKeys(prev => ({ ...prev, [note.note]: false }));
         }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -110,11 +99,11 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [sounds, userPressedKeys]);
+  }, [sounds, userPressedKeys, isFocused]);
 
   const handlePlayNote = useCallback((note: string) => {
-    sendPlayNote(note);
-  }, [sendPlayNote]);
+    sendPlayNote(note, api);
+  }, [sendPlayNote, api]);
 
   return (
     <div
@@ -125,6 +114,8 @@ const Piano: React.FC<PianoProps> = ({serviceId, pianoState}) => {
         height: "100%",
         width: "100%",
       }}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
     >
       <div
         style={{

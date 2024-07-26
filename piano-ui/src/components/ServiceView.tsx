@@ -2,13 +2,15 @@ import React, { useEffect } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import TopBar from '@dartfrog/puddle/components/TopBar';
 import { ServiceApi, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceMetadata } from '@dartfrog/puddle';
-import { PROCESS_NAME } from '../App';
-import { WEBSOCKET_URL, } from '../utils';
+import { PROCESS_NAME, WEBSOCKET_URL, } from '../utils';
 import useChatStore, { ChatState, ChatMessage } from '@dartfrog/puddle/store/chat';
 import ChatBox from '@dartfrog/puddle/components/ChatBox';
 import Spinner from '@dartfrog/puddle/components/Spinner';
 import { maybePlaySoundEffect, maybePlayTTS } from '@dartfrog/puddle/utils';
 import DisplayUserActivity from '@dartfrog/puddle/components/DisplayUserActivity';
+import Split from 'react-split';
+import usePianoStore from '../store/piano';
+import Piano from './Piano/Piano';
 
 const ServiceView = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +21,8 @@ const ServiceView = () => {
     addChatMessage, chatState, setServiceConnectionStatus, serviceConnectionStatus,
     setServiceMetadata, serviceMetadata
   } = useChatStore();
+
+  const {pianoState, setPianoState} = usePianoStore();
 
   useEffect(() => {
     setServiceId(paramServiceId);
@@ -48,6 +52,17 @@ const ServiceView = () => {
           } else if (msg.Chat.Message) {
             const chatMessage = msg.Chat.Message;
             addChatMessage(chatMessage);
+          }
+        } else if (msg.Piano) {
+          if (msg.Piano.PlayNote) {
+            let [player, note] = msg.Piano.PlayNote;
+            setPianoState({
+              notePlayed: {
+                note,
+                player,
+                timestamp: Date.now(),
+              }
+            });
           }
         }
       },
@@ -123,21 +138,41 @@ const ServiceView = () => {
                 {serviceConnectionStatus.toString()}
               </div>
             ) : (
-              <div
-                style={{
-                  height: "100%",
-                  maxHeight: "100%",
-                  display: 'flex',
-                  flexDirection: 'column',
-                  overflow: 'hidden',
-                  gap: "6px",
-                }}
-              >
-                <div style={{ flex: 1, overflow: 'auto' }}>
-                  <ChatBox chatState={chatState} />
+                <Split
+                  sizes={[50, 50]}
+                  minSize={[60, 60]}
+                  direction="horizontal"
+                  gutterSize={10}
+                  style={{
+                    flexGrow: 1,
+                    display: 'flex',
+                    flexDirection: 'row',
+                    overflowX: 'hidden',
+                    height:"100%",
+                    maxHeight:"100%",
+                    overflowY: 'hidden',
+                  }}
+                >
+
+                <div>
+                  <Piano />
                 </div>
-                <DisplayUserActivity metadata={serviceMetadata} />
-              </div>
+                <div
+                  style={{
+                    height: "100%",
+                    maxHeight: "100%",
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                    gap: "6px",
+                  }}
+                >
+                  <div style={{ flex: 1, overflow: 'auto' }}>
+                    <ChatBox chatState={chatState} />
+                  </div>
+                  <DisplayUserActivity metadata={serviceMetadata} />
+                </div>
+              </Split>
             )}
           </>
         )}

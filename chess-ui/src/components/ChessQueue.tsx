@@ -5,10 +5,9 @@ import './ChessPluginBox.css';
 interface ChessQueueProps {
   chessState: ChessState;
   sendChessRequest: (request: any) => void;
-  serviceId: string;
 }
 
-const ChessQueue: React.FC<ChessQueueProps> = ({ chessState, sendChessRequest, serviceId }) => {
+const ChessQueue: React.FC<ChessQueueProps> = ({ chessState, sendChessRequest, }) => {
 
   const { nameColors } = useChessStore();
   return (

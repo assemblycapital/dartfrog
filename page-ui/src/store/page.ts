@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId, } from '@dartfrog/puddle';
 
+import {ServiceApi} from '@dartfrog/puddle';
 export const PLUGIN_NAME = "page:dartfrog:herobrine.os";
 
 
@@ -9,8 +9,8 @@ export const PLUGIN_NAME = "page:dartfrog:herobrine.os";
 export interface PageStore {
   serviceId: string | null,
   setServiceId: (service: string) => void
-  api: DartApi | null,
-  setApi: (api: DartApi) => void
+  api: ServiceApi | null,
+  setApi: (api: ServiceApi ) => void
   //
   page: string | null,
   setPage: (page: string) => void
@@ -42,7 +42,7 @@ const usePageStore = create<PageStore>((set, get) => ({
       "EditPage": 
         text
       }
-    api.pokePluginService(serviceId, PLUGIN_NAME, innerPluginRequest);
+    // api.pokePluginService(serviceId, PLUGIN_NAME, innerPluginRequest);
   },
   // 
   nameColors: new Map<string, string>(),

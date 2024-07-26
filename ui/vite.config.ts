@@ -17,9 +17,9 @@ The format is "/" + "process_name:package_name:publisher_node"
 const PACKAGE_SUBDOMAIN = `${metadata.properties.package_name}-${metadata.properties.publisher.replace(/\./g, '-')}`;
 const BASE_URL = `/${manifest[0].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 const CHAT_URL = `/${manifest[1].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
-// const PIANO_URL = `/${manifest[2].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
-// const PAGE_URL = `/${manifest[3].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
-// const CHESS_URL = `/${manifest[4].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
+const PIANO_URL = `/${manifest[2].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
+const PAGE_URL = `/${manifest[3].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
+const CHESS_URL = `/${manifest[4].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 // const INBOX_URL = `/${manifest[5].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 
 // This is the proxy URL, it must match the node you are developing against
@@ -57,7 +57,7 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(BASE_URL, ''),
       },
-      [`${CHAT_URL}`]: {
+      [`${PIANO_URL}`]: {
         target: APPLET_PROXY_URL,
         changeOrigin: true,
         rewrite: (path) => path.replace(BASE_URL, ''),

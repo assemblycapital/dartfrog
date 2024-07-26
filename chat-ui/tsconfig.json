@@ -23,7 +23,7 @@
   "include": [
     "src",
     "../pkg/manifest.json",
-    "../pkg/metadata.json", "../puddle/store/chat.ts", "../puddle/components/ChatBox.tsx", "../puddle/components/ChatHeader.tsx", "../puddle/components/ChatInput.tsx", "../puddle/components/ProfilePicture.tsx",
+    "../pkg/metadata.json", "../puddle/store/chat.ts", "../puddle/components/ChatBox.tsx", "../puddle/components/ChatHeader.tsx", "../puddle/components/ChatInput.tsx", "../puddle/components/ProfilePicture.tsx", "../puddle/components/TopBar.tsx",
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

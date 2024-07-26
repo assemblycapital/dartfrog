@@ -7,10 +7,9 @@ import './ChessPluginBox.css';
 interface ChessGameProps {
   chessState: ChessState;
   sendChessRequest: (request: any) => void;
-  serviceId: string;
 }
 
-const ChessGame: React.FC<ChessGameProps> = ({ chessState, sendChessRequest, serviceId }) => {
+const ChessGame: React.FC<ChessGameProps> = ({ chessState, sendChessRequest, }) => {
   const [chess, setChess] = useState(new Chess());
   const [gameFen, setGameFen] = useState(chess.fen());
   const [canPlayerMove, setCanPlayerMove] = useState(false);

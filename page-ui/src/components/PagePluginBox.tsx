@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { ServiceId, parseServiceId } from '@dartfrog/puddle';
+import { ServiceID } from '@dartfrog/puddle';
 import usePageStore from '../store/page';
 
 type PageState = {
@@ -7,23 +7,22 @@ type PageState = {
 };
 
 interface PagePluginBoxProps {
-  serviceId: ServiceId;
   page: string;
 }
 
-const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, page }) => {
+const PagePluginBox: React.FC<PagePluginBoxProps> = ({ page }) => {
   const [isAuthor, setIsAuthor] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editableText, setEditableText] = useState(page);
   const {sendPageEdit} = usePageStore();
 
-  useEffect(() => {
-    const parsedServiceId = parseServiceId(serviceId);
-    if (!parsedServiceId) {
-      return;
-    }
-    setIsAuthor(parsedServiceId.node === window.our?.node);
-  }, [serviceId]);
+  // useEffect(() => {
+  //   const parsedServiceId = parseServiceId(serviceId);
+  //   if (!parsedServiceId) {
+  //     return;
+  //   }
+  //   setIsAuthor(parsedServiceId.node === window.our?.node);
+  // }, [serviceId]);
 
   useEffect(() => {
     // Update the editableText only when pageState.page changes
@@ -33,7 +32,7 @@ const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, page }) => {
   const handleSave = useCallback(() => {
     sendPageEdit(editableText);
     setEditMode(false);  // Exit edit mode after save
-  }, [editableText, serviceId]);
+  }, [editableText]);
 
   const iframeView = (
     <iframe

@@ -1,4 +1,4 @@
-import "./App.css";
+import "@dartfrog/puddle/components/App.css";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import NoServiceView from "./components/NoServiceView";
 import ServiceView from "./components/ServiceView";

@@ -1,28 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { ServiceId, computeColorForName, parseServiceId } from '@dartfrog/puddle';
 import useChessStore, { ChessState } from '../store/chess';
 import ChessQueue from './ChessQueue';
 import ChessGame from './ChessGame';
+import { ServiceID } from '@dartfrog/puddle';
 
 interface ChessPluginBoxProps {
-  serviceId: ServiceId;
   chessState: ChessState;
 }
 
-const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }) => {
+const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ chessState }) => {
   const { sendChessRequest, nameColors, addNameColor } = useChessStore();
 
   const [isAdmin, setIsAdmin] = useState(false);
 
-  useEffect(() => {
-    let parsedServiceId = parseServiceId(serviceId);
-    if (!parsedServiceId) {
-      return;
-    }
-    if (parsedServiceId.node === window.our.node) {
-      setIsAdmin(true);
-    }
-  }, [serviceId]);
+  // useEffect(() => {
+  //   if (serviceId.hostNode() === window.our.node) {
+  //     setIsAdmin(true);
+  //   }
+  // }, [serviceId]);
 
   useEffect(() => {
     // Precompute name colors for all messages
@@ -41,7 +36,7 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
 
     for (let player of players) {
       if (!nameColors[player]) {
-        const color = computeColorForName(player);
+        const color = "todo"
         addNameColor(player, color);
       }
     };
@@ -57,9 +52,9 @@ const ChessPluginBox: React.FC<ChessPluginBoxProps> = ({ serviceId, chessState }
       }}
     >
       {chessState.game ? (
-        <ChessGame chessState={chessState} sendChessRequest={sendChessRequest} serviceId={serviceId} />
+        <ChessGame chessState={chessState} sendChessRequest={sendChessRequest} />
       ) : (
-        <ChessQueue chessState={chessState} sendChessRequest={sendChessRequest} serviceId={serviceId} />
+        <ChessQueue chessState={chessState} sendChessRequest={sendChessRequest} />
       )}
       {isAdmin &&
         <div

@@ -4,6 +4,9 @@ members = [
     "dartfrog",
     "dartfrog_lib",
     "chat",
+    "piano",
+    "page",
+    "chess",
 ]
 
 [profile.release]

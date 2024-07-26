@@ -1,7 +1,74 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+#root {
+  /* max-width: 1280px; */
+  margin: 0 auto;
+  /* padding: 0.8rem 2rem; */
+  width: 100%;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.pfp-profile-image {
+  overflow: hidden;
+  display: inline-block;
+  border: 1px solid #333;
+  border-radius: 50%;
+}
+
+.pfp-profile-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background-color: #252525;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  cursor: pointer;
+}
+
+.join-button {
+  height:"100%";
+  padding: 0.5rem 0;
+  color: #646cff;
+  transition: background-color 0.2s;
+  text-align: center;
+}
+.join-button:hover {
+  background-color: #2e304a;
+  transition: background-color 0.2s;
+}
+.delete-button {
+  height:"100%";
+  padding: 0.5rem 0;
+  color: #d65353;
+  text-align: center;
+  transition: background-color 0.2s;
+}
+.delete-button:hover {
+  background-color: #473030;
+  transition: background-color 0.2s;
+}
+.service-list-item {
+  /* display: contents; */
+  border-bottom: 1px solid #ffffff11;
+  gap: 1rem;
+  align-items: center;
+  border-bottom: 1px solid #494949; /* Add this line to include a border around each grid row */
+  transition: background-color 0.2s;
+}
+.service-list-item:hover {
+  background-color: #222222;
+  transition: background-color 0.2s;
+}
+
+.hover-dark-gray {
+transition: background-color 0.3s ease;
+}
+
+.hover-dark-gray:hover {
+background-color: #1b1b1b;
+transition: background-color 0.3s ease;
 }
 
 .gutter.gutter-horizontal {

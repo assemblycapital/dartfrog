@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import "./App.css";
-import DartApi from "@dartfrog/puddle";
+// import DartApi from "@dartfrog/puddle";
 import { WEBSOCKET_URL } from "./utils";
 import useChessStore, { PLUGIN_NAME, handleChessUpdate } from "./store/chess";
 import ChessPluginBox from "./components/ChessPluginBox";
@@ -26,24 +26,6 @@ function App() {
     if (!serviceId) {
       return;
     }
-    const api = new DartApi({
-      our: window.our,
-      websocket_url: WEBSOCKET_URL,
-      pluginUpdateHandler: {
-          plugin:PLUGIN_NAME,
-          serviceId,
-          handler:(pluginUpdate, service, source) => {
-            let newChessState = handleChessUpdate(chessState, pluginUpdate);
-            setChessState(newChessState);
-          }
-        },
-      onOpen: () => {
-        api.joinService(serviceId);
-        setApi(api);
-      },
-      onClose: () => {
-      },
-    });
 
   }, [serviceId]);
 
@@ -53,7 +35,7 @@ function App() {
       {serviceId ? (
         <>
         {chessState ? (
-          <ChessPluginBox serviceId={serviceId} chessState={chessState} />
+          <ChessPluginBox chessState={chessState} />
         ) : (
           <p>loading chess state...</p>
         )}

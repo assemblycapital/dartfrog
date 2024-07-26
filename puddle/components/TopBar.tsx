@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { HamburgerIcon, HomeIcon } from '@dartfrog/puddle/components/Icons';
 
 const TopBar = ({ serviceId }) => {
