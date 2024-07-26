@@ -8,6 +8,8 @@ import { dfLinkRegex, dfLinkToRealLink, getClassForNameColor, getPeerNameColor, 
 import { maybeReplaceWithImage } from '@dartfrog/puddle/utils';
 import { formatTimestamp, isImageUrl, linkRegex } from '@dartfrog/puddle/components/ChatBox';
 import Split from 'react-split';
+import { getActivityMessage } from '../Nodes/NodeProfile';
+import { hasUnreadHistory } from './Messages';
 
 const MessagesNode: React.FC = () => {
     const {setCurrentPage, messageStoreMap, requestNewMessageStore, clearUnreadMessageStore, peerMap, localFwdPeerRequest, requestSendMessage} = useDartStore();
@@ -16,6 +18,8 @@ const MessagesNode: React.FC = () => {
 
     const [inputValue, setInputValue] = useState('');
     const [messageStore, setMessageStore] = useState<MessageStore>(null);
+    const [isPinging, setIsPinging] = useState(true);
+    const [isBadConnection, setIsBadConnection] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -26,14 +30,6 @@ const MessagesNode: React.FC = () => {
     useEffect(()=>{
         setCurrentPage('messages')
     }, [])
-
-    useEffect(()=>{
-      let gotPeer = peerMap.get(node)
-      if (!gotPeer) {
-        localFwdPeerRequest(node);
-      }
-    }, [peerMap])
-
 
     useEffect(()=>{
         
@@ -77,19 +73,37 @@ const MessagesNode: React.FC = () => {
 
     useEffect(() => {
         scrollDownChat();
-    }, [messageStore, scrollDownChat]);
+    }, [messageStore]);
 
     useEffect(() => {
         // Clear unread messages after a short delay
-        const timer = setTimeout(() => {
-            clearUnreadMessageStore(node);
-        }, 100);
-
-        return () => clearTimeout(timer);
+        if (messageStore && hasUnreadHistory(messageStore.history)) {
+          clearUnreadMessageStore(node);
+        }
     }, [node, messageStore, clearUnreadMessageStore]);
 
     useEffect(() => {
+      let timer: NodeJS.Timeout;
+      const peer = peerMap.get(node);
+      if (peer && peer.outstandingRequest !== null) {
+          timer = setTimeout(() => {
+              setIsPinging(false)
+              if (Date.now() - peer.outstandingRequest * 1000 >= 5000) {
+                  setIsBadConnection(true);
+              }
+          }, 5000);
+      }
+      else if (peer && peer.outstandingRequest === null) {
+        setIsBadConnection(false);
+        setIsPinging(false);
+      }
+      return () => clearTimeout(timer);
+    }, [peerMap]);
+
+
+    useEffect(() => {
         setComponentLoadTime(Date.now());
+        localFwdPeerRequest(node);
     }, []);
 
     const getMessageInnerText = useCallback(
@@ -105,7 +119,9 @@ const MessagesNode: React.FC = () => {
                 objectFit: "cover",
                 maxWidth: "100%",
               }}
-              onLoad={scrollDownChat}
+              onLoad={()=>{
+                scrollDownChat()
+              }}
             />
           );
         } else if (linkRegex.test(message)) {
@@ -196,14 +212,44 @@ const MessagesNode: React.FC = () => {
                             <ProfilePicture size="48px" node={node} />
                         </div>
                         <div
-                            style={{
-                                cursor:"default",
-                                fontSize:"1.3rem",
-                            }}
-                            className={getPeerNameColor(peerMap.get(node))}
+                          style={{
+                            display:"flex",
+                            flexDirection:"column",
+                            width:"100%",
+                          }}
                         >
-                            {node}
 
+                          <div
+                              style={{
+                                  cursor:"default",
+                                  fontSize:"1.3rem",
+                              }}
+                              className={getPeerNameColor(peerMap.get(node))}
+                          >
+                              {node}
+
+                          </div>
+                          <div
+                            style={{
+                                  cursor:"default",
+                                  fontSize:"0.8rem",
+                                  color:"gray",
+                                  display:"flex",
+                                  flexDirection:"row",
+                                  gap:"1rem"
+                            }}
+                          >
+                            <div>
+                              {peerMap.get(node) && getActivityMessage(peerMap.get(node))}
+                            </div>
+                            <div>
+                              {isPinging ? ('pinging...' ):(
+                                <>
+                                {isBadConnection && 'node unresponsive, messages may not deliver'}
+                                </>
+                              )}
+                            </div>
+                          </div>
                         </div>
                     </div>
 

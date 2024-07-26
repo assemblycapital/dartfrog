@@ -6,6 +6,10 @@ import ProfilePicture from '../ProfilePicture';
 import { getPeerNameColor } from '@dartfrog/puddle/index';
 import { formatTimestamp } from '@dartfrog/puddle/components/ChatBox';
 
+export const hasUnreadHistory = (history: DirectMessage[]) => {
+  return history.some(message => message.is_unread);
+};
+
 const Messages: React.FC = () => {
     const {setCurrentPage, messageStoreMap, peerMap} = useDartStore();
     useEffect(()=>{
@@ -21,10 +25,6 @@ const Messages: React.FC = () => {
         if (inputValue === "") return;
         navigate(`/messages/${inputValue}`)
     }, [inputValue]);
-
-    const hasUnread = (history: DirectMessage[]) => {
-      return history.some(message => message.is_unread);
-    };
 
 
     const getLatestMessageContents = (history: DirectMessage[]) => {
@@ -56,8 +56,8 @@ const Messages: React.FC = () => {
             const [bNode, bValue] = b;
             
             // First, sort by unread messages
-            const aHasUnread = hasUnread(aValue.history);
-            const bHasUnread = hasUnread(bValue.history);
+            const aHasUnread = hasUnreadHistory(aValue.history);
+            const bHasUnread = hasUnreadHistory(bValue.history);
             if (aHasUnread && !bHasUnread) return -1;
             if (!aHasUnread && bHasUnread) return 1;
             
@@ -147,7 +147,7 @@ const Messages: React.FC = () => {
                           }}
 
                         >
-                             {hasUnread(value.history) &&
+                             {hasUnreadHistory(value.history) &&
                               <div
                               style={{
                                 display: "flex",

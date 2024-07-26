@@ -144,26 +144,6 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
         return () => clearTimeout(timer);
     }, [peer]);
 
-    function getActivityMessage() {
-      if (peer && peer.peerData) {
-        if (peer.peerData.activity.type === 'Private') {
-          return 'has activity set to private';
-        }
-
-        const activity = peer.peerData.activity;
-        const activityTime = activity.timestamp*1000;
-        const now = Date.now();
-
-        if (now - activityTime <= 5 * 60 * 1000 && activity.type === 'Online') {
-          return 'online now';
-        }
-
-        const delta = now - activityTime;
-
-        return `active ${getRecencyText(delta)}`;
-      }
-      return ''
-    }
 
     useEffect(()=>{
       setCurrentPage('nodes')
@@ -394,7 +374,7 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                           cursor:'default',
                         }}
                       >
-                        {getActivityMessage()}
+                        {getActivityMessage(peer)}
                       </div>
                       {isEditMode ? (
                           <div style={{ marginTop: "1rem" }}>
@@ -454,5 +434,25 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
         </div>
     );
 };
+    export function getActivityMessage(peer) {
+      if (peer && peer.peerData) {
+        if (peer.peerData.activity.type === 'Private') {
+          return 'has activity set to private';
+        }
+
+        const activity = peer.peerData.activity;
+        const activityTime = activity.timestamp*1000;
+        const now = Date.now();
+
+        if (now - activityTime <= 5 * 60 * 1000 && activity.type === 'Online') {
+          return 'online now';
+        }
+
+        const delta = now - activityTime;
+
+        return `active ${getRecencyText(delta)}`;
+      }
+      return ''
+    }
 
 export default NodeProfile;
