@@ -15,16 +15,19 @@ type AppProviderState = ProviderState<AppService, DefaultAppClientState>;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppService {
     pub page: PageServiceState,
+    pub chat: ChatServiceState,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AppUpdate {
     Page(PageUpdate),
+    Chat(ChatUpdate),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AppRequest {
     Page(PageRequest),
+    Chat(ChatRequest),
 }
 
 #[derive(Debug, Clone)]
@@ -43,6 +46,7 @@ impl AppState {
 impl AppServiceState for AppService {
     fn new() -> Self {
         AppService {
+            chat: ChatServiceState::new(),
             page: PageServiceState::new()
         }
     }
@@ -52,7 +56,9 @@ impl AppServiceState for AppService {
     }
 
     fn handle_subscribe(&mut self, subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
-        self.page.handle_subscribe(subscriber_node, our, service)
+        self.page.handle_subscribe(subscriber_node.clone(), our, service)?;
+        self.chat.handle_subscribe(subscriber_node, our, service)?;
+        Ok(())
     }
 
     fn handle_request(&mut self, from: String, req: String, our: &Address, service: &Service) -> anyhow::Result<()> {
@@ -60,6 +66,9 @@ impl AppServiceState for AppService {
         match request {
             AppRequest::Page(page_request) => {
                 self.page.handle_request(from, page_request, our, service)
+            }
+            AppRequest::Chat(chat_request) => {
+                self.chat.handle_request(from, chat_request, our, service)
             }
         }
     }
@@ -89,7 +98,7 @@ impl PageServiceState {
 
     fn handle_subscribe(&mut self, _subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
         let upd = PageUpdate::Page(self.page.clone());
-        update_subscriber_clients(our, AppUpdate::Page(upd), service)?;
+        update_subscribers(AppUpdate::Page(upd), our, service)?;
         Ok(())
     }
 
@@ -101,7 +110,7 @@ impl PageServiceState {
             PageRequest::EditPage(new_page) => {
                 self.page = new_page.clone();
                 let upd = PageUpdate::Page(new_page);
-                update_subscriber_clients(our, AppUpdate::Page(upd), service)?;
+                update_subscribers(AppUpdate::Page(upd), our, service)?;
             }
         }
         Ok(())

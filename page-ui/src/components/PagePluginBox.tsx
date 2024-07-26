@@ -1,28 +1,25 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { ServiceID } from '@dartfrog/puddle';
 import usePageStore from '../store/page';
+import useChatStore from '@dartfrog/puddle/store/chat';
 
-type PageState = {
-  page: string;
-};
 
 interface PagePluginBoxProps {
-  page: string;
 }
 
-const PagePluginBox: React.FC<PagePluginBoxProps> = ({ page }) => {
+const PagePluginBox: React.FC = ({ }) => {
   const [isAuthor, setIsAuthor] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const {page, sendPageEdit} = usePageStore();
   const [editableText, setEditableText] = useState(page);
-  const {sendPageEdit} = usePageStore();
 
-  // useEffect(() => {
-  //   const parsedServiceId = parseServiceId(serviceId);
-  //   if (!parsedServiceId) {
-  //     return;
-  //   }
-  //   setIsAuthor(parsedServiceId.node === window.our?.node);
-  // }, [serviceId]);
+  const {serviceId} = useChatStore();
+
+  useEffect(() => {
+    const parsedServiceId = ServiceID.fromString(serviceId);
+    if (!parsedServiceId) return;
+    setIsAuthor(parsedServiceId.hostNode() === window.our?.node);
+  }, [serviceId]);
 
   useEffect(() => {
     // Update the editableText only when pageState.page changes
