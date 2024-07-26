@@ -624,6 +624,7 @@ where
     let Ok(_s) = String::from_utf8(blob.bytes.clone()) else {
         return Ok(());
     };
+    
     if let Ok(request) = serde_json::from_slice::<FrontendRequest>(&blob.bytes) {
         match request {
             FrontendRequest::Meta(m_req) => {

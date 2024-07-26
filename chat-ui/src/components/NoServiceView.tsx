@@ -153,7 +153,7 @@ const NoServiceView = () => {
           }}
           onClick={() => {
             const randomNumber = Math.floor(Math.random() * 10000) + 1;
-            createService(randomNumber.toString())
+            createService(randomNumber.toString(), 'Public', 'Visible', [])
           }}
         >
           create a service

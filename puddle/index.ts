@@ -166,8 +166,10 @@ export class ServiceApi {
 
   public sendRequest(json:any) {
     if (!(this.api)) {
+      console.log("wtf")
       return;
     }
+    console.log("sending", json)
     this.api.send({data:json})
   }
 
@@ -194,9 +196,20 @@ export class ServiceApi {
     this.sendRequest(req);
   }
 
-  public createService(name:string) {
-    let req = {"Meta": {"CreateService": name}}
-    this.sendRequest(req);
+  public createService(serviceName, access, visibility, whitelist) {
+    console.log("create service", serviceName, access, visibility, whitelist)
+    this.sendRequest(
+      {
+        "Meta" :
+        {
+        "CreateService": [
+          serviceName,
+          access,
+          visibility,
+          whitelist
+          ]
+        }
+    })
   }
   public deleteService(name:string) {
     let req = {"Meta": {"DeleteService": name}}

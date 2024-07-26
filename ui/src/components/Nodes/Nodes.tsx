@@ -31,11 +31,20 @@ const Nodes: React.FC = () => {
       }}
     >
 
-      <div style={{ marginTop: "1rem"}}>
+      <div style={{
+          marginTop: "1rem",
+          width:"100%",
+          display: "flex",
+          flexDirection: "row",
+        }}
+      >
         <input 
           type="text" 
           value={inputValue} 
           onChange={(e) => setInputValue(e.target.value)} 
+          style={{
+            flexGrow:"1",
+          }}
         />
         <button onClick={handleSubmit}>find</button>
       </div>

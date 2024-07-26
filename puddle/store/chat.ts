@@ -32,7 +32,7 @@ export interface ChatStore {
   api: ServiceApi | null,
   setApi: (api: ServiceApi) => void
   //
-  createService: (name: string) => void
+  createService: (serviceName, visibility, access, whitelist) => void
   deleteService: (name: string) => void
   requestPeer: (node:string) => void
   requestMyServices: () => void
@@ -63,10 +63,15 @@ const useChatStore = create<ChatStore>((set, get) => ({
   api: null,
   setApi: (api) => set({ api }),
   //
-  createService: (name) => {
-    const { api } = get();
-    if (!api) { return; }
-    api.createService(name);
+  createService: (serviceName, access, visibility, whitelist) => {
+    const { api } = get()
+    if (!(api)) return;
+    api.createService(
+          serviceName,
+          access,
+          visibility,
+          whitelist,
+    )
   },
   deleteService: (name) => {
     const { api } = get();

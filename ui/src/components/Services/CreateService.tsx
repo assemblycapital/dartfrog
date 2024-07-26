@@ -137,7 +137,7 @@ const CreateService: React.FC<{ }> = ({ }) => {
               }}
             >
               <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-                <span style={{ marginRight: "0.5rem" }}>Plugin:</span>
+                <span style={{ marginRight: "0.5rem" }}>App:</span>
                 <CreateServicePlugins selectedPlugin={selectedPlugin} setSelectedPlugin={setSelectedPlugin}/>
               </div>
               <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
