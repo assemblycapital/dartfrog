@@ -9,9 +9,11 @@ import { PROCESS_NAME } from '../../utils';
 interface SidebarProps {}
 
 const Sidebar: React.FC<SidebarProps> = ({ }) => {
-  const { isSidebarOpen, setIsSidebarOpen, currentPage, isClientConnected} = useDartStore();
+  const { isSidebarOpen, setIsSidebarOpen, currentPage, isClientConnected, messageStoreMap} = useDartStore();
   const [profileImage, setProfileImage] = useState<string>(DEFAULT_PFP);
   const [nameColorClass, setNameColorClass] = useState<string>('name-color-default');
+  const [hasUnreadMessages, setHasUnreadMessages] = useState<boolean>(false);
+
   const navigate = useNavigate();
 
   const {profile} = useDartStore();
@@ -25,6 +27,13 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
     }
   },[profile]);
 
+  useEffect(()=>{
+    // if there are any unread in any messages, set true, otherwise false
+    const hasUnread = Array.from(messageStoreMap.values()).some(store => 
+      store.history.some(message => message.is_unread)
+    );
+    setHasUnreadMessages(hasUnread);
+  },[messageStoreMap]);
 
 
   const renderComponent = () => {
@@ -141,8 +150,28 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
               event.preventDefault();
               navigate('/messages');
             }}
+            style={{
+              display:"flex",
+              flexDirection:"row",
+              gap:"1rem",
+            }}
           >
-            messages
+            {hasUnreadMessages &&
+              <span
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+
+                >
+                  ●
+              </span>
+            }
+            <span>
+
+              messages
+            </span>
           </a>
           <a className={`sidebar-option ${getBoldClass('nodes')}`}
             href={`/${PROCESS_NAME}/nodes`}

@@ -213,6 +213,7 @@ pub struct DirectMessage {
     pub from: String,
     pub is_unread: bool,
     pub contents: String,
+    pub time_received: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import CurrentPageHeader from '../CurrentPageHeader';
-import useDartStore from '../../store/dart';
+import useDartStore, { DirectMessage } from '../../store/dart';
 import { useNavigate } from 'react-router-dom';
 import ProfilePicture from '../ProfilePicture';
 import { getPeerNameColor } from '@dartfrog/puddle/index';
+import { formatTimestamp } from '@dartfrog/puddle/components/ChatBox';
 
 const Messages: React.FC = () => {
     const {setCurrentPage, messageStoreMap, peerMap} = useDartStore();
@@ -21,35 +22,69 @@ const Messages: React.FC = () => {
         navigate(`/messages/${inputValue}`)
     }, [inputValue]);
 
+    const hasUnread = (history: DirectMessage[]) => {
+      return history.some(message => message.is_unread);
+    };
+
+
+    const getLatestMessageContents = (history: DirectMessage[]) => {
+        if (history.length === 0) return "";
+        const latestMessage = history.reduce((latest, current) => 
+            current.time_received > latest.time_received ? current : latest
+        );
+        return latestMessage.contents
+
+    }
+    const getLatestTimestampUnformatted = (history: DirectMessage[]) => {
+      if (history.length === 0) return null;
+      const latestMessage = history.reduce((latest, current) => 
+          current.time_received > latest.time_received ? current : latest
+      );
+      return latestMessage.time_received;
+  };
+    const getLatestTimestamp = (history: DirectMessage[]) => {
+        if (history.length === 0) return "";
+        const latestMessage = history.reduce((latest, current) => 
+            current.time_received > latest.time_received ? current : latest
+        );
+        return formatTimestamp(latestMessage.time_received)
+    };
+
     const sortedEntries = React.useMemo(() => {
         return Array.from(messageStoreMap.entries()).sort((a, b) => {
-            const aNode = a[0];
-            const bNode = b[0];
+            const [aNode, aValue] = a;
+            const [bNode, bValue] = b;
+            
+            // First, sort by unread messages
+            const aHasUnread = hasUnread(aValue.history);
+            const bHasUnread = hasUnread(bValue.history);
+            if (aHasUnread && !bHasUnread) return -1;
+            if (!aHasUnread && bHasUnread) return 1;
+            
+            // Then, sort by most recent message timestamp
+            const aLatestTimestamp = getLatestTimestampUnformatted(aValue.history);
+            const bLatestTimestamp = getLatestTimestampUnformatted(bValue.history);
+            
+            if (aLatestTimestamp !== null && bLatestTimestamp !== null) {
+                return bLatestTimestamp - aLatestTimestamp;
+            } else if (aLatestTimestamp !== null) {
+                return -1; // a has a timestamp, b doesn't, so a comes first
+            } else if (bLatestTimestamp !== null) {
+                return 1;  // b has a timestamp, a doesn't, so b comes first
+            }
+            
+            // If one or both histories are empty, use the existing sorting logic
             const aPeer = peerMap.get(aNode);
             const bPeer = peerMap.get(bNode);
             
-            if (!aPeer && !bPeer) {
-                return 0;
-            }
-            if (!aPeer) {
-                return 1; // a is null, move it down
-            }
-            if (!bPeer) {
-                return -1; // b is null, move it down
-            }
+            if (!aPeer && !bPeer) return 0;
+            if (!aPeer) return 1;
+            if (!bPeer) return -1;
             
-            // Both peers exist, now check peerData
-            if (!aPeer.peerData && !bPeer.peerData) {
-                return 0;
-            }
-            if (!aPeer.peerData) {
-                return 1; // a.peerData is null, move it down
-            }
-            if (!bPeer.peerData) {
-                return -1; // b.peerData is null, move it down
-            }
+            if (!aPeer.peerData && !bPeer.peerData) return 0;
+            if (!aPeer.peerData) return 1;
+            if (!bPeer.peerData) return -1;
             
-            // Both peers and peerData exist, add additional sorting logic here if needed
             return 0;
         });
     }, [messageStoreMap, peerMap]);
@@ -112,6 +147,18 @@ const Messages: React.FC = () => {
                           }}
 
                         >
+                             {hasUnread(value.history) &&
+                              <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "center",
+                              }}
+
+                              >
+                                ●
+                              </div>
+                            }
                             <div
                               style={{
                                 minWidth: "48px",
@@ -121,6 +168,7 @@ const Messages: React.FC = () => {
                             >
                               <ProfilePicture size="48px" node={node} />
                             </div>
+                           
                             <div
                               style={{
                                 display: "flex",
@@ -138,10 +186,18 @@ const Messages: React.FC = () => {
                                   }}
                                 >
                                     <span>{node}</span>
-                                    <span style={{ color: "gray" }}>timestamp</span>
+                                    <span style={{ color: "gray", fontSize:"0.7rem"}}>
+                                        {getLatestTimestamp(value.history)}
+                                    </span>
                                 </div>
-                                <div style={{ color: "gray" }}>
-                                    message preview
+                                <div style={{ 
+                                    color: "gray",
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    maxWidth: "100%"
+                                }}>
+                                    {getLatestMessageContents(value.history)}
                                 </div>
                             </div>
                         </div>

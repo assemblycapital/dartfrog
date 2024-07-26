@@ -47,6 +47,7 @@ export interface DartStore {
   putMessageStoreMap: (messageStore: MessageStore) => void,
   requestNewMessageStore: (node: string) => void,
   requestSendMessage: (node, text) => void,
+  clearUnreadMessageStore: (node) => void,
   // 
   profile: Profile | null,
   setProfile: (profile) => void,
@@ -216,6 +217,18 @@ const useDartStore = create<DartStore>()(
         }
       })
     },
+    clearUnreadMessageStore: (node) => {
+      const { api } = get()
+      if (!(api)) return;
+      api.send({data:
+        {
+          "LocalDirectMessages": 
+            {
+              "ClearUnreadMessageStore": node
+            }
+        }
+      })
+    },
   })
 )
 
@@ -231,6 +244,7 @@ export interface DirectMessage {
   from: string;
   is_unread: boolean;
   contents: string;
+  time_received: number;
 }
 
 export function createMessageStore(peer_node: string): MessageStore {

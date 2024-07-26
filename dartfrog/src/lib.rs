@@ -358,6 +358,7 @@ fn handle_http_server_request(
                                 from: our.node.clone(),
                                 is_unread: false,
                                 contents: message,
+                                time_received: get_now(),
                             };
                             
                             message_store.history.push(new_message.clone());
@@ -594,6 +595,7 @@ fn handle_dartfrog_input(
                         from: source.node.clone(),
                         is_unread: true,
                         contents: text,
+                        time_received: get_now(),
                     };
                     
                     message_store.history.push(new_message);

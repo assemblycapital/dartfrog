@@ -10,7 +10,7 @@ import { formatTimestamp, isImageUrl, linkRegex } from '@dartfrog/puddle/compone
 import Split from 'react-split';
 
 const MessagesNode: React.FC = () => {
-    const {setCurrentPage, messageStoreMap, requestNewMessageStore, peerMap, localFwdPeerRequest, requestSendMessage} = useDartStore();
+    const {setCurrentPage, messageStoreMap, requestNewMessageStore, clearUnreadMessageStore, peerMap, localFwdPeerRequest, requestSendMessage} = useDartStore();
 
     const { node } = useParams<{ node: string }>();
 
@@ -45,7 +45,6 @@ const MessagesNode: React.FC = () => {
             return;
 
         }
-        console.log("got message store!", gotMessageStore)
         setMessageStore(gotMessageStore);
     }, [messageStoreMap])
 
@@ -61,8 +60,7 @@ const MessagesNode: React.FC = () => {
         event.preventDefault();
         if (!chatMessageInputText) return;
         let text = maybeReplaceWithImage(chatMessageInputText);
-        requestSendMessage(node, chatMessageInputText);
-        // sendChat(text);
+        requestSendMessage(node, text);
         setChatMessageInputText('');
       },
       [chatMessageInputText]
@@ -80,6 +78,15 @@ const MessagesNode: React.FC = () => {
     useEffect(() => {
         scrollDownChat();
     }, [messageStore, scrollDownChat]);
+
+    useEffect(() => {
+        // Clear unread messages after a short delay
+        const timer = setTimeout(() => {
+            clearUnreadMessageStore(node);
+        }, 100);
+
+        return () => clearTimeout(timer);
+    }, [node, messageStore, clearUnreadMessageStore]);
 
     useEffect(() => {
         setComponentLoadTime(Date.now());
@@ -261,7 +268,7 @@ const MessagesNode: React.FC = () => {
                                             <span>{message.from}:</span>
                                         </a>
                                         <div style={{ color: "#ffffff77", fontSize: "0.7rem", display: "inline-block", marginRight: "5px", cursor: "default" }}>
-                                            <span>{formatTimestamp(Date.now())}</span>
+                                            <span>{formatTimestamp(message.time_received)}</span>
                                         </div>
                                     </div>
                                     <span style={{ cursor: "default", wordWrap: "break-word", overflowWrap: "break-word", whiteSpace: "pre-wrap" }}>

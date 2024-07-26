@@ -3,7 +3,7 @@ import useDartStore from '../../store/dart';
 import Spinner from '@dartfrog/puddle/components/Spinner';
 // import { Presence, ServiceAccess } from '@dartfrog/puddle/index';
 import { useNavigate } from 'react-router-dom';
-import { Service, ServiceID, ServiceVisibility, getAllServicesFromPeerMap, getServiceRecencyText, sortServices } from '@dartfrog/puddle/index';
+import { Service, ServiceID, ServiceVisibility, dfLinkToRealLink, getAllServicesFromPeerMap, getServiceRecencyText, sortServices } from '@dartfrog/puddle/index';
 
 const ServiceList = ({services }) => {
   const { localServices, deleteService, requestLocalServiceList, peerMap, localFwdAllPeerRequests } = useDartStore();
@@ -14,6 +14,7 @@ const ServiceList = ({services }) => {
   //   .map(id => allServices.find(service => service.id.toString() === id));
 
   // // Sort the flattened array by the number of subscribers, and for those with zero subscribers, sort by recency
+  const baseOrigin = window.origin.split(".").slice(1).join(".")
   const sortedServices = sortServices(services);
 
   const knownProcesses = {
@@ -98,19 +99,21 @@ const ServiceList = ({services }) => {
                 { (service.meta.access === "Public") ||
                  (service.meta.access === "HostOnly" && hostNode === window.our?.node) ||
                  (service.meta.access === "Whitelist" && (hostNode === window.our?.node || service.meta.whitelist.includes(window.our?.node))) ? (
-                  <div
+                  <a
                     style={{
                       cursor: "pointer",
                       flex: "1",
                       textAlign: "center",
                     }}
                     className="join-button"
-                    onClick={() => {
+                    href={dfLinkToRealLink(service.id.toString(), baseOrigin)}
+                    onClick={(e) => {
+                      e.preventDefault();
                       navigate(`/join/${service.id.toString()}`);
                     }}
                   >
                     join
-                  </div>
+                  </a>
                 ) : (
                   <div
                     style={{
