@@ -46,6 +46,7 @@ export interface DartStore {
   setMessageStoreMap: (messageStoreMap: Map<string, MessageStore>) => void,
   putMessageStoreMap: (messageStore: MessageStore) => void,
   requestNewMessageStore: (node: string) => void,
+  requestSendMessage: (node, text) => void,
   // 
   profile: Profile | null,
   setProfile: (profile) => void,
@@ -196,11 +197,21 @@ const useDartStore = create<DartStore>()(
     requestNewMessageStore: (node) => {
       const { api } = get()
       if (!(api)) return;
-      console.log("requesting new message store")
       api.send({data:
         {
           "LocalDirectMessages": 
           { "CreateMessageStore": node
+          }
+        }
+      })
+    },
+    requestSendMessage: (node, text) => {
+      const { api } = get()
+      if (!(api)) return;
+      api.send({data:
+        {
+          "LocalDirectMessages": 
+          { "SendMessage": [node, text]
           }
         }
       })

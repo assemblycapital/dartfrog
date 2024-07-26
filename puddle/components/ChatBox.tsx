@@ -175,7 +175,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                 display: "flex",
                 flexGrow: 1,
                 flexDirection:"column",
-                gap:"1rem",
+                gap:"8px",
                 overflowY:"auto",
                 paddingTop:"0.8rem",
               }}
@@ -248,10 +248,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
 
 export default React.memo(ChatBox);
 
-const linkRegex = /^https?:\/\/\S+$/i;
-const imageRegex = /^https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp)$/i;
+export const linkRegex = /^https?:\/\/\S+$/i;
+export const imageRegex = /^https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp)$/i;
 
-function isImageUrl(url: string) {
+export function isImageUrl(url: string) {
   return imageRegex.test(url);
 }
 

@@ -21,26 +21,79 @@ const Messages: React.FC = () => {
         navigate(`/messages/${inputValue}`)
     }, [inputValue]);
 
+    const sortedEntries = React.useMemo(() => {
+        return Array.from(messageStoreMap.entries()).sort((a, b) => {
+            const aNode = a[0];
+            const bNode = b[0];
+            const aPeer = peerMap.get(aNode);
+            const bPeer = peerMap.get(bNode);
+            
+            if (!aPeer && !bPeer) {
+                return 0;
+            }
+            if (!aPeer) {
+                return 1; // a is null, move it down
+            }
+            if (!bPeer) {
+                return -1; // b is null, move it down
+            }
+            
+            // Both peers exist, now check peerData
+            if (!aPeer.peerData && !bPeer.peerData) {
+                return 0;
+            }
+            if (!aPeer.peerData) {
+                return 1; // a.peerData is null, move it down
+            }
+            if (!bPeer.peerData) {
+                return -1; // b.peerData is null, move it down
+            }
+            
+            // Both peers and peerData exist, add additional sorting logic here if needed
+            return 0;
+        });
+    }, [messageStoreMap, peerMap]);
 
     return (
-        <div>
-            <div style={{ marginTop: "1rem"}}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            maxHeight: "100%",
+            height: "100%",
+            overflowY: "hidden",
+            overflowX:"hidden",
+          }}
+        >
+            <div
+              style={{
+                marginTop: "1rem",
+                flexShrink: 0,
+                display: "flex",
+                flexDirection: "row",
+              }}
+            >
                 <input 
-                type="text" 
-                value={inputValue} 
-                onChange={(e) => setInputValue(e.target.value)} 
+                  type="text" 
+                  value={inputValue} 
+                  onChange={(e) => setInputValue(e.target.value)} 
+                  style={{
+                    flexGrow:"1",
+                  }}
                 />
                 <button onClick={handleSubmit}>new</button>
             </div>
 
             <div
               style={{
-                display:"flex",
-                flexDirection:"column",
-                width:"100%",
+                flexGrow: 1,
+                display: "flex",
+                flexDirection: "column",
+                width: "100%",
+                overflowY: "auto",
               }}
             >
-                {Array.from(messageStoreMap.entries()).map(([node, value]) => (
+                {sortedEntries.map(([node, value]) => (
                         <div key={node}
                           style={{
                             display:"flex",
@@ -49,6 +102,8 @@ const Messages: React.FC = () => {
                             cursor:"pointer",
                             gap:"1rem",
                             padding:"8px",
+                            overflowX:"hidden",
+                            flexShrink:"0",
                           }}
                           className="hover-dark-gray"
                           onClick={()=>{
@@ -57,29 +112,35 @@ const Messages: React.FC = () => {
                           }}
 
                         >
-                            <ProfilePicture size="48px" node={node} />
                             <div
+                              style={{
+                                minWidth: "48px",
+                                display: "flex",
+                                alignItems: "center",
+                              }}
+                            >
+                              <ProfilePicture size="48px" node={node} />
+                            </div>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "center",
+                              }}
                             >
                                 <div
                                   className={getPeerNameColor(peerMap.get(node))}
                                   style={{
-                                    display:"flex",
-                                    flexDirection:"row",
-                                    gap:"1rem",
+                                    display: "flex",
+                                    flexDirection: "row",
+                                    gap: "1rem",
+                                    alignItems: "center",
                                   }}
                                 >
-                                    <span>
-                                      {node}
-                                    </span>
-                                    <span
-                                      style={{color:"gray",}}
-                                    >
-                                      timestamp
-                                    </span>
+                                    <span>{node}</span>
+                                    <span style={{ color: "gray" }}>timestamp</span>
                                 </div>
-                                <div
-                                  style={{color:"gray",}}
-                                >
+                                <div style={{ color: "gray" }}>
                                     message preview
                                 </div>
                             </div>
