@@ -9,7 +9,6 @@ const ProfilePicture: React.FC<{ size: string; node: string }> = ({ size, node }
     const [pfpImageUrl, setPfpImageUrl] = useState<string>(DEFAULT_PFP);
 
     useEffect(()=>{
-
       const gotPeer = peerMap.get(node)
       if (gotPeer && gotPeer.peerData && gotPeer.peerData.profile.pfp) {
         setPfpImageUrl(gotPeer.peerData.profile.pfp)

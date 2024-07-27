@@ -49,7 +49,7 @@ const CreateService: React.FC<{ }> = ({ }) => {
       createService(inputCreateServiceName, selectedPlugin, selectedVisibility, selectedAccess, []);
       console.log("service create settings", serviceId, selectedPlugin, selectedVisibility, selectedAccess)
       setInputCreateServiceName('');
-      // navigate(`/join/${serviceId}`);
+      navigate(`/join/${serviceId}`);
       setTimeout(() => {
         requestLocalServiceList();
       }, 100);
@@ -64,7 +64,8 @@ const CreateService: React.FC<{ }> = ({ }) => {
     setTimeout(() => {
       requestLocalServiceList();
     }, 100);
-    // navigate(`/join/${serviceId}`);
+    let serviceId = `${serviceName}:${window.our?.node}@${processName}`;
+    navigate(`/join/${serviceId}`);
   }
 
 
@@ -93,10 +94,24 @@ const CreateService: React.FC<{ }> = ({ }) => {
       >
           <div className="service-create-shortcut"
             onClick={() =>{
-              createFromShortcut("chat");
+              createFromShortcut("page");
             }}
           >
-            chat
+            page
+          </div>
+          <div className="service-create-shortcut"
+            onClick={() =>{
+              createFromShortcut("chess");
+            }}
+          >
+            chess
+          </div>
+          <div className="service-create-shortcut"
+            onClick={() =>{
+              createFromShortcut("piano");
+            }}
+          >
+            piano
           </div>
       </div>
       <div

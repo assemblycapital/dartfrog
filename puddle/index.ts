@@ -85,6 +85,8 @@ export class ServiceApi {
   private onPeerMapChange: (api) => void;
   private onLocalServicesChange: (api) => void;
 
+  private heartbeatInterval: NodeJS.Timeout | null = null;
+
   constructor({
     our,
     websocket_url,
@@ -125,6 +127,10 @@ export class ServiceApi {
       onClose: (event) => {
         this.setConnectionStatus(ConnectionStatusType.Disconnected);
         this.onClose();
+        if (this.heartbeatInterval) {
+          clearInterval(this.heartbeatInterval);
+          this.heartbeatInterval = null;
+        }
       },
       onOpen: (event, api) => {
         console.log("Connected to Kinode");
@@ -135,7 +141,7 @@ export class ServiceApi {
           this.setService(this.serviceId);
         }
 
-        setInterval(() => {
+        this.heartbeatInterval = setInterval(() => {
           this.sendHeartbeat();
         }, 60*1000);
 

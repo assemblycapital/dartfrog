@@ -1,20 +1,33 @@
-import React, { useEffect } from 'react';
+import * as React from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import TopBar from '@dartfrog/puddle/components/TopBar';
-import { ServiceApi, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceMetadata } from '@dartfrog/puddle';
-import { PROCESS_NAME, WEBSOCKET_URL, } from '../utils';
+import { ServiceApi, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceID, ServiceMetadata } from '@dartfrog/puddle';
 import useChatStore, { ChatState, ChatMessage } from '@dartfrog/puddle/store/chat';
 import ChatBox from '@dartfrog/puddle/components/ChatBox';
 import Spinner from '@dartfrog/puddle/components/Spinner';
 import { maybePlaySoundEffect, maybePlayTTS } from '@dartfrog/puddle/utils';
 import DisplayUserActivity from '@dartfrog/puddle/components/DisplayUserActivity';
 import Split from 'react-split';
-import usePageStore from '../store/page';
-import PagePluginBox from './PagePluginBox';
 
-const ServiceView = () => {
-  const { id } = useParams<{ id: string }>();
+const SplitComponent = Split as unknown as React.FC<any>;
+
+interface HalfChatProps {
+  onServiceMessage?: (msg: any) => void;
+  onClientMessage?: (msg: any) => void;
+  Element?: React.ComponentType<{ params: string }>;
+  processName: string;
+  ourNode: string;
+  websocketUrl?: string;
+}
+
+const HalfChat: React.FC<HalfChatProps> = ({ onServiceMessage, onClientMessage, Element, processName, websocketUrl, ourNode}) => {
+  const { id, params } = useParams<{ id: string; params: string }>();
   const paramServiceId = id
+  const [isApiConnected, setIsApiConnected] = useState(false);
+  const reconnectTimer = useRef<NodeJS.Timeout | null>(null);
+  const [updateCount, setUpdateCount] = useState(0);
+  const isPageVisible = useRef(true);
 
   const {
     setApi, api, serviceId, requestPeer, setPeerMap, setServiceId, setChatHistory,
@@ -22,26 +35,53 @@ const ServiceView = () => {
     setServiceMetadata, serviceMetadata
   } = useChatStore();
 
-  const {page, setPage} = usePageStore();
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        isPageVisible.current = false;
+      } else {
+        isPageVisible.current = true;
+        setUpdateCount(0);
+      }
+      updateTitle();
+    };
 
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  const updateTitle = () => {
+    if (paramServiceId) {
+      const shortServiceId = ServiceID.fromString(paramServiceId).toShortString();
+      document.title = (isPageVisible.current || updateCount === 0)
+        ? shortServiceId
+        : `${shortServiceId} (${updateCount})`;
+    }
+  };
 
   useEffect(() => {
-    setServiceId(paramServiceId);
+    updateTitle();
+  }, [paramServiceId, updateCount]);
+
+  const createServiceApi = () => {
     const newApi = new ServiceApi({
       our: {
-        "node": window.our?.node,
-        "process": PROCESS_NAME,
+        "node": ourNode,
+        "process": processName,
       },
       serviceId: paramServiceId,
-      websocket_url: WEBSOCKET_URL,
-      onOpen: (api) => {
-        // 
-      },
+      websocket_url: websocketUrl,
       onServiceConnectionStatusChange(api) {
         setServiceConnectionStatus(api.serviceConnectionStatus)
       },
       onServiceMetadataChange(api) {
         setServiceMetadata(api.serviceMetadata)
+        if (!isPageVisible.current) {
+          setUpdateCount(prevCount => prevCount + 1);
+        }
       },
       onPeerMapChange(api) {
         setPeerMap(api.peerMap);
@@ -54,14 +94,37 @@ const ServiceView = () => {
             const chatMessage = msg.Chat.Message;
             addChatMessage(chatMessage);
           }
-        } else if (msg.Page) {
-          setPage(msg.Page.Page);
+        }
+        onServiceMessage?.(msg);
+        if (!isPageVisible.current) {
+          setUpdateCount(prevCount => prevCount + 1);
         }
       },
       onClientMessage(msg) {
+        onClientMessage?.(msg);
+        if (!isPageVisible.current) {
+          setUpdateCount(prevCount => prevCount + 1);
+        }
+      },
+      onOpen: (api) => {
+        setIsApiConnected(true);
+        if (reconnectTimer.current) {
+          clearTimeout(reconnectTimer.current);
+          reconnectTimer.current = null;
+        }
+      },
+      onClose() {
+        setIsApiConnected(false);
+        scheduleReconnect();
       },
     });
     setApi(newApi);
+    return newApi;
+  };
+
+  useEffect(() => {
+    setServiceId(paramServiceId);
+    const newApi = createServiceApi();
 
     const handleBeforeUnload = () => {
       newApi.unsubscribeService();
@@ -71,8 +134,21 @@ const ServiceView = () => {
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (reconnectTimer.current) {
+        clearTimeout(reconnectTimer.current);
+      }
+      newApi.unsubscribeService();
     };
-  }, [])
+  }, []);
+
+  const scheduleReconnect = () => {
+    if (!reconnectTimer.current) {
+      reconnectTimer.current = setTimeout(() => {
+        createServiceApi();
+        reconnectTimer.current = null;
+      }, 5000);
+    }
+  };
 
   return (
     <div
@@ -85,11 +161,7 @@ const ServiceView = () => {
         boxSizing: "border-box",
       }}
     >
-      <div style={{ flex: '0 1 auto',
-        overflow:"hidden",
-      }}>
-        <TopBar serviceId={paramServiceId} />
-      </div>
+      <TopBar serviceId={paramServiceId} />
       <div
         style={{
           flex: '1 1 100%',
@@ -132,7 +204,7 @@ const ServiceView = () => {
                 {serviceConnectionStatus.toString()}
               </div>
             ) : (
-                <Split
+                <SplitComponent
                   sizes={[50, 50]}
                   minSize={[60, 60]}
                   direction="horizontal"
@@ -148,8 +220,15 @@ const ServiceView = () => {
                   }}
                 >
 
-                <div>
-                  <PagePluginBox />
+                <div
+                  style={{
+                    display:"flex",
+                    flex:"1",
+                    flexDirection:"column",
+                    height:"100%",
+                  }}
+                >
+                  {Element && <Element params={params} />}
                 </div>
                 <div
                   style={{
@@ -159,6 +238,7 @@ const ServiceView = () => {
                     flexDirection: 'column',
                     overflow: 'hidden',
                     gap: "6px",
+                    marginLeft:"8px",
                   }}
                 >
                   <div style={{ flex: 1, overflow: 'auto' }}>
@@ -166,7 +246,7 @@ const ServiceView = () => {
                   </div>
                   <DisplayUserActivity metadata={serviceMetadata} />
                 </div>
-              </Split>
+              </SplitComponent>
             )}
           </>
         )}
@@ -175,4 +255,4 @@ const ServiceView = () => {
   );
 };
 
-export default ServiceView;
+export default HalfChat;

@@ -133,6 +133,7 @@ const ServiceView = () => {
                   flexDirection: 'column',
                   overflow: 'hidden',
                   gap: "6px",
+                  // marginLeft:"8px",
                 }}
               >
                 <div style={{ flex: 1, overflow: 'auto' }}>

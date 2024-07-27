@@ -281,7 +281,7 @@ const MessagesNode: React.FC = () => {
                                     flexDirection:"row",
                                     width:"100%",
                                     gap:"8px",
-                                    padding: "6px 0rem",
+                                    padding: "10px 0rem",
                                 }}
                             >
                                 <div
@@ -317,7 +317,7 @@ const MessagesNode: React.FC = () => {
                                             <span>{formatTimestamp(message.time_received)}</span>
                                         </div>
                                     </div>
-                                    <span style={{ cursor: "default", wordWrap: "break-word", overflowWrap: "break-word", whiteSpace: "pre-wrap" }}>
+                                    <span style={{ cursor: "default", wordWrap: "break-word", overflowWrap: "break-word", whiteSpace: "pre-wrap", fontSize: "0.9rem" }}>
                                         {getMessageInnerText(message.contents)}
                                     </span>
                                 </div>

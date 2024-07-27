@@ -21,7 +21,6 @@ const TopBar = ({ serviceId }) => {
       color: '#9d9d9d',
       backgroundColor: '#333',
       textAlign: 'center',
-      width: '100%',
       padding: '0 8px',
       height: '26px',
       flexShrink: 0,
@@ -60,18 +59,17 @@ const TopBar = ({ serviceId }) => {
         style={{
           flexGrow: "1",
           overflow: "hidden",
-          display: "flex", // Add this line
-          alignItems: "center", // Add this line
+          display: "flex",
+          alignItems: "center",
         }}
       >
         <div
           style={{
             display: "inline-block",
             cursor: "pointer",
-            padding: "0rem 1rem",
             overflowX: "hidden",
-            whiteSpace: "nowrap", // Prevent text wrapping
-            textOverflow: "ellipsis", // Add ellipsis for overflowed text
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis", 
             wordWrap: "normal",
           }}
           onClick={handleCopyClick}
@@ -79,17 +77,21 @@ const TopBar = ({ serviceId }) => {
           {serviceIdDisplayText}
         </div>
       </div>
-      {/* <div
+      <div
+        className="hover-dark-gray"
         style={{
-          display: "flex",
-          flexDirection: "row",
-          cursor: "pointer",
-          gap: "1rem",
+          position: 'absolute',
+          right: '0px',
+          display: 'flex',
           alignItems: 'center',
+          height: '100%',
+          cursor: 'pointer',
+          padding: '0px 10px'
+  
         }}
       >
         <HamburgerIcon height='1em' width='1em' color='#b4b4b4' />
-      </div> */}
+      </div>
     </div>
   );
 };

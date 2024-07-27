@@ -52,7 +52,7 @@ const ChatInput: React.FC<ChatInputProps> = ({  }) => {
         }}
       />
       <div>
-      <button style={{ cursor: 'pointer', height: '100%' }} onClick={sendChatCallback}>
+      <button style={{ cursor: 'pointer', height: '100%', borderLeft:"none" }} onClick={sendChatCallback}>
         Send
       </button>
       </div>

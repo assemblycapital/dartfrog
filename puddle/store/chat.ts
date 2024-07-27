@@ -112,7 +112,7 @@ const useChatStore = create<ChatStore>((set, get) => ({
   //
   peerMap: new Map(),
   setPeerMap: (newPeerMap) => {
-    set({ peerMap: newPeerMap });
+    set({ peerMap: new Map(newPeerMap) });
   },
   newPeer: (node) => {
     const { api } = get();

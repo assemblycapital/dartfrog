@@ -223,9 +223,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                     <span style={{ cursor: "default", wordWrap: "break-word", overflowWrap: "break-word", whiteSpace: "pre-wrap" }}>
                       {getMessageInnerText(message.msg)}
                     </span>
-
                   </div>
-
                 </div>
               ))}
               <div id="messages-end-ref" ref={messagesEndRef} style={{ display: "inline" }} />

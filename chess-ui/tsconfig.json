@@ -23,7 +23,7 @@
   "include": [
     "src",
     "../pkg/manifest.json",
-    "../pkg/metadata.json",
+    "../pkg/metadata.json", "../puddle/components/HalfChat.tsx",
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
