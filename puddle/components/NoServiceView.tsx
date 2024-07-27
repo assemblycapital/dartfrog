@@ -1,14 +1,13 @@
 import * as React from 'react';
 import { useEffect } from 'react';
 import { getServiceRecencyText, ServiceApi } from "@dartfrog/puddle";
-import useChatStore from '@dartfrog/puddle/store/chat';
 import { useNavigate } from 'react-router-dom';
+import useChatStore from '../store/chat';
 
 const NoServiceView = ({ processName, websocketUrl, ourNode }: { processName: string, websocketUrl: string, ourNode:string}) => {
   const {api, setApi, createService, deleteService, requestMyServices, setPeerMap, localServices, setLocalServices,} = useChatStore();
 
   const navigate = useNavigate();
-
   useEffect(()=>{
     const newApi = new ServiceApi({
       our: {
@@ -27,7 +26,7 @@ const NoServiceView = ({ processName, websocketUrl, ourNode }: { processName: st
       }
     });
     setApi(newApi);
-  }, [processName, websocketUrl])
+  }, [processName, websocketUrl, ourNode])
 
   return (
     <div

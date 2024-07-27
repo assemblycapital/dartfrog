@@ -2,8 +2,8 @@
 import "@dartfrog/puddle/components/App.css";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import NoServiceView from "@dartfrog/puddle/components/NoServiceView";
-import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
 import HalfChat from "@dartfrog/puddle/components/HalfChat";
+import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
 import ChessPluginBox from "./components/ChessPluginBox";
 import useChessStore, { handleChessUpdate } from "./store/chess";
 

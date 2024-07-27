@@ -15,15 +15,15 @@ const SplitComponent = Split as unknown as React.FC<any>;
 interface HalfChatProps {
   onServiceMessage?: (msg: any) => void;
   onClientMessage?: (msg: any) => void;
-  Element?: React.ComponentType<{ params: string }>;
+  Element?: React.ComponentType<{ }>;
   processName: string;
   ourNode: string;
   websocketUrl?: string;
 }
 
 const HalfChat: React.FC<HalfChatProps> = ({ onServiceMessage, onClientMessage, Element, processName, websocketUrl, ourNode}) => {
-  const { id, params } = useParams<{ id: string; params: string }>();
-  const paramServiceId = id
+  const { id } = useParams<{ id?: string; }>();
+  const paramServiceId = id ?? '';
   const [isApiConnected, setIsApiConnected] = useState(false);
   const reconnectTimer = useRef<NodeJS.Timeout | null>(null);
   const [updateCount, setUpdateCount] = useState(0);
@@ -137,9 +137,8 @@ const HalfChat: React.FC<HalfChatProps> = ({ onServiceMessage, onClientMessage, 
       if (reconnectTimer.current) {
         clearTimeout(reconnectTimer.current);
       }
-      newApi.unsubscribeService();
     };
-  }, []);
+  }, [paramServiceId]);
 
   const scheduleReconnect = () => {
     if (!reconnectTimer.current) {
@@ -228,7 +227,7 @@ const HalfChat: React.FC<HalfChatProps> = ({ onServiceMessage, onClientMessage, 
                     height:"100%",
                   }}
                 >
-                  {Element && <Element params={params} />}
+                  {Element && <Element />}
                 </div>
                 <div
                   style={{
