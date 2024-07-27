@@ -1412,6 +1412,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "radio"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "dartfrog_lib",
+ "kinode_process_lib",
+ "serde",
+ "serde_json",
+ "wit-bindgen",
+]
+
+[[package]]
 name = "radium"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

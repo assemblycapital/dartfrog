@@ -1,5 +1,5 @@
 {
-  "name": "df-page-ui",
+  "name": "df-radio-ui",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,7 +7,7 @@
     "dev": "vite --port 3000",
     "start": "vite --port 3000",
     "build": "tsc && vite build",
-    "copy": "mkdir -p ../pkg/page-ui && rm -rf ../pkg/page-ui/* && cp -r dist/* ../pkg/page-ui/",
+    "copy": "mkdir -p ../pkg/radio-ui && rm -rf ../pkg/radio-ui/* && cp -r dist/* ../pkg/radio-ui/",
     "build:copy": "npm run build && npm run copy",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"

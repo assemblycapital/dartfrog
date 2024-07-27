@@ -7,6 +7,7 @@ members = [
     "piano",
     "page",
     "chess",
+    "radio",
 ]
 
 [profile.release]
