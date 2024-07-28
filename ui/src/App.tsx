@@ -5,7 +5,7 @@ import ControlHeader from "./components/ControlHeader";
 import { useEffect, useRef, useState } from "react";
 import { PROCESS_NAME, WEBSOCKET_URL, } from './utils';
 import { Service, ServiceConnectionStatusType, peerFromJson, profileFromJson, serviceFromJson, } from "@dartfrog/puddle";
-import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, INBOX_PLUGIN, MessageStore, PAGE_PLUGIN, PIANO_PLUGIN } from "./store/dart";
+import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, MessageStore, PAGE_PLUGIN, PIANO_PLUGIN } from "./store/dart";
 import BrowserBox from "./components/BrowserBox";
 import TabbedWindowManager from "./components/TabbedWindowManager";
 import Sidebar from "./components/Sidebar/Sidebar";

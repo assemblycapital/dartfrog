@@ -12,6 +12,13 @@ interface ServiceCard {
 
 const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
     const navigate = useNavigate();
+
+    const isRecentlyActive = () => {
+        const lastPresence = new Date(service.meta.last_sent_presence);
+        const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+        return lastPresence > fifteenMinutesAgo;
+    };
+
     return (
         <a
           className="service-card hover-dark-gray color-white"
@@ -82,18 +89,17 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
               justifyContent: "flex-start",
             }}
           >
-            {service.meta.subscribers.length === 0 ? (
-
+            {service.meta.subscribers.length > 0 && isRecentlyActive() ? (
+              <span>
+                {service.meta.subscribers.length} online
+              </span>
+            ) : (
               <span
                 style={{
                   color:"gray",
                 }}
               >
                 {getServiceRecencyText(service)}
-              </span>
-            ):(
-              <span>
-                {service.meta.subscribers.length} online
               </span>
             )}
           </div>

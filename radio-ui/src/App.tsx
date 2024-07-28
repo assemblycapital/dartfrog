@@ -6,11 +6,12 @@ import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
 import useRadioStore from "./store/radio";
 import HalfChat from "@dartfrog/puddle/components/HalfChat";
 import RadioPluginBox from "./components/RadioPluginBox";
+import { useCallback } from "react";
 
 
 function App() {
 
-  const {setPlayingMedia} = useRadioStore();
+  const {setPlayingMedia, playingMedia, setPlayingMediaTime} = useRadioStore();
 
   const onServiceMessage = (msg: any) => {
     if (msg.Radio) {
@@ -20,7 +21,9 @@ function App() {
         setPlayingMedia(newPlaying);
       } else if (msg.Radio.PlayMedia) {
         setPlayingMedia(msg.Radio.PlayMedia);
-
+      } else if (msg.Radio.PlayMediaStartTime) {
+        console.log('setting time',msg.Radio)
+        setPlayingMediaTime(msg.Radio.PlayMediaStartTime)
       } else {
         console.log("unhandled update", msg.Radio)
       }

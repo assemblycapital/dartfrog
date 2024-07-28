@@ -7,10 +7,9 @@ const CHAT_PLUGIN = `chat:${PACKAGE}`
 const PIANO_PLUGIN = `piano:${PACKAGE}`;
 const PAGE_PLUGIN = `page:${PACKAGE}`;
 const CHESS_PLUGIN = `chess:${PACKAGE}`;
+const RADIO_PLUGIN = `radio:${PACKAGE}`;
 
-const PLUGINS = [CHAT_PLUGIN, PIANO_PLUGIN, PAGE_PLUGIN, CHESS_PLUGIN]
-
-
+const PLUGINS = [CHAT_PLUGIN, PIANO_PLUGIN, PAGE_PLUGIN, CHESS_PLUGIN, RADIO_PLUGIN]
 
 const PluginSelector = ({ plugin, setPlugin}) => {
   const [isCustom, setIsCustom] = useState(false);

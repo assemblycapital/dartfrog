@@ -610,9 +610,9 @@ export function getServiceRecencyText(service: Service) {
   // if less than 1h, say x min ago
   // if less than 1d, say x hr ago
   // else say x days ago
-  if (service.meta.subscribers.length > 0) {
-    return `now`;
-  }
+  // if (service.meta.subscribers.length > 0) {
+  //   return `now`;
+  // }
   return getRecencyText(diff);
 }
 

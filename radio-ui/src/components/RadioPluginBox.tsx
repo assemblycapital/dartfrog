@@ -11,7 +11,7 @@ const RadioPluginBox: React.FC = ({ }) => {
   const [interactScreen, setInteractScreen] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isHost, setIsHost] = useState(false);
-  const {playingMedia, requestPlayMedia} = useRadioStore();
+  const {playingMedia, requestPlayMedia, requestPlayMediaTime} = useRadioStore();
   const [inputMediaUrl, setInputMediaUrl] = useState('');
   const [showControls, setShowControls] = useState(false);
   const [playerInSync, setPlayerInSync] = useState(true);
@@ -56,6 +56,11 @@ const RadioPluginBox: React.FC = ({ }) => {
     setShowControls(!showControls);
   };
 
+  useEffect(()=>{
+    console.log("got new playingmedia", playingMedia)
+    seekToGlobal();
+  }, [playingMedia])
+
   const seekToGlobal = useCallback(()=> {
 
     if (!playerRef.current) return;
@@ -88,7 +93,7 @@ const RadioPluginBox: React.FC = ({ }) => {
 
     if (!playingMedia.start_time) return;
 
-    // nanoseconds to seconds
+    // seconds to nanoseconds
     let startSeconds = playingMedia.start_time / 1000000000;
 
 
@@ -116,7 +121,18 @@ const RadioPluginBox: React.FC = ({ }) => {
     setAutoSync(!autoSync);
   };
 
-    return (
+  const handleSetTimestamp = useCallback(() => {
+    if (!playerRef.current) return;
+    const now = Date.now();
+  
+    const playerTime = playerRef.current.getCurrentTime() * 1000
+    const newStartTime = now - playerTime ;
+    const newStartTimeNanoseconds = newStartTime * 1000000;
+
+    requestPlayMediaTime(api, newStartTimeNanoseconds);
+  }, [api, playerRef]);
+
+  return (
     <div
       style={{
         display: 'flex',
@@ -279,6 +295,7 @@ const RadioPluginBox: React.FC = ({ }) => {
                     display: 'flex',
                     flexDirection: 'row',
                     width:"100%",
+                    gap: "0.5rem",
                   }}
                 >
                   {/* viewer controls */}
@@ -294,6 +311,20 @@ const RadioPluginBox: React.FC = ({ }) => {
                   >
                     {autoSync ? "disable autosync" : "enable autosync"}
                   </button>
+                  {isHost && !playerInSync &&
+                    <button
+                      onClick={handleSetTimestamp}
+                      style={{
+                        cursor: 'pointer',
+                        margin: "0px",
+                        height: "32px",
+                        width: "auto",
+                        padding: "0 10px",
+                      }}
+                    >
+                      set timestamp
+                    </button>
+                  }
                 </div>
             </div>
           )}
@@ -304,15 +335,15 @@ const RadioPluginBox: React.FC = ({ }) => {
               alignItems: 'flex-start',
               display:"flex",
               flexDirection:"row",
-              gap:"1rem",
+              gap:"0.5rem",
             }}
           >
             <button
               onClick={toggleControls}
               style={{
                 width:"auto",
-                padding:"0.5rem 1rem",
                 userSelect: "none",
+                height: "32px",
               }}
             >
               {showControls ? "hide controls" : "controls"}
@@ -325,7 +356,7 @@ const RadioPluginBox: React.FC = ({ }) => {
                 }}
                 style={{
                   width:"auto",
-                  padding:"0.5rem 1rem",
+                  height: "32px",
                   userSelect: "none",
                 }}
               >
