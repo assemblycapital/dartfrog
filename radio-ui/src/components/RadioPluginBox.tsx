@@ -8,10 +8,14 @@ interface RadioPluginBoxProps {
 }
 
 const RadioPluginBox: React.FC = ({ }) => {
+  const [interactScreen, setInteractScreen] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isHost, setIsHost] = useState(false);
-  const {} = useRadioStore();
+  const {playingMedia, requestPlayMedia} = useRadioStore();
+  const [inputMediaUrl, setInputMediaUrl] = useState('');
 
-  const playerRef = useRef();
+  const playerRef = useRef<ReactPlayer>(null);
+
   const {api, serviceId} = useChatStore();
 
   useEffect(() => {
@@ -19,37 +23,31 @@ const RadioPluginBox: React.FC = ({ }) => {
     if (!parsedServiceId) return;
     setIsHost(parsedServiceId.hostNode() === window.our?.node);
   }, [serviceId]);
-  // function handleProgress(progress: any) {
-    // turn on scrub buttons if out of sync
 
-    // var currentUnixTime = Date.now() / 1000;
-    // if (!playerRef.current) return;
-    // var duration = playerRef.current.getDuration();
-    // if (!duration) return;
+  useEffect(() => {
+    const handleInteraction = () => {
+      setInteractScreen(false);
+      setIsPlaying(true);
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+    };
 
-    // let localProgress = progress.playedSeconds;
-    // let globalProgress = Math.ceil(currentUnixTime - spinTime);
+    document.addEventListener('click', handleInteraction);
+    document.addEventListener('keydown', handleInteraction);
 
-    // globalProgress = globalProgress % duration;
+    return () => {
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+    };
+  }, [playerRef]);
 
-    // let outOfSync = Math.abs(localProgress - globalProgress);
-
-    // stupid way to detect livestreams
-    // just dont autoscrub if the duration and played seconds are close
-    // because that tends to be the case for live streams...
-    //
-    // NOTE: this has bad edge cases. it was dumb anyways but im leaving commented for later
-    //
-    // ...(later) yeah, the duration is different for each user. everyone has a
-    //  static duration from when they first loaded the live stream. so this logic
-    //  will never work.
-    // let maybeLive = Math.abs(duration - globalProgress) < 3 || globalProgress < 3;
-
-    // if (outOfSync > 2) {
-    //   // dispatch(setPlayerInSync(false));
-    //   return;
-    // }
-  // }
+  const handlePlayMedia = useCallback(() => {
+    if (inputMediaUrl) {
+      console.log('Playing media:', inputMediaUrl);
+      requestPlayMedia(api, inputMediaUrl)
+      setInputMediaUrl("")
+    }
+  }, [inputMediaUrl, api,]);
 
     return (
     <div
@@ -59,40 +57,135 @@ const RadioPluginBox: React.FC = ({ }) => {
         height: '100%',
         width: '100%',
         boxSizing: 'border-box',
+        position:"relative",
       }}
     >
-        <ReactPlayer
-          ref={playerRef}
-          url={'https://www.youtube.com/watch?v=yJpJ8REjvqo'}
-          playing={true}
-          controls={true}
-          width="100%"
-          height="100%"
-          loop={true}
-          onReady={() => {
-
-            }
-          }
-          // onSeek={e => console.log('onSeek', e)}
-          // onProgress={(e) => handleProgress(e)}
+        {interactScreen &&
+          <div
           style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 10,
           }}
-          config={{
-            file: {
-              // makes the audio player look nice
-              attributes: {
-                style: {
-                  height: "default",
-                  maxHeight: "100%",
-                  width: "100%",
+        >
+          <button
+            style={{
+              width:"auto",
+              padding: '10px 20px',
+              fontSize: '16px',
+              cursor: 'pointer',
+              backgroundColor: '#181818',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+            }}
+          >
+            interact with the page to continue
+          </button>
+        </div>
+        }
+        <div
+          style={{
+            flexGrow:"1"
+          }}
+        >
+        </div>
+
+        {playingMedia ? (
+          <ReactPlayer
+            ref={playerRef}
+            url={playingMedia.media.url}
+            playing={isPlaying}
+            controls={true}
+            width="100%"
+            // height="100%"
+            loop={true}
+            onReady={() => {
+
+              }
+            }
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+            config={{
+              file: {
+                attributes: {
+                  style: {
+                    height: "default",
+                    maxHeight: "100%",
+                    width: "100%",
+                  },
                 },
               },
-            },
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              height:"30vh",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              textAlign:"center",
+            }}
+          >
+            nothing is playing
+          </div>
+          )
+        }
+        <div
+          style={{
+            flexGrow:"1"
           }}
-        />
+        >
+          {isHost &&
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                marginTop: "1rem",
+              }}
+            >
+              <input
+                type="text"
+                value={inputMediaUrl}
+                onChange={(e) => setInputMediaUrl(e.target.value)}
+                placeholder="media url"
+                style={{
+                  flexGrow: "1",
+                  border: "1px solid #333",
+                  margin: "0px",
+                  height: "32px",
+                  boxSizing: "border-box",
+                }}
+              />
+              <button
+                onClick={handlePlayMedia}
+                style={{
+                  cursor: 'pointer',
+                  borderRadius: '0px',
+                  margin: "0px",
+                  height: "32px",
+                  borderLeft: "none",
+                  padding: "0 10px",
+                }}
+              >
+                play
+              </button>
+            </div>
+          }
+
+        </div>
     </div>
     )
 };

@@ -41,6 +41,9 @@ export interface ChatStore {
   setChatState: (chatState: ChatState) => void
   addChatMessage: (message: ChatMessage) => void
   setChatHistory: (history: ChatMessage[]) => void
+  chatSoundsEnabled: boolean
+  setChatSoundsEnabled: (enabled: boolean) => void
+
   // 
   sendChat: (text: string) => void
   // 
@@ -91,11 +94,13 @@ const useChatStore = create<ChatStore>((set, get) => ({
   chatState: { messages: new Map(), lastUpdateType: "history" as "history" },
   setChatState: (chatState) => {  set({ chatState: chatState }) },
   addChatMessage: (message) => {
-    const { chatState } = get();
+    const { chatState, chatSoundsEnabled } = get();
     const newMessages = new Map(chatState.messages);
     newMessages.set(message.id, message);
-    maybePlaySoundEffect(message.msg);
-    maybePlayTTS(message.msg);
+    if (chatSoundsEnabled) {
+      maybePlaySoundEffect(message.msg);
+      maybePlayTTS(message.msg);
+    }
     set({ chatState: { messages: newMessages, lastUpdateType: "message" } });
   },
   setChatHistory: (history) => {
@@ -108,6 +113,10 @@ const useChatStore = create<ChatStore>((set, get) => ({
     if (!api) { return; }
     if (!serviceId) { return; }
     api.sendToService({Chat: {SendMessage: text}})
+  },
+  chatSoundsEnabled: false,
+  setChatSoundsEnabled: (enabled: boolean) => {
+    set({chatSoundsEnabled: enabled})
   },
   //
   peerMap: new Map(),

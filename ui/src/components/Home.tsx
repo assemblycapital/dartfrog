@@ -66,29 +66,54 @@ const Home: React.FC = () => {
               flexDirection: "column",
               justifyContent: "center",
               alignItems: "center",
+              marginTop:"1rem",
             }}
           >
             <div
               style={{
                 flex: "1",
                 display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                height:"100%",
-                maxHeight:"100%",
+                flexDirection: "row",
+                width: "100%",
               }}
             >
-              <div>
+              <div
+                style={{
+                  flex: "1",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  margin:"1rem",
+                }}
+              >
+                <img 
+                  src="https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/kino.webp"
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: "100%",
+                    objectFit: "contain",
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  flex: "1",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding:"2rem",
+                }}
+              >
                 <div>
                   dartfrog v0.3.0
                 </div>
                 <div
                   style={{
-                    fontSize:"0.8rem",
+                    fontSize: "0.8rem",
                   }}
                 >
-                  secure subdomains & custom profiles.
+                  secure subdomains, custom profiles, and more!
                 </div>
               </div>
             </div>

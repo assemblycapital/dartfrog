@@ -10,11 +10,18 @@ import RadioPluginBox from "./components/RadioPluginBox";
 
 function App() {
 
-  const {} = useRadioStore();
+  const {setPlayingMedia} = useRadioStore();
 
-  const onServiceMessage = (msg) => {
+  const onServiceMessage = (msg: any) => {
     if (msg.Radio) {
-      console.log("radio message")
+      if (msg.Radio.StationState) {
+        let [newPlaying, newMediaStore] = msg.Radio.StationState;
+        setPlayingMedia(newPlaying);
+      } else if (msg.Radio.PlayMedia) {
+        setPlayingMedia(msg.Radio.PlayMedia);
+      } else {
+        console.log("unhandled update", msg.Radio)
+      }
     }
   };
 

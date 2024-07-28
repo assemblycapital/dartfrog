@@ -1,20 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {  } from '@dartfrog/puddle';
+import useChatStore from '../store/chat';
 
 interface ChatHeaderProps {
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({ }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isMuted, setIsMuted] = useState(false); // New state for mute status
 
-  useEffect(() => {
-    const mute = sessionStorage.getItem("mute") === "true";
-    setIsMuted(mute);
-  }, []);
-  useEffect(() => {
-    sessionStorage.setItem("mute", isMuted ? "true" : "false");
-  }, [isMuted]);
+  const {peerMap, chatSoundsEnabled} = useChatStore();
 
   const headerStyle = {
     display: "flex",
@@ -28,7 +22,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ }) => {
     display: menuOpen ? "flex" : "none",
     height: menuOpen ? "auto" : "0",
     flexDirection: "column" as "column",
-    padding: "10px",
+    // padding: "10px",
     color: "#ffffff44",
     fontSize: "0.8rem",
     transition: "height 0.3s ease",
@@ -61,8 +55,10 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ }) => {
           {isMuted ? 'unmute' : 'mute'}
         </button> */}
         
-        <div>sfx: /yes /no /why /fart /people /robust /robustness</div>
         <div>img: /die /kino /panda /dev /tiger /wow /cry /ok /oops</div>
+        {chatSoundsEnabled &&
+          <div>sfx: /yes /no /why /fart /people /robust /robustness</div>
+        }
       </div>
     </div>
   );

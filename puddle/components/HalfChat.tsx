@@ -19,9 +19,10 @@ interface HalfChatProps {
   processName: string;
   ourNode: string;
   websocketUrl?: string;
+  enableChatSounds?: boolean;
 }
 
-const HalfChat: React.FC<HalfChatProps> = ({ onServiceMessage, onClientMessage, Element, processName, websocketUrl, ourNode}) => {
+const HalfChat: React.FC<HalfChatProps> = ({ onServiceMessage, onClientMessage, Element, processName, websocketUrl, ourNode, enableChatSounds = false }) => {
   const { id } = useParams<{ id?: string; }>();
   const paramServiceId = id ?? '';
   const [isApiConnected, setIsApiConnected] = useState(false);
@@ -32,8 +33,13 @@ const HalfChat: React.FC<HalfChatProps> = ({ onServiceMessage, onClientMessage, 
   const {
     setApi, api, serviceId, requestPeer, setPeerMap, setServiceId, setChatHistory,
     addChatMessage, chatState, setServiceConnectionStatus, serviceConnectionStatus,
-    setServiceMetadata, serviceMetadata
+    setServiceMetadata, serviceMetadata, setChatSoundsEnabled,
   } = useChatStore();
+
+  useEffect(()=> {
+    setChatSoundsEnabled(enableChatSounds)
+    
+  }, [enableChatSounds]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {

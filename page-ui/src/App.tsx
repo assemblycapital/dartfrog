@@ -31,6 +31,7 @@ function App() {
             processName={PROCESS_NAME}
             websocketUrl={WEBSOCKET_URL}
             onServiceMessage={onServiceMessage}
+            enableChatSounds
            />
         } />
       </Routes>

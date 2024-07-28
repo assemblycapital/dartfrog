@@ -21,7 +21,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
   const [inputHeight, setInputHeight] = useState(0);
   const [chatMessageList, setChatMessageList] = useState<Array<ChatMessage>>([]);
 
-  const {peerMap} = useChatStore();
+  const {peerMap, chatSoundsEnabled} = useChatStore();
 
   useEffect(() => {
     const updateInputHeight = () => {
@@ -175,7 +175,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                 display: "flex",
                 flexGrow: 1,
                 flexDirection:"column",
-                gap:"8px",
                 overflowY:"auto",
                 paddingTop:"0.8rem",
               }}
@@ -187,8 +186,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                     display:"flex",
                     flexDirection:"row",
                     width:"100%",
-                    gap:"8px",
-                    padding: "6px 0rem",
+                    gap:"0.8rem",
+                    // padding: "6px 0rem",
+                    marginTop:"9px",
                   }}
                 >
                   <div
@@ -207,20 +207,21 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                       display:"flex",
                       flexDirection:"column",
                       width:"100%",
+                      gap: "3px",
                     }}
                   >
-                    <div style={{ verticalAlign: "top", userSelect: "none", }}>
-                      <a style={{ display: "inline-block", marginRight: "8px", cursor: "pointer" }}
+                    <div style={{ verticalAlign: "top",  lineHeight: "0.9" }}>
+                      <a style={{ display: "inline-block", marginRight: "8px", cursor: "pointer", fontSize: "0.9rem" }}
                         className={getPeerNameColor(peerMap.get(message.from))}
                         href={nodeProfileLink(message.from, baseOrigin)}
                       >
                         <span>{message.from}:</span>
                       </a>
-                      <div style={{ color: "#ffffff77", fontSize: "0.7rem", display: "inline-block", marginRight: "5px", cursor: "default" }}>
+                      <div style={{ userSelect: "none", color: "#ffffff77", fontSize: "0.7rem", display: "inline-block", marginRight: "5px", cursor: "default" }}>
                         <span>{formatTimestamp(message.time)}</span>
                       </div>
                     </div>
-                    <span style={{ cursor: "default", wordWrap: "break-word", overflowWrap: "break-word", whiteSpace: "pre-wrap" }}>
+                    <span style={{ fontSize: "0.9rem", cursor: "default", wordWrap: "break-word", overflowWrap: "break-word", whiteSpace: "pre-wrap" }}>
                       {getMessageInnerText(message.msg)}
                     </span>
                   </div>

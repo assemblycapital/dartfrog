@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use dartfrog_lib::*;
 use kinode_process_lib::{call_init, http, Address};
 use serde::{Serialize, Deserialize};
@@ -14,19 +16,19 @@ type AppProviderState = ProviderState<AppService, DefaultAppClientState>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppService {
-    pub page: PageServiceState,
+    pub radio: RadioServiceState,
     pub chat: ChatServiceState,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AppUpdate {
-    Page(PageUpdate),
+    Radio(RadioUpdate),
     Chat(ChatUpdate),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AppRequest {
-    Page(PageRequest),
+    Radio(RadioRequest),
     Chat(ChatRequest),
 }
 
@@ -47,7 +49,7 @@ impl AppServiceState for AppService {
     fn new() -> Self {
         AppService {
             chat: ChatServiceState::new(),
-            page: PageServiceState::new()
+            radio: RadioServiceState::new()
         }
     }
 
@@ -56,7 +58,7 @@ impl AppServiceState for AppService {
     }
 
     fn handle_subscribe(&mut self, subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
-        self.page.handle_subscribe(subscriber_node.clone(), our, service)?;
+        self.radio.handle_subscribe(subscriber_node.clone(), our, service)?;
         self.chat.handle_subscribe(subscriber_node, our, service)?;
         Ok(())
     }
@@ -64,8 +66,8 @@ impl AppServiceState for AppService {
     fn handle_request(&mut self, from: String, req: String, our: &Address, service: &Service) -> anyhow::Result<()> {
         let request = serde_json::from_str::<AppRequest>(&req)?;
         match request {
-            AppRequest::Page(page_request) => {
-                self.page.handle_request(from, page_request, our, service)
+            AppRequest::Radio(radio_request) => {
+                self.radio.handle_request(from, radio_request, our, service)
             }
             AppRequest::Chat(chat_request) => {
                 self.chat.handle_request(from, chat_request, our, service)
@@ -75,42 +77,170 @@ impl AppServiceState for AppService {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum PageUpdate {
-    Page(String),
+pub enum RadioUpdate {
+    PlayMedia(PlayingMedia),
+    StationState(Option<PlayingMedia>, Vec<Media>),
+    NewMedia(Media),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum PageRequest {
-    EditPage(String),
+pub enum RadioRequest {
+    PlayMedia(String, Option<u128>),
+    AddMediaMetadata(String, MediaMetadata)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PageServiceState {
-    pub page: String,
+pub struct PlayingMedia {
+    pub media: Media,
+    pub start_time: Option<u128>
 }
 
-impl PageServiceState {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Media {
+    pub url: String,
+    pub meta: MediaMetadata,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MediaMetadata {
+    pub is_livestream: bool,
+    pub is_audio_only: bool,
+    pub duration: Option<u128>,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub tags: Vec<String>,
+}
+
+impl Default for MediaMetadata {
+    fn default() -> Self {
+        MediaMetadata {
+            is_livestream: false,
+            is_audio_only: false,
+            duration: None,
+            title: None,
+            description: None,
+            tags: Vec::new(),
+        }
+    }
+}
+
+impl Media {
+    pub fn new(url: String) -> Self {
+        Media {
+            url,
+            meta: MediaMetadata::default(),
+        }
+    }
+
+    pub fn with_livestream(mut self, is_livestream: bool) -> Self {
+        self.meta = self.meta.with_livestream(is_livestream);
+        self
+    }
+
+    pub fn with_audio_only(mut self, is_audio_only: bool) -> Self {
+        self.meta = self.meta.with_audio_only(is_audio_only);
+        self
+    }
+
+    pub fn with_duration(mut self, duration: u128) -> Self {
+        self.meta = self.meta.with_duration(duration);
+        self
+    }
+
+    pub fn with_title(mut self, title: String) -> Self {
+        self.meta = self.meta.with_title(title);
+        self
+    }
+
+    pub fn with_description(mut self, description: String) -> Self {
+        self.meta = self.meta.with_description(description);
+        self
+    }
+
+    pub fn with_tags(mut self, tags: Vec<String>) -> Self {
+        self.meta = self.meta.with_tags(tags);
+        self
+    }
+}
+
+impl MediaMetadata {
+    pub fn with_livestream(mut self, is_livestream: bool) -> Self {
+        self.is_livestream = is_livestream;
+        self
+    }
+
+    pub fn with_audio_only(mut self, is_audio_only: bool) -> Self {
+        self.is_audio_only = is_audio_only;
+        self
+    }
+
+    pub fn with_duration(mut self, duration: u128) -> Self {
+        self.duration = Some(duration);
+        self
+    }
+
+    pub fn with_title(mut self, title: String) -> Self {
+        self.title = Some(title);
+        self
+    }
+
+    pub fn with_description(mut self, description: String) -> Self {
+        self.description = Some(description);
+        self
+    }
+
+    pub fn with_tags(mut self, tags: Vec<String>) -> Self {
+        self.tags = tags;
+        self
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RadioServiceState {
+    pub playing: Option<PlayingMedia>,
+    pub media_store: HashMap<String, Media>
+}
+
+impl RadioServiceState {
     fn new() -> Self {
-        PageServiceState {
-            page: DEFAULT_PAGE.to_string(),
+        RadioServiceState {
+            playing: None,
+            media_store: HashMap::new(),
         }
     }
 
     fn handle_subscribe(&mut self, _subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
-        let upd = PageUpdate::Page(self.page.clone());
-        update_subscribers(AppUpdate::Page(upd), our, service)?;
+        let upd = RadioUpdate::StationState(self.playing.clone(), self.media_store.values().cloned().collect());
+        update_subscribers(AppUpdate::Radio(upd), our, service)?;
         Ok(())
     }
 
-    fn handle_request(&mut self, from: String, req: PageRequest, our: &Address, service: &Service) -> anyhow::Result<()> {
+    fn handle_request(&mut self, from: String, req: RadioRequest, our: &Address, service: &Service) -> anyhow::Result<()> {
         if from != our.node() {
             return Ok(());
         }
         match req {
-            PageRequest::EditPage(new_page) => {
-                self.page = new_page.clone();
-                let upd = PageUpdate::Page(new_page);
-                update_subscribers(AppUpdate::Page(upd), our, service)?;
+            RadioRequest::PlayMedia(url, start_time) => {
+                let media = self.media_store.entry(url.clone()).or_insert_with(|| Media::new(url));
+                let playing_media = PlayingMedia {
+                    media: media.clone(),
+                    start_time,
+                };
+                self.playing = Some(playing_media.clone());
+                let upd = RadioUpdate::PlayMedia(playing_media);
+                update_subscribers(AppUpdate::Radio(upd), our, service)?;
+            }
+            RadioRequest::AddMediaMetadata(url, metadata) => {
+                let media = if let Some(existing_media) = self.media_store.get_mut(&url) {
+                    existing_media.meta = metadata;
+                    existing_media.clone()
+                } else {
+                    let new_media = Media { url: url.clone(), meta: metadata };
+                    self.media_store.insert(url, new_media.clone());
+                    new_media
+                };
+                let upd = RadioUpdate::NewMedia(media);
+                update_subscribers(AppUpdate::Radio(upd), our, service)?;
             }
         }
         Ok(())

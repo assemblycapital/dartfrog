@@ -185,29 +185,31 @@ const MessagesNode: React.FC = () => {
                     <div style={{
                         display: "flex",
                         alignItems: "center",
-                        padding: "0.5rem",
-                        gap:"1rem",
                         boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
                     }}>
                         <div
+                            onClick={()=>{
+                                navigate("/messages")
+                            }}
+                            style={{
+                              cursor:"pointer",
+                              fontSize: "1.6rem",
+                              width:"auto",
+                              color:"gray",
+                              height:"100%",
+                              padding: "0.5rem 1rem",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                            className="hover-dark-gray"
                         >
-                            <button
-                                onClick={()=>{
-                                    navigate("/messages")
-                                }}
-                                style={{
-                                    cursor:"pointer",
-                                    fontSize: "1.6rem",
-                                    width:"auto",
-                                    color:"gray",
-                                    height:"auto",
-                                }}
-                            >
-                                <span>◄</span>
+                            <span>←</span>
 
-                            </button>
                         </div>
                         <div
+                          style={{
+                            padding: "0.5rem",
+                          }}
                         >
                             <ProfilePicture size="48px" node={node} />
                         </div>
@@ -216,6 +218,7 @@ const MessagesNode: React.FC = () => {
                             display:"flex",
                             flexDirection:"column",
                             width:"100%",
+                            padding: "0.5rem",
                           }}
                         >
 
@@ -280,13 +283,14 @@ const MessagesNode: React.FC = () => {
                                     display:"flex",
                                     flexDirection:"row",
                                     width:"100%",
-                                    gap:"8px",
+                                    gap:"1rem",
                                     padding: "10px 0rem",
                                 }}
                             >
                                 <div
                                     style={{
                                         userSelect:"none",
+                                        paddingLeft: "10px",
                                     }}
                                 >
                                     <a
@@ -300,10 +304,11 @@ const MessagesNode: React.FC = () => {
                                         display:"flex",
                                         flexDirection:"column",
                                         width:"100%",
+                                        gap:"3px",
                                     }}
                                 >
-                                    <div style={{ verticalAlign: "top", userSelect: "none", }}>
-                                        <a style={{ display: "inline-block", marginRight: "8px", cursor: "pointer" }}
+                                    <div style={{ verticalAlign: "top", lineHeight: "1" }}>
+                                        <a style={{ display: "inline-block", marginRight: "8px", cursor: "pointer", fontSize: "0.9rem", }}
                                             className={getPeerNameColor(peerMap.get(message.from))}
                                             href={nodeProfileLink(message.from, baseOrigin)}
                                             onClick={(e)=>{
@@ -313,7 +318,7 @@ const MessagesNode: React.FC = () => {
                                         >
                                             <span>{message.from}:</span>
                                         </a>
-                                        <div style={{ color: "#ffffff77", fontSize: "0.7rem", display: "inline-block", marginRight: "5px", cursor: "default" }}>
+                                        <div style={{ color: "#ffffff77", fontSize: "0.7rem", display: "inline-block", marginRight: "5px", cursor: "default", userSelect: "none", }}>
                                             <span>{formatTimestamp(message.time_received)}</span>
                                         </div>
                                     </div>
