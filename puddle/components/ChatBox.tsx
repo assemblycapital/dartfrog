@@ -194,6 +194,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                   <div
                     style={{
                       userSelect:"none",
+                      paddingLeft: "10px",
                     }}
                   >
                     <a

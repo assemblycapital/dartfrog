@@ -24,6 +24,7 @@ export interface RadioStore {
   playingMedia: PlayingMedia | null;
   setPlayingMedia: (playingMedia: PlayingMedia | null) => void;
   requestPlayMedia: (api: ServiceApi, url:string) => void;
+  requestPlayMediaTime: (api: ServiceApi, time:number|null) => void;
   get: () => RadioStore;
   set: (partial: RadioStore | Partial<RadioStore>) => void;
 }
@@ -40,6 +41,16 @@ const useRadioStore = create<RadioStore>((set, get) => ({
           url,
           null
         ]
+      }
+    }
+    api.sendToService(req);
+  },
+  requestPlayMediaTime: (api, time) => {
+    let req = 
+      {
+      "Radio": {
+        "PlayMediaStartTime" :
+          time
       }
     }
     api.sendToService(req);

@@ -79,6 +79,7 @@ impl AppServiceState for AppService {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RadioUpdate {
     PlayMedia(PlayingMedia),
+    PlayMediaStartTime(Option<u128>),
     StationState(Option<PlayingMedia>, Vec<Media>),
     NewMedia(Media),
 }
@@ -86,6 +87,7 @@ pub enum RadioUpdate {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RadioRequest {
     PlayMedia(String, Option<u128>),
+    PlayMediaStartTime(Option<u128>),
     AddMediaMetadata(String, MediaMetadata)
 }
 
@@ -224,11 +226,23 @@ impl RadioServiceState {
                 let media = self.media_store.entry(url.clone()).or_insert_with(|| Media::new(url));
                 let playing_media = PlayingMedia {
                     media: media.clone(),
-                    start_time,
+                    start_time: start_time.or_else(|| Some(std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .expect("Time went backwards")
+                        .checked_add(std::time::Duration::from_secs(2))
+                        .expect("Time overflow")
+                        .as_nanos())),
                 };
                 self.playing = Some(playing_media.clone());
                 let upd = RadioUpdate::PlayMedia(playing_media);
                 update_subscribers(AppUpdate::Radio(upd), our, service)?;
+            }
+            RadioRequest::PlayMediaStartTime(start_time) => {
+                if let Some(playing_media) = &mut self.playing {
+                    playing_media.start_time = start_time;
+                    let upd = RadioUpdate::PlayMediaStartTime(start_time);
+                    update_subscribers(AppUpdate::Radio(upd), our, service)?;
+                }
             }
             RadioRequest::AddMediaMetadata(url, metadata) => {
                 let media = if let Some(existing_media) = self.media_store.get_mut(&url) {

@@ -13,6 +13,9 @@ const RadioPluginBox: React.FC = ({ }) => {
   const [isHost, setIsHost] = useState(false);
   const {playingMedia, requestPlayMedia} = useRadioStore();
   const [inputMediaUrl, setInputMediaUrl] = useState('');
+  const [showControls, setShowControls] = useState(false);
+  const [playerInSync, setPlayerInSync] = useState(true);
+  const [autoSync, setAutoSync] = useState(true);
 
   const playerRef = useRef<ReactPlayer>(null);
 
@@ -43,11 +46,75 @@ const RadioPluginBox: React.FC = ({ }) => {
 
   const handlePlayMedia = useCallback(() => {
     if (inputMediaUrl) {
-      console.log('Playing media:', inputMediaUrl);
+      // console.log('Playing media:', inputMediaUrl);
       requestPlayMedia(api, inputMediaUrl)
       setInputMediaUrl("")
     }
   }, [inputMediaUrl, api,]);
+
+  const toggleControls = () => {
+    setShowControls(!showControls);
+  };
+
+  const seekToGlobal = useCallback(()=> {
+
+    if (!playerRef.current) return;
+    let player = playerRef.current;
+    if (!playingMedia) return;
+    if (!playingMedia.start_time) return;
+    let startedTime = playingMedia.start_time;
+
+    let adjustedStartedTime = startedTime / 1000000000;
+
+    if (!player) return;
+
+    var currentUnixTime = Date.now() / 1000;
+    var duration = player.getDuration();
+
+    if (!duration) return;
+
+    let globalProgress = Math.ceil(currentUnixTime - adjustedStartedTime) % duration;
+
+    player.seekTo(globalProgress, "seconds");
+  }, [playingMedia, playerRef]);
+
+  const handleProgress = useCallback((progress: any) => {
+    // turn on scrub buttons if out of sync
+
+    var currentUnixTime = Date.now() / 1000;
+    if (!playerRef.current) return;
+    var duration = playerRef.current.getDuration();
+    if (!duration) return;
+
+    if (!playingMedia.start_time) return;
+
+    // nanoseconds to seconds
+    let startSeconds = playingMedia.start_time / 1000000000;
+
+
+    let localProgress = progress.playedSeconds;
+    let globalProgress = Math.ceil(currentUnixTime - startSeconds);
+
+    globalProgress = globalProgress % duration;
+
+    let outOfSync = Math.abs(localProgress - globalProgress);
+
+    if (outOfSync > 2) {
+      if (autoSync) {
+        seekToGlobal();
+      } else {
+        setPlayerInSync(false);
+      }
+    } else {
+        setPlayerInSync(true);
+    }
+
+  }, [playingMedia, playerRef, autoSync]);
+
+
+  const toggleAutoSync = () => {
+    setAutoSync(!autoSync);
+  };
 
     return (
     <div
@@ -58,6 +125,9 @@ const RadioPluginBox: React.FC = ({ }) => {
         width: '100%',
         boxSizing: 'border-box',
         position:"relative",
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        overflow:"hidden",
       }}
     >
         {interactScreen &&
@@ -92,99 +162,179 @@ const RadioPluginBox: React.FC = ({ }) => {
           </button>
         </div>
         }
-        <div
-          style={{
-            flexGrow:"1"
-          }}
-        >
-        </div>
 
-        {playingMedia ? (
-          <ReactPlayer
-            ref={playerRef}
-            url={playingMedia.media.url}
-            playing={isPlaying}
-            controls={true}
-            width="100%"
-            // height="100%"
-            loop={true}
-            onReady={() => {
-
-              }
-            }
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
-            config={{
-              file: {
-                attributes: {
-                  style: {
-                    height: "default",
-                    maxHeight: "100%",
-                    width: "100%",
-                  },
-                },
-              },
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              height:"30vh",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              textAlign:"center",
-            }}
-          >
-            nothing is playing
-          </div>
-          )
-        }
-        <div
-          style={{
-            flexGrow:"1"
-          }}
-        >
-          {isHost &&
+        <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          {playingMedia ? (
             <div
               style={{
-                display: 'flex',
-                flexDirection: 'row',
-                marginTop: "1rem",
+                height: "100%",
+                maxHeight:"100%",
+                width:"100%",
               }}
             >
-              <input
-                type="text"
-                value={inputMediaUrl}
-                onChange={(e) => setInputMediaUrl(e.target.value)}
-                placeholder="media url"
+              <ReactPlayer
+                ref={playerRef}
+                url={playingMedia.media.url}
+                playing={isPlaying}
+                controls={true}
+                width="100%"
+                height="100%"
+                loop={true}
+                onReady={() => {
+
+                }}
+                onProgress={(e) => handleProgress(e)}
                 style={{
-                  flexGrow: "1",
-                  border: "1px solid #333",
-                  margin: "0px",
-                  height: "32px",
-                  boxSizing: "border-box",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+                config={{
+                  file: {
+                    attributes: {
+                      style: {
+                        height: "100%",
+                        maxHeight: "100%",
+                        width: "100%",
+                      },
+                    },
+                  },
                 }}
               />
+            </div>
+          ) : (
+            <div
+              style={{
+                height:"100%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                textAlign:"center",
+              }}
+            >
+              nothing is playing
+            </div>
+          )
+          }
+        </div>
+
+        <div
+          style={{
+            width: "100%",
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            marginTop: "0.5rem",
+          }}
+        >
+          {showControls && (
+            <div
+              style={{
+                width: "100%",
+                marginBottom: '0.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap:"0.5rem",
+              }}
+            >
+               {isHost &&
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      width:"100%",
+                    }}
+                  >
+                    {/* host controls */}
+                    <input
+                      type="text"
+                      value={inputMediaUrl}
+                      onChange={(e) => setInputMediaUrl(e.target.value)}
+                      placeholder="media url"
+                      style={{
+                        flexGrow: "1",
+                        border: "1px solid #333",
+                        margin: "0px",
+                        height: "32px",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                    <button
+                      onClick={handlePlayMedia}
+                      style={{
+                        cursor: 'pointer',
+                        borderRadius: '0px',
+                        margin: "0px",
+                        height: "32px",
+                        borderLeft: "none",
+                        padding: "0 10px",
+                      }}
+                    >
+                      play
+                    </button>
+                  </div>
+                }
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    width:"100%",
+                  }}
+                >
+                  {/* viewer controls */}
+                  <button
+                    onClick={toggleAutoSync}
+                    style={{
+                      cursor: 'pointer',
+                      margin: "0px",
+                      height: "32px",
+                      width: "auto",
+                      padding: "0 10px",
+                    }}
+                  >
+                    {autoSync ? "disable autosync" : "enable autosync"}
+                  </button>
+                </div>
+            </div>
+          )}
+
+          <div
+            style={{
+              width:"100%",
+              alignItems: 'flex-start',
+              display:"flex",
+              flexDirection:"row",
+              gap:"1rem",
+            }}
+          >
+            <button
+              onClick={toggleControls}
+              style={{
+                width:"auto",
+                padding:"0.5rem 1rem",
+                userSelect: "none",
+              }}
+            >
+              {showControls ? "hide controls" : "controls"}
+            </button>
+            {!playerInSync &&
               <button
-                onClick={handlePlayMedia}
+                onClick={()=>{
+                  seekToGlobal();
+                  setPlayerInSync(true);
+                }}
                 style={{
-                  cursor: 'pointer',
-                  borderRadius: '0px',
-                  margin: "0px",
-                  height: "32px",
-                  borderLeft: "none",
-                  padding: "0 10px",
+                  width:"auto",
+                  padding:"0.5rem 1rem",
+                  userSelect: "none",
                 }}
               >
-                play
+                sync
               </button>
-            </div>
-          }
 
+            }
+
+          </div>
         </div>
     </div>
     )
