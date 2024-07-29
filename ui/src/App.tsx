@@ -22,6 +22,7 @@ function App() {
 
   useEffect(() => {
     let reconnectInterval: ReturnType<typeof setInterval> | null = null;
+    let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
     const connectToKinode = () => {
       const newApi = new KinodeClientApi({
@@ -36,9 +37,10 @@ function App() {
             clearInterval(reconnectInterval);
             reconnectInterval = null;
           }
-          setInterval(() => {
+          heartbeatInterval = setInterval(() => {
             pokeHeartbeat();
-          }, 30000);
+            localFwdAllPeerRequests();
+          }, 60*1000);
           pokeRequestVersion();
         },
         onMessage: (json, api) => {
@@ -107,6 +109,10 @@ function App() {
         onClose: (event) => {
           console.log("Disconnected from Kinode");
           setIsClientConnected(false);
+          if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
+          }
           if (!reconnectInterval) {
             reconnectInterval = setInterval(connectToKinode, 5000);
           }
@@ -120,6 +126,9 @@ function App() {
     return () => {
       if (reconnectInterval) {
         clearInterval(reconnectInterval);
+      }
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
       }
     };
   }, []);
@@ -187,20 +196,20 @@ function App() {
               your version is incompatible with others until you upgrade.
               if you have any issues, contact a.cow on discord
             </div>
-            {/* <button
-              onClick={()=>{
+            <button
+              onClick={() => {
                 setVersionOutdated(false);
               }}
               style={{
-                margin:"1rem",
-                marginBottom:"0rem",
-                padding:"0.5rem 1rem",
-                width:"auto",
-                height:"auto",
+                margin: "1rem",
+                marginBottom: "0rem",
+                padding: "0.5rem 1rem",
+                width: "auto",
+                height: "auto",
               }}
             >
               dismiss
-            </button> */}
+            </button>
           </div>
         </div>
       )}

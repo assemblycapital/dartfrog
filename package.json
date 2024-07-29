@@ -7,6 +7,7 @@
     "page-ui",
     "chess-ui",
     "radio-ui",
+    "forum-ui",
     "puddle"
   ],
   "dependencies": {

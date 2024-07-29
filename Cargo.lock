@@ -799,6 +799,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "forum"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "dartfrog_lib",
+ "kinode_process_lib",
+ "serde",
+ "serde_json",
+ "wit-bindgen",
+]
+
+[[package]]
 name = "funty"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -1,17 +1,15 @@
 import * as React from 'react';
 import { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import TopBar from '@dartfrog/puddle/components/TopBar';
 import { ServiceApi, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceID, ServiceMetadata } from '@dartfrog/puddle';
-import useChatStore from '@dartfrog/puddle/store/chat';
+import useChatStore, { ChatState, ChatMessage } from '@dartfrog/puddle/store/chat';
 import ChatBox from '@dartfrog/puddle/components/ChatBox';
+import Spinner from '@dartfrog/puddle/components/Spinner';
+import { maybePlaySoundEffect, maybePlayTTS } from '@dartfrog/puddle/utils';
 import DisplayUserActivity from '@dartfrog/puddle/components/DisplayUserActivity';
-import Split from 'react-split';
-import { renderConnectionStatus } from '@dartfrog/puddle/components/ServiceView';
 
-const SplitComponent = Split as unknown as React.FC<any>;
-
-interface HalfChatProps {
+interface ServiceViewProps {
   onServiceMessage?: (msg: any) => void;
   onClientMessage?: (msg: any) => void;
   Element?: React.ComponentType<{ }>;
@@ -21,7 +19,51 @@ interface HalfChatProps {
   enableChatSounds?: boolean;
 }
 
-const HalfChat: React.FC<HalfChatProps> = ({ onServiceMessage, onClientMessage, Element, processName, websocketUrl, ourNode, enableChatSounds = false }) => {
+export const renderConnectionStatus = (
+  serviceConnectionStatus: ServiceConnectionStatus | null,
+  isConnectingTooLong: boolean
+): React.ReactNode => {
+  const containerStyle: React.CSSProperties = {
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "1rem",
+    color: "gray",
+    userSelect: "none",
+  };
+
+  if (!serviceConnectionStatus) {
+    return (
+      <div style={containerStyle}>
+        <div>connecting to client...</div>
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (serviceConnectionStatus.status === ServiceConnectionStatusType.Connecting) {
+    return (
+      <div style={containerStyle}>
+        <div>{isConnectingTooLong ? "bad connection to host..." : "connecting to host..."}</div>
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (serviceConnectionStatus.status !== ServiceConnectionStatusType.Connected) {
+    return (
+      <div style={containerStyle}>
+        {serviceConnectionStatus.toString()}
+      </div>
+    );
+  }
+
+  return null;
+};
+
+const ServiceView : React.FC<ServiceViewProps> = ({ onServiceMessage, onClientMessage, Element, processName, websocketUrl, ourNode, enableChatSounds = false }) => {
   const { id } = useParams<{ id?: string; }>();
   const paramServiceId = id ?? '';
   const [isApiConnected, setIsApiConnected] = useState(false);
@@ -38,7 +80,6 @@ const HalfChat: React.FC<HalfChatProps> = ({ onServiceMessage, onClientMessage, 
 
   useEffect(()=> {
     setChatSoundsEnabled(enableChatSounds)
-    
   }, [enableChatSounds]);
 
   useEffect(() => {
@@ -58,6 +99,18 @@ const HalfChat: React.FC<HalfChatProps> = ({ onServiceMessage, onClientMessage, 
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (serviceConnectionStatus?.status === ServiceConnectionStatusType.Connecting) {
+      timer = setTimeout(() => {
+        setIsConnectingTooLong(true);
+      }, 5000);
+    } else {
+      setIsConnectingTooLong(false);
+    }
+    return () => clearTimeout(timer);
+  }, [serviceConnectionStatus]);
 
   const updateTitle = () => {
     if (paramServiceId) {
@@ -155,16 +208,6 @@ const HalfChat: React.FC<HalfChatProps> = ({ onServiceMessage, onClientMessage, 
     }
   };
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (serviceConnectionStatus?.status === ServiceConnectionStatusType.Connecting) {
-      timer = setTimeout(() => setIsConnectingTooLong(true), 5000);
-    } else {
-      setIsConnectingTooLong(false);
-    }
-    return () => clearTimeout(timer);
-  }, [serviceConnectionStatus]);
-
   return (
     <div
       style={{
@@ -185,52 +228,20 @@ const HalfChat: React.FC<HalfChatProps> = ({ onServiceMessage, onClientMessage, 
         }}
       >
         {renderConnectionStatus(serviceConnectionStatus, isConnectingTooLong) || (
-          <SplitComponent
-            sizes={[50, 50]}
-            minSize={[60, 60]}
-            direction="horizontal"
-            gutterSize={10}
+          <div
             style={{
-              flexGrow: 1,
-              display: 'flex',
-              flexDirection: 'row',
-              overflowX: 'hidden',
+              display:"flex",
+              flex:"1",
+              flexDirection:"column",
               height:"100%",
-              maxHeight:"100%",
-              overflowY: 'hidden',
             }}
           >
-            <div
-              style={{
-                display:"flex",
-                flex:"1",
-                flexDirection:"column",
-                height:"100%",
-              }}
-            >
-              {Element && <Element />}
-            </div>
-            <div
-              style={{
-                height: "100%",
-                maxHeight: "100%",
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
-                gap: "6px",
-                marginLeft:"8px",
-              }}
-            >
-              <div style={{ flex: 1, overflow: 'auto' }}>
-                <ChatBox chatState={chatState} />
-              </div>
-              <DisplayUserActivity metadata={serviceMetadata} />
-            </div>
-          </SplitComponent>
+            <Element />
+          </div>
         )}
       </div>
     </div>
   );
 };
 
-export default HalfChat;
+export default ServiceView;

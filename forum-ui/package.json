@@ -1,0 +1,15 @@
+{
+  "name": "df-forum-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3000",
+    "start": "vite --port 3000",
+    "build": "tsc && vite build",
+    "copy": "mkdir -p ../pkg/forum-ui && rm -rf ../pkg/forum-ui/* && cp -r dist/* ../pkg/forum-ui/",
+    "build:copy": "npm run build && npm run copy",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  }
+}

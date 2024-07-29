@@ -1,15 +1,6 @@
 import React, { useState } from 'react';
 import { XIcon } from '@dartfrog/puddle/components/Icons';
-
-
-const PACKAGE = "dartfrog:herobrine.os"
-const CHAT_PLUGIN = `chat:${PACKAGE}`
-const PIANO_PLUGIN = `piano:${PACKAGE}`;
-const PAGE_PLUGIN = `page:${PACKAGE}`;
-const CHESS_PLUGIN = `chess:${PACKAGE}`;
-const RADIO_PLUGIN = `radio:${PACKAGE}`;
-
-const PLUGINS = [CHAT_PLUGIN, PIANO_PLUGIN, PAGE_PLUGIN, CHESS_PLUGIN, RADIO_PLUGIN]
+import { STANDARD_PLUGINS } from '../../store/dart';
 
 const PluginSelector = ({ plugin, setPlugin}) => {
   const [isCustom, setIsCustom] = useState(false);
@@ -53,7 +44,7 @@ const PluginSelector = ({ plugin, setPlugin}) => {
           margin: "0px"
         }}
       >
-        {PLUGINS.map((p) => (
+        {STANDARD_PLUGINS.map((p) => (
           <option key={p} value={p}>{p}</option>
         ))}
         <option value="custom">custom</option>

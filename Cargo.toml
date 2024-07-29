@@ -8,6 +8,7 @@ members = [
     "page",
     "chess",
     "radio",
+    "forum",
 ]
 
 [profile.release]

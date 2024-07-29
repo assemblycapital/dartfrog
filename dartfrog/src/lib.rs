@@ -621,7 +621,7 @@ fn handle_dartfrog_input(
             }
         }
         _ => {
-            println!("unhandled DartfrogInput: {:?}", dartfrog_input);
+            // println!("unhandled DartfrogInput: {:?}", dartfrog_input);
         }
     }
     Ok(())

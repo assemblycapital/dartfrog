@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { validateServiceName } from "./Services";
-import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, PAGE_PLUGIN, PIANO_PLUGIN, RADIO_PLUGIN } from "../../store/dart";
+import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, PAGE_PLUGIN, PIANO_PLUGIN, RADIO_PLUGIN, FORUM_PLUGIN } from "../../store/dart";
 
 import './CreateService.css';
 // import { ServiceAccess, ServiceVisibility } from "@dartfrog/puddle";
@@ -15,6 +15,7 @@ const PLUGIN_MAP = {
   "page": PAGE_PLUGIN,
   "chess": CHESS_PLUGIN,
   "radio": RADIO_PLUGIN,
+  "forum": FORUM_PLUGIN,
 }
 
 const CreateService: React.FC<{ }> = ({ }) => {
@@ -113,6 +114,13 @@ const CreateService: React.FC<{ }> = ({ }) => {
             }}
           >
             radio
+          </div>
+          <div className="service-create-shortcut"
+            onClick={() =>{
+              createFromShortcut("forum");
+            }}
+          >
+            forum
           </div>
           <div className="service-create-shortcut"
             onClick={() =>{

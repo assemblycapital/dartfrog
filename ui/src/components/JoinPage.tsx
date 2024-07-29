@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import useDartStore from '../store/dart';
 import { ServiceID, ServiceMetadata } from '@dartfrog/puddle/index';
+import Spinner from '@dartfrog/puddle/components/Spinner';
+import { PROCESS_NAME } from '../utils';
 // import { Service, ServiceMetadata, parseServiceId } from '@dartfrog/puddle/index';
 
 enum ServiceStatus {
@@ -25,6 +27,7 @@ const JoinPage = () => {
 
   const [serviceMetadata, setServiceMetadata] = useState<ServiceMetadata | null>(null)
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(null);
+  const [connectionTimedOut, setConnectionTimedOut] = useState(false);
 
 
   const navigate = useNavigate();
@@ -53,6 +56,9 @@ const JoinPage = () => {
       }
       if (!(gotPeer.peerData)) {
         setServiceStatus(ServiceStatus.CONTACTING_HOST)
+        const timeoutId = setTimeout(() => {
+          setConnectionTimedOut(true);
+        }, 5000);
         return;
       }
       gotService = gotPeer.peerData.hostedServices.find(service => service.id.toString() === serviceId.toString());
@@ -168,9 +174,54 @@ const JoinPage = () => {
           </div>
       )
     }
+    if (status == ServiceStatus.CONTACTING_HOST ) {
+
+      if (connectionTimedOut) {
+        const node = serviceId.hostNode()
+        return (
+          <div
+            style={{
+              display:"flex",
+              flexDirection:"row",
+              gap:"0.5rem",
+            }}
+          >
+            <a
+              href={`/${PROCESS_NAME}/nodes/${node}`}
+              onClick={(event) => {
+                event.preventDefault()
+                navigate(`/nodes/${node}`);
+              }}
+            >
+              {node}
+            </a>
+
+            <span style={{cursor:"default"}}>
+              may be offline...
+            </span>
+          </div>
+        )
+      }
+      return (
+        <div
+          style={{
+            display:"flex",
+            flexDirection:"column",
+            gap: "1rem",
+            alignItems: "center",
+            cursor:"default"
+          }}
+        >
+          <div>
+            contacting {serviceId.hostNode()}
+          </div>
+          <Spinner />
+        </div>
+      )
+    }
     return status;
 
-  }, [serviceId, serviceMetadata])
+  }, [serviceId, serviceMetadata, connectionTimedOut])
 
   return (
     <div
