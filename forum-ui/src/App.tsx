@@ -8,7 +8,7 @@ import HalfChat from "@dartfrog/puddle/components/HalfChat";
 import ServiceView from "@dartfrog/puddle/components/ServiceView";
 import Forum from "./components/Forum";
 import useForumStore from "./store/forum";
-
+import './App.css'
 
 function App() {
 
