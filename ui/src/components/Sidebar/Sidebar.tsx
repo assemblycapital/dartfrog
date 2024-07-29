@@ -164,6 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
                   justifyContent: "center",
                 }}
 
+                className="name-color-blue"
                 >
                   ●
               </span>

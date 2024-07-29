@@ -211,9 +211,9 @@ impl RadioServiceState {
         }
     }
 
-    fn handle_subscribe(&mut self, _subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
+    fn handle_subscribe(&mut self, subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
         let upd = RadioUpdate::StationState(self.playing.clone(), self.media_store.values().cloned().collect());
-        update_subscribers(AppUpdate::Radio(upd), our, service)?;
+        update_subscriber(AppUpdate::Radio(upd), &subscriber_node,  our, service)?;
         Ok(())
     }
 

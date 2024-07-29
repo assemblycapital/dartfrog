@@ -154,6 +154,7 @@ const Messages: React.FC = () => {
                                 flexDirection: "column",
                                 justifyContent: "center",
                               }}
+                              className="name-color-blue"
 
                               >
                                 ●
