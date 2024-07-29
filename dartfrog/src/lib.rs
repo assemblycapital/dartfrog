@@ -235,6 +235,10 @@ fn handle_http_server_request(
             };
 
             match serde_json::from_slice(&blob.bytes)? {
+                DartfrogInput::RequestVersion => {
+                    let network_hub_address = get_server_address(NETWORK_HUB);
+                    poke(&network_hub_address, VersionControl::RequestVersion)?;
+                }
                 DartfrogInput::SetProfile(profile) => {
                     state.profile = profile;
                     let local_user = DartfrogOutput::LocalUser(state.profile.clone(), state.activity.clone(), state.activity_setting.clone());
@@ -640,6 +644,20 @@ fn handle_message(our: &Address, state: &mut DartfrogState) -> anyhow::Result<()
         }
         if let Ok(dartfrog_input) = serde_json::from_slice::<DartfrogInput>(&body) {
             handle_dartfrog_input(our, state, source, dartfrog_input)?;
+        }
+        if let Ok(version_request) = serde_json::from_slice::<VersionControl>(&body) {
+            match version_request {
+                VersionControl::RequestVersion => {
+                    let address = get_server_address(&source.node);
+                    poke(&address, VersionControl::RequestVersionResponse(DARTFROG_VERSION.to_string()))?;
+                }
+                VersionControl::RequestVersionResponse(version_string) => {
+                    if source.node == NETWORK_HUB.to_string() {
+                        let update = DartfrogOutput::RequestVersionResponse(NETWORK_HUB.to_string(), version_string);
+                        update_all_consumers(state, update)?;
+                    }
+                }
+            }
         }
         Ok(())
     }

@@ -16,7 +16,9 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 function App() {
 
-  const {setApi, closeApi, setIsClientConnected, setProfile, pokeHeartbeat, putMessageStoreMap, setMessageStoreMap, localFwdAllPeerRequests, setActivitySetting, peerMap, putPeerMap, localServices, setLocalServices } = useDartStore();
+  const {setApi, closeApi, setIsClientConnected, setProfile, pokeHeartbeat, pokeRequestVersion, putMessageStoreMap, setMessageStoreMap, localFwdAllPeerRequests, setActivitySetting, peerMap, putPeerMap, localServices, setLocalServices } = useDartStore();
+
+  const [versionOutdated, setVersionOutdated] = useState(false);
 
   useEffect(() => {
     let reconnectInterval: ReturnType<typeof setInterval> | null = null;
@@ -37,6 +39,7 @@ function App() {
           setInterval(() => {
             pokeHeartbeat();
           }, 30000);
+          pokeRequestVersion();
         },
         onMessage: (json, api) => {
           const data = JSON.parse(json)
@@ -85,6 +88,11 @@ function App() {
             setMessageStoreMap(newMessageStoreMap);
           } else if (data["MessageStore"]) {
             putMessageStoreMap(data["MessageStore"])
+          } else if (data["RequestVersionResponse"]) {
+            let [node, version] = data["RequestVersionResponse"]
+            if (version !== "v0.3.1") {
+              setVersionOutdated(true);
+            }
           } else {
             console.log("unhandled update", data)
           }
@@ -124,6 +132,7 @@ function App() {
       display: 'flex',
       flexDirection: 'column',
       padding: '20px',
+      position: 'relative', // Add this to allow absolute positioning of the overlay
     }}>
       {/* <div
         style={{
@@ -142,6 +151,59 @@ function App() {
       >
           <Middle />
       </div>
+      {versionOutdated && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(5px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: '#242424',
+            padding: '20px',
+            borderRadius: '10px',
+            boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+            textAlign: 'center',
+            margin:"1rem",
+            display:"flex",
+            flexDirection:"column",
+            gap:"0.5rem",
+          }}>
+            <div>a new version of dartfrog is available in the kinode app store.</div>
+            <div
+              style={{
+
+                fontSize:"0.8rem",
+                color:"gray",
+              }}
+            >
+              your version is incompatible with others until you upgrade.
+              if you have any issues, contact a.cow on discord
+            </div>
+            {/* <button
+              onClick={()=>{
+                setVersionOutdated(false);
+              }}
+              style={{
+                margin:"1rem",
+                marginBottom:"0rem",
+                padding:"0.5rem 1rem",
+                width:"auto",
+                height:"auto",
+              }}
+            >
+              dismiss
+            </button> */}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -11,6 +11,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::hash::{Hash, Hasher};
 use kinode_process_lib::{await_message, get_blob, println, Address, LazyLoadBlob, ProcessId, Request, get_typed_state, set_state};
 
+pub const DARTFROG_VERSION: &str = "v0.3.0";
+
 #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct ServiceID {
     pub name: String,
@@ -168,6 +170,12 @@ impl Peer {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum VersionControl {
+    RequestVersion,
+    RequestVersionResponse(String),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DartfrogInput {
     CreateService(String, String, ServiceAccess, ServiceVisibility, Vec<String>), // service_name, process_name, access, visibility, whitelist
     DeleteService(String),
@@ -192,6 +200,8 @@ pub enum DartfrogInput {
     // 
     LocalDirectMessages(LocalDirectMessagePoke),
     RemoteDirectMessages(RemoteDirectMessagePoke),
+    //
+    RequestVersion,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -244,6 +254,8 @@ pub enum DartfrogOutput {
     //
     MessageStore(MessageStore),
     MessageStoreList(Vec<MessageStore>),
+    //
+    RequestVersionResponse(String, String),
 }
 
 pub fn check_subscribe_permission(service: &Service, source: &Address) -> bool {
@@ -921,6 +933,29 @@ pub fn poke_client(source: &Address, service_id: String, client_request: UpdateF
     Ok(())
 }
 
+fn kick_inactive_users(service: &mut Service, source: &Address, service_id: String) -> anyhow::Result<()> {
+    let now = get_now();
+    let mut to_kick: HashSet<String> = HashSet::new();
+    
+    for (user, presence_time) in service.meta.user_presence.iter() {
+        const THREE_MINUTES: u64 = 3 * 60;
+        if (now - *presence_time) > THREE_MINUTES {
+            to_kick.insert(user.clone());
+        }
+    }
+
+    for user in service.meta.subscribers.iter() {
+        if to_kick.contains(user) {
+            let update = UpdateFromService::Kick(KickReason::ServiceDeleted);
+            poke_client(source, service_id.clone(), update)?;
+        }
+    }
+    
+    service.meta.subscribers.retain(|x| !to_kick.contains(x));
+
+    Ok(())
+}
+
 pub fn handle_provider_input<T, U>(
     our: &Address,
     state: &mut ProviderState<T, U>,
@@ -1038,7 +1073,8 @@ where
                         sw.service.meta.subscribers.insert(source.node.clone());
                         sw.service.meta.user_presence.insert(source.node.clone(), get_now());
                         sw.service.meta.last_sent_presence = Some(get_now());
-                        poke_client(source, service_id.clone(), UpdateFromService::SubscribeAck)?;
+                        kick_inactive_users(&mut sw.service, source, service_id.clone())?;
+                        poke_client(source, service_id, UpdateFromService::SubscribeAck)?;
                         publish_metadata(our, &sw.service)?;
                         sw.state.handle_subscribe(source.node.clone(), our, &sw.service)?;
                     } else {
@@ -1068,22 +1104,7 @@ where
                         }
                     }
 
-                    // check if anyone needs to be kicked
-                    let mut to_kick: HashSet<String> = HashSet::new();
-                    for (user, presence_time) in sw.service.meta.user_presence.iter() {
-                        const THREE_MINUTES: u64 = 3 * 60;
-                        if (now - *presence_time) > THREE_MINUTES {
-                            to_kick.insert(user.clone());
-                        }
-                    }
-
-                    for user in sw.service.meta.subscribers.iter() {
-                        if to_kick.contains(user) {
-                            let update = UpdateFromService::Kick(KickReason::ServiceDeleted);
-                            poke_client(source, service_id.clone(), update)?;
-                        }
-                    }
-                    sw.service.meta.subscribers.retain(|x| !to_kick.contains(x));
+                    kick_inactive_users(&mut sw.service, source, service_id)?;
 
                     // send metadata update
                     sw.service.meta.last_sent_presence = Some(get_now());

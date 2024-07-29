@@ -26,6 +26,7 @@ export interface DartStore {
   setIsClientConnected: (isClientConnected: boolean) => void
   //
   pokeHeartbeat: () => void
+  pokeRequestVersion: () => void
   // 
   isSidebarOpen: boolean
   setIsSidebarOpen: (isSidebarOpen: boolean) => void
@@ -85,6 +86,11 @@ const useDartStore = create<DartStore>()(
       const { api } = get();
       if (!api) { return; }
       api.send({ data: 'Heartbeat' });
+    },
+    pokeRequestVersion: () => {
+      const { api } = get();
+      if (!api) { return; }
+      api.send({ data: 'RequestVersion' });
     },
     // 
     isSidebarOpen: true,
