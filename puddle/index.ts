@@ -624,7 +624,8 @@ export function getRecencyText(diff:number) {
     const months = Math.floor((diff % 31536000000) / 2592000000);
     return `${years} yrs ${months} months ago`;
   }
-  return `${Math.floor(diff / 86400000)} days ago`;
+  const days = Math.floor(diff / 86400000);
+  return days === 1 ? "1 day ago" : `${days} days ago`;
 }
 
 export function getAllServicesFromPeerMap(peerMap: PeerMap): Service[] {

@@ -187,8 +187,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                     flexDirection:"row",
                     width:"100%",
                     gap:"0.8rem",
-                    // padding: "6px 0rem",
-                    marginTop:"9px",
+                    padding: "10px 0rem",
                   }}
                 >
                   <div

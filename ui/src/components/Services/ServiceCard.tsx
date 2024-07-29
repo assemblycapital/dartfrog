@@ -14,7 +14,7 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
     const navigate = useNavigate();
 
     const isRecentlyActive = () => {
-        const lastPresence = new Date(service.meta.last_sent_presence);
+        const lastPresence = new Date(service.meta.last_sent_presence*1000);
         const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
         return lastPresence > fifteenMinutesAgo;
     };

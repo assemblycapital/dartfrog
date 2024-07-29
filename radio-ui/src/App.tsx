@@ -22,7 +22,6 @@ function App() {
       } else if (msg.Radio.PlayMedia) {
         setPlayingMedia(msg.Radio.PlayMedia);
       } else if (msg.Radio.PlayMediaStartTime) {
-        console.log('setting time',msg.Radio)
         setPlayingMediaTime(msg.Radio.PlayMediaStartTime)
       } else {
         console.log("unhandled update", msg.Radio)

@@ -46,7 +46,6 @@ const RadioPluginBox: React.FC = ({ }) => {
 
   const handlePlayMedia = useCallback(() => {
     if (inputMediaUrl) {
-      // console.log('Playing media:', inputMediaUrl);
       requestPlayMedia(api, inputMediaUrl)
       setInputMediaUrl("")
     }
@@ -57,7 +56,6 @@ const RadioPluginBox: React.FC = ({ }) => {
   };
 
   useEffect(()=>{
-    console.log("got new playingmedia", playingMedia)
     seekToGlobal();
   }, [playingMedia])
 
@@ -226,12 +224,62 @@ const RadioPluginBox: React.FC = ({ }) => {
                 flexDirection: "column",
                 justifyContent: "center",
                 textAlign:"center",
+                width:"100%",
+                gap:"1rem",
               }}
             >
-              nothing is playing
+              <div
+              >
+                nothing is playing
+              </div>
+              {isHost &&
+                <>
+                <div
+                  style={{
+                    width:"100%",
+                    fontSize:"0.8rem",
+                  }}
+                >
+                  Enter a URL for a <a href="https://www.youtube.com" target="_blank">YouTube</a> video or any direct video/audio file link. Paste the URL below to start playing.
+                  </div>
+                <div
+                  style={{
+                    width:"100%",
+                    display: 'flex',
+                    flexDirection: 'row',
+                  }}
+                >
+                  <input
+                  type="text"
+                  value={inputMediaUrl}
+                  onChange={(e) => setInputMediaUrl(e.target.value)}
+                  placeholder="media url"
+                  style={{
+                    flexGrow: "1",
+                    border: "1px solid #333",
+                    margin: "0px",
+                    height: "32px",
+                    boxSizing: "border-box",
+                  }}
+                  />
+                  <button
+                  onClick={handlePlayMedia}
+                  style={{
+                    cursor: 'pointer',
+                    borderRadius: '0px',
+                    margin: "0px",
+                    height: "32px",
+                    borderLeft: "none",
+                    padding: "0 10px",
+                  }}
+                  >
+                  play
+                  </button>
+                </div>
+                </>
+              }
             </div>
-          )
-          }
+          )}
         </div>
 
         <div
@@ -362,9 +410,7 @@ const RadioPluginBox: React.FC = ({ }) => {
               >
                 sync
               </button>
-
             }
-
           </div>
         </div>
     </div>

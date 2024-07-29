@@ -16,7 +16,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 function App() {
 
-  const {setApi, closeApi, setIsClientConnected, setProfile, putMessageStoreMap, setMessageStoreMap, localFwdAllPeerRequests, setActivitySetting, peerMap, putPeerMap, localServices, setLocalServices } = useDartStore();
+  const {setApi, closeApi, setIsClientConnected, setProfile, pokeHeartbeat, putMessageStoreMap, setMessageStoreMap, localFwdAllPeerRequests, setActivitySetting, peerMap, putPeerMap, localServices, setLocalServices } = useDartStore();
 
   useEffect(() => {
     let reconnectInterval: ReturnType<typeof setInterval> | null = null;
@@ -34,6 +34,9 @@ function App() {
             clearInterval(reconnectInterval);
             reconnectInterval = null;
           }
+          setInterval(() => {
+            pokeHeartbeat();
+          }, 30000);
         },
         onMessage: (json, api) => {
           const data = JSON.parse(json)

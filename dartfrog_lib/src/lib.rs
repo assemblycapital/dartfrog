@@ -173,6 +173,8 @@ pub enum DartfrogInput {
     DeleteService(String),
     SetProfile(Profile),
     //
+    Heartbeat,
+    //
     RequestLocalService(String),
     RequestLocalServiceList,
     // 
@@ -369,6 +371,7 @@ pub enum ProviderOutput {
     DeleteService(ServiceID),
     RequestPeer(String),
     RequestPeerList(Vec<String>),
+    FrontendActivity,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -747,6 +750,12 @@ where
                                 service_id_string.clone(),
                                 ProviderServiceInput::Heartbeat
                             )
+                        )?;
+
+                        // Notify the server about frontend activity
+                        poke(
+                            &get_server_address(&our.node),
+                            ProviderOutput::FrontendActivity
                         )?;
                     }
                     FrontendChannelRequest::MessageClient(msg) => {

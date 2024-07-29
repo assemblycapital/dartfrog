@@ -277,6 +277,9 @@ fn handle_http_server_request(
                         }
                     }
                 }
+                DartfrogInput::Heartbeat => {
+                    state.activity = PeerActivity::Online(get_now());
+                }
                 DartfrogInput::RequestLocalService(id) => {
                     match state.local_services.get(&id) {
                         Some(service) => {
@@ -490,6 +493,12 @@ fn handle_provider_output(
                 // TODO more efficient to respond with a peerlist instead of one at a time.
                 handle_request_peer(our, state, source, &node)?;
             }
+        }
+        ProviderOutput::FrontendActivity => {
+            if our.node != source.node {
+                return Ok(());
+            }
+            state.activity = PeerActivity::Online(get_now());
         }
     }
     Ok(())
