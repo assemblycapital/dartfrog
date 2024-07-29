@@ -196,10 +196,7 @@ impl ForumServiceState {
                     upvotes: 0,
                     downvotes: 0,
                     comments: Vec::new(),
-                    created_at: std::time::SystemTime::now()
-                        .duration_since(std::time::UNIX_EPOCH)
-                        .unwrap()
-                        .as_secs(),
+                    created_at: get_now(),
                     voted_users: HashMap::new(),
                 };
 
@@ -233,7 +230,7 @@ impl ForumServiceState {
                         _ => {} // No change if the vote is the same as before
                     }
 
-                    update_subscribers(AppUpdate::Forum(ForumUpdate::UpdatedPost(post.to_public(false))), our, service)?;
+                    update_subscribers(AppUpdate::Forum(ForumUpdate::UpdatedPost(post.to_public(true))), our, service)?;
                 }
             }
             ForumRequest::CreateComment { post_id, text } => {
