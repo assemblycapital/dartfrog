@@ -68,6 +68,9 @@ const PeerList = () => {
           event.preventDefault()
           navigate(`/nodes/${node}`);
         }}
+        style={{
+          overflowX:"hidden",
+        }}
       >
         <div
           style={{
@@ -80,15 +83,26 @@ const PeerList = () => {
               display: "flex",
               flexDirection: "row",
               gap: "1rem",
-              alignItems: "center"
+              alignItems: "center",
             }}
           >
-            <ProfilePicture size={"36px"} node={node} />
+            <div
+              style={{
+                width:"36px",
+                maxWidth:"36px",
+                minWidth:"36px",
+                flexShrink:"0"
+              }}
+            >
+
+              <ProfilePicture size={"36px"} node={node} />
+            </div>
             <div
               style={{
                 display: "flex",
                 flexDirection: "column",
                 gap: "1px",
+                flexGrow:"1",
               }}
             >
               <span className={peer.peerData ? getPeerNameColor(peer) : 'color-gray'}>
@@ -101,7 +115,6 @@ const PeerList = () => {
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
-                    maxWidth: "100px",
                     color:'gray',
                   }}
                 >

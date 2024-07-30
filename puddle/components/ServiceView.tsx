@@ -118,7 +118,7 @@ const ServiceView : React.FC<ServiceViewProps> = ({ onServiceMessage, onClientMe
       const shortServiceId = ServiceID.fromString(paramServiceId).toShortString();
       document.title = (isPageVisible.current || updateCount === 0)
         ? shortServiceId
-        : `${shortServiceId} (${updateCount})`;
+        : `(${updateCount}) ${shortServiceId}`;
     }
   };
 

@@ -179,7 +179,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, showFullContents = false }) =
                 maxWidth: '100%', 
                 height: 'auto', 
                 borderRadius: '8px',
-                maxHeight: showFullContents ? 'none' : '200px',
+                maxHeight: showFullContents ? '400px' : '200px',
                 objectFit: 'cover'
               }} 
             />
