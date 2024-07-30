@@ -61,8 +61,20 @@
         "public": true
     },
     {
-        "process_name": "inbox",
-        "process_wasm_path": "/inbox.wasm",
+        "process_name": "radio",
+        "process_wasm_path": "/radio.wasm",
+        "on_exit": "Restart",
+        "request_networking": true,
+        "request_capabilities": [
+            "http_server:distro:sys",
+            "vfs:distro:sys"
+        ],
+        "grant_capabilities": [],
+        "public": true
+    },
+    {
+        "process_name": "forum",
+        "process_wasm_path": "/forum.wasm",
         "on_exit": "Restart",
         "request_networking": true,
         "request_capabilities": [

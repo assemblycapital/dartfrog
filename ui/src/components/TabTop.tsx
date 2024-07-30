@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { PlusIcon, XIcon } from './icons/Icons';
+import { PlusIcon, XIcon } from '@dartfrog/puddle/components/Icons';
 
 const TabTop = ({ tab, index, activeTabIndex, setActiveTabIndex, closeTab, tabs, exitService }) => {
 

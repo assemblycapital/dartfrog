@@ -1,45 +1,49 @@
 
-export function computeColorForName(name: string): string {
-  let hash: number = Math.abs(simpleHash(name));
-  let color: string;
+export const soundEffectCommands = {
+  '/fart': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_sounds/wet.mp3',
+  '/no': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_sounds/hell-naw-dog.mp3',
+  '/yes': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_sounds/oh-yes.mp3',
+  '/why': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_sounds/why.mp3',
+  '/people': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_sounds/the-people.mp3',
+  '/robust': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_sounds/robust-josh.mp3',
+  '/robustness': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_sounds/robust-basile.mp3',
+};
 
-  let numColors = 5;
-  switch (hash % numColors) {
-    case 0:
-      // red
-      color = '#cc4444';
-      break;
-    case 1:
-      // blue
-      color = '#339933';
-      break;
-    case 2:
-      // green
-      color = '#4682B4';
-      break;
-    case 3:
-      // orange
-      color = '#cc7a00';
-      break;
-    case 4:
-      // purple
-      color = '#a36bdb';
-      break;
-    default:
-      color= '#ffffff';
-      break;
+export const maybePlayTTS = (msg: string) => {
+  const mute = sessionStorage.getItem("mute") === "true";
+  if (!mute) {
+    const commandPrefix = "/tts ";
+    if (msg.startsWith(commandPrefix)) {
+      const textToSpeak = msg.slice(commandPrefix.length);
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      window.speechSynthesis.speak(utterance);
+    }
   }
-
-  return color;
 }
 
-export function simpleHash(source: string): number {
-  let hash = 0;
-
-  for (let i = 0; i < source.length; i++) {
-    hash = (hash << 5) - hash + source.charCodeAt(i);
-    hash |= 0; // Convert to 32bit integer
+export const maybePlaySoundEffect = (msg: string) => {
+  if (msg in soundEffectCommands) {
+    const link = soundEffectCommands[msg];
+    const sound = new Audio(link);
+    sound.play();
   }
+}
 
-  return hash;
+export const imageCommands = {
+  '/die': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/die.webp',
+  '/kino': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/kino.webp',
+  '/panda': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/panda.jpeg',
+  '/dev': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/dev.jpeg',
+  '/tiger': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/tiger.jpeg',
+  '/wow': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/wow.jpeg',
+  '/cry': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/cry.jpeg',
+  '/ok': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/ok.jpeg',
+  '/oops': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/oops.jpeg',
+}
+
+export const maybeReplaceWithImage = (msg: string) => {
+  if (msg in imageCommands) {
+      return imageCommands[msg];
+  }
+  return msg
 }

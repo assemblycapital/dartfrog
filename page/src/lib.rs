@@ -1,7 +1,7 @@
-use common::{get_server_address, handle_plugin_update, send_to_frontend, update_subscriber_clients, PluginClientState, PluginMessage, PluginMetadata, PluginServiceState, PluginState};
+use dartfrog_lib::*;
+use kinode_process_lib::{call_init, http, Address};
+use serde::{Serialize, Deserialize};
 use constants::DEFAULT_PAGE;
-use kinode_process_lib::{await_message, call_init, println, Address};
-use serde::{Deserialize, Serialize};
 
 mod constants;
 
@@ -10,170 +10,135 @@ wit_bindgen::generate!({
     world: "process-v0",
 });
 
+type AppProviderState = ProviderState<AppService, DefaultAppClientState>;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AppService {
+    pub page: PageServiceState,
+    pub chat: ChatServiceState,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum AppUpdate {
+    Page(PageUpdate),
+    Chat(ChatUpdate),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum AppRequest {
+    Page(PageRequest),
+    Chat(ChatRequest),
+}
+
+#[derive(Debug, Clone)]
+pub struct AppState {
+    pub provider: AppProviderState,
+}
+
+impl AppState {
+    pub fn new(our: &Address) -> Self {
+        AppState {
+            provider: AppProviderState::new(our),
+        }
+    }
+}
+
+impl AppServiceState for AppService {
+    fn new() -> Self {
+        AppService {
+            chat: ChatServiceState::new(),
+            page: PageServiceState::new()
+        }
+    }
+
+    fn handle_unsubscribe(&mut self, _subscriber_node: String, _our: &Address, _service: &Service) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    fn handle_subscribe(&mut self, subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
+        self.page.handle_subscribe(subscriber_node.clone(), our, service)?;
+        self.chat.handle_subscribe(subscriber_node, our, service)?;
+        Ok(())
+    }
+
+    fn handle_request(&mut self, from: String, req: String, our: &Address, service: &Service) -> anyhow::Result<()> {
+        let request = serde_json::from_str::<AppRequest>(&req)?;
+        match request {
+            AppRequest::Page(page_request) => {
+                self.page.handle_request(from, page_request, our, service)
+            }
+            AppRequest::Chat(chat_request) => {
+                self.chat.handle_request(from, chat_request, our, service)
+            }
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PageUpdate {
     Page(String),
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PageRequest {
     EditPage(String),
 }
 
-#[derive(Debug, Clone)]
-pub struct PageService {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PageServiceState {
     pub page: String,
 }
 
-#[derive(Debug, Clone)]
-pub struct PageClient {
-    pub page: String,
-}
-
-pub fn new_page_service() -> PageService {
-    PageService {
-        page: String::new(),
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct AppState {
-    pub plugin: PluginState<PageService, PageClient>,
-}
-
-impl AppState {
-    pub fn new() -> Self {
-        AppState {
-            plugin: PluginState::<PageService, PageClient>::new(),
-        }
-    }
-}
-
-impl PluginClientState for PageClient {
+impl PageServiceState {
     fn new() -> Self {
-        PageClient {
-            page: String::new(),
-        }
-    }
-    fn handle_new_frontend(&mut self, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
-        let upd = PageUpdate::Page(self.page.clone());
-        let Ok(upd_str) = serde_json::to_string(&upd) else {
-            println!("error serializing update: {:?}", upd);
-            return Ok(());
-        };
-        send_to_frontend(&upd_str, metadata, our)?;
-        Ok(())
-    }
-    fn handle_frontend_message(&mut self, _update: String, _our: &Address, _metadata: &PluginMetadata) -> anyhow::Result<()> {
-        Ok(())
-    }
-    fn handle_service_message(&mut self, update: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
-        // TODO cache page
-        let Ok(upd) = serde_json::from_str::<PageUpdate>(&update) else {
-            println!("error parsing request: {:?}", update);
-            return Ok(());
-        };
-        match upd {
-            PageUpdate::Page(new_page) => {
-                self.page = new_page.clone();
-            }
-        }
-        send_to_frontend(&update, metadata, our)?;
-        Ok(())
-    }
-}
-impl PluginServiceState for PageService {
-
-    fn new() -> Self {
-        PageService {
+        PageServiceState {
             page: DEFAULT_PAGE.to_string(),
         }
     }
-    fn handle_unsubscribe(&mut self, _subscriber_node: String, _our: &Address, _metadata: &PluginMetadata) -> anyhow::Result<()> {
-        Ok(())
-    }
 
-    fn handle_subscribe(&mut self, _subscriber_node: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
+    fn handle_subscribe(&mut self, _subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
         let upd = PageUpdate::Page(self.page.clone());
-        match update_subscriber_clients(our, upd, metadata) {
-            Ok(()) => {}
-            Err(e) => {
-                println!("error sending update to subscribers: {:?}", e);
-            }
-        }
+        update_subscribers(AppUpdate::Page(upd), our, service)?;
         Ok(())
     }
 
-    fn handle_request(&mut self, from: String, req: String, our: &Address, metadata: &PluginMetadata) -> anyhow::Result<()> {
-
+    fn handle_request(&mut self, from: String, req: PageRequest, our: &Address, service: &Service) -> anyhow::Result<()> {
         if from != our.node() {
             return Ok(());
         }
-        // println!("page service received request: {:?}", req);
-        let Ok(request) = serde_json::from_str::<PageRequest>(&req) else {
-            println!("error parsing request: {:?}", req);
-            return Ok(());
-        };
-        match request {
+        match req {
             PageRequest::EditPage(new_page) => {
                 self.page = new_page.clone();
                 let upd = PageUpdate::Page(new_page);
-
-                match update_subscriber_clients(our, upd, metadata) {
-                    Ok(()) => {}
-                    Err(e) => {
-                        println!("error sending update to subscribers: {:?}", e);
-                    }
-                }
+                update_subscribers(AppUpdate::Page(upd), our, service)?;
             }
         }
         Ok(())
     }
-}
-
-
-fn handle_message(our: &Address, state: &mut AppState) -> anyhow::Result<()> {
-    let message = await_message()?;
-
-    let body = message.body();
-    let source = message.source();
-
-    if source != &get_server_address(our.node()) {
-        println!("page received message from unknown source: {:?}", source);
-        return Ok(());
-    }
-
-    if !message.is_request() {
-        return Err(anyhow::anyhow!("unexpected Response: {:?}", message));
-    }
-    
-    if let Ok(plugin_message) = serde_json::from_slice::<PluginMessage>(&body) {
-        if let Err(e) = handle_plugin_update(plugin_message, &mut state.plugin, our, source) {
-            println!("page error handling plugin update: {:?}", e);
-        }
-    }
-    Ok(())
 }
 
 call_init!(init);
 fn init(our: Address) {
     println!("init page");
-    let mut state: AppState = AppState::new();
+    let mut state = AppState::new(&our);
+    let loaded_provider = AppProviderState::load(&our);
+    state.provider = loaded_provider;
 
-    let try_ui = kinode_process_lib::http::serve_ui(&our, "page-ui", true, false, vec!["/"]);
+    let try_ui = http::secure_serve_ui(&our, "page-ui", vec!["/", "*"]);
+    http::secure_bind_ws_path("/", true).unwrap();
+
     match try_ui {
         Ok(()) => {}
         Err(e) => {
-            println!("page error starting ui: {:?}", e)
+            println!("page error starting ui: {:?}", e);
         }
     };
 
     loop {
-        match handle_message(&our, &mut state) {
+        match provider_handle_message(&our, &mut state.provider) {
             Ok(()) => {}
             Err(e) => {
-                println!("page error handling message: {:?}", e)
+                println!("page error handling message: {:?}", e);
             }
         };
     }

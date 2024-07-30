@@ -1,0 +1,8 @@
+.nodes-node-row {
+  gap: 1rem;
+  align-items: center;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  display: flex;
+  padding:8px;
+}

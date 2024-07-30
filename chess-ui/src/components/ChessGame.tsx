@@ -3,15 +3,16 @@ import Chessboard from 'chessboardjsx';
 import { Chess } from 'chess.js';
 import useChessStore, { ChessState } from '../store/chess';
 import './ChessPluginBox.css';
-import { parseServiceId } from '@dartfrog/puddle';
+import useChatStore from '@dartfrog/puddle/store/chat';
+import { getPeerNameColor } from '@dartfrog/puddle';
 
 interface ChessGameProps {
-  chessState: ChessState;
-  sendChessRequest: (request: any) => void;
-  serviceId: string;
 }
 
-const ChessGame: React.FC<ChessGameProps> = ({ chessState, sendChessRequest, serviceId }) => {
+const ChessGame: React.FC<ChessGameProps> = () => {
+  const {api} = useChatStore();
+  const { peerMap } = useChatStore();
+  const { chessState, sendChessRequest, } = useChessStore();
   const [chess, setChess] = useState(new Chess());
   const [gameFen, setGameFen] = useState(chess.fen());
   const [canPlayerMove, setCanPlayerMove] = useState(false);
@@ -21,8 +22,6 @@ const ChessGame: React.FC<ChessGameProps> = ({ chessState, sendChessRequest, ser
   const [bottomPlayer, setBottomPlayer] = useState('');
   const [isTopPlayerTurn, setIsTopPlayerTurn] = useState(false);
   const [orientation, setOrientation] = useState<'white' | 'black'>('white');
-
-  const { nameColors } = useChessStore();
 
   useEffect(() => {
     if (orientation === 'white') {
@@ -105,17 +104,20 @@ const ChessGame: React.FC<ChessGameProps> = ({ chessState, sendChessRequest, ser
       return;
     }
     let movetoSend = result.san;
-    sendChessRequest({ "Move": movetoSend });
+    sendChessRequest(api, { "Move": movetoSend });
   }, [chess, sendChessRequest, canPlayerMove, chessState]);
 
   return (
-    <div className="chess-container">
-      <div>
+    <div className="chess-container"
+      style={{
+        overflow:"hidden",
+      }}
+    >
+      <div
+      >
         <div className="player-info">
           <div
-            style={{
-              color: nameColors[topPlayer],
-            }}
+            className={getPeerNameColor(peerMap.get(topPlayer))}
           >
             {topPlayer}
           </div>
@@ -129,9 +131,7 @@ const ChessGame: React.FC<ChessGameProps> = ({ chessState, sendChessRequest, ser
         />
         <div className="player-info">
           <div
-            style={{
-              color: nameColors[bottomPlayer],
-            }}
+            className={getPeerNameColor(peerMap.get(bottomPlayer))}
           >
             {bottomPlayer}
           </div>

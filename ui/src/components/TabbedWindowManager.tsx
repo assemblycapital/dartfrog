@@ -1,10 +1,9 @@
 import React, { useEffect } from 'react';
-import { ServiceId, Service } from '@dartfrog/puddle';
+// import { ServiceId, Service } from '@dartfrog/puddle';
 import ServiceTab from './ServiceTab';
 import useDartStore from '../store/dart';
 import './TabbedWindowManager.css';
-import { PlusIcon } from './icons/Icons';
-import NewTab from './NewTab/NewTab';
+import { PlusIcon } from '@dartfrog/puddle/components/Icons';
 import { HUB_NODE } from '../utils';
 import TabTop from './TabTop';
 import TabTops from './TabTops';
@@ -14,23 +13,23 @@ import TabbedWindow from './TabbedWindowStack';
 import TabbedWindowStack from './TabbedWindowStack';
 
 interface TabbedWindowManagerProps {
-  services: Map<ServiceId, Service>;
+  // services: Map<ServiceId, Service>;
 }
 
-const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) => {
-  const { tabs, activeTabIndex, setTabs, setActiveTabIndex, addTab, closeTab, setFromNewTab, joinService, exitService } = useDartStore();
+const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({  }) => {
+  // const { tabs, activeTabIndex, setTabs, setActiveTabIndex, addTab, closeTab, setFromNewTab, joinService, exitService } = useDartStore();
 
-  useEffect(() => {
-    if (!(services instanceof Map)) return;
-    tabs.forEach(tab => {
-      if (tab && tab.serviceId) {
-        const service = services.get(tab.serviceId);
-        if (!service) {
-          joinService(tab.serviceId);
-        }
-      }
-    });
-  }, [tabs, services, joinService]);
+  // useEffect(() => {
+  //   if (!(services instanceof Map)) return;
+  //   tabs.forEach(tab => {
+  //     if (tab && tab.serviceId) {
+  //       const service = services.get(tab.serviceId);
+  //       if (!service) {
+  //         joinService(tab.serviceId);
+  //       }
+  //     }
+  //   });
+  // }, [tabs, services, joinService]);
 
   return (
     <div
@@ -45,37 +44,8 @@ const TabbedWindowManager: React.FC<TabbedWindowManagerProps> = ({ services }) =
         overflowY: 'hidden', // Ensure no overflow on the main container
       }}
     >
-     
-      {/* this is the topbar of constant size */}
-      <div style={{
-        height: "26px",
-        display: "block",
-        flexShrink: 0, // Ensure this div does not shrink
-      }}>
-        <TabTops />
-      </div>
-
-      <Split
-        sizes={[80,20]}
-        minSize={[80, 30]}
-        direction="vertical"
-        style={{
-          flexGrow: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-        }}
-      >
-        <div>
-
-          <TabbedWindowStack />
-        </div>
+      {/* <NewTab /> */}
       
-        <div>
-
-          <Footer />
-        </div>
-      </Split>
     </div>
   );
 };

@@ -1,68 +1,41 @@
-import { useCallback, useEffect, useState, useRef } from "react";
-import { useLocation } from "react-router-dom";
-import "./App.css";
-import DartApi, { parseServiceId } from "@dartfrog/puddle";
-import { WEBSOCKET_URL, maybePlaySoundEffect } from "./utils";
-import usePageStore, { PLUGIN_NAME } from "./store/page";
+
+import "@dartfrog/puddle/components/App.css";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import NoServiceView from "@dartfrog/puddle/components/NoServiceView";
+import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
+import usePageStore from "./store/page";
+import HalfChat from "@dartfrog/puddle/components/HalfChat";
 import PagePluginBox from "./components/PagePluginBox";
 
+
 function App() {
-  const location = useLocation();
-  const {api, setApi, serviceId, setServiceId, page, setPage} = usePageStore();
 
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const paramService = searchParams.get("service");
+  const {page, setPage} = usePageStore();
 
-    if (paramService) {
-      setServiceId(paramService);
-    } else {
-      setServiceId(null);
+  const onServiceMessage = (msg) => {
+    if (msg.Page) {
+      setPage(msg.Page.Page);
     }
-
-  }, [location.search])
-
-  useEffect(() => {
-    if (!serviceId) {
-      return;
-    }
-    const api = new DartApi({
-      our: window.our,
-      websocket_url: WEBSOCKET_URL,
-      pluginUpdateHandler: {
-          plugin:PLUGIN_NAME,
-          serviceId,
-          handler:(pluginUpdate, service, source) => {
-            // console.log("page pluginUpdate", pluginUpdate);
-            if (pluginUpdate["Page"]) {
-              setPage(pluginUpdate["Page"]);
-            }
-          }
-        },
-      onOpen: () => {
-        api.joinService(serviceId);
-        setApi(api);
-      },
-      onClose: () => {
-      },
-    });
-
-  }, [serviceId]);
-
+  };
 
   return (
-    <div style={{
-      display: 'flex',
-      height: '100%',
-      width: '100%',
-      // border: '1px solid blue',
-    }}>
-      {page !== null ? (
-        <PagePluginBox serviceId={serviceId} page={page} />
-      ) : (
-        <p>loading...</p>
-      )}
-    </div>
+    <Router basename={`/${PROCESS_NAME}`}>
+      <Routes>
+        <Route path="/" element={
+          <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
+        } />
+        <Route path="/df/service/:id" element={
+          <HalfChat
+            ourNode={window.our.node}
+            Element={PagePluginBox}
+            processName={PROCESS_NAME}
+            websocketUrl={WEBSOCKET_URL}
+            onServiceMessage={onServiceMessage}
+            enableChatSounds
+           />
+        } />
+      </Routes>
+    </Router>
   );
 }
 

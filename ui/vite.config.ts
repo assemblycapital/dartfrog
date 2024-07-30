@@ -14,22 +14,39 @@ IMPORTANT:
 This must match the process name from pkg/manifest.json + pkg/metadata.json
 The format is "/" + "process_name:package_name:publisher_node"
 */
-const BASE_URL = `/${manifest[0].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}/`;
+const PACKAGE_SUBDOMAIN = `${metadata.properties.package_name}-${metadata.properties.publisher.replace(/\./g, '-')}`;
+const BASE_URL = `/${manifest[0].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 const CHAT_URL = `/${manifest[1].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 const PIANO_URL = `/${manifest[2].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 const PAGE_URL = `/${manifest[3].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 const CHESS_URL = `/${manifest[4].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
-const INBOX_URL = `/${manifest[5].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
+const RADIO_URL = `/${manifest[5].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
+const FORUM_URL = `/${manifest[6].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 
 // This is the proxy URL, it must match the node you are developing against
-const PROXY_URL = (process.env.VITE_NODE_URL || 'http://127.0.0.1:8080').replace('localhost', '127.0.0.1');
+const PROXY_URL = (process.env.VITE_NODE_URL || `http://${PACKAGE_SUBDOMAIN}.localhost:8080`)
 // proxy for applet to its vite hot reload server
-const APPLET_PROXY_URL = (process.env.VITE_NODE_URL || 'http://127.0.0.1:3001').replace('localhost', '127.0.0.1');
-
+const APPLET_PROXY_URL = (process.env.VITE_NODE_URL || `http://${PACKAGE_SUBDOMAIN}.localhost:3001`)
 console.log('process.env.VITE_NODE_URL', process.env.VITE_NODE_URL, PROXY_URL);
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'redirect-localhost',
+      transformIndexHtml(html) {
+        return html.replace(
+          /<head>/,
+          `<head>
+            <script>
+              if (window.location.hostname === 'localhost') {
+                window.location.hostname = '${PACKAGE_SUBDOMAIN}.localhost';
+              }
+            </script>`
+        );
+      },
+    },
+  ],
   resolve: {  // Add resolve configuration
     alias: {
       '@puddle': path.resolve(__dirname, '../puddle')  // Alias for "puddle" workspace
@@ -43,26 +60,30 @@ export default defineConfig({
   },
   server: {
     open: true,
+    hmr: {
+      host: `${PACKAGE_SUBDOMAIN}.localhost`, // Explicit HMR host
+      port: 3000, // Ensure the port is correctly specified for WebSocket connections
+    },
     proxy: {
       '/our': {
         target: PROXY_URL,
         changeOrigin: true,
       },
-      [`${BASE_URL}our.js`]: {
+      [`${BASE_URL}/our.js`]: {
         target: PROXY_URL,
         changeOrigin: true,
         rewrite: (path) => path.replace(BASE_URL, ''),
       },
-      [`${INBOX_URL}`]: {
+      [`${FORUM_URL}`]: {
         target: APPLET_PROXY_URL,
         changeOrigin: true,
         rewrite: (path) => path.replace(BASE_URL, ''),
       },
       // This route will match all other HTTP requests to the backend
-      [`^${BASE_URL}/(?!(@vite/client|src/.*|node_modules/.*|@react-refresh|$))`]: {
-        target: PROXY_URL,
-        changeOrigin: true,
-      },
+      // [`^${BASE_URL}/(?!(@vite/client|src/.*|node_modules/.*|@react-refresh|.*\.ts$))`]: {
+      //   target: PROXY_URL,
+      //   changeOrigin: true,
+      // },
       // '/example': {
       //   target: PROXY_URL,
       //   changeOrigin: true,

@@ -1,9 +1,9 @@
 use std::collections::{HashMap, HashSet};
+use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::hash::{Hash, Hasher};
 
-// mod common;
-use common::*;
-use kinode_process_lib::vfs::{create_drive, open_file};
+use dartfrog_lib::*;
 mod constants;
 use kinode_process_lib::{http, await_message, call_init, println, Address, Request,
     get_blob,
@@ -12,697 +12,85 @@ use kinode_process_lib::{http, await_message, call_init, println, Address, Reque
         send_ws_push, HttpServerRequest,
         WsMessageType,
     },
+    set_state, get_typed_state,
 };
+use serde::{Deserialize, Serialize};
 
 wit_bindgen::generate!({
     path: "target/wit",
     world: "process-v0",
 });
 
-fn handle_server_request(our: &Address, state: &mut DartState, source: Address, req: ServerRequest) -> anyhow::Result<()> {
-    match req {
-        ServerRequest::ServiceRequest(service_id, service_request) => {
-            match handle_service_request(our, state, source, service_id, service_request) {
-                Ok(_) => {}
-                Err(e) => {
-                    println!("error handling service request: {:?}", e);
-                }
-            }
-        }
-        ServerRequest::CreateService(service_id, plugins, visibility, access, whitelist) => {
-            if source.node != our.node {
-                return Ok(());
-            }
-            if service_id.node != our.node {
-                return Ok(());
-            }
-            if let Some(_service) = state.server.services.get(&service_id.id) {
-                // already exists
-            } else {
-                let mut service = new_service(service_id.clone());
-                service.metadata.visibility = visibility;
-                service.metadata.access = access;
-                service.metadata.whitelist = whitelist.into_iter().collect();
-                for plugin in plugins {
-                    match get_plugin_address(&plugin, our.node.as_str()) {
-                      Ok(plugin_address) => {
-                            // TODO vfs for plugin metadata sharing
-                            service.metadata.plugins.insert(plugin.clone());
-                            let plugin_metadata = PluginMetadata {
-                                plugin_name: plugin.clone(),
-                                service: service.clone(),
-                            };
-                            poke_plugin(&plugin_address, &PluginMessage::ServiceInput(service.clone(), PluginServiceInput::Init(plugin_metadata)))?;
-                        }
-                        Err(_e) => {
-                        }
-                    }
-                }
 
-                state.server.services.insert(service_id.id.clone(), service.clone());
-                // TODO read_service??? for restoring state
-                write_service(state.server.drive_path.clone(), &service)?;
-            }
-        }
-        ServerRequest::DeleteService(service_id) => {
-            if source.node != our.node {
-                return Ok(());
-            }
-            if let Some(service) = state.server.services.get(&service_id.id) {
-                for subscriber in service.metadata.subscribers.clone() {
-                    let update = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::ServiceDeleted);
-                    update_client_consumer(update, subscriber)?;
-                }
-                for plugin in service.metadata.plugins.clone() {
-                    if let Ok(plugin_address) = get_plugin_address(&plugin, our.node.as_str()) {
-                        poke_plugin(&plugin_address, &PluginMessage::ServiceInput(service.clone(), PluginServiceInput::Kill))?;
-                    }
-                }
-                state.server.services.remove(&service_id.id.clone());
-            }
-
-        }
-        ServerRequest::RequestServiceList => {
-
-            let mut services: HashMap<String, ServiceMetadata> = HashMap::new();
-            for (id, service) in state.server.services.iter() {
-                let service_id = ServiceId {
-                    node: our.node.clone(),
-                    id: id.clone(),
-                };
-                if !matches!(service.metadata.visibility, ServiceVisibility::Visible) {
-                    // if its not visible, ignore unless the request is from the host
-                    if source.node != our.node {
-                        continue;
-                    }
-                }
-                services.insert(get_service_id_string(&service_id), service.metadata.clone());
-            }
-            
-            let update = ConsumerUpdate::FromServer(our.node.clone(), ConsumerServerUpdate::ServiceList(services));
-            update_client_consumer(update, source.node.clone())?;
-        }
-        
-    }
-    Ok(())
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Consumer {
+    pub ws_channel_id: u32,
+    pub last_active: u64,
 }
 
-fn make_consumer_service_update(service_id: ServiceId, update: ConsumerServiceUpdate) -> ConsumerUpdate {
-    ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), update)
+impl Consumer {
+    pub fn new(id:u32) -> Self {
+        Consumer {
+            ws_channel_id: id,
+            last_active: get_now(),
+        }
+    }
 }
-
-fn write_service(drive_path: String, service: &Service) -> anyhow::Result<()> {
-    let service_name = service.id.id.clone();
-    let file_path = format!("{}/{}.service.txt", drive_path, service_name);
-    let file = open_file(&file_path, true, None);
-    match file {
-        Ok(mut file) => {
-            let metadata = serde_json::to_string(&service)?;
-            let bytes = metadata.as_bytes();
-            match file.set_len(bytes.len() as u64) {
-                Ok(_) => {
-                    match file.write_all(metadata.as_bytes()) {
-                        Ok(_) => {}
-                        Err(e) => {
-                            println!("error writing service metadata: {:?}", e);
-                        }
-                    }
-                }
-                Err(e) => {
-                    println!("error writing service metadata: {:?}", e);
-                }
-            }
-        }
-        Err(e) => {
-            println!("error writing service metadata: {:?}", e);
-        }
-    }
-    Ok(())
-}
-
-fn poke_plugins(service:&Service, poke: PluginServiceInput, our: &Address) -> anyhow::Result<()> {
-    for plugin in service.metadata.plugins.clone() {
-
-        if let Ok(plugin_address) = get_plugin_address(&plugin, our.node.as_str()) {
-            poke_plugin(&plugin_address, &PluginMessage::ServiceInput(service.clone(), poke.clone()))?;
-        }
-    }
-    Ok(())
-}
-
-fn handle_service_request(our: &Address, state: &mut DartState, source: Address, service_id: ServiceId, req: ServiceRequest) -> anyhow::Result<()> {
-    if service_id.node != our.node {
-        return Ok(());
-    }
-    if let Some(service) = state.server.services.get_mut(&service_id.id) {
-        // handle the request
-        match req {
-            ServiceRequest::PluginRequest(plugin_name, plugin_req) => {
-                if service.metadata.plugins.contains(&plugin_name) {
-                    if let Ok(plugin_address) = get_plugin_address(&plugin_name, our.node.as_str()) {
-                        poke_plugin(&plugin_address, &PluginMessage::ServiceInput(service.clone(), PluginServiceInput::Message(source.node.clone(), PluginNodeType::Client, plugin_req)))?;
-                    }
-                }
-            }
-            ServiceRequest::Subscribe => {
-                // check service access
-                if !matches!(service.metadata.access, ServiceAccess::Public) {
-                    if source.node != our.node && !service.metadata.whitelist.contains(&source.node) {
-                        let ack = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::AccessDenied);
-                        update_client_consumer(ack, source.node.clone())?;
-                        return Ok(());
-                    }
-                }
-                let mut subscriber_is_new = false;
-                if !service.metadata.subscribers.contains(&source.node.clone()) {
-                    // subscriber is new, notify plugins
-                    subscriber_is_new = true;
-                }
-                service.metadata.subscribers.insert(source.node.clone());
-                service.metadata.user_presence.insert(source.node.clone(), Presence {
-                    time: SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .unwrap()
-                        .as_secs(),
-                });
-                write_service(state.server.drive_path.clone(), service)?;
-                if subscriber_is_new {
-                    poke_plugins(&service, PluginServiceInput::ClientJoined(source.node.clone()), our)?;
-                    let meta = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
-                    update_subscribers(meta, service.metadata.subscribers.clone())?;
-                }
-                let ack = make_consumer_service_update(service_id.clone(), ConsumerServiceUpdate::SubscribeAck(service.metadata.clone()));
-                update_client_consumer(ack, source.node.clone())?;
-            }
-            ServiceRequest::Unsubscribe => {
-                if !service.metadata.subscribers.contains(&source.node.clone()) {
-                    // already unsubscribed, ignore
-                    return Ok(());
-                }
-                service.metadata.subscribers.remove(&source.node.clone());
-                poke_plugins(&service, PluginServiceInput::ClientExited(source.node.clone()), our)?;
-                write_service(state.server.drive_path.clone(), service)?;
-                let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
-                update_subscribers(meta, service.metadata.subscribers.clone())?;
-            }
-            ServiceRequest::PresenceHeartbeat => {
-                if !service.metadata.subscribers.contains(&source.node.clone()) {
-                    // not subscribed, ignore
-                    return Ok(());
-                }
-                service.metadata.user_presence.insert(source.node.clone(), Presence {
-                    time: SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .unwrap()
-                        .as_secs(),
-                });
-                let now = SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs();
-                if (now - service.metadata.last_sent_presence) < 1*60 {
-                    // "regular metadata updates"
-                    // these are evoked by client heartbeats, but only sent up to a capped rate
-                    return Ok(());
-                }
-                // 
-                // check if anyone needs to be kicked
-                // 
-                let mut to_kick: HashSet<String> = HashSet::new();
-                for (user, presence) in service.metadata.user_presence.iter() {
-                    const THREE_MINUTES : u64 = 3*60;
-                    if (now - presence.time) > THREE_MINUTES {
-                        to_kick.insert(user.clone());
-                    }
-                }
-
-                for user in service.metadata.subscribers.iter() {
-                    if to_kick.contains(user) {
-                        let update: ConsumerUpdate = ConsumerUpdate::FromService(service_id.node.clone(), service_id.id.clone(), ConsumerServiceUpdate::Kick);
-                        update_client_consumer(update, user.clone())?;
-                        poke_plugins(&service, PluginServiceInput::ClientExited(source.node.clone()), our)?;
-                    }
-                }
-                service.metadata.subscribers.retain(|x| !to_kick.contains(x));
-
-                // send metadata update
-                service.metadata.last_sent_presence = SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs();
-                write_service(state.server.drive_path.clone(), service)?;
-                let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
-                update_subscribers(meta, service.metadata.subscribers.clone())?;
-            }
-            ServiceRequest::WhitelistAdd(node) => {
-                if source.node != our.node {
-                    return Ok(());
-                }
-                if let Some(service) = state.server.services.get_mut(&service_id.id) {
-                    service.metadata.whitelist.insert(node.clone());
-                    write_service(state.server.drive_path.clone(), service)?;
-                    let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
-                    update_subscribers(meta, service.metadata.subscribers.clone())?;
-                }
-            }
-            ServiceRequest::WhitelistRemove(node) => {
-                if source.node != our.node {
-                    return Ok(());
-                }
-                if let Some(service) = state.server.services.get_mut(&service_id.id) {
-                    service.metadata.whitelist.remove(&node);
-                    write_service(state.server.drive_path.clone(), service)?;
-                    let meta = make_consumer_service_update(service_id, ConsumerServiceUpdate::ServiceMetadata(service.metadata.clone()));
-                    update_subscribers(meta, service.metadata.subscribers.clone())?;
-                }
-            }
-            _ => {
-                println!("unexpected service request: {:?}", req);
-            }
-        }
-    } else {
-        // respond with NoSuchService
-        let update = ConsumerUpdate::FromServer(our.node().to_string(), ConsumerServerUpdate::NoSuchService(service_id.id.clone()));
-        update_client_consumer(update, source.node.clone())?;
-    }
-    Ok(())
-}
-
-fn update_subscribers(update: ConsumerUpdate, subscribers: HashSet<String>) -> anyhow::Result<()> {
-    for subscriber in subscribers {
-        update_client_consumer(update.clone(), subscriber)?;
-    }
-    Ok(())
-}
-
-
-fn handle_client_update(our: &Address, state: &mut DartState, source: &Address, upd: ClientUpdate) -> anyhow::Result<()> {
-    match upd {
-        ClientUpdate::ConsumerUpdate(consumer_update) => {
-            // possibly intercept the update first
-            // TODO filter out lying updates
-            // e.g. an update could lie about its source address if not checked
-            match consumer_update.clone() {
-                ConsumerUpdate::FromServer(server_node, _inner) => {
-                    // handle the request
-                    if server_node != source.node {
-                        // no spoofing
-                        return Ok(());
-                    }
-                    update_all_consumers(&state, consumer_update.clone());
-                    
-                }
-                ConsumerUpdate::FromService(service_node, service_name, inner) => {
-                    // handle the request
-
-                    if service_node != source.node && our.node != source.node {
-                        // no spoofing
-                        return Ok(());
-                    }
-
-                    let service_id: ServiceId = ServiceId {
-                        node: service_node.clone(),
-                        id: service_name.clone()
-                    };
-                    let mut sent_to_plugin = false;
-                    for (_consumer_id, consumer) in state.client.consumers.iter_mut() {
-                        if !consumer.services.contains_key(&service_id) {
-                            continue;
-                        }
-                        match inner {
-                            ConsumerServiceUpdate::ServiceDeleted => {
-                                consumer.services.remove(&service_id);
-                                update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
-                            }
-                            ConsumerServiceUpdate::Kick => {
-                                consumer.services.remove(&service_id);
-                                update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
-                            }
-                            ConsumerServiceUpdate::AccessDenied => {
-                                consumer.services.remove(&service_id);
-                                update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
-                            }
-                            ConsumerServiceUpdate::ServiceMetadata(ref metadata) => {
-                                let service = consumer.services.get_mut(&service_id).unwrap();
-                                service.service.metadata = metadata.clone();
-                                service.connection = ConnectionStatus::Connected(
-                                    SystemTime::now()
-                                        .duration_since(UNIX_EPOCH)
-                                        .unwrap()
-                                        .as_secs(),
-                                );
-                                update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
-                            }
-                            ConsumerServiceUpdate::MessageFromPluginServiceToClient(ref plugin, ref upd) => {
-                                // authenticate the plugin
-                                let Ok(expected_source ) = get_plugin_address(plugin, service_id.node.as_str()) else {
-                                    return Ok(());
-                                };
-
-                                if source != &expected_source {
-                                    return Ok(());
-                                }
-
-                                if sent_to_plugin {
-                                    // don't duplicate updates
-                                    continue;
-                                }
-                                let service = consumer.services.get_mut(&service_id).unwrap();
-                                if service.service.metadata.plugins.contains(plugin) {
-                                    sent_to_plugin = true;
-                                    let update = PluginClientInput::FromService(upd.clone());
-                                    poke_plugin_client(plugin, &update, &service.service, our)?;
-                                }
-                            }
-                            ConsumerServiceUpdate::MessageFromPluginServiceToFrontend(ref plugin, ref _upd) => {
-                                // authenticate the plugin
-                                let Ok(expected_source ) = get_plugin_address(plugin, service_id.node.as_str()) else {
-                                    return Ok(());
-                                };
-
-                                if source != &expected_source {
-                                    return Ok(());
-                                }
-
-                                let service = consumer.services.get_mut(&service_id).unwrap();
-                                if service.service.metadata.plugins.contains(plugin) {
-                                    sent_to_plugin = true;
-                                    update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
-                                }
-                            }
-                            ConsumerServiceUpdate::MessageFromPluginClient(ref plugin, ref _upd) => {
-                                // authenticate the plugin
-                                let Ok(expected_source ) = get_plugin_address(plugin, our.node.as_str()) else {
-                                    return Ok(());
-                                };
-                                if source != &expected_source {
-                                    return Ok(());
-                                }
-                                let service = consumer.services.get_mut(&service_id).unwrap();
-                                if service.service.metadata.plugins.contains(plugin) {
-                                    update_consumer(consumer.ws_channel_id, consumer_update.clone())?;
-                                }
-                            }
-                            ConsumerServiceUpdate::SubscribeAck(ref metadata) => {
-                                let service = consumer.services.get_mut(&service_id).unwrap();
-                                service.service.metadata = metadata.clone();
-                                service.connection = ConnectionStatus::Connected(
-                                    SystemTime::now()
-                                        .duration_since(UNIX_EPOCH)
-                                        .unwrap()
-                                        .as_secs(),
-                                );
-                                let metadata_update = ConsumerUpdate::FromService(service.service.id.node.clone(), service.service.id.id.clone(), ConsumerServiceUpdate::ServiceMetadata(service.service.metadata.clone()));
-                                update_consumer(consumer.ws_channel_id, metadata_update)?;
-                                if sent_to_plugin {
-                                    // don't duplicate updates
-                                    continue;
-                                }
-                                sent_to_plugin = true;
-                                let update = PluginClientInput::FrontendJoined;
-                                for plugin in service.service.metadata.plugins.iter() {
-                                    poke_plugin_client(plugin, &update, &service.service, our)?;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    Ok(())
-}
-
-fn handle_client_request(our: &Address, state: &mut DartState, source: Address, req: ClientRequest) -> anyhow::Result<()> {
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
-    match req {
-        ClientRequest::DeleteConsumer(num) => {
-            if source.node != our.node {
-                return Ok(());
-            }
-
-            let mut all_services: HashMap<ServiceId, HashSet<u32>> = HashMap::new();
-            for (id, consumer) in state.client.consumers.iter() {
-                for (service_id, _service) in consumer.services.iter() {
-                    all_services
-                        .entry(service_id.clone())
-                        .or_insert_with(HashSet::new)
-                        .insert(id.clone());
-                }
-            }
-            if let Some(consumer) = state.client.consumers.get(&num) {
-                for (service_id, _service) in consumer.services.iter() {
-                    // TODO this kind of sucks
-                    // here we only send the unsub if no other consumer is subscribed to the service in question
-                    // 
-                    // in the future, consumers should just unsubscribe onclose,
-                    //  it just requires extending some consumer scope to the service
-                    //  but that adds some complexity, and could be inefficient if not done correctly
-                    // 
-                    let consumers_with_this_service = all_services.get(&service_id).unwrap();
-                    if consumers_with_this_service.len() == 1 {
-                        let s_req = ServerRequest::ServiceRequest(service_id.clone(), ServiceRequest::Unsubscribe);
-                        let address = get_server_address(service_id.node.as_str());
-                        poke_server(&address, s_req)?;
-                    }
-                }
-                state.client.consumers.remove(&num);
-            }
-        }
-        ClientRequest::ConsumerRequest(num, inner) => {
-            let Some(consumer) = state.client.consumers.get_mut(&num) else {
-                return Ok(());
-            };
-            consumer.last_active = now;
-
-            match inner {
-                ConsumerRequest::JoinService(sid) => {
-                    if source.node != our.node {
-                        return Ok(());
-                    }
-                    if let Some(_service) = consumer.services.get(&sid) {
-                        // already have it
-                        // send this anyways just to refresh the connection
-                        let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::Subscribe);
-                        let address = get_server_address(sid.clone().node.as_str());
-                        poke_server(&address, s_req)?;
-                    } else {
-                        consumer.services.insert(sid.clone(), new_sync_service(sid.clone()));
-
-                        let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::Subscribe);
-                        let address = get_server_address(sid.clone().node.as_str());
-                        poke_server(&address, s_req)?;
-                    }
-                }
-                ConsumerRequest::ExitService(sid) => {
-                    if source.node != our.node {
-                        return Ok(());
-                    }
-                    if let Some(_service) = consumer.services.get(&sid) {
-                        let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::Unsubscribe);
-                        let address = get_server_address(sid.clone().node.as_str());
-                        poke_server(&address, s_req)?;
-                        consumer.services.remove(&sid);
-
-                    } else {
-                        // already have it
-                        // TODO maybe tell frontend that it's already gone
-                    }
-                }
-                ConsumerRequest::ServiceHeartbeat(sid) => {
-                    if source.node != our.node {
-                        return Ok(());
-                    }
-                    if let Some(_service) = consumer.services.get(&sid) {
-                        let s_req = ServerRequest::ServiceRequest(sid.clone(), ServiceRequest::PresenceHeartbeat);
-                        let address = get_server_address(sid.clone().node.as_str());
-                        poke_server(&address, s_req)?;
-                    } else {
-                        // dont have this service
-                        // TODO maybe tell frontend that it's missing
-                    }
-                }
-                ConsumerRequest::RequestServiceList(server_node) => {
-                    let s_req = ServerRequest::RequestServiceList;
-                    let address = get_server_address(server_node.as_str());
-                    poke_server(&address, s_req)?;
-                }
-                ConsumerRequest::SendToService(sid, req ) => {
-                    if source.node != our.node {
-                        return Ok(());
-                    }
-                    if let Some(_service) = consumer.services.get(&sid) {
-                        let s_req = ServerRequest::ServiceRequest(sid.clone(), req);
-                        let address = get_server_address(sid.clone().node.as_str());
-                        poke_server(&address, s_req)?;
-                    } else {
-                        // dont have this service
-                        // TODO maybe tell frontend that it's missing
-                    }
-                }
-                ConsumerRequest::SendToPluginClient(sid, plugin, update) => {
-                    if source.node != our.node {
-                        return Ok(());
-                    }
-                    if let Some(service) = consumer.services.get(&sid) {
-                        if service.service.metadata.plugins.contains(&plugin) {
-                            let update = PluginClientInput::FromFrontend(update.clone());
-                            poke_plugin_client(&plugin, &update, &service.service, our)?;
-                        }
-                    }
-                }
-            }
-        }
-        _ => {
-        }
-    }
-    // clean up inactive consumers
-    let mut to_kick: HashSet<u32> = HashSet::new();
-    // iterate over consumers and remove inactive
-    for (id, consumer) in state.client.consumers.iter() {
-        const FOUR_MINUTES : u64 = 4*60;
-        if (now - consumer.last_active) > FOUR_MINUTES {
-            to_kick.insert(id.clone());
-        }
-    }
-    state.client.consumers.retain(|x, _| !to_kick.contains(x));
-
-    // TODO possibly update / kick consumer frontend
-    // not important rn because they are most likely already disconnected
-
-    Ok(())
-}
-
-fn handle_http_server_request(
-    our: &Address,
-    state: &mut DartState,
-    source: &Address,
-    body: &[u8],
-) -> anyhow::Result<()> {
-
-    let Ok(server_request) = serde_json::from_slice::<HttpServerRequest>(body) else {
-        // Fail silently if we can't parse the request
-        return Ok(());
-    };
-
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
-
-    match server_request {
-        HttpServerRequest::WebSocketOpen { channel_id, .. } => {
-            state.client.consumers.insert(
-                channel_id,
-                Consumer {
-                    ws_channel_id: channel_id,
-                    services: HashMap::new(),
-                    last_active: now,
-                },
-            );
-        }
-        HttpServerRequest::WebSocketPush { channel_id, message_type} => {
-            if message_type == WsMessageType::Close {
-                state.client.consumers.remove(&channel_id);
-                return Ok(());
-            }
-            if message_type != WsMessageType::Binary {
-                return Ok(());
-            }
-            let Some(blob) = get_blob() else {
-                return Ok(());
-            };
-
-            let Ok(_s) = String::from_utf8(blob.bytes.clone()) else {
-                return Ok(());
-            };
-
-            match serde_json::from_slice(&blob.bytes)? {
-                DartMessage::ServerRequest(s_req) => {
-                    match handle_server_request(our, state, source.clone(), s_req) {
-                        Ok(_) => {}
-                        Err(e) => {
-                            println!("error handling server request: {:?}", e);
-                        }
-                    }
-                }
-                DartMessage::ClientRequest(c_req) => {
-                    match c_req {
-                        ClientRequest::DeleteConsumer(_num) => {
-                            // write down the current channel_id, num inaccurate from the api lib
-                            let req = ClientRequest::DeleteConsumer(channel_id);
-                            handle_client_request(our, state, source.clone(), req)?;
-                        }
-                        ClientRequest::ConsumerRequest(_num, inner) => {
-                            // write down the current channel_id, num inaccurate from the api lib
-                            let req = ClientRequest::ConsumerRequest(channel_id, inner);
-                            handle_client_request(our, state, source.clone(), req)?;
-                        }
-                        _ => {}
-                    }
-                }
-                _ => {}
-            }
-        }
-        HttpServerRequest::WebSocketClose(channel_id) => {
-            state.client.consumers.remove(&channel_id);
-        }
-        HttpServerRequest::Http(_request) => {
-        }
-    };
-
-    Ok(())
-}
-
-fn handle_message(our: &Address, state: &mut DartState) -> anyhow::Result<()> {
-    let message = await_message()?;
-
-    let body = message.body();
-    let source = message.source();
-    if !message.is_request() {
-        return Err(anyhow::anyhow!("unexpected Response: {:?}", message));
-    }
-    if message.source().node == our.node
-        && message.source().process == "http_server:distro:sys" {
-        handle_http_server_request(our, state, source, body)
-    } else {
-        match serde_json::from_slice(body)? {
-            DartMessage::ServerRequest(s_req) => {
-                match handle_server_request(our, state, source.clone(), s_req) {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("error handling server request: {:?}", e);
-                    }
-                }
-            }
-            DartMessage::ClientRequest(c_req) => {
-                if our.node != source.node {
-                    // we only send client requests to ourself
-                    return Ok(());
-                }
-                handle_client_request(our, state, source.clone(), c_req)?;
-            }
-            DartMessage::ClientUpdate(update) => {
-                handle_client_update(our, state, &source, update)?;
-            }
-        }
-        Ok(())
+impl Hash for Consumer{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.ws_channel_id.hash(state);
     }
 }
 
-fn update_all_consumers (state: &DartState, update: ConsumerUpdate) {
-    for (_id, consumer) in state.client.consumers.iter() {
-        update_consumer(consumer.ws_channel_id, update.clone()).unwrap();
+const IS_FAKE: bool = !cfg!(feature = "prod");
+const NETWORK_HUB: &str = if IS_FAKE { "fake.dev" } else { "waterhouse.os" };
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DartfrogState {
+    pub network_hub: Option<String>,
+    pub consumers: HashMap<u32, Consumer>,
+    pub provider_consumers: HashMap<Address, Consumer>,
+    pub local_services: HashMap<String, Service>,
+    pub peers: HashMap<String, Peer>,
+    pub profile: Profile,
+    pub activity_setting: ActivitySetting,
+    pub activity: PeerActivity,
+    pub messages: HashMap<String, MessageStore>,
+}
+
+impl DartfrogState {
+    pub fn new(our: &Address) -> Self {
+        DartfrogState {
+            network_hub: None,
+            consumers: HashMap::new(),
+            provider_consumers: HashMap::new(),
+            local_services: HashMap::new(),
+            peers: HashMap::new(),
+            profile : Profile::new(our.node.clone()),
+            activity_setting: ActivitySetting::Public,
+            activity: PeerActivity::Offline(get_now()),
+            messages: HashMap::new(),
+        }
+    }
+
+    pub fn save(&self) {
+        set_state(&bincode::serialize(self).unwrap());
+    }
+
+    pub fn load(our: &Address) -> Self {
+        match get_typed_state(|bytes| Ok(bincode::deserialize::<DartfrogState>(bytes)?)) {
+            Some(state) => state,
+            None => DartfrogState::new(our)
+        }
     }
 }
+
+const CONSUMER_TIMEOUT : u64 = 10*60; //10 minutes
 
 fn update_consumer (
-    // state: &DartState,
     websocket_id: u32,
-    update: ConsumerUpdate,
+    update: DartfrogOutput,
 ) -> anyhow::Result<()> {
 
     let blob = LazyLoadBlob {
@@ -721,28 +109,557 @@ fn update_consumer (
     Ok(())
 }
 
-fn poke_plugin_client (
-    plugin: &String,
-    update: &PluginClientInput,
-    service: &Service,
-    our: &Address,
+fn update_all_of_new_peer(
+    state: &DartfrogState,
+    peer: Peer,
 ) -> anyhow::Result<()> {
-    let address = get_process_address(our.node.as_str(), plugin.as_str());
-    let update = PluginMessage::ClientInput(service.clone(), update.clone());
-    Request::to(address)
-        .body(serde_json::to_vec(&update)?)
-        .send()?;
+    for consumer in state.consumers.values() {
+        update_consumer(consumer.ws_channel_id, DartfrogOutput::Peer(peer.clone()))?;
+    }
+    for address in state.provider_consumers.keys() {
+        let req = ProviderInput::DartfrogRequest(DartfrogToProvider::Peer(peer.clone()));
+        poke(address, req)?;
+    }
+    Ok(())
+}
+
+fn update_all_consumers(
+    state: &DartfrogState,
+    update: DartfrogOutput,
+) -> anyhow::Result<()> {
+    for consumer in state.consumers.values() {
+        update_consumer(consumer.ws_channel_id, update.clone())?;
+    }
+    Ok(())
+}
+
+fn update_provider_consumer(
+    source: &Address,
+    state: &mut DartfrogState,
+    update: DartfrogToProvider,
+) -> anyhow::Result<()> {
+    let consumer = state.provider_consumers.entry(source.clone()).or_insert_with(|| {
+        Consumer {
+            ws_channel_id: 0,
+            last_active: get_now(),
+        }
+    });
+    let req = ProviderInput::DartfrogRequest(update);
+    poke(source, req)?;
+    Ok(())
+}
+
+fn update_all_provider_consumers(
+    state: &DartfrogState,
+    update: DartfrogToProvider,
+) -> anyhow::Result<()> {
+    for address in state.provider_consumers.keys() {
+        let req = ProviderInput::DartfrogRequest(update.clone());
+        poke(address, req)?;
+    }
+    Ok(())
+}
+
+fn handle_http_server_request(
+    our: &Address,
+    state: &mut DartfrogState,
+    source: &Address,
+    body: &[u8],
+) -> anyhow::Result<()> {
+
+    let Ok(server_request) = serde_json::from_slice::<HttpServerRequest>(body) else {
+        // Fail silently if we can't parse the request
+        return Ok(());
+    };
+
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
+    match server_request {
+        HttpServerRequest::WebSocketOpen { channel_id, .. } => {
+            state.consumers.insert(
+                channel_id,
+                Consumer {
+                    ws_channel_id: channel_id,
+                    last_active: now,
+                },
+            );
+            state.activity = PeerActivity::Online(get_now());
+            let my_peer_data = PeerData {
+                profile: state.profile.clone(),
+                hosted_services: state.local_services.values()
+                    .cloned()
+                    .collect(),
+                activity: state.activity.clone(),
+            };
+            state.peers.insert(our.node.clone(), Peer {
+                node: our.node.clone(),
+                peer_data: Some(my_peer_data),
+                outstanding_request: None,
+                last_updated: Some(get_now()),
+            });
+            let services: Vec<Service> = state.local_services.values().cloned().collect();
+            update_consumer(channel_id, DartfrogOutput::LocalServiceList(services))?;
+            let peers: Vec<Peer> = state.peers.values().cloned().collect();
+            update_consumer(channel_id, DartfrogOutput::PeerList(peers))?;
+            let messages : Vec<MessageStore> = state.messages.values().cloned().collect();
+            update_consumer(channel_id, DartfrogOutput::MessageStoreList(messages))?;
+            let local_user = DartfrogOutput::LocalUser(state.profile.clone(), state.activity.clone(), state.activity_setting.clone());
+            update_consumer(channel_id, local_user)?;
+            state.save(); // Save after adding a new consumer
+        }
+        HttpServerRequest::WebSocketPush { channel_id, message_type} => {
+            // take the opportunity to kill any old consumers
+            // TODO this is weird if the calling consumer times out
+            state.consumers.retain(|_, consumer| {
+                get_now() - consumer.last_active <= CONSUMER_TIMEOUT
+            });
+            state.activity = PeerActivity::Online(get_now());
+
+            if message_type == WsMessageType::Close {
+                state.consumers.remove(&channel_id);
+                state.save(); // Save after removing a consumer
+                return Ok(());
+            }
+            if message_type != WsMessageType::Binary {
+                return Ok(());
+            }
+            let Some(blob) = get_blob() else {
+                return Ok(());
+            };
+
+            let Ok(_s) = String::from_utf8(blob.bytes.clone()) else {
+                return Ok(());
+            };
+
+            match serde_json::from_slice(&blob.bytes)? {
+                DartfrogInput::RequestVersion => {
+                    let network_hub_address = get_server_address(NETWORK_HUB);
+                    poke(&network_hub_address, VersionControl::RequestVersion)?;
+                }
+                DartfrogInput::SetProfile(profile) => {
+                    state.profile = profile;
+                    let local_user = DartfrogOutput::LocalUser(state.profile.clone(), state.activity.clone(), state.activity_setting.clone());
+                    update_consumer(channel_id, local_user)?;
+                    state.save(); // Save after updating profile
+                },
+                DartfrogInput::CreateService(service_name, process_name, access, visibility, whitelist) => {
+                    let address_str = format!("{}@{}", our.node, process_name);
+                    let address = Address::from_str(address_str.as_str());
+                    match address {
+                        Ok(address) => {
+                            // forward the request
+                            let req = ProviderInput::DartfrogRequest(DartfrogToProvider::CreateService(service_name, access, visibility, whitelist));
+                            poke(&address, req)?;
+                        }
+                        _ => {
+                        }
+                    }
+
+                },
+                DartfrogInput::DeleteService(id) => {
+                    let maybe_service_id = ServiceID::from_string(&id);
+                    match maybe_service_id {
+                        Some(service_id) => {
+                            // Delete the service locally
+                            state.local_services.remove(&id);
+                            
+                            // Forward the request
+                            let req = ProviderInput::DartfrogRequest(DartfrogToProvider::DeleteService(id));
+                            poke(&service_id.address, req)?;
+                            
+                            // Update all consumers with the new service list
+                            let services: Vec<Service> = state.local_services.values().cloned().collect();
+                            update_all_consumers(state, DartfrogOutput::LocalServiceList(services))?;
+                            
+                            state.save(); // Save after deleting a service
+                        }
+                        _ => {
+                            println!("failed to parse {:?}", id);
+                        }
+                    }
+                }
+                DartfrogInput::Heartbeat => {
+                    state.activity = PeerActivity::Online(get_now());
+                }
+                DartfrogInput::RequestLocalService(id) => {
+                    match state.local_services.get(&id) {
+                        Some(service) => {
+                            update_consumer(channel_id, DartfrogOutput::LocalService(service.clone()))?;
+                        }
+                        None => {
+                        }
+                    }
+                },
+                DartfrogInput::RequestLocalServiceList => {
+                    let services: Vec<Service> = state.local_services.values().cloned().collect();
+                    update_consumer(channel_id, DartfrogOutput::LocalServiceList(services))?;
+                }
+                DartfrogInput::LocalDeletePeer(node) => {
+                    match state.peers.get(&node) {
+                        Some(peer) => {
+                            state.peers.remove(&node);
+                            let peers: Vec<Peer> = state.peers.values().cloned().collect();
+                            update_consumer(channel_id, DartfrogOutput::PeerList(peers))?;
+                            state.save(); // Save after deleting a peer
+                        }
+                        None => {
+                        }
+                    }
+                },
+                DartfrogInput::LocalRequestPeer(node) => {
+                    match state.peers.get(&node) {
+                        Some(peer) => {
+                            update_consumer(channel_id, DartfrogOutput::Peer(peer.clone()))?;
+                        }
+                        None => {
+                        }
+                    }
+                },
+                DartfrogInput::LocalRequestAllPeers => {
+                    let peers: Vec<Peer> = state.peers.values().cloned().collect();
+                    update_consumer(channel_id, DartfrogOutput::PeerList(peers))?;
+                },
+                DartfrogInput::LocalFwdAllPeerRequests => {
+                    for peer in state.peers.values_mut() {
+                        let address = get_server_address(&peer.node);
+                        peer.outstanding_request = Some(get_now());
+                        poke(&address, DartfrogInput::RemoteRequestPeer)?;
+                    }
+                },
+                DartfrogInput::LocalFwdPeerRequest(node) => {
+                    if source.node != our.node { return Ok(()); }
+                    
+                    let peer = state.peers.entry(node.clone())
+                        .or_insert_with(|| Peer::new(node.clone()));
+                    
+                    peer.outstanding_request = Some(get_now());
+                    let update = DartfrogOutput::Peer(peer.clone());
+                    update_all_consumers(state, update)?;
+
+                    let address = get_server_address(&node);
+                    poke(&address, DartfrogInput::RemoteRequestPeer)?;
+                }
+                DartfrogInput::LocalDirectMessages(dm_request) => {
+                    match dm_request {
+                        LocalDirectMessagePoke::CreateMessageStore(node) => {
+                            if !state.messages.contains_key(&node) {
+                                let new_store = MessageStore::new(node.clone());
+                                state.messages.insert(node.clone(), new_store);
+                                update_all_consumers(state, DartfrogOutput::MessageStoreList(state.messages.values().cloned().collect()))?;
+                                state.save(); // Save after creating a new message store
+                            }
+                        },
+                        LocalDirectMessagePoke::SendMessage(node, message) => {
+                            let message_store = state.messages.entry(node.clone())
+                                .or_insert_with(|| MessageStore::new(node.clone()));
+                            
+                            let new_message = DirectMessage {
+                                id: SystemTime::now()
+                                    .duration_since(UNIX_EPOCH)
+                                    .unwrap()
+                                    .as_nanos()
+                                    .to_string(),
+                                from: our.node.clone(),
+                                is_unread: false,
+                                contents: message,
+                                time_received: get_now(),
+                            };
+                            
+                            message_store.history.push(new_message.clone());
+                            
+                            // Update local consumers
+                            update_all_consumers(state, DartfrogOutput::MessageStoreList(state.messages.values().cloned().collect()))?;
+                            
+                            // Send message to remote peer
+                            let remote_poke = RemoteDirectMessagePoke::SendMessage(new_message.id, new_message.contents);
+                            let address = get_server_address(&node);
+                            poke(&address, DartfrogInput::RemoteDirectMessages(remote_poke))?;
+                            
+                            state.save(); // Save after sending a message
+                        },
+                        LocalDirectMessagePoke::ClearUnreadMessageStore(node) => {
+                            if let Some(message_store) = state.messages.get_mut(&node) {
+                                for message in &mut message_store.history {
+                                    message.is_unread = false;
+                                }
+                                update_all_consumers(state, DartfrogOutput::MessageStoreList(state.messages.values().cloned().collect()))?;
+                                state.save(); // Save after clearing unread messages
+                            }
+                        },
+                    }
+                }
+                _ => {
+                }
+            }
+        }
+        HttpServerRequest::WebSocketClose(channel_id) => {
+            state.consumers.remove(&channel_id);
+            state.save(); // Save after removing a consumer
+        }
+        HttpServerRequest::Http(_request) => {
+        }
+    };
 
     Ok(())
 }
 
-// const IS_FAKE: bool = !cfg!(feature = "prod");
-// const SERVER_NODE: &str = if IS_FAKE { "fake.dev" } else { "waterhouse.os" };
+fn handle_request_peer(
+    our: &Address,
+    state: &mut DartfrogState,
+    source: &Address,
+    node: &String,
+) -> anyhow::Result<()> {
+    if our.node != source.node {
+        return Ok(());
+    }
+    // If we have it, send our current version of the peer
+    if let Some(peer) = state.peers.get_mut(node) {
+        peer.outstanding_request = Some(get_now());
+        let update = DartfrogToProvider::Peer(peer.clone());
+        update_provider_consumer(source, state, update)?;
+    } else {
+        // Insert a new peer if we don't have it
+        let mut new_peer = Peer::new(node.clone());
+        new_peer.outstanding_request = Some(get_now());
+        state.peers.insert(node.clone(), new_peer.clone());
+        let update = DartfrogToProvider::Peer(new_peer);
+        update_provider_consumer(source, state, update)?;
+    }
+    // Either way, send a remote request to the peer for its latest peer data
+    let address = get_server_address(node);
+    poke(&address, DartfrogInput::RemoteRequestPeer)?;
+    Ok(())
+}
 
-fn new_dart_state() -> DartState {
-    DartState {
-        client: new_client_state(),
-        server: new_server_state()
+fn handle_provider_output(
+    our: &Address,
+    state: &mut DartfrogState,
+    source: &Address,
+    app_message: ProviderOutput,
+) -> anyhow::Result<()> {
+    if source.node != our.node {
+        return Ok(());
+    }
+
+    match app_message {
+       ProviderOutput::DeleteService(id) => {
+            if id.address.node != source.node ||
+               id.address.process != source.process
+            {
+                // ignore
+                return Ok(())
+            }
+            if let Some(service) = state.local_services.remove(&id.to_string()) {
+                let update = DartfrogOutput::LocalServiceList(state.local_services.values().cloned().collect());
+                update_all_consumers(state, update)?;
+                state.save(); // Save after deleting a service
+            }
+        },
+        ProviderOutput::Service(service) => {
+            // source process == service process
+            if service.id.address.node != source.node ||
+               service.id.address.process != source.process
+            {
+                // ignore
+                return Ok(())
+            }
+            state.local_services.insert(service.id.to_string(), service.clone());
+            let update = DartfrogOutput::LocalService(service);
+            update_all_consumers(state, update)?;
+            state.save(); // Save after adding or updating a service
+        },
+        ProviderOutput::ServiceList(services) => {
+            for service in services {
+                if service.id.address.node == source.node &&
+                   service.id.address.process == source.process
+                {
+                    state.local_services.insert(service.id.to_string(), service.clone());
+                }
+            }
+            let update = DartfrogOutput::LocalServiceList(state.local_services.values().cloned().collect());
+            update_all_consumers(state, update)?;
+            state.save(); // Save after updating service list
+        },
+        ProviderOutput::RequestPeer(node) => {
+            if our.node != source.node {
+                return Ok(());
+            }
+            handle_request_peer(our, state, source, &node)?;
+        }
+        ProviderOutput::RequestPeerList(nodes) => {
+            if our.node != source.node {
+                return Ok(());
+            }
+            for node in nodes {
+                // TODO more efficient to respond with a peerlist instead of one at a time.
+                handle_request_peer(our, state, source, &node)?;
+            }
+        }
+        ProviderOutput::FrontendActivity => {
+            if our.node != source.node {
+                return Ok(());
+            }
+            state.activity = PeerActivity::Online(get_now());
+        }
+    }
+    Ok(())
+}
+
+fn handle_dartfrog_input(
+    our: &Address,
+    state: &mut DartfrogState,
+    source: &Address,
+    dartfrog_input: DartfrogInput,
+) -> anyhow::Result<()> {
+
+    match dartfrog_input {
+        DartfrogInput::LocalFwdAllPeerRequests => {
+            if source.node != our.node { return Ok(()); }
+            for peer in state.peers.values() {
+                let address = get_server_address(&peer.node);
+                poke(&address, DartfrogInput::RemoteRequestPeer)?;
+            }
+        },
+        DartfrogInput::LocalFwdPeerRequest(node) => {
+            if source.node != our.node { return Ok(()); }
+            
+            let peer = state.peers.entry(node.clone())
+                .or_insert_with(|| Peer::new(node.clone()));
+            
+            peer.outstanding_request = Some(get_now());
+            let update = DartfrogOutput::Peer(peer.clone());
+            update_all_consumers(state, update)?;
+
+            let address = get_server_address(&node);
+            poke(&address, DartfrogInput::RemoteRequestPeer)?;
+        }
+        DartfrogInput::RemoteRequestPeer => {
+            let address = get_server_address(&source.node());
+            let my_peer_data = PeerData {
+                profile: state.profile.clone(),
+                hosted_services: state.local_services.values()
+                    .filter(|service| matches!(service.meta.visibility, ServiceVisibility::Visible))
+                    .cloned()
+                    .collect(),
+                activity: state.activity.clone(),
+            };
+            poke(&address, DartfrogInput::RemoteResponsePeer(my_peer_data))?;
+        }
+        DartfrogInput::RemoteResponsePeer(peer_data) => {
+            let Some(local_peer) = state.peers.get_mut(source.node()) else {
+                return Ok(());
+            };
+            // println!("peer response {:?} {:?}", source.node(), peer_data);
+            match local_peer.outstanding_request {
+                None => {
+                }
+                Some(time) => {
+                    local_peer.peer_data = Some(peer_data);
+                    local_peer.outstanding_request = None;
+                    local_peer.last_updated = Some(get_now());
+                    let local_peer_clone = local_peer.clone();
+                    update_all_of_new_peer(state, local_peer_clone)?;
+                    state.save(); // Save after updating peer data
+                }
+            }
+        }
+        DartfrogInput::RemoteRequestAllPeerNodes => {
+            // Add the source.node as a new peer if it doesn't exist
+            if !state.peers.contains_key(&source.node) {
+                let new_peer = Peer::new(source.node.clone());
+                state.peers.insert(source.node.clone(), new_peer);
+                state.save(); // Save after adding a new peer
+            }
+
+            // Now collect all peer nodes, including the newly added one
+            let peer_nodes: Vec<String> = state.peers.keys().cloned().collect();
+            let address = get_server_address(&source.node());
+            poke(&address, DartfrogInput::RemoteResponseAllPeerNodes(peer_nodes))?;
+        }
+        DartfrogInput::RemoteResponseAllPeerNodes(nodes) => {
+            if Some(source.node.clone()) != state.network_hub { return Ok(()); }
+            
+            for node in nodes {
+                if !state.peers.contains_key(&node) {
+                    // Add new blank peer
+                    let mut new_peer = Peer::new(node.clone());
+                    new_peer.outstanding_request = Some(get_now());
+                    state.peers.insert(node.clone(), new_peer);
+                    
+                    // Contact the new peer
+                    let address = get_server_address(&node);
+                    poke(&address, DartfrogInput::RemoteRequestPeer)?;
+                }
+            }
+            
+            state.save(); // Save after adding new peers
+        }
+        DartfrogInput::RemoteDirectMessages(dm_request) => {
+            match dm_request {
+                RemoteDirectMessagePoke::SendMessage(id, text) => {
+                    let message_store = state.messages.entry(source.node.clone())
+                        .or_insert_with(|| MessageStore::new(source.node.clone()));
+                    
+                    let new_message = DirectMessage {
+                        id: id,
+                        from: source.node.clone(),
+                        is_unread: true,
+                        contents: text,
+                        time_received: get_now(),
+                    };
+                    
+                    message_store.history.push(new_message);
+                    // Update all consumers with the new message
+                    let message_store_clone = message_store.clone();
+                    update_all_consumers(state, DartfrogOutput::MessageStore(message_store_clone))?;
+                    
+                    state.save(); // Save after adding a new message
+                }
+            }
+        }
+        _ => {
+            // println!("unhandled DartfrogInput: {:?}", dartfrog_input);
+        }
+    }
+    Ok(())
+}
+
+fn handle_message(our: &Address, state: &mut DartfrogState) -> anyhow::Result<()> {
+    let message = await_message()?;
+
+    let body = message.body();
+    let source = message.source();
+    if !message.is_request() {
+        return Err(anyhow::anyhow!("unexpected Response: {:?}", message));
+    }
+    if message.source().node == our.node
+        && message.source().process == "http_server:distro:sys" {
+        handle_http_server_request(our, state, source, body)
+    } else {
+        if let Ok(app_message) = serde_json::from_slice::<ProviderOutput>(&body) {
+            handle_provider_output(our, state, source, app_message)?;
+        }
+        if let Ok(dartfrog_input) = serde_json::from_slice::<DartfrogInput>(&body) {
+            handle_dartfrog_input(our, state, source, dartfrog_input)?;
+        }
+        if let Ok(version_request) = serde_json::from_slice::<VersionControl>(&body) {
+            match version_request {
+                VersionControl::RequestVersion => {
+                    let address = get_server_address(&source.node);
+                    poke(&address, VersionControl::RequestVersionResponse(DARTFROG_VERSION.to_string()))?;
+                }
+                VersionControl::RequestVersionResponse(version_string) => {
+                    if source.node == NETWORK_HUB.to_string() {
+                        let update = DartfrogOutput::RequestVersionResponse(NETWORK_HUB.to_string(), version_string);
+                        update_all_consumers(state, update)?;
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 }
 
@@ -751,13 +668,10 @@ fn init(our: Address) {
     println!("initializing");
     
     // Serve the index.html and other UI files found in pkg/ui at the root path.
-    http::serve_ui(&our, "ui", true, false, vec!["/"]).unwrap();
+    http::secure_serve_ui(&our, "ui", vec!["/", "*"]).unwrap();
 
-    // // Allow HTTP requests to be made to /api; they will be handled dynamically.
-    // http::bind_http_path("/api", true, false).unwrap();
-
-    // Allow websockets to be opened at / (our process ID will be prepended).
-    http::bind_ws_path("/", true, false).unwrap();
+    // Allow websocket to be opened at / (our process ID will be prepended).
+    http::secure_bind_ws_path("/", true).unwrap();
 
     Request::to(("our", "homepage", "homepage", "sys"))
         .body(
@@ -766,7 +680,6 @@ fn init(our: Address) {
                     "label": "dartfrog",
                     "icon": constants::HOMEPAGE_IMAGE,
                     "path": "/",
-                    // "widget": get_widget(),
                 }
             })
             .to_string()
@@ -776,51 +689,23 @@ fn init(our: Address) {
         .send()
         .unwrap();
 
-    // let server = get_server_address(SERVER_NODE);
-    let mut state = new_dart_state();
+    let mut state = DartfrogState::load(&our);
+    if state.network_hub.is_none() {
+        state.network_hub = Some(NETWORK_HUB.to_string());
+    }
+    if !state.peers.contains_key(NETWORK_HUB) {
+        let network_hub_peer = Peer::new(NETWORK_HUB.to_string());
+        state.peers.insert(NETWORK_HUB.to_string(), network_hub_peer);
+    }
 
-    let drive_path: String = create_drive(our.package_id(), "dartfrog", None).unwrap();
-    state.server.drive_path = drive_path;
+    let network_hub_address = get_server_address(NETWORK_HUB);
+    poke(&network_hub_address, DartfrogInput::RemoteRequestAllPeerNodes).unwrap();
 
-    // let mut plugins = Vec::new();
-    // plugins.push("chat:dartfrog:herobrine.os".to_string());
-    // plugins.push("piano:dartfrog:herobrine.os".to_string());
-    // poke_server(&our, ServerRequest::CreateService(ServiceId {
-    //     node: our.node.clone(),
-    //     id: "chat".to_string()
-    // }, plugins)).unwrap();
+    state.save(); // Save initial state if changes were made
 
     loop {
-        match handle_message(&our, &mut state) {
-            Ok(()) => {}
-            Err(e) => {
-                println!("handle_message error: {:?}", e);
-            }
-        };
+        if let Err(e) = handle_message(&our, &mut state) {
+            println!("handle_message error: {:?}", e);
+        }
     }
-}
-
-fn update_client_consumer(update: ConsumerUpdate, client_node: String) -> anyhow::Result<()> {
-    update_client(ClientUpdate::ConsumerUpdate(update), client_node)
-}
-fn update_client(update: ClientUpdate, client_node: String) -> anyhow::Result<()> {
-    let address = get_server_address(&client_node);
-    Request::to(address)
-        .body(serde_json::to_vec(&DartMessage::ClientUpdate(update))?)
-        .send()?;
-    Ok(())
-}
-
-fn poke_server(address:&Address, req: ServerRequest) -> anyhow::Result<()> {
-    Request::to(address)
-        .body(serde_json::to_vec(&DartMessage::ServerRequest(req))?)
-        .send()?;
-    Ok(())
-}
-
-fn poke_plugin(address:&Address, poke: &PluginMessage) -> anyhow::Result<()> {
-    Request::to(address)
-        .body(serde_json::to_vec(poke)?)
-        .send()?;
-    Ok(())
 }

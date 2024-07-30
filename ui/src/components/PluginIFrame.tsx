@@ -1,30 +1,49 @@
 import React from 'react';
-import { ServiceId, Service } from '@dartfrog/puddle';
+// import { ServiceId, Service } from '@dartfrog/puddle';
+import useDartStore, { STANDARD_PLUGINS } from '../store/dart';
+import './PluginIFrame.css';
 
 interface PluginIFrameProps {
-  serviceId: ServiceId,
-  service: Service,
-  plugin: string,
-  addTab: (serviceId: ServiceId | null) => void;
+  // serviceId: ServiceId,
+  // service: Service,
+  // plugin: string,
+  // addTab: (serviceId: ServiceId | null) => void;
 }
 
 
-const PluginIFrame: React.FC<PluginIFrameProps> = ({serviceId, service, plugin, addTab}) => {
-  const [isPluginAvailable, setIsPluginAvailable] = React.useState(true);
+const PluginIFrame: React.FC<PluginIFrameProps> = ({}) => {
+  const [isThirdParty, setIsThirdParty] = React.useState(true);
 
-  React.useEffect(() => {
-    const checkPluginAvailability = async () => {
-      try {
-        const response = await fetch(`/${plugin}/?service=${serviceId}`);
-        if (!response.ok) throw new Error('Plugin not found');
-      } catch (error) {
-        console.log(error);
-        setIsPluginAvailable(false);
-      }
-    };
+  // const {setAuthDialog, setIsAuthDialogActive, authDialog} = useDartStore();
+// 
+  let baseOrigin = window.location.origin.split(".").slice(1).join(".");
 
-    checkPluginAvailability();
-  }, [plugin, serviceId]);
+  // React.useEffect(()=> {
+  //   setIsThirdParty(!(STANDARD_PLUGINS.includes(plugin)))
+  // }, [plugin])
+
+  // React.useEffect(() => {
+  //   const checkPluginAvailability = async () => {
+      // try {
+      //   const response = await fetch(`/${plugin}/?service=${serviceId}`);
+      //   if (!response.ok) {
+      //     setPluginStatus(PLUGIN_NOT_INSTALLED);
+      //   } else {
+      //     console.log("response ok", response)
+      //     setPluginStatus(PLUGIN_READY);
+      //   }
+      // } catch (error) {
+      //   if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      //     // This is likely a CORS error
+      //     setPluginStatus(PLUGIN_SECURE_SUBDOMAIN);
+      //   } else {
+      //     // ??
+      //     setPluginStatus(PLUGIN_NOT_INSTALLED);
+      //   }
+      // }
+    // };
+  //   checkPluginAvailability();
+  // }, [isThirdParty]);
 
   React.useEffect(() => {
     const messageListener = (event: MessageEvent) => {
@@ -32,26 +51,26 @@ const PluginIFrame: React.FC<PluginIFrameProps> = ({serviceId, service, plugin, 
         const dialogKey = 'dialogShown-' + event.data.url;
         if (!sessionStorage.getItem(dialogKey)) {
           let confirmed = window.confirm(`Open ${event.data.url}?`);
-          sessionStorage.setItem(dialogKey, 'true'); // Set flag in session storage
+          sessionStorage.setItem(dialogKey, 'true');
           if (confirmed) {
             let serviceId = event.data.url.slice(5, event.data.url.length);
-            addTab(serviceId);
+            // addTab(serviceId);
           }
           setTimeout(() => {
-            sessionStorage.removeItem(dialogKey); // Remove flag after a delay
-          }, 500); // Delay of 5000 milliseconds (5 seconds)
+            sessionStorage.removeItem(dialogKey);
+          }, 500);
         }
       } else if (event.data.type === 'open-http-url') {
         const dialogKey = 'dialogShown-' + event.data.url;
         if (!sessionStorage.getItem(dialogKey)) {
           let confirmed = window.confirm(`Open ${event.data.url}?`);
-          sessionStorage.setItem(dialogKey, 'true'); // Set flag in session storage
+          sessionStorage.setItem(dialogKey, 'true');
           if (confirmed) {
             window.open(event.data.url, '_blank');
           }
           setTimeout(() => {
-            sessionStorage.removeItem(dialogKey); // Remove flag after a delay
-          }, 500); // Delay of 5000 milliseconds (5 seconds)
+            sessionStorage.removeItem(dialogKey);
+          }, 500);
         }
       }
     };
@@ -63,25 +82,29 @@ const PluginIFrame: React.FC<PluginIFrameProps> = ({serviceId, service, plugin, 
     };
   }, []);
 
-  if (!isPluginAvailable) {
-    let [process, packageName, node] = plugin.split(":");
-    let fullPackageName = `${packageName}:${node}`;
-    return (
-      <div>
-        <div>{plugin} not found...</div>
+
+  if (isThirdParty) {
+      return (
         <div>
-          You may need to install <a href={`/main:app_store:sys/app-details/${fullPackageName}`}>{fullPackageName}</a> from the app store.
+          {/* <a href={`http://${baseOrigin}/${plugin}/?service=${serviceId}`} target="_blank" rel="noopener noreferrer"> */}
+          <div
+            className="open-secure-subdomain-link"
+          >
+            {/* open {plugin} in a new tab */}
+          </div>
+          {/* </a> */}
         </div>
-      </div>
-    );
+
+      )
   }
 
   return (
     <iframe 
-      src={`/${plugin}/?service=${serviceId}`} 
-      title={plugin}
+      // src={`/${plugin}/?service=${serviceId}`} 
+      // title={plugin}
     />
   );
 };
+
 
 export default PluginIFrame;

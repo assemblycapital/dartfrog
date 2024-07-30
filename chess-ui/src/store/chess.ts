@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId, parseServiceId } from '@dartfrog/puddle';
+import {ServiceApi} from '@dartfrog/puddle';
 import { Howl } from 'howler';
 
 export const PLUGIN_NAME = "chess:dartfrog:herobrine.os";
@@ -69,44 +69,23 @@ export function handleChessUpdate(chessState: ChessState | null, update: any): C
 
 
 export interface ChessStore {
-  serviceId: string | null,
-  setServiceId: (service: string) => void
-  api: DartApi | null,
-  setApi: (api: DartApi) => void
-  //
   chessState: ChessState | null,
   setChessState: (chessState: ChessState) => void
   //
-  sendChessRequest: (req: any) => void
-  // 
-  nameColors: Map<string, string>
-  addNameColor: (name:string, color:string) => void
+  sendChessRequest: (api: ServiceApi, req: any) => void
   // 
   get: () => ChessStore 
   set: (partial: ChessStore | Partial<ChessStore>) => void
 }
 
 const useChessStore = create<ChessStore>((set, get) => ({
-  serviceId: null,
-  setServiceId: (serviceId) => set({ serviceId }),
-  api: null,
-  setApi: (api) => set({ api }),
-  // 
   chessState: null,
   setChessState: (chessState) => set({ chessState }),
   // 
-  sendChessRequest: (req) => {
-    const { api, serviceId } = get();
+  sendChessRequest: (api, req) => {
     if (!api) { return; }
-    if (!serviceId) { return; }
-    api.pokePluginService(serviceId, PLUGIN_NAME, req);
-  },
-  // 
-  nameColors: new Map<string, string>(),
-  addNameColor: (name:string, color:string) => {
-    const { nameColors } = get()
-    nameColors[name] = color;
-    set({ nameColors: nameColors })
+    api.sendToService({"Chess":req})
+    // api.pokePluginService(serviceId, PLUGIN_NAME, req);
   },
   // 
   get,

@@ -1,49 +1,38 @@
 import { create } from 'zustand'
-import DartApi, { AvailableServices, ParsedServiceId, Service, ServiceId, parseServiceId } from '@dartfrog/puddle';
+import {ServiceApi} from '@dartfrog/puddle';
 
 export const PLUGIN_NAME = "piano:dartfrog:herobrine.os";
 
-
-
-
 export interface PianoStore {
-  serviceId: string | null,
-  setServiceId: (service: string) => void
-  api: DartApi | null,
-  setApi: (api: DartApi) => void
-  //
-  sendPlayNote: (text: string) => void
-  // 
-  nameColors: Map<string, string>
-  addNameColor: (name:string, color:string) => void
+  pianoState: PianoState
+  setPianoState: (pianoState: PianoState) => void
+  sendPlayNote: (text: string, api: ServiceApi) => void
   // 
   get: () => PianoStore 
   set: (partial: PianoStore | Partial<PianoStore>) => void
 }
 
+export type PianoState = {
+  notePlayed: {
+    note: string;
+    player: string;
+    timestamp: number;
+  } | null;
+}
+
+
 const usePianoStore = create<PianoStore>((set, get) => ({
-  serviceId: null,
-  setServiceId: (serviceId) => set({ serviceId }),
-  api: null,
-  setApi: (api) => set({ api }),
-  // 
-  sendPlayNote: (text) => {
-    const { api, serviceId } = get();
-    if (!api) { return; }
-    if (!serviceId) { return; }
-    let innerPluginRequest = 
+  pianoState: null,
+  setPianoState: (pianoState) => {set({pianoState})},
+  sendPlayNote: (text, api) => {
+    let req = 
       {
-      "PlayNote": 
-        text
+      "Piano": {
+        "PlayNote": 
+          text
       }
-    api.pokePluginService(serviceId, PLUGIN_NAME, innerPluginRequest);
-  },
-  // 
-  nameColors: new Map<string, string>(),
-  addNameColor: (name:string, color:string) => {
-    const { nameColors } = get()
-    nameColors[name] = color;
-    set({ nameColors: nameColors })
+    }
+    api.sendToService(req);
   },
   // 
   get,

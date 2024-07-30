@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import DisplayUserActivity from './DisplayUserActivity';
+import DisplayUserActivity from '@dartfrog/puddle/components/DisplayUserActivity';
 import ServiceConnectedRow from './ServiceConnectedRow';
 import "./ServiceConnectedDisplay.css"
-import ChessPluginBox from '../../../chess-ui/src/components/ChessPluginBox';
 
 
 const ServiceConnectedDisplay = ({ serviceId, service, addTab }) => {
@@ -17,7 +16,7 @@ const ServiceConnectedDisplay = ({ serviceId, service, addTab }) => {
     <div
       className="service-column"
       >
-        <ServiceConnectedRow serviceId={serviceId} service={service} plugins={plugins} addTab={addTab} />
+        {/* <ServiceConnectedRow serviceId={serviceId} service={service} plugins={plugins} addTab={addTab} /> */}
         {/* <DisplayUserActivity serviceId={serviceId} metadata={service.metadata} /> */}
     </div>
   );

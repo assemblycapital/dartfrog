@@ -1,25 +1,25 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { ServiceId, parseServiceId } from '@dartfrog/puddle';
+import { ServiceID } from '@dartfrog/puddle';
 import usePageStore from '../store/page';
+import useChatStore from '@dartfrog/puddle/store/chat';
 
-type PageState = {
-  page: string;
-};
 
 interface PagePluginBoxProps {
-  serviceId: ServiceId;
-  page: string;
 }
 
-const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, page }) => {
+const PagePluginBox: React.FC = ({ }) => {
   const [isAuthor, setIsAuthor] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const {page, sendPageEdit} = usePageStore();
   const [editableText, setEditableText] = useState(page);
-  const {sendPageEdit} = usePageStore();
+
+  const {api} = useChatStore();
+  const {serviceId} = useChatStore();
 
   useEffect(() => {
-    const parsedServiceId = parseServiceId(serviceId);
-    setIsAuthor(parsedServiceId.node === window.our?.node);
+    const parsedServiceId = ServiceID.fromString(serviceId);
+    if (!parsedServiceId) return;
+    setIsAuthor(parsedServiceId.hostNode() === window.our?.node);
   }, [serviceId]);
 
   useEffect(() => {
@@ -28,9 +28,9 @@ const PagePluginBox: React.FC<PagePluginBoxProps> = ({ serviceId, page }) => {
   }, [page]);
 
   const handleSave = useCallback(() => {
-    sendPageEdit(editableText);
+    sendPageEdit(api, editableText);
     setEditMode(false);  // Exit edit mode after save
-  }, [editableText, serviceId]);
+  }, [editableText, api]);
 
   const iframeView = (
     <iframe

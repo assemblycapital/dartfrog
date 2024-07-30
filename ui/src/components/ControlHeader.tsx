@@ -1,24 +1,29 @@
 import { useState, useEffect } from "react";
 import useDartStore from "../store/dart";
-import { HamburgerIcon, IconMail, IconMailUnread } from "./icons/Icons";
+import { HamburgerIcon, IconMail, IconMailUnread } from "@dartfrog/puddle/components/Icons";
+import { useNavigate } from "react-router-dom";
 import "./ControlHeader.css";
 
 interface ControlHeaderProps {
-  // setIsSidebarOpen: (isOpen: boolean) => void;
 }
 
 const ControlHeader: React.FC<ControlHeaderProps> = ({ }) => {
-  const { api, isClientConnected, isSidebarOpen, setIsSidebarOpen, hasUnreadInbox } = useDartStore();
+  const { api, isClientConnected, isSidebarOpen, setIsSidebarOpen,  } = useDartStore();
+  const navigate = useNavigate();
+
   return (
     <div className="control-header">
       <div className="control-header-left">
-        <a href="/" className='home-link control-header-button'>
+        <div
+          className='home-link control-header-button' 
+          onClick={() => navigate('/')}
+        >
           <span>home</span>
-        </a>
+        </div>
       </div>
       <div className="control-header-right">
         {!isClientConnected && <div className="connection-status">connecting...</div>}
-          <div className={`sidebar-toggle control-header-button ${isSidebarOpen ? 'active' : ''} ${hasUnreadInbox ? 'inbox-unread': ''}`}
+          <div className={`sidebar-toggle control-header-button ${isSidebarOpen ? 'active' : ''} `}
             onClick={() => {
               if (isSidebarOpen) {
                 setIsSidebarOpen(false);

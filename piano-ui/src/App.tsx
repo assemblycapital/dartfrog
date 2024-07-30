@@ -1,69 +1,48 @@
-import { useCallback, useEffect, useState, useRef } from "react";
-import { useLocation } from "react-router-dom";
-import Piano, { PianoState } from "./components/Piano/Piano";
-import "./App.css";
-import DartApi, { parseServiceId } from "@dartfrog/puddle";
-import { WEBSOCKET_URL, maybePlaySoundEffect } from "./utils";
-import usePianoStore, { PLUGIN_NAME } from "./store/piano";
+import "@dartfrog/puddle/components/App.css";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import NoServiceView from "@dartfrog/puddle/components/NoServiceView";
+import HalfChat from "@dartfrog/puddle/components/HalfChat";
+import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
+import Piano from "./components/Piano/Piano";
+import usePianoStore from "./store/piano";
+
 
 function App() {
-  const location = useLocation();
-  const {api, setApi, serviceId, setServiceId} = usePianoStore();
-  const [pianoState, setPianoState] = useState<PianoState>(null);
 
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const paramService = searchParams.get("service");
-
-    if (paramService) {
-      setServiceId(paramService);
-    } else {
-      setServiceId(null);
-    }
-
-  }, [location.search])
-
-  useEffect(() => {
-    if (!serviceId) {
-      return;
-    }
-    const api = new DartApi({
-      our: window.our,
-      websocket_url: WEBSOCKET_URL,
-      pluginUpdateHandler: {
-          plugin:PLUGIN_NAME,
-          serviceId,
-          handler:(pluginUpdate, service, source) => {
-            if (pluginUpdate["PlayNote"]) {
-              
-              const note = pluginUpdate["PlayNote"];
-              const newPianoState: PianoState = {
-                notePlayed: {
-                  note: note[1],
-                  player: note[0],
-                  timestamp: Date.now(),
-                },
-              };
-              setPianoState(newPianoState);
-
-            }
+  const {pianoState, setPianoState} = usePianoStore();
+  const onServiceMessage = (msg: any) => {
+    if (msg.Piano) {
+      if (msg.Piano.PlayNote) {
+        let [player, note] = msg.Piano.PlayNote;
+        setPianoState({
+          notePlayed: {
+            note,
+            player,
+            timestamp: Date.now(),
           }
-        },
-      onOpen: () => {
-        api.joinService(serviceId);
-        setApi(api);
-      },
-      onClose: () => {
-      },
-    });
-
-  }, [serviceId]);
-
+        });
+      }
+    }
+  }
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100%' }}>
-      <Piano serviceId={serviceId} pianoState={pianoState} />
-    </div>
+    <Router basename={`/${PROCESS_NAME}`}>
+      <Routes>
+        <Route path="/" element={
+          <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
+        } />
+        <Route path="/df/service/:id" element={
+          <HalfChat
+            ourNode={window.our.node}
+            Element={Piano}
+            processName={PROCESS_NAME}
+            websocketUrl={WEBSOCKET_URL}
+            onServiceMessage={onServiceMessage}
+            enableChatSounds
+           />
+        } />
+      </Routes>
+    </Router>
   );
 }
 

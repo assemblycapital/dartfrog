@@ -2,12 +2,13 @@
 resolver = "2"
 members = [
     "dartfrog",
+    "dartfrog_lib",
     "chat",
     "piano",
     "page",
     "chess",
-    "inbox",
-    "common",
+    "radio",
+    "forum",
 ]
 
 [profile.release]

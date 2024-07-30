@@ -1,0 +1,43 @@
+.service-create-shortcut {
+  display: inline-block;
+  margin-left: 0.3rem;
+  text-align:center;
+  padding: 0.3rem;
+  border: none;
+  width:5rem;
+  color: #ffffff66;
+  background-color: #1f1f1f;
+  border: 1px solid #333;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: background-color 0.25s, color 0.25s;
+}
+
+.toggle-advanced-options {
+  transition: background-color 0.25s, color  0.25s;
+  user-select: none;
+
+}
+.toggle-advanced-options:hover {
+  transition: background-color 0.25s, color  0.25s;
+  background-color:#2c2c2c
+}
+
+.service-create-shortcut:hover {
+  background-color: #191919;
+  color: #999;
+  transition: background-color 0.25s, color 0.25s;
+}
+.remove-plugin-selector {
+  display: inline-block;
+  border: none;
+  background-color: #1f1f1f;
+  cursor: pointer;
+  transition: background-color 0.25s;
+  width:27px;
+  height:27px;
+}
+
+.remove-plugin-selector:hover {
+  background-color: #181818;
+}

@@ -23,7 +23,9 @@
     "src",
     "../pkg/manifest.json",
     "../pkg/metadata.json",
-    "../puddle/**/*.ts", "../chess-ui/src/components/ChessPluginBox.tsx"],
+    "../puddle/**/*.ts",
+    "../puddle/index.ts"
+, "../puddle/components/Spinner.tsx", "../puddle/components/Icons.tsx", "../puddle/components/DisplayUserActivity.tsx"  ],
   "references": [
     { "path": "./tsconfig.node.json" }
   ]

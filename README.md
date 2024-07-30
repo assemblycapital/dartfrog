@@ -1,6 +1,6 @@
 # dartfrog
 
-dartfrog is a realtime chat app on kinode.
+dartfrog is a multiplayer app framework and browser on kinode.
 
 build for production
 ```bash

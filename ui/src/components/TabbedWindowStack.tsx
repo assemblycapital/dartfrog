@@ -1,20 +1,20 @@
 import React from 'react';
 import ServiceTab from './ServiceTab';
-import NewTab from './NewTab/NewTab';
 
-import useDartStore, { Tab } from '../store/dart';
+import useDartStore from '../store/dart';
 import TabbedWindow from './TabbedWindow';
 interface TabbedWindowStackProps {
 }
 
 const TabbedWindowStack: React.FC<TabbedWindowStackProps> = ({ }) => {
-  const { tabs, activeTabIndex, services, setTabs, setActiveTabIndex, addTab, closeTab, setFromNewTab, joinService, exitService } = useDartStore();
+  // const { tabs, activeTabIndex, services, setTabs, setActiveTabIndex, addTab, closeTab, setFromNewTab, joinService, exitService } = useDartStore();
 
   return (
     <div style={{ overflowY: 'auto', boxSizing: 'border-box', position: 'relative', height: '100%',
     overflowX: 'hidden',
 
     }}>
+{/* 
       {tabs.length === 0 ? (
         <div
           style={{
@@ -59,10 +59,12 @@ const TabbedWindowStack: React.FC<TabbedWindowStackProps> = ({ }) => {
               display: index === activeTabIndex ? 'inline-block' : 'none',
             }}
           >
-            <TabbedWindow tab={tab} />
           </div>
         ))
       )}
+    
+    */}
+
     </div>
   );
 };

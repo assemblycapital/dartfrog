@@ -522,7 +522,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
- "common",
+ "dartfrog_lib",
  "kinode_process_lib",
  "serde",
  "serde_json",
@@ -535,21 +535,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
- "common",
+ "dartfrog_lib",
  "kinode_process_lib",
  "serde",
  "serde_json",
  "wit-bindgen",
-]
-
-[[package]]
-name = "common"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "kinode_process_lib",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -620,11 +610,22 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
- "common",
+ "dartfrog_lib",
  "kinode_process_lib",
  "serde",
  "serde_json",
  "wit-bindgen",
+]
+
+[[package]]
+name = "dartfrog_lib"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "kinode_process_lib",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -795,6 +796,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e13624c2627564efccf4934284bdd98cbaa14e79b0b5a141218e507b3a823456"
 dependencies = [
  "percent-encoding",
+]
+
+[[package]]
+name = "forum"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "dartfrog_lib",
+ "kinode_process_lib",
+ "serde",
+ "serde_json",
+ "wit-bindgen",
 ]
 
 [[package]]
@@ -990,19 +1004,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "inbox"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bincode",
- "common",
- "kinode_process_lib",
- "serde",
- "serde_json",
- "wit-bindgen",
-]
-
-[[package]]
 name = "indexmap"
 version = "2.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1072,7 +1073,7 @@ dependencies = [
 [[package]]
 name = "kinode_process_lib"
 version = "0.8.0"
-source = "git+https://github.com/kinode-dao/process_lib?rev=43afdf4#43afdf42a8afd1dd52e423e4503d00d30032c380"
+source = "git+https://github.com/kinode-dao/process_lib?tag=v0.8.0#95a4b042939b760d58c4c4c4eb92f43e813fc1d2"
 dependencies = [
  "alloy-json-rpc",
  "alloy-primitives",
@@ -1218,7 +1219,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
- "common",
+ "dartfrog_lib",
  "kinode_process_lib",
  "serde",
  "serde_json",
@@ -1280,7 +1281,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
- "common",
+ "dartfrog_lib",
  "kinode_process_lib",
  "serde",
  "serde_json",
@@ -1421,6 +1422,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fa76aaf39101c457836aec0ce2316dbdc3ab723cdda1c6bd4e6ad4208acaca7"
 dependencies = [
  "proc-macro2",
+]
+
+[[package]]
+name = "radio"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "dartfrog_lib",
+ "kinode_process_lib",
+ "serde",
+ "serde_json",
+ "wit-bindgen",
 ]
 
 [[package]]

@@ -1,39 +1,37 @@
 import { useEffect, useState } from "react";
-import { AssemblyCapitalLogo } from "./icons/Icons";
-import { ConnectionStatusType, Service, ServiceId, ServiceConnectionStatusType } from "@dartfrog/puddle/index";
+import { AssemblyCapitalLogo } from "@dartfrog/puddle/components/Icons";
+import { ConnectionStatusType, ServiceConnectionStatusType } from "@dartfrog/puddle/index";
 import useDartStore from "../store/dart";
-import DisplayUserActivity from "./DisplayUserActivity";
+import DisplayUserActivity from "@dartfrog/puddle/components/DisplayUserActivity";
 
 const Footer = () => {
 
-  const { services, tabs, activeTabIndex } = useDartStore();
-  const [serviceId, setServiceId] = useState<ServiceId | null>(null);
-  const [service, setService] = useState<Service | null>(null);
+  const {  } = useDartStore();
 
-  useEffect(() => {
-    let tab = tabs[activeTabIndex];
-    if (tab) {
-      setServiceId(tab.serviceId);
-    }
-  }, [tabs, activeTabIndex]);
+  // useEffect(() => {
+  //   let tab = tabs[activeTabIndex];
+  //   if (tab) {
+  //     setServiceId(tab.serviceId);
+  //   }
+  // }, [tabs, activeTabIndex]);
 
-  useEffect(() => {
-    if (!(services instanceof Map)) return;
-    const gotService = services.get(serviceId);
-    if (gotService) {
-      setService({ ...gotService });
-    } else {
-      setService(null);
-    }
-  }, [services, serviceId]);
+  // useEffect(() => {
+  //   if (!(services instanceof Map)) return;
+  //   const gotService = services.get(serviceId);
+  //   if (gotService) {
+  //     setService({ ...gotService });
+  //   } else {
+  //     setService(null);
+  //   }
+  // }, [services, serviceId]);
 
-  if (serviceId !== null && (service !== null && service.connectionStatus.status === ServiceConnectionStatusType.Connected)) {
-    return (
-      <>
-        <DisplayUserActivity serviceId={serviceId} metadata={service?.metadata}/>
-      </>
-    )
-  }
+  // if (serviceId !== null && (service !== null && service.connectionStatus.status === ServiceConnectionStatusType.Connected)) {
+  //   return (
+  //     <>
+  //       <DisplayUserActivity serviceId={serviceId} metadata={service?.metadata}/>
+  //     </>
+  //   )
+  // }
 
   return (
     <div

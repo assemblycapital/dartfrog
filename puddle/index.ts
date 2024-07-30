@@ -1,5 +1,5 @@
 import KinodeClientApi from "@kinode/client-api";
-export * from './utils';
+// export * from './utils';
 
 export enum ConnectionStatusType {
   Connecting,
@@ -12,10 +12,33 @@ export type ConnectionStatus = {
   timestamp: number
 }
 
-export type PluginUpdateSource = "client" | "service";
-export type PluginUpdateHandler = (json: string | Blob, service: Service, source: PluginUpdateSource) => void;
+export class ServiceConnectionStatus {
+  constructor(
+    public status: ServiceConnectionStatusType,
+    public timestamp: number
+  ) {}
 
-export type PluginUpdateHandlers = Map<PluginId, PluginUpdateHandler>;
+  toString(): string {
+    switch (this.status) {
+      case ServiceConnectionStatusType.Connecting:
+        return "Connecting";
+      case ServiceConnectionStatusType.Connected:
+        return "Connected";
+      case ServiceConnectionStatusType.Disconnected:
+        return "Disconnected";
+      case ServiceConnectionStatusType.ServiceDoesNotExist:
+        return "ServiceDoesNotExist";
+      case ServiceConnectionStatusType.Kicked:
+        return "Kicked";
+      case ServiceConnectionStatusType.ServiceDeleted:
+        return "ServiceDeleted";
+      case ServiceConnectionStatusType.AccessDenied:
+        return "AccessDenied";
+      default:
+        return "Unknown Status";
+    }
+  }
+}
 
 export enum ServiceConnectionStatusType {
   Connecting,
@@ -23,487 +46,108 @@ export enum ServiceConnectionStatusType {
   Disconnected,
   ServiceDoesNotExist,
   Kicked,
+  ServiceDeleted,
   AccessDenied,
-}
-
-export type ServiceConnectionStatus = {
-  status: ServiceConnectionStatusType,
-  timestamp: number
-}
-
-export type ParsedServiceId = {
-  node: string,
-  id: string
-}
-export type ServiceId = string;
-export type PluginId = string;
-
-export type Service = {
-  serviceId: ParsedServiceId,
-  connectionStatus: ServiceConnectionStatus,
-  metadata: ServiceMetadata,
-  heartbeatIntervalId?: NodeJS.Timeout,
-}
-export interface Presence {
-  time: number;
-}
-
-export type ServiceAccess = 'Public' | 'Whitelist' | 'HostOnly';
-export type ServiceVisibility = 'Visible' | 'VisibleToHost' | 'Hidden';
-export interface ServiceMetadata {
-  subscribers: Array<string>;
-  user_presence: { [key: string]: Presence };
-  plugins: Array<string>;
-  last_sent_presence: number;
-  access: ServiceAccess;
-  visibility: ServiceVisibility;
-  whitelist: Array<string>;
-}
-
-export type Services = Map<ServiceId, Service>;
-
-export const makeServiceId = (node: string, id: string) => {
-  return `${id}.${node}`;
-}
-
-export const parseServiceId = (serviceId: string) => {
-  const split = serviceId.split('.');
-  let tlz = split.slice(-1)[0];
-  let node_sub = split.slice(-2,-1)[0];
-  let id = split.slice(0,-2).join('.');
-  const node = `${node_sub}.${tlz}`
-  return { node, id };
-}
-
-export type PerNodeAvailableServices = Map<string, AvailableServices>  // node, available services
-export type AvailableServices = Map<string, ServiceMetadata> // serviceId, metadata
-
-function new_service(serviceId: ParsedServiceId) : Service {
-  return {
-    serviceId: serviceId,
-    metadata: {subscribers: [], user_presence: {}, plugins: [], last_sent_presence: 0, access: "Public", visibility: "Visible", whitelist: []},
-    connectionStatus: {status:ServiceConnectionStatusType.Connecting, timestamp:Date.now()},
-  }
 }
 
 interface ConstructorArgs {
   our: { node: string, process: string };
   websocket_url: string;
-  pluginUpdateHandlers?: PluginUpdateHandlers;
-  pluginUpdateHandler?: {plugin: string, serviceId: ServiceId, handler: PluginUpdateHandler}
-  onOpen?: () => void;
+  onOpen?: (api) => void;
   onClose?: () => void;
-  onServicesChangeHook?: (services: Services) => void;
-  onAvailableServicesChangeHook?: (availableServices: PerNodeAvailableServices) => void;
+  serviceId?: string;
+  onServiceConnectionStatusChange?: (api) => void;
+  onServiceMetadataChange?: (api) => void;
+  onServiceMessage?: (message: any) => void;
+  onClientMessage?: (message: any) => void;
+  onPeerMapChange?: (api) => void;
+  onLocalServicesChange?: (api) => void;
 }
 
-class DartApi {
+export class ServiceApi {
   private api: KinodeClientApi | null = null;
   public connectionStatus: ConnectionStatus;
-  private pluginUpdateHandlers: PluginUpdateHandlers;
-  private services: Map<ServiceId, Service> = new Map();
-  private availableServices: PerNodeAvailableServices = new Map();
   public our: { node: string, process: string };
   public websocket_url: string;
 
-  private onOpen: () => void;
+  public serviceId: string | null;
+  public serviceMetadata: ServiceMetadata | null;
+  public serviceConnectionStatus: ServiceConnectionStatus | null;
+  public peerMap: PeerMap = new Map();
+  public localServices = [];
+
+  private onOpen: (api) => void;
   private onClose: () => void;
-  private onServicesChangeHook: (services: Services) => void = () => {};
-  private onAvailableServicesChangeHook: (availableServices: PerNodeAvailableServices) => void = () => {};
-  private reconnectIntervalId?: NodeJS.Timeout;
+  private onServiceConnectionStatusChange: (api) => void;
+  private onServiceMetadataChange: (api) => void;
+  private onServiceMessage: (message: any) => void;
+  private onClientMessage: (message: any) => void;
+  private onPeerMapChange: (api) => void;
+  private onLocalServicesChange: (api) => void;
+
+  private heartbeatInterval: NodeJS.Timeout | null = null;
 
   constructor({
     our,
     websocket_url,
-    pluginUpdateHandlers = new Map(),
-    pluginUpdateHandler,
-    onOpen = () => {},
+    onOpen = (api) => {},
     onClose = () => {},
-    onServicesChangeHook = (services) => {},
-    onAvailableServicesChangeHook = (availableServices) => {},
+    serviceId = null,
+    onServiceConnectionStatusChange = (api) => {},
+    onServiceMetadataChange = (api) => {},
+    onServiceMessage = (message) => {},
+    onClientMessage = (message) => {},
+    onPeerMapChange = (api) => {},
+    onLocalServicesChange = (api) => {},
   }: ConstructorArgs) {
-    // console.log("init puddle")
-    this.pluginUpdateHandlers = pluginUpdateHandlers;
-    if (pluginUpdateHandler) {
-      // console.log("registerplugin handler", pluginUpdateHandler.serviceId, pluginUpdateHandler.plugin)
-      this.registerPluginUpdateHandler(pluginUpdateHandler.serviceId, pluginUpdateHandler.plugin, pluginUpdateHandler.handler);
-    }
     this.onOpen = onOpen;
     this.onClose = onClose;
-    this.onServicesChangeHook = onServicesChangeHook;
-    this.onAvailableServicesChangeHook = onAvailableServicesChangeHook;
-    this.setConnectionStatus(ConnectionStatusType.Connecting);
+    this.serviceId = serviceId;
+    this.onServiceConnectionStatusChange = onServiceConnectionStatusChange;
+    this.onServiceMetadataChange = onServiceMetadataChange;
+    this.onServiceMessage = onServiceMessage;
+    this.onClientMessage = onClientMessage;
+    this.onPeerMapChange = onPeerMapChange;
+    this.onLocalServicesChange = onLocalServicesChange;
     this.initialize(our, websocket_url);
-    this.onAvailableServicesChange();
-  }
-  private onServicesChange: () => void = () => {  
-    this.onServicesChangeHook(this.services);
-  }
-  private onAvailableServicesChange: () => void = () => {  
-    this.onAvailableServicesChangeHook(this.availableServices);
-  }
-
-  public make_plugin_id(serviceId: ServiceId, plugin: string) {
-    return `${plugin}.${serviceId}`;
-  }
-  public registerPluginUpdateHandler(serviceId: ServiceId, plugin: string, handler: PluginUpdateHandler) {
-    let pluginId = this.make_plugin_id(serviceId, plugin);
-    this.pluginUpdateHandlers.set(pluginId, handler);
-  }
-
-  private setConnectionStatus(status: ConnectionStatusType) {
-    this.connectionStatus = {status:status, timestamp:Date.now()};
-  }
-
-  private updateHandler(json: string | Blob) {
-    if (typeof json !== 'string') {
-        return;
-    }
-    
-    let parsedJson;
-    try {
-        parsedJson = JSON.parse(json);
-    } catch (error) {
-        console.error('Failed to parse JSON:', error);
-        return;
-    }
-
-    if (parsedJson.FromClient) {
-        this.handleClientUpdate(parsedJson.FromClient);
-    } else if (parsedJson.FromServer) {
-        this.handleServerUpdate(parsedJson.FromServer);
-    } else if (parsedJson.FromService) {
-        this.handleServiceUpdate(parsedJson.FromService);
-    } else {
-        console.warn('Unknown message format:', parsedJson);
-    }
-  }
-
-  private handleClientUpdate(message: any) {
-      if (message.Todo) {
-          // console.log('Client TODO:', message.Todo);
-          // Add your logic to handle the client message here
-          // For example, if message.Todo is "clientmodule created your service, poking server"
-      } else {
-          console.warn('Unknown client message:', message);
-      }
-  }
-
-  private handleServerUpdate(message: any) {
-      if (Array.isArray(message) && message.length > 1) {
-          const [address, response] = message;
-          // console.log('Server Address:', address);
-          // console.log('Server Response:', response);
-
-          if (response.NoSuchService) {
-              // Add your logic to handle the NoSuchService response here
-              let serviceId : ServiceId = makeServiceId(address, response.NoSuchService);
-              let service = this.services.get(serviceId);
-              if (!service) { return; }
-              service.connectionStatus = {status:ServiceConnectionStatusType.ServiceDoesNotExist, timestamp:Date.now()};
-              this.services.set(serviceId, service);
-              this.onServicesChange();
-
-          } else if (response.ServiceList) {
-              // console.log('Service List:', address, response.ServiceList);
-              // Add your logic to handle the ServiceList response here
-              // for (let serviceId of Array.from(response.ServiceList.keys())) {
-
-              // }
-              let newServices = new Map()
-              // console.log(response.ServiceList)
-              let serviceIds = Object.keys(response.ServiceList);
-              for (let serviceId of serviceIds) {
-                newServices.set(serviceId, response.ServiceList[serviceId]);
-              }
-              // for (let serviceId of Array.from(response.ServiceList.keys())) {
-              //   newServices.set(serviceId, response.ServiceList.get(serviceId));
-              // }
-              this.availableServices.set(address, newServices);
-              this.onAvailableServicesChange();
-          } else {
-              console.warn('Unknown server response:', response);
-          }
-      } else {
-          console.warn('Unknown server message format:', message);
-      }
-  }
-
-
-  private handleServiceUpdate(message: any) {
-    if (Array.isArray(message) && message.length > 2) {
-        const [service_node, service_name, response] = message;
-        let serviceId : ServiceId = makeServiceId(service_node, service_name);
-        let service = this.services.get(serviceId);
-
-        if (!service) {
-          console.log("Service not found", serviceId);
-          return;
-        }
-        
-        service.connectionStatus = {status:ServiceConnectionStatusType.Connected, timestamp:Date.now()};
-        if (response === "SubscribeAck") {
-          this.services.set(serviceId, service);
-          this.onServicesChange();
-        } else if (response.ServiceMetadata) {
-          service.metadata = response.ServiceMetadata;
-          this.services.set(serviceId, service);
-          for (let user of Object.keys(response.ServiceMetadata.user_presence)) {
-            if (!this.availableServices.has(user)) {
-              this.requestServiceList(user);
-              this.onAvailableServicesChange();
-            }
-          }
-          this.onServicesChange();
-        } else if (response === 'ServiceDeleted') {
-          service.connectionStatus = {status:ServiceConnectionStatusType.Kicked, timestamp:Date.now()};
-          this.cancelPresenceHeartbeat(serviceId);
-          // TODO?
-          // this.services.delete(serviceId);
-          this.onServicesChange();
-        } else if (response === 'Kick') {
-          service.connectionStatus = {status:ServiceConnectionStatusType.Kicked, timestamp:Date.now()};
-          this.cancelPresenceHeartbeat(serviceId);
-          // TODO?
-          // this.services.delete(serviceId);
-          this.onServicesChange();
-        } else if (response === 'AccessDenied') {
-          service.connectionStatus = {status:ServiceConnectionStatusType.AccessDenied, timestamp:Date.now()};
-          this.cancelPresenceHeartbeat(serviceId);
-          // TODO?
-          // this.services.delete(serviceId);
-          this.onServicesChange();
-        } else if (response.MessageFromPluginClient) {
-          const [plugin_name, update] = response.MessageFromPluginClient;
-          // call pluginUpdateHandler if it exists
-          let pluginId = this.make_plugin_id(serviceId, plugin_name);
-          const pluginUpdateHandler = this.pluginUpdateHandlers.get(pluginId);
-          if (pluginUpdateHandler) {
-              let parsedUpdate = JSON.parse(update);
-              pluginUpdateHandler(parsedUpdate, service, "client");
-          } else {
-            // console.warn("no plugin update handler for", pluginId);
-          }
-        } else if (response.MessageFromPluginServiceToFrontend) {
-          const [plugin_name, update] = response.MessageFromPluginServiceToFrontend;
-          // call pluginUpdateHandler if it exists
-          let pluginId = this.make_plugin_id(serviceId, plugin_name);
-          const pluginUpdateHandler = this.pluginUpdateHandlers.get(pluginId);
-          if (pluginUpdateHandler) {
-              let parsedUpdate = JSON.parse(update);
-              pluginUpdateHandler(parsedUpdate, service, "service");
-          } else {
-          }
-        } else {
-          console.warn('Unknown service message format:', message);
-        }
-    }
-}
-
-
-
-  startPresenceHeartbeat(serviceId: ServiceId) {
-    const service = this.services.get(serviceId);
-    if (!service) {
-      console.log("Service not found", serviceId)
-      return;
-    }
-
-    // Clear any existing interval to avoid multiple timers
-    this.cancelPresenceHeartbeat(serviceId);
-
-    // Call presenceHeartbeat immediately
-    this.presenceHeartbeat(serviceId);
-
-    // Set an interval to call presenceHeartbeat
-    service.heartbeatIntervalId = setInterval(() => {
-      this.presenceHeartbeat(serviceId);
-    }, 60*1000);
-  }
-
-  // Method to stop the heartbeat timer
-  cancelPresenceHeartbeat(serviceId: ServiceId) {
-    const service = this.services.get(serviceId);
-    if (service && service.heartbeatIntervalId) {
-      clearInterval(service.heartbeatIntervalId);
-      service.heartbeatIntervalId = undefined;
-    }
-  }
-
-  // Your presenceHeartbeat method
-  presenceHeartbeat(serviceId: ServiceId) {
-    // Add your logic to send the presence heartbeat here
-    let parsedServiceId = parseServiceId(serviceId);
-    const request =  { "ServiceHeartbeat": { "node": parsedServiceId.node, "id": parsedServiceId.id } }
-    // console.log("sending presence", serviceId);
-    this.sendRequest(request);
-  }
-
-  public close() {
-    if (!this.api) { return; }
-    const wrapper = {
-      "ClientRequest": {
-        "DeleteConsumer": 0
-      }
-    }
-
-    this.api.send({ data:wrapper });
-  }
-  sendPoke(data: any) {
-    if (!this.api) { return; }
-    this.api.send({ data });
-  }
-
-  sendRequest(req: any) {
-    if (!this.api) { return; }
-    const wrapper = {
-      "ClientRequest": {
-        "ConsumerRequest": [0, req]
-      }
-    }
-
-    try {
-      this.api.send({ data:wrapper });
-    } catch (error) {
-      console.error('Failed to send request:', error);
-    }
-  }
-
-  pokeService(parsedServiceId: ParsedServiceId, data: any) {
-    const request =  { "SendToService": 
-      [
-        { "node": parsedServiceId.node, "id": parsedServiceId.id },
-        data,
-      ]
-    }
-     this.sendRequest(request);
-  }
-
-  pokePluginService(serviceId: ServiceId, plugin: string, innerPluginRequest: any) {
-    const wrap = {
-      "PluginRequest": [
-        plugin,
-        JSON.stringify(innerPluginRequest)
-      ]
-    }
-    let parsedServiceId = parseServiceId(serviceId);
-    this.pokeService(parsedServiceId, wrap);
-  }
-
-  pokePluginClient(serviceId: ServiceId, plugin: string, innerPluginRequest: any) {
-    let parsedServiceId = parseServiceId(serviceId);
-    const request =  { "SendToPluginClient": 
-      [
-        { "node": parsedServiceId.node, "id": parsedServiceId.id },
-        plugin,
-        JSON.stringify(innerPluginRequest)
-      ]
-    }
-    this.sendRequest(request);
-  }
-
-  sendCreateServiceRequest(serviceId: ParsedServiceId, plugins: Array<String>, visibility: ServiceVisibility, access: ServiceAccess, whitelist: Array<String>) {
-    if (!this.api) { return; }
-    // console.log("Sending create service request", serviceId, plugins)
-    const wrapper = {
-      "ServerRequest": {
-        "CreateService": [
-          { "node": serviceId.node, "id": serviceId.id },
-          plugins,
-          visibility,
-          access,
-          whitelist
-        ]
-      }
-    }
-
-    this.api.send({ data:wrapper });
-  }
-
-  sendDeleteServiceRequest(serviceId: ParsedServiceId) {
-    if (!this.api) { return; }
-    const wrapper = {
-      "ServerRequest": {
-        "DeleteService": { "node": serviceId.node, "id": serviceId.id}
-      }
-    }
-
-    this.api.send({ data:wrapper });
-  }
-
-  public joinService(serviceId: ServiceId) {
-    let parsedServiceId = parseServiceId(serviceId);
-    this._joinService(parsedServiceId);
-  }
-  public _joinService(serviceId: ParsedServiceId) {
-    const request =  { "JoinService": { "node": serviceId.node, "id": serviceId.id } }
-    let rawServiceId = makeServiceId(serviceId.node, serviceId.id);
-    if (this.services.has(rawServiceId)) {
-      // console.log("Service already exists", rawServiceId);
-      return;
-    }
-
-    this.services.set(makeServiceId(serviceId.node, serviceId.id), new_service(serviceId));
-    this.onServicesChange();
-    this.sendRequest(request);
-    this.startPresenceHeartbeat(rawServiceId);
-  }
-
-  public exitService(serviceId: ServiceId) {
-    let parsedServiceId = parseServiceId(serviceId);
-    this._exitService(parsedServiceId);
-  }
-  public _exitService(parsedServiceId: ParsedServiceId) {
-    let serviceId = makeServiceId(parsedServiceId.node, parsedServiceId.id);
-    if (!this.services.has(serviceId)) {
-      console.log("Service not found", serviceId);
-      return;
-    }
-    this.cancelPresenceHeartbeat(serviceId);
-    this.services.delete(serviceId);
-    this.onServicesChange();
-    const request =  { "ExitService": { "node": parsedServiceId.node, "id": parsedServiceId.id } }
-    this.sendRequest(request);
-  }
-
-  requestServiceList(serverNode: string) {
-    const request =  { "RequestServiceList": serverNode }
-    this.sendRequest(request);
-  }
-  requestAllInServiceList() {
-    for (let serverNode of Array.from(this.availableServices.keys())) {
-      this.requestServiceList(serverNode);
-    }
   }
   private initialize(our, websocket_url) {
-    // console.log("Attempting to connect to Kinode...");
+    // console.log("Attempting to connect to Kinode...", our, websocket_url);
     if (!(our.node && our.process)) {
+      // console.log("exit", our.node, our.process)
       return;
     }
+    this.serviceMetadata = null;
+    this.serviceConnectionStatus = null;
+
     const newApi = new KinodeClientApi({
       uri: websocket_url,
       nodeId: our.node,
-      processId: "dartfrog:dartfrog:herobrine.os",
+      processId: our.process,
       onClose: (event) => {
-        console.log("Disconnected from Kinode");
         this.setConnectionStatus(ConnectionStatusType.Disconnected);
         this.onClose();
-        // Set a timeout to attempt reconnection
-        setTimeout(() => {
-          this.initialize(our, websocket_url);
-        }, 5000); // Retry every 5 seconds
-      },
-      onOpen: (event, api) => {
-        // console.log("Connected to Kinode");
-        this.onOpen();
-        this.setConnectionStatus(ConnectionStatusType.Connected);
-        if (this.reconnectIntervalId) {
-          clearInterval(this.reconnectIntervalId);
-          this.reconnectIntervalId = undefined;
+        if (this.heartbeatInterval) {
+          clearInterval(this.heartbeatInterval);
+          this.heartbeatInterval = null;
         }
       },
-      onMessage: (json, api) => {
+      onOpen: (event, api) => {
+        console.log("Connected to Kinode");
+        this.onOpen(this);
+        if (this.serviceId) {
+          this.setServiceConnectionStatus(ServiceConnectionStatusType.Connecting);
+          this.onServiceConnectionStatusChange(this);
+          this.setService(this.serviceId);
+        }
+
+        this.heartbeatInterval = setInterval(() => {
+          this.sendHeartbeat();
+        }, 60*1000);
+
         this.setConnectionStatus(ConnectionStatusType.Connected);
+      },
+      onMessage: (json, api) => {
         this.updateHandler(json);
       },
       onError: (event) => {
@@ -512,32 +156,504 @@ class DartApi {
     });
 
     this.api = newApi;
-    if (this.connectionStatus.status !== ConnectionStatusType.Connected) {
-      this.reconnectIntervalId = setInterval(() => {
-        if (this.connectionStatus.status !== ConnectionStatusType.Connected) {
-          this.initialize(our, websocket_url);
+  }
+
+  private setConnectionStatus(status: ConnectionStatusType) {
+    this.connectionStatus = {
+      status,
+      timestamp: Date.now(),
+    };
+  }
+
+  private setServiceConnectionStatus(status: ServiceConnectionStatusType) {
+    this.serviceConnectionStatus = new ServiceConnectionStatus(status, Date.now());
+    this.onServiceConnectionStatusChange(this);
+  }
+
+  public sendRequest(json:any) {
+    if (!(this.api)) {
+      return;
+    }
+    this.api.send({data:json})
+  }
+
+  public sendToService(data:any) {
+    let req = {"Channel":
+                {"MessageServer":
+                  JSON.stringify(data)
+                }
+              };
+    this.sendRequest(req);
+  }
+
+  public sendHeartbeat() {
+    let req = {"Channel": "Heartbeat"};
+    this.sendRequest(req);
+  }
+
+  public unsubscribeService() {
+    let req = {"Meta": "Unsubscribe"}
+    this.sendRequest(req);
+  }
+  public setService(fullServiceId:string) {
+    let req = {"Meta": {"SetService": fullServiceId}}
+    this.sendRequest(req);
+  }
+
+  public createService(serviceName, access, visibility, whitelist) {
+    let req = {
+      "Meta" :
+      {
+      "CreateService": [
+        serviceName,
+        access,
+        visibility,
+        whitelist
+        ]
+      }
+  }
+    this.sendRequest(req)
+  }
+  public deleteService(name:string) {
+    let req = {"Meta": {"DeleteService": name}}
+    this.sendRequest(req);
+  }
+
+  public requestMyServices() {
+    let req = {"Meta": "RequestMyServices"}
+    this.sendRequest(req);
+  }
+
+  public requestPeer(node:string) {
+    let req = {"Meta": {
+      "RequestPeer":
+        node
+      }
+    }
+    this.sendRequest(req);
+  }
+
+  public requestPeerList(nodeList: string[] ) {
+    let req = {"Meta": {
+      "RequestPeerList":
+        nodeList
+      }
+    }
+    this.sendRequest(req);
+  }
+
+  private updateHandler(jsonString: any) {
+    const data = JSON.parse(jsonString)
+
+    if (data["Meta"]) {
+      const metaUpd = data["Meta"]
+      // TODO
+      if (metaUpd["Peer"]) {
+        const jsonPeer = metaUpd["Peer"]
+        let peer = peerFromJson(jsonPeer);
+        this.peerMap.set(peer.node, peer)
+        this.onPeerMapChange(this);
+
+      } else if (metaUpd["MyServices"]) {
+        const myServices = metaUpd["MyServices"]
+        let parsedMyServices = []
+        for (const service of myServices) {
+          const parsedService = serviceFromJson(service);
+          parsedMyServices.push(parsedService)
         }
-      }, 5000);
+        this.localServices = parsedMyServices;
+        this.onLocalServicesChange(this);
+      } else {
+        console.log("todo handle metaupdate'", metaUpd)
+      }
+    } else if (data["Channel"]) {
+      const channelUpd = data["Channel"]
+      if (channelUpd === "SubscribeAck") {
+        this.setServiceConnectionStatus(ServiceConnectionStatusType.Connected);
+      } else if (channelUpd["SubscribeNack"]) {
+        const nack = channelUpd["SubscribeNack"]
+        if (nack === "ServiceDoesNotExist") {
+          this.setServiceConnectionStatus(ServiceConnectionStatusType.ServiceDoesNotExist);
+        } else if (nack === "AccessDenied") {
+          this.setServiceConnectionStatus(ServiceConnectionStatusType.AccessDenied);
+        }
+      } else if (channelUpd["Metadata"]) {
+        this.setServiceConnectionStatus(ServiceConnectionStatusType.Connected);
+        const meta = channelUpd["Metadata"]
+        const parsedMeta = serviceMetadataFromJson(meta);
+        this.serviceMetadata = parsedMeta;
+        this.onServiceMetadataChange(this);
+        // Collect nodes into a list and request them in a batch
+        const nodesToRequest: string[] = [];
+        parsedMeta.user_presence.forEach((_, node) => {
+          if (!this.peerMap.has(node)) {
+            this.peerMap.set(node, Peer.new(node));
+            nodesToRequest.push(node);
+          }
+        });
+        if (nodesToRequest.length > 0) {
+          this.requestPeerList(nodesToRequest);
+        }
+      } else if (channelUpd["Kick"]) {
+        const kick = channelUpd["Kick"]
+        if (kick === "ServiceDeleted")
+        this.setServiceConnectionStatus(ServiceConnectionStatusType.ServiceDeleted);
+
+      } else if (channelUpd["FromClient"]) {
+        const msg = JSON.parse(channelUpd["FromClient"])
+        this.onClientMessage(msg)
+      } else if (channelUpd["FromServer"]) {
+        const msg = JSON.parse(channelUpd["FromServer"])
+        this.onServiceMessage(msg)
+      } else {
+        console.log('unhandled update', data)
+      }
+
     }
   }
 }
 
-export function stringifyServiceConnectionStatus(status: ServiceConnectionStatusType): string {
-  switch (status) {
-    case ServiceConnectionStatusType.Connecting:
-      return "Connecting";
-    case ServiceConnectionStatusType.Connected:
-      return "Connected";
-    case ServiceConnectionStatusType.Disconnected:
-      return "Disconnected";
-    case ServiceConnectionStatusType.ServiceDoesNotExist:
-      return "ServiceDoesNotExist";
-    case ServiceConnectionStatusType.Kicked:
-      return "Kicked";
-    case ServiceConnectionStatusType.AccessDenied:
-      return "AccessDenied";
-    default:
-      return "Unknown Status";
+
+export type PeerMap = Map<string, Peer>;
+
+export type Address = string;
+
+export interface ServiceID {
+  name: string;
+  address: Address;
+}
+
+export class ServiceID {
+  constructor(public name: string, public address: Address) {}
+
+  toShortString(): string {
+    let [node, process] = this.address.split("@")
+    const res = `${this.name}:${node}`;
+    return res;
+  }
+
+  toString(): string {
+    const res = `${this.name}:${this.address}`;
+    return res;
+  }
+
+  hostNode(): string {
+    let [node, process] = this.address.split("@")
+    return node;
+  }
+  process(): string {
+    let [node, process] = this.address.split("@")
+    return process;
+  }
+
+  static fromString(s: string): ServiceID | null {
+    const parts = s.split(':');
+    if (parts.length < 2) {
+      return null;
+    }
+    const name = parts[0];
+    const address = parts.slice(1).join(':'); // Join parts 1 to n by ':'
+    if (!address) {
+      return null;
+    }
+    return new ServiceID(name, address);
   }
 }
-export default DartApi;
+
+export interface Service {
+  id: ServiceID;
+  meta: ServiceMetadata;
+}
+
+export class Service {
+  constructor(public id: ServiceID, public meta: ServiceMetadata) {}
+
+  static new(name: string, address: Address): Service {
+    return new Service(new ServiceID(name, address), ServiceMetadata.new());
+  }
+}
+
+export interface ServiceMetadata {
+  last_sent_presence: number | null;
+  subscribers: Array<string>;
+  user_presence: Map<string, number>;
+  access: ServiceAccess;
+  visibility: ServiceVisibility;
+  whitelist: Array<string>;
+}
+
+export class ServiceMetadata {
+  constructor({
+    last_sent_presence = null,
+    subscribers = new Array<string>(),
+    user_presence = new Map<string, number>(),
+    access = ServiceAccess.Public,
+    visibility = ServiceVisibility.Visible,
+    whitelist = new Array<string>()
+  }: {
+    last_sent_presence?: number | null,
+    subscribers?: Array<string>,
+    user_presence?: Map<string, number>,
+    access?: ServiceAccess,
+    visibility?: ServiceVisibility,
+    whitelist?: Array<string>
+  }) {
+    this.last_sent_presence = last_sent_presence;
+    this.subscribers = subscribers;
+    this.user_presence = user_presence;
+    this.access = access;
+    this.visibility = visibility;
+    this.whitelist = whitelist;
+  }
+
+  static new(): ServiceMetadata {
+    return new ServiceMetadata({});
+  }
+}
+
+export enum ServiceAccess {
+  Public = "Public",
+  Whitelist = "Whitelist",
+  HostOnly = "HostOnly",
+}
+
+export enum ServiceVisibility {
+  Visible = "Visible",
+  HostOnly = "HostOnly",
+  Hidden = "Hidden",
+}
+
+export interface JsonService {
+  id: {
+    name: string;
+    address: string;
+  };
+  meta: {
+    last_sent_presence: number | null;
+    subscribers: Array<string>;
+    user_presence: { [key: string]: number };
+    access: ServiceAccess;
+    visibility: ServiceVisibility;
+    whitelist: Array<string>;
+  };
+}
+
+export function serviceFromJson(jsonService: JsonService): Service {
+  return {
+    id: new ServiceID(jsonService.id.name, jsonService.id.address),
+    meta: serviceMetadataFromJson(jsonService.meta)
+  };
+}
+
+export function serviceMetadataFromJson(jsonMeta: JsonService['meta']): ServiceMetadata {
+  return new ServiceMetadata({
+    last_sent_presence: jsonMeta.last_sent_presence,
+    subscribers: jsonMeta.subscribers,
+    user_presence: new Map(Object.entries(jsonMeta.user_presence)),
+    access: jsonMeta.access,
+    visibility: jsonMeta.visibility,
+    whitelist: jsonMeta.whitelist,
+  });
+}
+
+export enum PeerActivityType {
+  Offline = "Offline",
+  Private = "Private",
+  Online = "Online",
+  RecentlyOnline = "RecentlyOnline",
+}
+
+export type PeerActivity = 
+  | { type: PeerActivityType.Private }
+  | { type: PeerActivityType.Online, timestamp: number }
+  | { type: PeerActivityType.Offline, timestamp: number }
+
+export function activityFromJson(jsonActivity: any): PeerActivity {
+  if (jsonActivity.Online !== undefined) {
+    return { type: PeerActivityType.Online, timestamp: jsonActivity.Online };
+  } else if (jsonActivity.Offline !== undefined) {
+    return { type: PeerActivityType.Offline, timestamp: jsonActivity.Offline };
+  } else if (jsonActivity === 'Private') {
+    return { type: PeerActivityType.Private };
+  } else {
+    throw new Error("Unknown activity type");
+  }
+}
+
+export enum ActivitySetting {
+  Public = "Public",
+  Private = "Private",
+}
+
+export enum NameColor {
+  Red = "Red",
+  Blue = "Blue",
+  Green = "Green",
+  Orange = "Orange",
+  Purple = "Purple",
+  Default = "Default",
+}
+
+export interface Profile {
+  bio: string;
+  nameColor: NameColor;
+  pfp?: string; // url
+}
+
+export function profileFromJson(jsonProfile: any): Profile {
+  return new Profile(
+    jsonProfile.bio,
+    jsonProfile.name_color,
+    jsonProfile.pfp
+  );
+}
+
+export class Profile {
+  constructor(public bio: string, public nameColor: NameColor, public pfp?: string) {}
+
+  static new(node: string): Profile {
+    return new Profile("", NameColor.Blue, undefined);
+  }
+}
+
+export interface PeerData {
+  hostedServices: Service[];
+  profile: Profile;
+  activity: PeerActivity;
+}
+
+export class Peer {
+  constructor(
+    public node: string,
+    public peerData: PeerData | null = null,
+    public outstandingRequest: number | null = null,
+    public lastUpdated: number | null = null
+  ) {}
+
+  static new(node: string): Peer {
+    return new Peer(
+      node,
+      null, // Initialize peerData as null
+      null, // Initialize outstandingRequest as null
+      null  // Initialize lastUpdated as null
+    );
+  }
+}
+
+export function peerFromJson(json: any): Peer {
+  const peerData: PeerData | null = json.peer_data ? {
+    hostedServices: json.peer_data.hosted_services.map((service: any) => serviceFromJson(service)),
+    profile: profileFromJson(json.peer_data.profile),
+    activity: activityFromJson(json.peer_data.activity)  // Use activityFromJson here
+  } : null;
+
+  return new Peer(
+    json.node,
+    peerData,
+    json.outstanding_request || null,
+    json.last_updated || null
+  );
+}
+
+export const dfLinkRegex = /^df:\/\/([a-zA-Z0-9\-]+):([a-zA-Z0-9\-]+\.[a-zA-Z0-9\-]+)@([a-zA-Z0-9\-]+):([a-zA-Z0-9\-]+):([a-zA-Z0-9\-]+\.[a-zA-Z0-9\-]+)$/;
+
+export function dfLinkToRealLink(dfLink: string, baseOrigin:string) {
+  return `http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/join/${dfLink.slice(5)}`
+}
+
+export function nodeProfileLink(node: string, baseOrigin:string) {
+  return `http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/nodes/${node}`
+}
+
+
+
+export const DEFAULT_PFP = 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/dartfrog256_small_nobg.png'
+export function getPeerPfp(peer: Peer | undefined): string {
+  if (peer && peer.peerData && peer.peerData.profile.pfp) {
+    return peer.peerData.profile.pfp
+  }
+  return DEFAULT_PFP;
+}
+export function getPeerNameColor(peer: Peer | undefined): string {
+  if (peer && peer.peerData) {
+    return getClassForNameColor(peer.peerData.profile.nameColor)
+  }
+  return 'name-color-default';
+}
+export function getClassForNameColor(nameColor: NameColor): string {
+  switch (nameColor) {
+    case NameColor.Red:
+      return 'name-color-red';
+    case NameColor.Blue:
+      return 'name-color-blue';
+    case NameColor.Green:
+      return 'name-color-green';
+    case NameColor.Orange:
+      return 'name-color-orange';
+    case NameColor.Purple:
+      return 'name-color-purple';
+    default:
+      return 'name-color-default';
+  }
+}
+
+
+export function getServiceRecencyText(service: Service) {
+  const now = new Date();
+  if (!(service.meta.last_sent_presence)) {
+    return "new"
+  }
+  const time = service.meta.last_sent_presence
+  const diff = now.getTime() - time*1000;
+
+  // if less than 5min, say now
+  // if less than 1h, say x min ago
+  // if less than 1d, say x hr ago
+  // else say x days ago
+  // if (service.meta.subscribers.length > 0) {
+  //   return `now`;
+  // }
+  return getRecencyText(diff);
+}
+
+export function getRecencyText(diff:number) {
+  if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)} hr ago`;
+  if (diff > 7307200000) {
+    const years = Math.floor(diff / 31536000000);
+    const months = Math.floor((diff % 31536000000) / 2592000000);
+    return `${years} yrs ${months} months ago`;
+  }
+  const days = Math.floor(diff / 86400000);
+  return days === 1 ? "1 day ago" : `${days} days ago`;
+}
+
+export function getAllServicesFromPeerMap(peerMap: PeerMap): Service[] {
+  const allServices: Service[] = [];
+  
+  peerMap.forEach(peer => {
+    if (peer.peerData && peer.peerData.hostedServices) {
+      allServices.push(...peer.peerData.hostedServices);
+    }
+  });
+
+  return allServices;
+}
+
+export function sortServices(services) {
+  return services.sort((a, b) => {
+    const subDiff = b.meta.subscribers.length - a.meta.subscribers.length;
+    if (subDiff !== 0) return subDiff;
+
+    const aMaxTime = a.meta.last_sent_presence ?? 0;
+    const bMaxTime = b.meta.last_sent_presence ?? 0;
+
+    return bMaxTime - aMaxTime;
+  });
+}
+
+export const getUniqueServices = (services) => {
+  return Array.from(new Set(services.map(service => service.id.toString())))
+    .map(id => services.find(service => service.id.toString() === id));
+};
+

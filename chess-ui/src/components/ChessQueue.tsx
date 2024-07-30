@@ -1,20 +1,23 @@
 import React from 'react';
 import useChessStore, { ChessState } from '../store/chess';
 import './ChessPluginBox.css';
+import useChatStore from '@dartfrog/puddle/store/chat';
+import { getPeerNameColor } from '@dartfrog/puddle';
 
 interface ChessQueueProps {
-  chessState: ChessState;
-  sendChessRequest: (request: any) => void;
-  serviceId: string;
 }
 
-const ChessQueue: React.FC<ChessQueueProps> = ({ chessState, sendChessRequest, serviceId }) => {
+const ChessQueue: React.FC<ChessQueueProps> = () => {
 
-  const { nameColors } = useChessStore();
+  const {api, peerMap} = useChatStore();
+  const { chessState, sendChessRequest } = useChessStore();
   return (
     <div
       style={{
         marginBottom: "3rem",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
       }}
     >
       <div
@@ -48,7 +51,7 @@ const ChessQueue: React.FC<ChessQueueProps> = ({ chessState, sendChessRequest, s
             <div
               className='queue-button'
               onClick={() => {
-                sendChessRequest({ "Queue": "White" });
+                sendChessRequest(api, { "Queue": "White" });
                 if (chessState.queuedBlack === null) {  
                   const sound = new Audio('/chess:dartfrog:herobrine.os/assets/chess-queue.mp3');
                   sound.play();
@@ -62,9 +65,7 @@ const ChessQueue: React.FC<ChessQueueProps> = ({ chessState, sendChessRequest, s
               className='queue-button-disabled'
             >
               <span
-                style={{
-                  color: nameColors[chessState.queuedWhite],
-                }}
+                className={getPeerNameColor(peerMap.get(chessState.queuedWhite))}
               >
                 {chessState.queuedWhite}
               </span>
@@ -89,7 +90,7 @@ const ChessQueue: React.FC<ChessQueueProps> = ({ chessState, sendChessRequest, s
             <div
               className='queue-button'
               onClick={() => {
-                sendChessRequest({ "Queue": "Black" });
+                sendChessRequest(api, { "Queue": "Black" });
                 if (chessState.queuedWhite === null) {  
                   const sound = new Audio('/chess:dartfrog:herobrine.os/assets/chess-queue.mp3');
                   sound.play();
@@ -103,9 +104,7 @@ const ChessQueue: React.FC<ChessQueueProps> = ({ chessState, sendChessRequest, s
               className='queue-button-disabled'
             >
               <span
-                style={{
-                  color: nameColors[chessState.queuedBlack],
-                }}
+                className={getPeerNameColor(peerMap.get(chessState.queuedBlack))}
               >
                 {chessState.queuedBlack}
               </span>
