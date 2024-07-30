@@ -65,6 +65,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, showFullContents = false }) =
         display: "flex",
         flexDirection: "column",
         padding: "0.8rem",
+        border: post.is_sticky ? "1px solid #333" : "none",
       }}
       className="forum-post"
     >
@@ -113,6 +114,17 @@ const PostCard: React.FC<PostCardProps> = ({ post, showFullContents = false }) =
         >
           {getRecencyText(Date.now() - post.created_at * 1000)}
         </span>
+        {post.is_sticky &&
+          <span
+            style={{
+              fontSize: "0.7rem",
+              color: 'gray',
+            }}
+          >
+
+            (sticky)
+          </span>
+        }
       </div>
       <div
         style={{

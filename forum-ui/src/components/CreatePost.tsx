@@ -3,28 +3,41 @@ import useForumStore from "../store/forum";
 import { useNavigate } from "react-router-dom";
 import useChatStore from "@dartfrog/puddle/store/chat";
 import ForumHeader from "./ForumHeader";
+import { ServiceID } from "@dartfrog/puddle";
 
 const CreatePost: React.FC = () => {
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
   const [newPostLink, setNewPostLink] = useState('');
   const [newPostImage, setNewPostImage] = useState('');
-  const { createPost } = useForumStore();
+  const [isSticky, setIsSticky] = useState(false);
+  const { createPost, createStickyPost } = useForumStore();
   const { api, serviceId } = useChatStore();
   const navigate = useNavigate();
 
+  const parsedServiceId = ServiceID.fromString(serviceId);
+  const isAdmin = parsedServiceId.hostNode() === window.our?.node;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createPost(api, {
+    const postData = {
       title: newPostTitle,
       text_contents: newPostContent,
       link: newPostLink || undefined,
       image_url: newPostImage || undefined,
-    });
+    };
+
+    if (isSticky) {
+      createStickyPost(api, postData);
+    } else {
+      createPost(api, postData);
+    }
+
     setNewPostTitle('');
     setNewPostContent('');
     setNewPostLink('');
     setNewPostImage('');
+    setIsSticky(false);
     navigate("..")
   };
 
@@ -58,7 +71,7 @@ const CreatePost: React.FC = () => {
             borderRadius: "4px",
             margin: "0",
           }}
-            className="color-white"
+          className="color-white"
         />
         <textarea
           value={newPostContent}
@@ -66,6 +79,7 @@ const CreatePost: React.FC = () => {
           placeholder="Post content"
           required
           style={{
+            fontFamily: 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
             padding: "0.5rem",
             fontSize: "1rem",
             borderRadius: "4px",
@@ -73,7 +87,7 @@ const CreatePost: React.FC = () => {
             resize: "vertical",
             margin: "0",
           }}
-            className="color-white"
+          className="color-white"
         />
         <input
           type="url"
@@ -87,7 +101,7 @@ const CreatePost: React.FC = () => {
             border: "1px solid #333",
             backgroundColor: "#1f1f1f",
           }}
-            className="color-white"
+          className="color-white"
         />
         <input
           type="url"
@@ -101,8 +115,20 @@ const CreatePost: React.FC = () => {
             border: "1px solid #333",
             backgroundColor: "#1f1f1f",
           }}
-            className="color-white"
+          className="color-white"
         />
+        {isAdmin && (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <input
+              type="checkbox"
+              id="stickyToggle"
+              checked={isSticky}
+              onChange={(e) => setIsSticky(e.target.checked)}
+              style={{ margin: 0 }}
+            />
+            <label htmlFor="stickyToggle">make this a sticky post</label>
+          </div>
+        )}
         <button
           type="submit"
           style={{

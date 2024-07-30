@@ -86,6 +86,7 @@ pub struct ForumPost {
     comments: Vec<ForumComment>,
     created_at: u64,
     voted_users: HashMap<String, bool>,
+    is_sticky: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -100,6 +101,7 @@ pub struct PublicForumPost {
     downvotes: u32,
     comments: Vec<ForumComment>,
     created_at: u64,
+    is_sticky: bool,
 }
 
 impl ForumPost {
@@ -115,6 +117,7 @@ impl ForumPost {
             downvotes: self.downvotes,
             comments: self.comments.clone(),
             created_at: self.created_at,
+            is_sticky: self.is_sticky,
         }
     }
 }
@@ -165,6 +168,12 @@ pub enum ForumRequest {
     DeletePost {
         post_id: String,
     },
+    CreateStickyPost {
+        title: String,
+        text_contents: String,
+        link: Option<String>,
+        image_url: Option<String>,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -203,10 +212,16 @@ impl ForumServiceState {
             .map(|post| post.to_public(true))
             .collect();
         
-        // Sort posts by created_at in descending order (most recent first)
-        public_posts.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        // Sort posts: sticky posts first, then by created_at in descending order
+        public_posts.sort_by(|a, b| {
+            match (a.is_sticky, b.is_sticky) {
+                (true, false) => std::cmp::Ordering::Less,
+                (false, true) => std::cmp::Ordering::Greater,
+                _ => b.created_at.cmp(&a.created_at),
+            }
+        });
         
-        // Take up to 30 most recent posts
+        // Take up to 30 most recent posts (including sticky posts)
         let top_posts = public_posts.into_iter().take(30).collect();
         
         let upd = ForumUpdate::TopPosts(top_posts);
@@ -253,6 +268,7 @@ impl ForumServiceState {
                     comments: Vec::new(),
                     created_at: get_now(),
                     voted_users: HashMap::new(),
+                    is_sticky: false,
                 };
 
                 self.posts.insert(post_id, new_post.clone());
@@ -355,6 +371,31 @@ impl ForumServiceState {
                         let delete_update = ForumUpdate::DeletedPost(post_id);
                         update_subscribers(AppUpdate::Forum(delete_update), our, service)?;
                     }
+                }
+            }
+
+            ForumRequest::CreateStickyPost { title, text_contents, link, image_url } => {
+                if from == our.node {
+                    let post_id = self.next_post_id.to_string();
+                    self.next_post_id += 1;
+                    
+                    let new_post = ForumPost {
+                        id: post_id.clone(),
+                        title,
+                        text_contents,
+                        link,
+                        image_url,
+                        author: from,
+                        upvotes: 0,
+                        downvotes: 0,
+                        comments: Vec::new(),
+                        created_at: get_now(),
+                        voted_users: HashMap::new(),
+                        is_sticky: true,
+                    };
+
+                    self.posts.insert(post_id, new_post.clone());
+                    update_subscribers(AppUpdate::Forum(ForumUpdate::NewPost(new_post.to_public(true))), our, service)?;
                 }
             }
         }
