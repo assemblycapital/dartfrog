@@ -13,3 +13,5 @@ export const PROXY_TARGET = `${(import.meta.env.VITE_NODE_URL || `http://${PACKA
 export const WEBSOCKET_URL = import.meta.env.DEV
   ? `${PROXY_TARGET.replace('http', 'ws')}`
   : undefined;
+
+export const BASE_ORIGIN = window.origin.split(".").slice(1).join(".")

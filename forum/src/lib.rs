@@ -121,10 +121,14 @@ impl ForumPost {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ForumUpdate {
-    AllPosts(Vec<PublicForumPost>),
+    TopPosts(Vec<PublicForumPost>),
     NewPost(PublicForumPost),
     UpdatedPost(PublicForumPost),
     NewComment(ForumComment),
+    Metadata {
+        title: String,
+        description: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -146,6 +150,16 @@ pub enum ForumRequest {
     GetPost {
         post_id: String,
     },
+    UpdateMetadata {
+        title: Option<String>,
+        description: Option<String>,
+    },
+    BanUser {
+        user: String,
+    },
+    UnbanUser {
+        user: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -162,6 +176,9 @@ pub struct ForumServiceState {
     pub posts: HashMap<String, ForumPost>,
     pub next_post_id: u64,
     pub next_comment_id: u64,
+    pub title: String,
+    pub description: String,
+    pub banned_users: HashSet<String>,
 }
 
 impl ForumServiceState {
@@ -170,17 +187,42 @@ impl ForumServiceState {
             posts: HashMap::new(),
             next_post_id: 1,
             next_comment_id: 1,
+            title: "Default Forum Title".to_string(),
+            description: "Welcome to the forum!".to_string(),
+            banned_users: HashSet::new(),
         }
     }
 
     fn handle_subscribe(&mut self, subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
-        let public_posts: Vec<PublicForumPost> = self.posts.values().map(|post| post.to_public(true)).collect();
-        let upd = ForumUpdate::AllPosts(public_posts);
+        let mut public_posts: Vec<PublicForumPost> = self.posts.values()
+            .map(|post| post.to_public(true))
+            .collect();
+        
+        // Sort posts by created_at in descending order (most recent first)
+        public_posts.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        
+        // Take up to 30 most recent posts
+        let top_posts = public_posts.into_iter().take(30).collect();
+        
+        let upd = ForumUpdate::TopPosts(top_posts);
         update_subscriber(AppUpdate::Forum(upd), &subscriber_node, our, service)?;
+        
+        // Send forum metadata
+        let metadata_update = ForumUpdate::Metadata {
+            title: self.title.clone(),
+            description: self.description.clone(),
+        };
+        update_subscriber(AppUpdate::Forum(metadata_update), &subscriber_node, our, service)?;
+        
         Ok(())
     }
 
     fn handle_request(&mut self, from: String, req: ForumRequest, our: &Address, service: &Service) -> anyhow::Result<()> {
+        // Check if the user is banned
+        if self.banned_users.contains(&from) {
+            return Ok(());
+        }
+
         match req {
             ForumRequest::CreatePost { title, text_contents, link, image_url } => {
                 let post_id = self.next_post_id.to_string();
@@ -256,6 +298,39 @@ impl ForumServiceState {
             ForumRequest::GetPost { post_id } => {
                 if let Some(post) = self.posts.get(&post_id) {
                     update_subscriber(AppUpdate::Forum(ForumUpdate::UpdatedPost(post.to_public(true))), &from, our, service)?;
+                }
+            }
+            ForumRequest::UpdateMetadata { title, description } => {
+                if from == our.node {
+                    let old_title = self.title.clone();
+                    let old_description = self.description.clone();
+                    
+                    if let Some(new_title) = title {
+                        self.title = new_title;
+                    }
+                    if let Some(new_description) = description {
+                        self.description = new_description;
+                    }
+
+                    if self.title != old_title || self.description != old_description {
+                        let metadata_update = ForumUpdate::Metadata {
+                            title: self.title.clone(),
+                            description: self.description.clone(),
+                        };
+                        update_subscribers(AppUpdate::Forum(metadata_update), our, service)?;
+                    }
+                }
+            }
+
+            ForumRequest::BanUser { user } => {
+                if from == our.node {
+                    self.banned_users.insert(user);
+                }
+            }
+
+            ForumRequest::UnbanUser { user } => {
+                if from == our.node {
+                    self.banned_users.remove(&user);
                 }
             }
         }

@@ -24,23 +24,31 @@ export interface ForumComment {
 
 export interface ForumStore {
   posts: ForumPost[]
+  title: string
+  description: string
   createPost: (api: ServiceApi, post: Omit<ForumPost, 'id' | 'author' | 'upvotes' | 'downvotes' | 'comments' | 'created_at'>) => void
   vote: (api: ServiceApi, postId: string, isUpvote: boolean) => void
   createComment: (api: ServiceApi, postId: string, text: string) => void
   getPost: (api: ServiceApi, postId: string) => void
+  updateMetadata: (api: ServiceApi, title?: string, description?: string) => void
+  banUser: (api: ServiceApi, user: string) => void
+  unbanUser: (api: ServiceApi, user: string) => void
   handleUpdate: (update: ForumUpdate) => void
   get: () => ForumStore
   set: (partial: ForumStore | Partial<ForumStore>) => void
 }
 
 export type ForumUpdate =
-  | { AllPosts: ForumPost[] }
+  | { TopPosts: ForumPost[] }
   | { NewPost: ForumPost }
   | { UpdatedPost: ForumPost }
   | { NewComment: ForumComment }
+  | { Metadata: { title: string, description: string } }
 
 const useForumStore = create<ForumStore>((set, get) => ({
   posts: [],
+  title: '',
+  description: '',
 
   createPost: (api, post) => {
     const req = {
@@ -91,10 +99,44 @@ const useForumStore = create<ForumStore>((set, get) => ({
     api.sendToService(req)
   },
 
+  updateMetadata: (api, title, description) => {
+    const req = {
+      Forum: {
+        UpdateMetadata: {
+          title,
+          description,
+        },
+      },
+    }
+    api.sendToService(req)
+  },
+
+  banUser: (api, user) => {
+    const req = {
+      Forum: {
+        BanUser: {
+          user,
+        },
+      },
+    }
+    api.sendToService(req)
+  },
+
+  unbanUser: (api, user) => {
+    const req = {
+      Forum: {
+        UnbanUser: {
+          user,
+        },
+      },
+    }
+    api.sendToService(req)
+  },
+
   handleUpdate: (update: ForumUpdate) => {
     set((state) => {
-      if ('AllPosts' in update) {
-        return { posts: update.AllPosts }
+      if ('TopPosts' in update) {
+        return { posts: update.TopPosts }
       } else if ('NewPost' in update) {
         return { posts: [...state.posts, update.NewPost] }
       } else if ('UpdatedPost' in update) {
@@ -113,6 +155,11 @@ const useForumStore = create<ForumStore>((set, get) => ({
           return post
         })
         return { posts: updatedPosts }
+      } else if ('Metadata' in update) {
+        return {
+          title: update.Metadata.title,
+          description: update.Metadata.description,
+        }
       }
       return state
     })

@@ -16,6 +16,7 @@ function App() {
 
   const onServiceMessage = (msg) => {
     if (msg.Forum) {
+      console.log("upd", msg.Forum)
       handleUpdate(msg.Forum);
     }
   };
@@ -33,6 +34,7 @@ function App() {
             websocketUrl={WEBSOCKET_URL}
             onServiceMessage={onServiceMessage}
             Element={Forum}
+            // hideTopBar
            />
         } />
       </Routes>

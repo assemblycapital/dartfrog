@@ -14,3 +14,42 @@ html, body {
   padding: 0;
 }
 
+.comment-button {
+  background-color:#333;
+  transition: background-color 0.25s;
+}
+
+.comment-button:hover {
+  background-color: #464646;
+  transition: background-color 0.25s;
+}
+
+.upvote-button {
+  background-color: #00000000;
+  transition: background-color 0.25s;
+}
+
+.upvote-button:hover {
+  background-color:rgb(156, 95, 25);
+  transition: background-color 0.25s;
+}
+
+.downvote-button {
+  background-color: #00000000;
+  transition: background-color 0.25s;
+
+}
+
+.downvote-button:hover {
+  background-color:rgb(47, 65, 168);
+  transition: background-color 0.25s;
+}
+
+.forum-post {
+  transition: background-color 0.25s;
+}
+.forum-post:hover {
+  background-color: #1d1d1d;
+  transition: background-color 0.25s;
+
+}
