@@ -38,7 +38,7 @@ html, body {
 }
 
 .upvote-button:hover {
-  background-color:rgb(156, 95, 25);
+  background-color:rgb(108, 65, 15);
   transition: background-color 0.25s;
 }
 

@@ -99,7 +99,7 @@ pub struct PublicForumPost {
     author: Option<String>,
     upvotes: u32,
     downvotes: u32,
-    comments: Vec<ForumComment>,
+    comments: Vec<PublicForumComment>,
     created_at: u64,
     is_sticky: bool,
 }
@@ -115,7 +115,7 @@ impl ForumPost {
             author: if include_author { Some(self.author.clone()) } else { None },
             upvotes: self.upvotes,
             downvotes: self.downvotes,
-            comments: self.comments.clone(),
+            comments: self.comments.iter().map(|c| c.to_public(include_author)).collect(),
             created_at: self.created_at,
             is_sticky: self.is_sticky,
         }
@@ -127,7 +127,15 @@ pub enum ForumUpdate {
     TopPosts(Vec<PublicForumPost>),
     NewPost(PublicForumPost),
     UpdatedPost(PublicForumPost),
-    NewComment(ForumComment),
+    NewComment(PublicForumComment),
+    UpdatedComment {
+        post_id: String,
+        comment: PublicForumComment,
+    },
+    DeletedComment {
+        post_id: String,
+        comment_id: String,
+    },
     Metadata {
         title: String,
         description: String,
@@ -174,6 +182,15 @@ pub enum ForumRequest {
         link: Option<String>,
         image_url: Option<String>,
     },
+    VoteComment {
+        post_id: String,
+        comment_id: String,
+        is_upvote: bool,
+    },
+    DeleteComment {
+        post_id: String,
+        comment_id: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -183,6 +200,34 @@ pub struct ForumComment {
     author: String,
     text: String,
     created_at: u64,
+    upvotes: u32,
+    downvotes: u32,
+    voted_users: HashMap<String, bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PublicForumComment {
+    id: String,
+    post_id: String,
+    author: Option<String>,
+    text: String,
+    created_at: u64,
+    upvotes: u32,
+    downvotes: u32,
+}
+
+impl ForumComment {
+    pub fn to_public(&self, include_author: bool) -> PublicForumComment {
+        PublicForumComment {
+            id: self.id.clone(),
+            post_id: self.post_id.clone(),
+            author: if include_author { Some(self.author.clone()) } else { None },
+            text: self.text.clone(),
+            created_at: self.created_at,
+            upvotes: self.upvotes,
+            downvotes: self.downvotes,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -314,14 +359,14 @@ impl ForumServiceState {
                         post_id: post_id.clone(),
                         author: from,
                         text,
-                        created_at: std::time::SystemTime::now()
-                            .duration_since(std::time::UNIX_EPOCH)
-                            .unwrap()
-                            .as_secs(),
+                        created_at: get_now(),
+                        upvotes: 0,
+                        downvotes: 0,
+                        voted_users: HashMap::new(),
                     };
 
                     post.comments.push(new_comment.clone());
-                    update_subscribers(AppUpdate::Forum(ForumUpdate::NewComment(new_comment)), our, service)?;
+                    update_subscribers(AppUpdate::Forum(ForumUpdate::NewComment(new_comment.to_public(true))), our, service)?;
                 }
             }
             ForumRequest::GetPost { post_id } => {
@@ -396,6 +441,56 @@ impl ForumServiceState {
 
                     self.posts.insert(post_id, new_post.clone());
                     update_subscribers(AppUpdate::Forum(ForumUpdate::NewPost(new_post.to_public(true))), our, service)?;
+                }
+            }
+
+            ForumRequest::VoteComment { post_id, comment_id, is_upvote } => {
+                if let Some(post) = self.posts.get_mut(&post_id) {
+                    if let Some(comment) = post.comments.iter_mut().find(|c| c.id == comment_id) {
+                        let has_voted = comment.voted_users.contains_key(&from);
+                        let previous_vote = comment.voted_users.get(&from).cloned();
+
+                        match (has_voted, previous_vote, is_upvote) {
+                            (false, _, true) => {
+                                comment.upvotes += 1;
+                                comment.voted_users.insert(from.clone(), true);
+                            }
+                            (false, _, false) => {
+                                comment.downvotes += 1;
+                                comment.voted_users.insert(from.clone(), false);
+                            }
+                            (true, Some(true), false) => {
+                                comment.upvotes -= 1;
+                                comment.downvotes += 1;
+                                comment.voted_users.insert(from.clone(), false);
+                            }
+                            (true, Some(false), true) => {
+                                comment.downvotes -= 1;
+                                comment.upvotes += 1;
+                                comment.voted_users.insert(from.clone(), true);
+                            }
+                            _ => {} // No change if the vote is the same as before
+                        }
+
+                        let update = ForumUpdate::UpdatedComment {
+                            post_id: post_id.clone(),
+                            comment: comment.to_public(true),
+                        };
+                        update_subscribers(AppUpdate::Forum(update), our, service)?;
+                    }
+                }
+            }
+
+            ForumRequest::DeleteComment { post_id, comment_id } => {
+                if from == our.node {
+                    if let Some(post) = self.posts.get_mut(&post_id) {
+                        post.comments.retain(|c| c.id != comment_id);
+                        let update = ForumUpdate::DeletedComment {
+                            post_id: post_id.clone(),
+                            comment_id,
+                        };
+                        update_subscribers(AppUpdate::Forum(update), our, service)?;
+                    }
                 }
             }
         }

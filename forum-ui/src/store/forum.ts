@@ -18,9 +18,11 @@ export interface ForumPost {
 export interface ForumComment {
   id: string
   post_id: string
-  author: string
+  author?: string // Optional, as it might be excluded for privacy
   text: string
   created_at: number
+  upvotes: number
+  downvotes: number
 }
 
 export interface ForumStore {
@@ -32,6 +34,8 @@ export interface ForumStore {
   createStickyPost: (api: ServiceApi, post: Omit<ForumPost, 'id' | 'author' | 'upvotes' | 'downvotes' | 'comments' | 'created_at' | 'is_sticky'>) => void
   vote: (api: ServiceApi, postId: string, isUpvote: boolean) => void
   createComment: (api: ServiceApi, postId: string, text: string) => void
+  voteComment: (api: ServiceApi, postId: string, commentId: string, isUpvote: boolean) => void
+  deleteComment: (api: ServiceApi, postId: string, commentId: string) => void
   getPost: (api: ServiceApi, postId: string) => void
   updateMetadata: (api: ServiceApi, title?: string, description?: string) => void
   banUser: (api: ServiceApi, user: string) => void
@@ -47,6 +51,8 @@ export type ForumUpdate =
   | { NewPost: ForumPost }
   | { UpdatedPost: ForumPost }
   | { NewComment: ForumComment }
+  | { UpdatedComment: { post_id: string, comment: ForumComment } }
+  | { DeletedComment: { post_id: string, comment_id: string } }
   | { Metadata: { title: string, description: string } }
   | { BannedUsers: string[] }
   | { DeletedPost: string }
@@ -103,6 +109,31 @@ const useForumStore = create<ForumStore>((set, get) => ({
         CreateComment: {
           post_id: postId,
           text,
+        },
+      },
+    }
+    api.sendToService(req)
+  },
+
+  voteComment: (api, postId, commentId, isUpvote) => {
+    const req = {
+      Forum: {
+        VoteComment: {
+          post_id: postId,
+          comment_id: commentId,
+          is_upvote: isUpvote,
+        },
+      },
+    }
+    api.sendToService(req)
+  },
+
+  deleteComment: (api, postId, commentId) => {
+    const req = {
+      Forum: {
+        DeleteComment: {
+          post_id: postId,
+          comment_id: commentId,
         },
       },
     }
@@ -194,6 +225,32 @@ const useForumStore = create<ForumStore>((set, get) => ({
             return {
               ...post,
               comments: [...post.comments, update.NewComment]
+            }
+          }
+          return post
+        })
+        return { posts: updatedPosts }
+      } else if ('UpdatedComment' in update) {
+        const updatedPosts = state.posts.map(post => {
+          if (post.id === update.UpdatedComment.post_id) {
+            return {
+              ...post,
+              comments: post.comments.map(comment =>
+                comment.id === update.UpdatedComment.comment.id
+                  ? update.UpdatedComment.comment
+                  : comment
+              )
+            }
+          }
+          return post
+        })
+        return { posts: updatedPosts }
+      } else if ('DeletedComment' in update) {
+        const updatedPosts = state.posts.map(post => {
+          if (post.id === update.DeletedComment.post_id) {
+            return {
+              ...post,
+              comments: post.comments.filter(comment => comment.id !== update.DeletedComment.comment_id)
             }
           }
           return post
