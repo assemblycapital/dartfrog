@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { PROCESS_NAME } from '../utils';
 import { ServiceID } from "@dartfrog/puddle";
 import IconTrash3Fill from './IconTrash';
+import IconPushpin from './IconPushpin'; // You'll need to create this icon component
 
 interface PostCardProps {
   post: ForumPost;
@@ -15,7 +16,7 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, showFullContents = false }) => {
-  const { posts, vote, deletePost} = useForumStore();
+  const { posts, vote, deletePost, toggleSticky } = useForumStore();
   const { api, peerMap, serviceId } = useChatStore();
   const baseOrigin = window.origin.split(".").slice(1).join(".")
   const navigate = useNavigate();
@@ -55,6 +56,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, showFullContents = false }) =
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete this post?')) {
       deletePost(api, post.id);
+    }
+  };
+
+  const handleToggleSticky = () => {
+    if (window.confirm(`Are you sure you want to ${post.is_sticky ? 'unstick' : 'stick'} this post?`)) {
+      toggleSticky(api, post.id);
     }
   };
 
@@ -274,24 +281,44 @@ const PostCard: React.FC<PostCardProps> = ({ post, showFullContents = false }) =
           {post.comments.length}
         </div>
         {isAdmin && (
-          <div
-            onClick={handleDelete}
-            className="delete-post-button"
-            style={{
-              borderRadius: "10px",
-              padding: "0.1rem 0.5rem",
-              fontSize: "0.8rem",
-              display: "flex",
-              flexDirection: "row",
-              gap: "0.7rem",
-              alignItems: "center",
-              cursor:"pointer",
-              color: "#999999",
-              height:"1.2rem",
-            }}
-          >
-            <IconTrash3Fill />
-          </div>
+          <>
+            <div
+              onClick={handleDelete}
+              className="delete-post-button"
+              style={{
+                borderRadius: "10px",
+                padding: "0.1rem 0.5rem",
+                fontSize: "0.8rem",
+                display: "flex",
+                flexDirection: "row",
+                gap: "0.7rem",
+                alignItems: "center",
+                cursor:"pointer",
+                color: "#999999",
+                height:"1.2rem",
+              }}
+            >
+              <IconTrash3Fill />
+            </div>
+            <div
+              onClick={handleToggleSticky}
+              className="toggle-sticky-button"
+              style={{
+                borderRadius: "10px",
+                padding: "0.1rem 0.5rem",
+                fontSize: "0.8rem",
+                display: "flex",
+                flexDirection: "row",
+                gap: "0.7rem",
+                alignItems: "center",
+                cursor:"pointer",
+                color: post.is_sticky ? "#4a90e2" : "#999999",
+                height:"1.2rem",
+              }}
+            >
+              <IconPushpin />
+            </div>
+          </>
         )}
       </div>
     </div>

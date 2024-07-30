@@ -118,10 +118,10 @@ const PostDetail: React.FC = () => {
               width:"auto",
             }}
           >
-            <option value="mostRecent">Most Recent</option>
-            <option value="leastRecent">Least Recent</option>
-            <option value="highestScore">Highest Score</option>
-            <option value="lowestScore">Lowest Score</option>
+            <option value="mostRecent">newest</option>
+            <option value="leastRecent">oldest</option>
+            <option value="highestScore">popular</option>
+            <option value="lowestScore">unpopular</option>
           </select>
         </div>
         <div>

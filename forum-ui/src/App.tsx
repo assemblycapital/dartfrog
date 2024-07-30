@@ -16,7 +16,6 @@ function App() {
 
   const onServiceMessage = (msg) => {
     if (msg.Forum) {
-      console.log("upd", msg.Forum)
       handleUpdate(msg.Forum);
     }
   };

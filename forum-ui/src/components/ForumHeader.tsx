@@ -7,7 +7,7 @@ interface ForumHeaderProps {
 }
 
 const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false }) => {
-  const { serviceId } = useChatStore();
+  const { serviceId, serviceMetadata} = useChatStore();
   const {title, description} = useForumStore();
   const navigate = useNavigate();
 
@@ -16,12 +16,10 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
       style={{
         display: "flex",
         flexDirection: "row",
-        gap: "1.3rem",
-        margin: "1rem 0rem",
-        alignItems: "flex-end"
+        gap: "0.3rem",
       }}
-    >
-      {includeForumButton && (
+      >
+        {includeForumButton && (
         <button
           style={{
             width: 'auto',
@@ -35,6 +33,16 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
           forum
         </button>
       )}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        gap: "1.3rem",
+        margin: "1rem 0.7rem",
+        alignItems: "flex-end"
+      }}
+    >
+      
       <div
         style={{
           fontWeight: "bold",
@@ -49,6 +57,17 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
       >
         {description}
       </div>
+      {serviceMetadata &&
+        <div
+          style={{
+            fontSize: "0.8rem",
+            color:'gray',
+          }}
+        >
+          {serviceMetadata.subscribers.length} online
+        </div>
+      }
+    </div>
     </div>
   )
 }

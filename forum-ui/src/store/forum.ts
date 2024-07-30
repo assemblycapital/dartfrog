@@ -41,6 +41,7 @@ export interface ForumStore {
   banUser: (api: ServiceApi, user: string) => void
   unbanUser: (api: ServiceApi, user: string) => void
   deletePost: (api: ServiceApi, postId: string) => void
+  toggleSticky: (api: ServiceApi, postId: string) => void
   handleUpdate: (update: ForumUpdate) => void
   get: () => ForumStore
   set: (partial: ForumStore | Partial<ForumStore>) => void
@@ -189,6 +190,17 @@ const useForumStore = create<ForumStore>((set, get) => ({
     const req = {
       Forum: {
         DeletePost: {
+          post_id: postId,
+        },
+      },
+    }
+    api.sendToService(req)
+  },
+
+  toggleSticky: (api, postId) => {
+    const req = {
+      Forum: {
+        ToggleSticky: {
           post_id: postId,
         },
       },

@@ -191,6 +191,9 @@ pub enum ForumRequest {
         post_id: String,
         comment_id: String,
     },
+    ToggleSticky {
+        post_id: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -490,6 +493,15 @@ impl ForumServiceState {
                             comment_id,
                         };
                         update_subscribers(AppUpdate::Forum(update), our, service)?;
+                    }
+                }
+            }
+
+            ForumRequest::ToggleSticky { post_id } => {
+                if from == our.node {
+                    if let Some(post) = self.posts.get_mut(&post_id) {
+                        post.is_sticky = !post.is_sticky;
+                        update_subscribers(AppUpdate::Forum(ForumUpdate::UpdatedPost(post.to_public(true))), our, service)?;
                     }
                 }
             }

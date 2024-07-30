@@ -14,7 +14,6 @@ const HomePage: React.FC = () => {
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: "5px",
         overflowX:"hidden",
         overflowY:"auto",
       }}
@@ -24,7 +23,8 @@ const HomePage: React.FC = () => {
         style={{
           display:"flex",
           flexDirection:"row",
-          gap:"1rem",
+          gap:"0.6rem",
+          marginBottom:"6px"
         }}
       >
         <button

@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Service, ServiceID, ServiceVisibility, dfLinkToRealLink, getAllServicesFromPeerMap, getServiceRecencyText, sortServices } from '@dartfrog/puddle/index';
 
 const ServiceList = ({services }) => {
-  const { localServices, deleteService, requestLocalServiceList, peerMap, localFwdAllPeerRequests } = useDartStore();
+  const { localServices, deleteService, requestLocalServiceList, localFwdPeerRequest, peerMap, localFwdAllPeerRequests } = useDartStore();
   const navigate = useNavigate();
 
   // const allServices = [...localServices, ...getAllServicesFromPeerMap(peerMap)];
@@ -140,6 +140,7 @@ const ServiceList = ({services }) => {
                     onClick={() => {
                       deleteService(service.id.toString());
                       requestLocalServiceList();
+                      localFwdPeerRequest(window.our?.node);
                     }}
                   >
                     delete
