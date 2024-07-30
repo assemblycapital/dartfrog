@@ -129,6 +129,8 @@ pub enum ForumUpdate {
         title: String,
         description: String,
     },
+    BannedUsers(Vec<String>),
+    DeletedPost(String),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -159,6 +161,9 @@ pub enum ForumRequest {
     },
     UnbanUser {
         user: String,
+    },
+    DeletePost {
+        post_id: String,
     },
 }
 
@@ -214,13 +219,21 @@ impl ForumServiceState {
         };
         update_subscriber(AppUpdate::Forum(metadata_update), &subscriber_node, our, service)?;
         
+        // Send banned users list
+        let banned_users_update = ForumUpdate::BannedUsers(self.banned_users.iter().cloned().collect());
+        update_subscriber(AppUpdate::Forum(banned_users_update), &subscriber_node, our, service)?;
+        
         Ok(())
     }
 
     fn handle_request(&mut self, from: String, req: ForumRequest, our: &Address, service: &Service) -> anyhow::Result<()> {
-        // Check if the user is banned
-        if self.banned_users.contains(&from) {
-            return Ok(());
+        match req {
+            ForumRequest::CreatePost { .. } | ForumRequest::CreateComment { .. } => {
+                if self.banned_users.contains(&from) {
+                    return Ok(());
+                }
+            }
+            _ => {}
         }
 
         match req {
@@ -325,16 +338,32 @@ impl ForumServiceState {
             ForumRequest::BanUser { user } => {
                 if from == our.node {
                     self.banned_users.insert(user);
+                    self.send_banned_users_update(our, service)?;
                 }
             }
 
             ForumRequest::UnbanUser { user } => {
                 if from == our.node {
                     self.banned_users.remove(&user);
+                    self.send_banned_users_update(our, service)?;
+                }
+            }
+
+            ForumRequest::DeletePost { post_id } => {
+                if from == our.node {
+                    if let Some(removed_post) = self.posts.remove(&post_id) {
+                        let delete_update = ForumUpdate::DeletedPost(post_id);
+                        update_subscribers(AppUpdate::Forum(delete_update), our, service)?;
+                    }
                 }
             }
         }
         Ok(())
+    }
+
+    fn send_banned_users_update(&self, our: &Address, service: &Service) -> anyhow::Result<()> {
+        let banned_users_update = ForumUpdate::BannedUsers(self.banned_users.iter().cloned().collect());
+        update_subscribers(AppUpdate::Forum(banned_users_update), our, service)
     }
 }
 

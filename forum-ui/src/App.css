@@ -14,6 +14,14 @@ html, body {
   padding: 0;
 }
 
+.delete-post-button {
+  background-color:#333;
+  transition: background-color 0.25s;
+}
+.delete-post-button:hover {
+  background-color: #5e2626;
+  transition: background-color 0.25s;
+}
 .comment-button {
   background-color:#333;
   transition: background-color 0.25s;

@@ -6,17 +6,22 @@ import { getPeerNameColor, getRecencyText, nodeProfileLink, dfLinkToRealLink } f
 import IconBxsComment from './IconBxsComment';
 import { useNavigate } from 'react-router-dom';
 import { PROCESS_NAME } from '../utils';
+import { ServiceID } from "@dartfrog/puddle";
+import IconTrash3Fill from './IconTrash';
 
 interface PostCardProps {
   post: ForumPost;
-  showFullContents?: boolean
+  showFullContents?: boolean;
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, showFullContents = false }) => {
-  const { posts, vote } = useForumStore();
+  const { posts, vote, deletePost} = useForumStore();
   const { api, peerMap, serviceId } = useChatStore();
   const baseOrigin = window.origin.split(".").slice(1).join(".")
   const navigate = useNavigate();
+
+  const parsedServiceId = ServiceID.fromString(serviceId);
+  const isAdmin = parsedServiceId.hostNode() === window.our?.node;
 
   const linkRegex = /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}(\/\S*)?$/i;
   const dfLinkRegex = /^df:\/\/.+/;
@@ -45,6 +50,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, showFullContents = false }) =
       );
     }
     return link;
+  };
+
+  const handleDelete = () => {
+    if (window.confirm('Are you sure you want to delete this post?')) {
+      deletePost(api, post.id);
+    }
   };
 
   return (
@@ -168,6 +179,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, showFullContents = false }) =
           flexDirection: "row",
           gap: "1rem",
           marginTop: "0.8rem",
+          alignItems: "center",
         }}
       >
         <div
@@ -249,6 +261,26 @@ const PostCard: React.FC<PostCardProps> = ({ post, showFullContents = false }) =
           <IconBxsComment />
           {post.comments.length}
         </div>
+        {isAdmin && (
+          <div
+            onClick={handleDelete}
+            className="delete-post-button"
+            style={{
+              borderRadius: "10px",
+              padding: "0.1rem 0.5rem",
+              fontSize: "0.8rem",
+              display: "flex",
+              flexDirection: "row",
+              gap: "0.7rem",
+              alignItems: "center",
+              cursor:"pointer",
+              color: "#999999",
+              height:"1.2rem",
+            }}
+          >
+            <IconTrash3Fill />
+          </div>
+        )}
       </div>
     </div>
   );

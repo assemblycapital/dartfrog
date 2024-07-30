@@ -58,6 +58,7 @@ const CreatePost: React.FC = () => {
             borderRadius: "4px",
             margin: "0",
           }}
+            className="color-white"
         />
         <textarea
           value={newPostContent}
@@ -72,6 +73,7 @@ const CreatePost: React.FC = () => {
             resize: "vertical",
             margin: "0",
           }}
+            className="color-white"
         />
         <input
           type="url"
@@ -85,6 +87,7 @@ const CreatePost: React.FC = () => {
             border: "1px solid #333",
             backgroundColor: "#1f1f1f",
           }}
+            className="color-white"
         />
         <input
           type="url"
@@ -98,6 +101,7 @@ const CreatePost: React.FC = () => {
             border: "1px solid #333",
             backgroundColor: "#1f1f1f",
           }}
+            className="color-white"
         />
         <button
           type="submit"

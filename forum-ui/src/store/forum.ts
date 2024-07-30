@@ -26,6 +26,7 @@ export interface ForumStore {
   posts: ForumPost[]
   title: string
   description: string
+  bannedUsers: string[]
   createPost: (api: ServiceApi, post: Omit<ForumPost, 'id' | 'author' | 'upvotes' | 'downvotes' | 'comments' | 'created_at'>) => void
   vote: (api: ServiceApi, postId: string, isUpvote: boolean) => void
   createComment: (api: ServiceApi, postId: string, text: string) => void
@@ -33,6 +34,7 @@ export interface ForumStore {
   updateMetadata: (api: ServiceApi, title?: string, description?: string) => void
   banUser: (api: ServiceApi, user: string) => void
   unbanUser: (api: ServiceApi, user: string) => void
+  deletePost: (api: ServiceApi, postId: string) => void
   handleUpdate: (update: ForumUpdate) => void
   get: () => ForumStore
   set: (partial: ForumStore | Partial<ForumStore>) => void
@@ -44,11 +46,14 @@ export type ForumUpdate =
   | { UpdatedPost: ForumPost }
   | { NewComment: ForumComment }
   | { Metadata: { title: string, description: string } }
+  | { BannedUsers: string[] }
+  | { DeletedPost: string }
 
 const useForumStore = create<ForumStore>((set, get) => ({
   posts: [],
   title: '',
   description: '',
+  bannedUsers: [],
 
   createPost: (api, post) => {
     const req = {
@@ -133,6 +138,17 @@ const useForumStore = create<ForumStore>((set, get) => ({
     api.sendToService(req)
   },
 
+  deletePost: (api, postId) => {
+    const req = {
+      Forum: {
+        DeletePost: {
+          post_id: postId,
+        },
+      },
+    }
+    api.sendToService(req)
+  },
+
   handleUpdate: (update: ForumUpdate) => {
     set((state) => {
       if ('TopPosts' in update) {
@@ -160,6 +176,10 @@ const useForumStore = create<ForumStore>((set, get) => ({
           title: update.Metadata.title,
           description: update.Metadata.description,
         }
+      } else if ('BannedUsers' in update) {
+        return { bannedUsers: update.BannedUsers }
+      } else if ('DeletedPost' in update) {
+        return { posts: state.posts.filter(post => post.id !== update.DeletedPost) }
       }
       return state
     })

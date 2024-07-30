@@ -11,6 +11,14 @@ html, body {
   padding: 0;
 }
 
+.color-white {
+  color: #d1d1d1;
+}
+
+.color-gray {
+  color:gray;
+}
+
 .pfp-profile-image {
   overflow: hidden;
   display: inline-block;
