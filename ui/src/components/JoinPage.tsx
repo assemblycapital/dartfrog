@@ -33,6 +33,7 @@ const JoinPage = () => {
   const navigate = useNavigate();
 
   let baseOrigin = window.location.origin.split(".").slice(1).join(".");
+
   useEffect(()=> {
     if (!(peerMap instanceof Map)) {
       return
@@ -49,7 +50,6 @@ const JoinPage = () => {
     } else {
       let gotPeer = peerMap.get(serviceId.hostNode());
       if (!(gotPeer)) {
-        // TODO
         localFwdPeerRequest(serviceId.hostNode());
         setServiceStatus(ServiceStatus.CONTACTING_HOST)
         return;
@@ -64,12 +64,25 @@ const JoinPage = () => {
       gotService = gotPeer.peerData.hostedServices.find(service => service.id.toString() === serviceId.toString());
     }
 
+    if (!gotService) {
+      return;
+    }
+
+    setServiceMetadata(gotService.meta);
+
+  }, [peerMap, localServices])
+
+  useEffect(()=>{
+
+    if (!serviceMetadata) {
+      return;
+    }
     setServiceStatus(ServiceStatus.CHECKING_PLUGIN)
 
     const checkProcessAvailability = async () => {
       const process = serviceId.process();
       try {
-        const response = await fetch(`/${process}/?service=${serviceId}`);
+        const response = await fetch(`/${process}/`);
         if (!response.ok) {
           setServiceStatus(ServiceStatus.PLUGIN_NOT_INSTALLED)
         } else {
@@ -77,29 +90,11 @@ const JoinPage = () => {
           setServiceStatus(ServiceStatus.PLUGIN_READY)
         }
       } catch (error) {
-        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-          // This is likely a CORS error
-          setServiceStatus(ServiceStatus.PLUGIN_SECURE_SUBDOMAIN);
-        } else {
-          // ??
           setServiceStatus(ServiceStatus.PLUGIN_ISSUE);
-        }
       }
     };
     checkProcessAvailability();
-
-    if (!(gotService)) {
-      // setServiceStatus(ServiceStatus.SERVICE_DOES_NOT_EXIST);
-      // setTimeout(() => {
-      //   requestServiceList(parsedServiceId.node);
-      // }, 300);
-      return;
-    }
-
-    setServiceMetadata(gotService.meta);
-
-
-  }, [peerMap, localServices])
+  }, [serviceMetadata])
 
   
   function processToSubdomain(process:string) {
@@ -125,13 +120,13 @@ const JoinPage = () => {
       if (packageName !== "dartfrog:herobrine.os") {
         let url = `http://${baseOrigin}/${process}/df/service/${serviceId}`;
         window.location.replace(url);
-
+      } else {
+        const packageSubdomain = processToSubdomain(process)
+        let url = `http://${packageSubdomain}.${baseOrigin}/${process}/df/service/${serviceId}`;
+        window.location.replace(url);
       }
-      const packageSubdomain = processToSubdomain(process)
-      let url = `http://${packageSubdomain}.${baseOrigin}/${process}/df/service/${serviceId}`;
-      window.location.replace(url);
     }
-  }, [serviceStatus, baseOrigin, serviceId]);
+  }, [serviceStatus]);
 
   const renderServiceStatus = useCallback((status) => {
     if (!(status)) {
