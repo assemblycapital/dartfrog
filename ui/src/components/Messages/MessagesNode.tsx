@@ -343,6 +343,7 @@ const MessagesNode: React.FC = () => {
                                 marginRight: '8px',
                                 resize: "none",
                                 height: '100%',
+                                fontFamily: 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
                             }}
                             value={chatMessageInputText}
                             onChange={handleInputChange}

@@ -111,6 +111,7 @@ const Messages: React.FC = () => {
                 <input 
                   type="text" 
                   value={inputValue} 
+                  placeholder='node-to-message.os'
                   onChange={(e) => setInputValue(e.target.value)} 
                   style={{
                     flexGrow:"1",
