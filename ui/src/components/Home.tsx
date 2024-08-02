@@ -67,6 +67,7 @@ const Home: React.FC = () => {
               justifyContent: "center",
               alignItems: "center",
               marginTop:"1rem",
+              overflow:"hidden",
             }}
           >
             <div
@@ -123,12 +124,13 @@ const Home: React.FC = () => {
                 display: "flex",
                 flexDirection: "column",
                 marginTop:"1rem",
+                overflow:"hidden",
                 // justifyContent: "center",
                 // alignItems: "center",
                 fontSize: "0.8rem",
                 width: "100%",
-                height:"100%",
-                maxHeight:"100%",
+                // height:"100%",
+                // maxHeight:"100%",
               }}
             >
               {allServices.length === 0 ? (
@@ -186,6 +188,7 @@ const Home: React.FC = () => {
                     width: "100%",
                     display: "flex",
                     flexDirection: "column",
+                    overflow:"hidden",
                   }}
                 >
                   <div
@@ -201,10 +204,10 @@ const Home: React.FC = () => {
                   </div>
                   <div
                     style={{
-                      overflowY:"scroll",
+                      overflow:"auto",
                     }}
                   >
-                    {allServices.slice(0,4).map((service, index) => (
+                    {allServices.slice(0,10).map((service, index) => (
                       <ServiceCard key={index} service={service} />
                     ))}
                   </div>
