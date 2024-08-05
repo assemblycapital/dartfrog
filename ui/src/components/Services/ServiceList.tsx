@@ -138,9 +138,11 @@ const ServiceList = ({services }) => {
                     }}
                     className="delete-button"
                     onClick={() => {
-                      deleteService(service.id.toString());
-                      requestLocalServiceList();
-                      localFwdPeerRequest(window.our?.node);
+                      if (window.confirm(`Are you sure you want to delete ${service.id.toString()}?`)) {
+                        deleteService(service.id.toString());
+                        requestLocalServiceList();
+                        localFwdPeerRequest(window.our?.node);
+                      }
                     }}
                   >
                     delete
