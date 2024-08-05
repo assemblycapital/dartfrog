@@ -59,6 +59,7 @@ impl AppServiceState for AppService {
     fn handle_subscribe(&mut self, subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
         self.piano.handle_subscribe(subscriber_node.clone(), our, service)?;
         self.chat.handle_subscribe(subscriber_node, our, service)?;
+        self.save(our, service)?;
         Ok(())
     }
 
@@ -66,18 +67,20 @@ impl AppServiceState for AppService {
         let request = serde_json::from_str::<AppRequest>(&req)?;
         match request {
             AppRequest::Piano(piano_request) => {
-                self.piano.handle_request(from, piano_request, our, service)
+                self.piano.handle_request(from, piano_request, our, service)?;
             }
             AppRequest::Chat(chat_request) => {
-                self.chat.handle_request(from, chat_request, our, service)
+                self.chat.handle_request(from, chat_request, our, service)?;
             }
         }
+        self.save(our, service)?;
+        Ok(())
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PianoUpdate {
-    PlayNote(String, String), // from, note
+    PlayNote { from: String, note: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -103,7 +106,7 @@ impl PianoServiceState {
     fn handle_request(&mut self, from: String, req: PianoRequest, our: &Address, service: &Service) -> anyhow::Result<()> {
         match req {
             PianoRequest::PlayNote(note) => {
-                let upd = PianoUpdate::PlayNote(from, note);
+                let upd = PianoUpdate::PlayNote { from, note };
                 update_subscribers(AppUpdate::Piano(upd), our, service)?;
             }
         }

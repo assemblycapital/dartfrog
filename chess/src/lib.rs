@@ -59,6 +59,7 @@ impl AppServiceState for AppService {
     fn handle_subscribe(&mut self, subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
         self.chess.handle_subscribe(subscriber_node.clone(), our, service)?;
         self.chat.handle_subscribe(subscriber_node, our, service)?;
+        self.save(our, service)?;
         Ok(())
     }
 
@@ -66,12 +67,14 @@ impl AppServiceState for AppService {
         let request = serde_json::from_str::<AppRequest>(&req)?;
         match request {
             AppRequest::Chess(chess_request) => {
-                self.chess.handle_request(from, chess_request, our, service)
+                self.chess.handle_request(from, chess_request, our, service)?;
             }
             AppRequest::Chat(chat_request) => {
-                self.chat.handle_request(from, chat_request, our, service)
+                self.chat.handle_request(from, chat_request, our, service)?;
             }
         }
+        self.save(our, service)?;
+        Ok(())
     }
 }
 

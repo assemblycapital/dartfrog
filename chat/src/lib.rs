@@ -52,16 +52,20 @@ impl AppServiceState for AppService {
     }
 
     fn handle_subscribe(&mut self, subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
-        self.chat.handle_subscribe(subscriber_node, our, service)
+        self.chat.handle_subscribe(subscriber_node, our, service)?;
+        self.save(our, service)?;
+        Ok(())
     }
 
     fn handle_request(&mut self, from: String, req: String, our: &Address, service: &Service) -> anyhow::Result<()> {
         let request = serde_json::from_str::<AppRequest>(&req)?;
         match request {
             AppRequest::Chat(chat_request) => {
-                self.chat.handle_request(from, chat_request, our, service)
+                self.chat.handle_request(from, chat_request, our, service);
             }
         }
+        self.save(our, service)?;
+        Ok(())
     }
 }
 

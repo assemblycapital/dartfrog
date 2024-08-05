@@ -462,13 +462,11 @@ where
         // Save services
         for (service_id, wrapper) in &mut self.services {
             services.insert(service_id.clone(), wrapper.service.clone());
-            wrapper.state.save(our, &wrapper.service)?;
         }
     
         // Save clients
         for (client_id, wrapper) in &mut self.clients {
             clients.insert(client_id.clone(), wrapper.client.clone());
-            wrapper.state.save(our, &wrapper.client)?;
         }
     
         // Convert to ProviderSaveState
@@ -591,11 +589,11 @@ pub struct AppClientStateWrapper<T: AppClientState> {
 pub trait AppServiceState: {
     fn new() -> Self;
 
-    fn init(&mut self, our: &Address, service: &Service) -> anyhow::Result<()> {
+    fn init(&mut self, _our: &Address, _service: &Service) -> anyhow::Result<()> {
         Ok(())
     }
 
-    fn save(&mut self, our: &Address, service: &Service) -> anyhow::Result<()> {
+    fn save(&mut self, _our: &Address, _service: &Service) -> anyhow::Result<()> {
         Ok(())
     }
 
@@ -619,10 +617,10 @@ pub trait AppServiceState: {
 pub trait AppClientState: std::fmt::Debug + DeserializeOwned + Serialize {
     fn new() -> Self;
 
-    fn init(&mut self, our: &Address, client: &Client) -> anyhow::Result<()> {
+    fn init(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
         Ok(())
     }
-    fn save(&mut self, our: &Address, client: &Client) -> anyhow::Result<()> {
+    fn save(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
         Ok(())
     }
     fn kill(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
@@ -693,6 +691,12 @@ where
 
                         // TODO possibly delete client?
                         // TODO possibly set consumer.service_id back to None?
+                        if let Some(mut client_wrapper) = state.clients.remove(&sid) {
+                            if let Some(service_id) = ServiceID::from_string(sid.as_str()) {
+                                // Call client.kill()
+                                client_wrapper.state.kill(our, &client_wrapper.client)?;
+                            }
+                        }
 
                         poke(&service_id.address, ProviderInput::ProviderServiceInput(sid, ProviderServiceInput::Unsubscribe))?;
                     }
@@ -809,7 +813,9 @@ where
                         )?;
                     }
                     FrontendChannelRequest::MessageClient(msg) => {
-                        // TODO
+                        if let Some(cw) = state.clients.get_mut(service_id_string) {
+                            cw.state.handle_frontend_message(msg, our, &cw.client)?;
+                        }
                     }
                     FrontendChannelRequest::MessageServer(msg) => {
                         poke(

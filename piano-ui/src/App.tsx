@@ -13,11 +13,11 @@ function App() {
   const onServiceMessage = (msg: any) => {
     if (msg.Piano) {
       if (msg.Piano.PlayNote) {
-        let [player, note] = msg.Piano.PlayNote;
+        let playNote = msg.Piano.PlayNote;
         setPianoState({
           notePlayed: {
-            note,
-            player,
+            note: playNote.note,
+            player: playNote.from,
             timestamp: Date.now(),
           }
         });
