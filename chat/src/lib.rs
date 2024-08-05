@@ -43,6 +43,14 @@ impl AppServiceState for AppService {
         }
     }
 
+    fn init(&mut self, our: &Address, service: &Service) -> anyhow::Result<()> {
+        default_load_service::<Self>(our, &service.id.to_string(), self)
+    }
+
+    fn save(&mut self, our: &Address, service: &Service) -> anyhow::Result<()> {
+        default_save_service::<Self>(our, &service.id.to_string(), self)
+    }
+
     fn handle_subscribe(&mut self, subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
         self.chat.handle_subscribe(subscriber_node, our, service)
     }

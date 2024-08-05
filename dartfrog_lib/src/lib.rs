@@ -524,7 +524,7 @@ where
 
 pub fn default_save_service<T: Serialize>(
     our: &Address,
-    service_id: &str,
+    service_id: &String,
     service_state: &T
 ) -> anyhow::Result<()> {
     let file_path = format!("{}/service.{}", &get_drive_path(our), service_id);
@@ -538,7 +538,7 @@ pub fn default_save_service<T: Serialize>(
 
 pub fn default_save_client<U: Serialize>(
     our: &Address,
-    client_id: &str,
+    client_id: &String,
     client_state: &U,
 ) -> anyhow::Result<()> {
     let file_path = format!("{}/client.{}", &get_drive_path(our), client_id);
@@ -552,24 +552,28 @@ pub fn default_save_client<U: Serialize>(
 
 pub fn default_load_service<T: DeserializeOwned>(
     our: &Address,
-    service_id: &str
-) -> anyhow::Result<T> {
+    service_id: &String,
+    service_state: &mut T,
+) -> anyhow::Result<()> {
     let file_path = format!("{}/service.{}", &get_drive_path(our), service_id);
     let file = open_file(&file_path, true, None)?;
     let buf = file.read()?;
     let state = serde_json::from_slice(&buf)?;
-    Ok(state)
+    *service_state = state;
+    Ok(())
 }
 
 pub fn default_load_client<U: DeserializeOwned>(
     our: &Address,
-    client_id: &str
-) -> anyhow::Result<U> {
+    client_id: &String,
+    client_state: &mut U,
+) -> anyhow::Result<()> {
     let file_path = format!("{}/client.{}", &get_drive_path(our), client_id);
     let file = open_file(&file_path, true, None)?;
     let buf = file.read()?;
     let state = serde_json::from_slice(&buf)?;
-    Ok(state)
+    *client_state = state;
+    Ok(())
 }
 
 #[derive(Debug, Clone)]
@@ -583,31 +587,30 @@ pub struct AppClientStateWrapper<T: AppClientState> {
     pub client: Client,
     pub state: T,
 }
-pub trait AppServiceState: std::fmt::Debug + DeserializeOwned + Serialize {
+
+pub trait AppServiceState: {
     fn new() -> Self;
+
     fn init(&mut self, our: &Address, service: &Service) -> anyhow::Result<()> {
-        match default_load_service::<Self>(our, &service.id.to_string()) {
-            Ok(loaded_service) => {
-                *self = loaded_service;
-                Ok(())
-            }
-            Err(e) => {
-                Err(e)
-            }
-        }
+        Ok(())
     }
+
     fn save(&mut self, our: &Address, service: &Service) -> anyhow::Result<()> {
-       default_save_service::<Self>(our, service.id.to_string().as_str(), self)
+        Ok(())
     }
+
     fn kill(&mut self, _our: &Address, _service: &Service) -> anyhow::Result<()> {
         Ok(())
     }
+
     fn handle_request(&mut self, _from: String, _req: String, _our: &Address, _service: &Service) -> anyhow::Result<()> {
         Ok(())
     }
+
     fn handle_subscribe(&mut self, _from: String, _our: &Address, _service: &Service) -> anyhow::Result<()> {
         Ok(())
     }
+
     fn handle_unsubscribe(&mut self, _from: String, _our: &Address, _service: &Service) -> anyhow::Result<()> {
         Ok(())
     }
@@ -615,19 +618,12 @@ pub trait AppServiceState: std::fmt::Debug + DeserializeOwned + Serialize {
 
 pub trait AppClientState: std::fmt::Debug + DeserializeOwned + Serialize {
     fn new() -> Self;
+
     fn init(&mut self, our: &Address, client: &Client) -> anyhow::Result<()> {
-        match default_load_client::<Self>(our, client.id.to_string().as_str()) {
-            Ok(loaded_client) => {
-                *self = loaded_client;
-                Ok(())
-            }
-            Err(e) => {
-                Err(e)
-            }
-        }
+        Ok(())
     }
     fn save(&mut self, our: &Address, client: &Client) -> anyhow::Result<()> {
-       default_save_client::<Self>(our, client.id.to_string().as_str(), self)
+        Ok(())
     }
     fn kill(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
         Ok(())
@@ -730,9 +726,11 @@ where
                         service.meta.access = access;
                         service.meta.visibility = visibility;
                         service.meta.whitelist = whitelist.into_iter().collect();
+                        let mut service_state = T::new();
+                        service_state.init(our, &service)?;
                         state.services.insert(service.id.to_string(), AppServiceStateWrapper {
                             service: service.clone(),
-                            state: T::new(),
+                            state: service_state,
                         });
                         let req = ProviderOutput::Service(service);
                         poke(&get_server_address(&our.node), req)?;
@@ -1323,30 +1321,6 @@ impl AppServiceState for DefaultAppServiceState {
     fn new() -> Self {
         DefaultAppServiceState
     }
-
-    fn init(&mut self, _our: &Address, _service: &Service) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    fn save(&mut self, _our: &Address, _service: &Service) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    fn kill(&mut self, _our: &Address, _service: &Service) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    fn handle_request(&mut self, _from: String, _req: String, _our: &Address, _service: &Service) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    fn handle_subscribe(&mut self, _from: String, _our: &Address, _service: &Service) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    fn handle_unsubscribe(&mut self, _from: String, _our: &Address, _service: &Service) -> anyhow::Result<()> {
-        Ok(())
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -1355,30 +1329,6 @@ pub struct DefaultAppClientState;
 impl AppClientState for DefaultAppClientState {
     fn new() -> Self {
         DefaultAppClientState
-    }
-
-    fn init(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    fn save(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    fn kill(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    fn handle_service_message(&mut self, _upd: String, _our: &Address, _client: &Client) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    fn handle_frontend_message(&mut self, _upd: String, _our: &Address, _client: &Client) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    fn handle_new_frontend(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
-        Ok(())
     }
 }
 
