@@ -455,49 +455,20 @@ where
     }
 
     /// Helper function to serialize and save the process state.
-    pub fn save(&self, our:&Address) -> anyhow::Result<()> {
-        // println!("saving");
+    pub fn save(&mut self, our:&Address) -> anyhow::Result<()> {
         let mut services = HashMap::new();
         let mut clients = HashMap::new();
     
         // Save services
-        for (service_id, wrapper) in &self.services {
+        for (service_id, wrapper) in &mut self.services {
             services.insert(service_id.clone(), wrapper.service.clone());
-            let file_path = format!("{}/service.{}", &get_drive_path(our), service_id);
-            match open_file(&file_path, true, None) {
-                Ok(mut file) => {
-                    if let Ok(buffer) = serde_json::to_vec(&wrapper.state) {
-                        if let Err(e) = file.write_all(&buffer) {
-                            // eprintln!("Failed to write state to file: {}", e);
-                        }
-                    } else {
-                        // eprintln!("Failed to serialize state");
-                    }
-                }
-                Err(e) => {
-                    // eprintln!("Failed to open file: {}", e);
-                }
-            }
+            wrapper.state.save(our, &wrapper.service)?;
         }
     
         // Save clients
-        for (client_id, wrapper) in &self.clients {
+        for (client_id, wrapper) in &mut self.clients {
             clients.insert(client_id.clone(), wrapper.client.clone());
-            let file_path = format!("{}/client.{}", &get_drive_path(our), client_id);
-            match open_file(&file_path, true, None) {
-                Ok(mut file) => {
-                    if let Ok(buffer) = serde_json::to_vec(&wrapper.state) {
-                        if let Err(e) = file.write_all(&buffer) {
-                            // eprintln!("Failed to write state to file: {}", e);
-                        }
-                    } else {
-                        // eprintln!("Failed to serialize state");
-                    }
-                }
-                Err(e) => {
-                    // eprintln!("Failed to open file: {}", e);
-                }
-            }
+            wrapper.state.save(our, &wrapper.client)?;
         }
     
         // Convert to ProviderSaveState
@@ -506,8 +477,8 @@ where
             clients,
             consumers: self.consumers.clone(),
         };
+        
         // Save the state
-        // set_state(&bincode::serialize(&save_state)?);
         set_state(&bincode::serialize(&save_state)?);
 
         Ok(())
@@ -516,13 +487,8 @@ where
     /// Helper function to deserialize the process state.
     pub fn load(our: &Address) -> Self {
         let saved_state = match get_typed_state(|bytes| Ok(bincode::deserialize::<ProviderSaveState>(bytes)?)) {
-            Some(loaded) => {
-                loaded
-            }
-            _ => {
-                // println!("failed load");
-                return Self::new(our);
-            }
+            Some(loaded) => loaded,
+            _ => return Self::new(our),
         };
 
         let mut provider_state = ProviderState {
@@ -533,21 +499,8 @@ where
 
         // Load services
         for (service_id, service) in saved_state.services {
-            let file_path = format!("{}/service.{}", &get_drive_path(our), service_id);
-            let app_state = match open_file(&file_path, true, None) {
-                Ok(mut file) => match file.read() {
-                    Ok(buf) => {
-                        serde_json::from_slice::<T>(&buf).ok()
-                    }
-                    Err(_) => None,
-                },
-                Err(_) => None,
-            };
-
-            let state = app_state.unwrap_or_else(|| {
-                T::new()
-            });
-
+            let mut state = T::new();
+            let _ = state.init(our, &service);
             provider_state.services.insert(service_id, AppServiceStateWrapper {
                 service,
                 state,
@@ -556,18 +509,8 @@ where
 
         // Load clients
         for (client_id, client) in saved_state.clients {
-            let file_path = format!("{}/client.{}", &get_drive_path(our), client_id);
-            let app_state = match open_file(&file_path, true, None) {
-                Ok(mut file) => match file.read() {
-                    Ok(buf) => serde_json::from_slice::<U>(&buf).ok(),
-                    Err(_) => None,
-                },
-                Err(_) => None,
-            };
-
-            let state = app_state.unwrap_or_else(|| {
-                U::new()
-            });
+            let mut state = U::new();
+            let _ = state.init(our, &client);
 
             provider_state.clients.insert(client_id, AppClientStateWrapper {
                 client,
@@ -577,6 +520,56 @@ where
 
         provider_state
     }
+}
+
+pub fn default_save_service<T: Serialize>(
+    our: &Address,
+    service_id: &str,
+    service_state: &T
+) -> anyhow::Result<()> {
+    let file_path = format!("{}/service.{}", &get_drive_path(our), service_id);
+    let mut file = open_file(&file_path, true, None)?;
+    
+    let buffer = serde_json::to_vec(service_state)?;
+    file.write_all(&buffer)?;
+    
+    Ok(())
+}
+
+pub fn default_save_client<U: Serialize>(
+    our: &Address,
+    client_id: &str,
+    client_state: &U,
+) -> anyhow::Result<()> {
+    let file_path = format!("{}/client.{}", &get_drive_path(our), client_id);
+    let mut file = open_file(&file_path, true, None)?;
+    
+    let buffer = serde_json::to_vec(client_state)?;
+    file.write_all(&buffer)?;
+    
+    Ok(())
+}
+
+pub fn default_load_service<T: DeserializeOwned>(
+    our: &Address,
+    service_id: &str
+) -> anyhow::Result<T> {
+    let file_path = format!("{}/service.{}", &get_drive_path(our), service_id);
+    let file = open_file(&file_path, true, None)?;
+    let buf = file.read()?;
+    let state = serde_json::from_slice(&buf)?;
+    Ok(state)
+}
+
+pub fn default_load_client<U: DeserializeOwned>(
+    our: &Address,
+    client_id: &str
+) -> anyhow::Result<U> {
+    let file_path = format!("{}/client.{}", &get_drive_path(our), client_id);
+    let file = open_file(&file_path, true, None)?;
+    let buf = file.read()?;
+    let state = serde_json::from_slice(&buf)?;
+    Ok(state)
 }
 
 #[derive(Debug, Clone)]
@@ -590,18 +583,64 @@ pub struct AppClientStateWrapper<T: AppClientState> {
     pub client: Client,
     pub state: T,
 }
-pub trait AppServiceState: std::fmt::Debug {
+pub trait AppServiceState: std::fmt::Debug + DeserializeOwned + Serialize {
     fn new() -> Self;
-    fn handle_request(&mut self, from: String, req: String, our: &Address, service: &Service) -> anyhow::Result<()>;
-    fn handle_subscribe(&mut self, from: String, our: &Address, service: &Service) -> anyhow::Result<()>;
-    fn handle_unsubscribe(&mut self, from: String, our: &Address, service: &Service) -> anyhow::Result<()>;
+    fn init(&mut self, our: &Address, service: &Service) -> anyhow::Result<()> {
+        match default_load_service::<Self>(our, &service.id.to_string()) {
+            Ok(loaded_service) => {
+                *self = loaded_service;
+                Ok(())
+            }
+            Err(e) => {
+                Err(e)
+            }
+        }
+    }
+    fn save(&mut self, our: &Address, service: &Service) -> anyhow::Result<()> {
+       default_save_service::<Self>(our, service.id.to_string().as_str(), self)
+    }
+    fn kill(&mut self, _our: &Address, _service: &Service) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn handle_request(&mut self, _from: String, _req: String, _our: &Address, _service: &Service) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn handle_subscribe(&mut self, _from: String, _our: &Address, _service: &Service) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn handle_unsubscribe(&mut self, _from: String, _our: &Address, _service: &Service) -> anyhow::Result<()> {
+        Ok(())
+    }
 }
 
-pub trait AppClientState: std::fmt::Debug {
+pub trait AppClientState: std::fmt::Debug + DeserializeOwned + Serialize {
     fn new() -> Self;
-    fn handle_service_message(&mut self, upd: String, our: &Address, client: &Client) -> anyhow::Result<()>;
-    fn handle_frontend_message(&mut self, upd: String, our: &Address, client: &Client) -> anyhow::Result<()>;
-    fn handle_new_frontend(&mut self, our: &Address, client: &Client) -> anyhow::Result<()>;
+    fn init(&mut self, our: &Address, client: &Client) -> anyhow::Result<()> {
+        match default_load_client::<Self>(our, client.id.to_string().as_str()) {
+            Ok(loaded_client) => {
+                *self = loaded_client;
+                Ok(())
+            }
+            Err(e) => {
+                Err(e)
+            }
+        }
+    }
+    fn save(&mut self, our: &Address, client: &Client) -> anyhow::Result<()> {
+       default_save_client::<Self>(our, client.id.to_string().as_str(), self)
+    }
+    fn kill(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn handle_service_message(&mut self, _upd: String, _our: &Address, _client: &Client) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn handle_frontend_message(&mut self, _upd: String, _our: &Address, _client: &Client) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn handle_new_frontend(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
+        Ok(())
+    }
 }
 
 pub fn get_now() -> u64 {
@@ -705,7 +744,8 @@ where
                     }
                     FrontendMetaRequest::DeleteService(name) => {
                         let dummy_service = Service::new(&name, our.clone());
-                        if let Some(service) = state.services.remove(&dummy_service.id.to_string()) {
+                        if let Some(mut service) = state.services.remove(&dummy_service.id.to_string()) {
+                            service.state.kill(our, &service.service)?;
                             let service_id = service.service.id.to_string();
                             
                             // Notify dartfrog about the deletion
@@ -1284,6 +1324,18 @@ impl AppServiceState for DefaultAppServiceState {
         DefaultAppServiceState
     }
 
+    fn init(&mut self, _our: &Address, _service: &Service) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    fn save(&mut self, _our: &Address, _service: &Service) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    fn kill(&mut self, _our: &Address, _service: &Service) -> anyhow::Result<()> {
+        Ok(())
+    }
+
     fn handle_request(&mut self, _from: String, _req: String, _our: &Address, _service: &Service) -> anyhow::Result<()> {
         Ok(())
     }
@@ -1303,6 +1355,18 @@ pub struct DefaultAppClientState;
 impl AppClientState for DefaultAppClientState {
     fn new() -> Self {
         DefaultAppClientState
+    }
+
+    fn init(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    fn save(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    fn kill(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
+        Ok(())
     }
 
     fn handle_service_message(&mut self, _upd: String, _our: &Address, _client: &Client) -> anyhow::Result<()> {

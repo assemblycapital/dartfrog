@@ -43,10 +43,6 @@ impl AppServiceState for AppService {
         }
     }
 
-    fn handle_unsubscribe(&mut self, _subscriber_node: String, _our: &Address, _service: &Service) -> anyhow::Result<()> {
-        Ok(())
-    }
-
     fn handle_subscribe(&mut self, subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
         self.chat.handle_subscribe(subscriber_node, our, service)
     }
