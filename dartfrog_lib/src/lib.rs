@@ -55,23 +55,48 @@ impl Service {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ServiceMetadata {
+    pub title: Option<String>,
+    pub description: Option<String>,
     pub last_sent_presence: Option<u64>,
     pub subscribers: HashSet<String>,
     pub user_presence: HashMap<String, u64>,
     pub access: ServiceAccess,
     pub visibility: ServiceVisibility,
     pub whitelist: HashSet<String>,
+    pub publish_user_presence: bool,
+    pub publish_subscribers: bool,
+    pub publish_subscriber_count: bool,
+    pub publish_whitelist: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PublicServiceMetadata {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub last_sent_presence: Option<u64>,
+    pub subscribers: Option<HashSet<String>>,
+    pub subscriber_count: Option<u64>,
+    pub user_presence: Option<HashMap<String, u64>>,
+    pub access: ServiceAccess,
+    pub visibility: ServiceVisibility,
+    pub whitelist: Option<HashSet<String>>,
 }
 
 impl ServiceMetadata {
     pub fn new() -> Self {
         ServiceMetadata {
+            title: None,
+            description: None,
             last_sent_presence: None,
             subscribers: HashSet::new(),
             user_presence: HashMap::new(),
             access: ServiceAccess::Public,
             visibility: ServiceVisibility::Visible,
             whitelist: HashSet::new(),
+            publish_user_presence: true,
+            publish_subscribers: true,
+            publish_subscriber_count: true,
+            publish_whitelist: true,
         }
     }
 }
@@ -176,8 +201,17 @@ pub enum VersionControl {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ServiceCreationOptions {
+    pub service_name: String,
+    pub process_name: String,
+    pub access: ServiceAccess,
+    pub visibility: ServiceVisibility,
+    pub whitelist: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DartfrogInput {
-    CreateService(String, String, ServiceAccess, ServiceVisibility, Vec<String>), // service_name, process_name, access, visibility, whitelist
+    CreateService(ServiceCreationOptions), // service_name, process_name, access, visibility, whitelist
     DeleteService(String),
     SetProfile(Profile),
     SetActivitySetting(ActivitySetting),
@@ -283,7 +317,7 @@ pub enum FrontendRequest {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum FrontendMetaRequest {
     RequestMyServices,
-    CreateService(String, ServiceAccess, ServiceVisibility, Vec<String>), // service_name, access, visibility, whitelist,
+    CreateService(ServiceCreationOptions), // service_name, access, visibility, whitelist,
     DeleteService(String),
     SetService(String),
     Unsubscribe,
@@ -313,6 +347,7 @@ pub enum FrontendMetaUpdate {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum FrontendChannelUpdate {
     Metadata(ServiceMetadata),
+    PublicMetadata(PublicServiceMetadata),
     SubscribeAck,
     SubscribeNack(SubscribeNack),
     Kick(KickReason),
@@ -323,7 +358,7 @@ pub enum FrontendChannelUpdate {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DartfrogToProvider {
-    CreateService(String, ServiceAccess, ServiceVisibility, Vec<String>), // service_name, access, visibility, whitelist
+    CreateService(ServiceCreationOptions),
     DeleteService(String),
     Peer(Peer),
     PeerList(Vec<Peer>),
@@ -372,7 +407,7 @@ pub enum KickReason {
 pub enum UpdateFromService {
     AppMessageToClient(String),
     AppMessageToFrontend(String),
-    Metadata(ServiceMetadata),
+    PublicMetadata(PublicServiceMetadata),
     SubscribeAck,
     SubscribeNack(SubscribeNack),
     Kick(KickReason),
@@ -414,7 +449,7 @@ const CONSUMER_TIMEOUT : u64 = 10*60; // 10 minutes
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Client {
     pub id: ServiceID,
-    pub meta: Option<ServiceMetadata>,
+    pub meta: Option<PublicServiceMetadata>,
     pub last_visited: u64,
     pub last_heard_from_host: Option<u64>,
 }
@@ -726,11 +761,11 @@ where
                         let response_message = FrontendUpdate::Meta(FrontendMetaUpdate::MyServices(services));
                         update_consumer(channel_id, response_message)?;
                     }
-                    FrontendMetaRequest::CreateService(name, access, visibility, whitelist) => {
-                        let mut service = Service::new(&name, our.clone());
-                        service.meta.access = access;
-                        service.meta.visibility = visibility;
-                        service.meta.whitelist = whitelist.into_iter().collect();
+                    FrontendMetaRequest::CreateService(options) => {
+                        let mut service = Service::new(&options.service_name, our.clone());
+                        service.meta.access = options.access;
+                        service.meta.visibility = options.visibility;
+                        service.meta.whitelist = options.whitelist.into_iter().collect();
                         let mut service_state = T::new();
                         service_state.init(our, &service)?;
                         state.services.insert(service.id.to_string(), AppServiceStateWrapper {
@@ -930,14 +965,14 @@ where
     U: AppClientState,
 {
     match app_message {
-        DartfrogToProvider::CreateService(service_name, access, visibility, whitelist) => {
+        DartfrogToProvider::CreateService(options) => {
             if source != &get_server_address(&our.node) {
                 return Ok(());
             }
-            let mut service = Service::new(&service_name, our.clone());
-            service.meta.access = access;
-            service.meta.visibility = visibility;
-            service.meta.whitelist = whitelist.into_iter().collect();
+            let mut service = Service::new(&options.service_name, our.clone());
+            service.meta.access = options.access;
+            service.meta.visibility = options.visibility;
+            service.meta.whitelist = options.whitelist.into_iter().collect();
             state.services.insert(service.id.to_string(), AppServiceStateWrapper {
                 service: service.clone(),
                 state: T::new(),
@@ -1046,10 +1081,10 @@ where
                             );
                             update_all_consumers_with_service_id(state, service_id, update)?;
                         }
-                        UpdateFromService::Metadata(meta) => {
+                        UpdateFromService::PublicMetadata(meta) => {
                             client.meta = Some(meta.clone());
                             let update = FrontendUpdate::Channel(
-                                FrontendChannelUpdate::Metadata(meta)
+                                FrontendChannelUpdate::PublicMetadata(meta)
                             );
                             update_all_consumers_with_service_id(state, service_id, update)?;
 
@@ -1257,12 +1292,41 @@ pub fn publish_metadata(our: &Address, service: &Service) -> anyhow::Result<()> 
     // send to dartfrog
     poke(&get_server_address(&our.node), ProviderOutput::Service(service.clone()))?;
     
+    // Construct PublicServiceMetadata
+    let public_meta = PublicServiceMetadata {
+        title: service.meta.title.clone(),
+        description: service.meta.description.clone(),
+        last_sent_presence: service.meta.last_sent_presence,
+        subscribers: if service.meta.publish_subscribers {
+            Some(service.meta.subscribers.clone())
+        } else {
+            None
+        },
+        subscriber_count: if service.meta.publish_subscriber_count {
+            Some(service.meta.subscribers.len() as u64)
+        } else {
+            None
+        },
+        user_presence: if service.meta.publish_user_presence {
+            Some(service.meta.user_presence.clone())
+        } else {
+            None
+        },
+        access: service.meta.access.clone(),
+        visibility: service.meta.visibility.clone(),
+        whitelist: if service.meta.publish_whitelist {
+            Some(service.meta.whitelist.clone())
+        } else {
+            None
+        },
+    };
+
     // send to all clients
     for client in service.meta.subscribers.iter() {
         let req = ProviderInput::ProviderUserInput(
             service.id.to_string(),
             ProviderUserInput::FromService(
-                UpdateFromService::Metadata(service.meta.clone())
+                UpdateFromService::PublicMetadata(public_meta.clone())
             )
         );
         let address = Address {
@@ -1270,8 +1334,7 @@ pub fn publish_metadata(our: &Address, service: &Service) -> anyhow::Result<()> 
             process: our.process.clone(),
         };
         poke(&address, req)?;
-    }
-    
+    }    
     Ok(())
 }
 

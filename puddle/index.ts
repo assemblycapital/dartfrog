@@ -71,7 +71,7 @@ export class ServiceApi {
   public websocket_url: string;
 
   public serviceId: string | null;
-  public serviceMetadata: ServiceMetadata | null;
+  public serviceMetadata: PublicServiceMetadata | null;
   public serviceConnectionStatus: ServiceConnectionStatus | null;
   public peerMap: PeerMap = new Map();
   public localServices = [];
@@ -277,10 +277,10 @@ export class ServiceApi {
         } else if (nack === "AccessDenied") {
           this.setServiceConnectionStatus(ServiceConnectionStatusType.AccessDenied);
         }
-      } else if (channelUpd["Metadata"]) {
+      } else if (channelUpd["PublicMetadata"]) {
         this.setServiceConnectionStatus(ServiceConnectionStatusType.Connected);
-        const meta = channelUpd["Metadata"]
-        const parsedMeta = serviceMetadataFromJson(meta);
+        const meta = channelUpd["PublicMetadata"]
+        const parsedMeta = publicServiceMetadataFromJson(meta);
         this.serviceMetadata = parsedMeta;
         this.onServiceMetadataChange(this);
         // Collect nodes into a list and request them in a batch
@@ -365,6 +365,7 @@ export interface Service {
   meta: ServiceMetadata;
 }
 
+
 export class Service {
   constructor(public id: ServiceID, public meta: ServiceMetadata) {}
 
@@ -373,37 +374,53 @@ export class Service {
   }
 }
 
+export interface PublicService {
+  id: ServiceID;
+  meta: PublicServiceMetadata;
+}
+
 export interface ServiceMetadata {
+  title?: string;
+  description?: string;
   last_sent_presence: number | null;
-  subscribers: Array<string>;
+  subscribers: string[];
   user_presence: Map<string, number>;
   access: ServiceAccess;
   visibility: ServiceVisibility;
-  whitelist: Array<string>;
+  whitelist: string[];
+  publish_user_presence: boolean;
+  publish_subscribers: boolean;
+  publish_subscriber_count: boolean;
+  publish_whitelist: boolean;
 }
 
 export class ServiceMetadata {
   constructor({
+    title = undefined,
+    description = undefined,
     last_sent_presence = null,
-    subscribers = new Array<string>(),
+    subscribers = [],
     user_presence = new Map<string, number>(),
     access = ServiceAccess.Public,
     visibility = ServiceVisibility.Visible,
-    whitelist = new Array<string>()
-  }: {
-    last_sent_presence?: number | null,
-    subscribers?: Array<string>,
-    user_presence?: Map<string, number>,
-    access?: ServiceAccess,
-    visibility?: ServiceVisibility,
-    whitelist?: Array<string>
-  }) {
+    whitelist = [],
+    publish_user_presence = false,
+    publish_subscribers = false,
+    publish_subscriber_count = false,
+    publish_whitelist = false
+  }: Partial<ServiceMetadata>) {
+    this.title = title;
+    this.description = description;
     this.last_sent_presence = last_sent_presence;
     this.subscribers = subscribers;
     this.user_presence = user_presence;
     this.access = access;
     this.visibility = visibility;
     this.whitelist = whitelist;
+    this.publish_user_presence = publish_user_presence;
+    this.publish_subscribers = publish_subscribers;
+    this.publish_subscriber_count = publish_subscriber_count;
+    this.publish_whitelist = publish_whitelist;
   }
 
   static new(): ServiceMetadata {
@@ -429,12 +446,18 @@ export interface JsonService {
     address: string;
   };
   meta: {
+    title?: string;
+    description?: string;
     last_sent_presence: number | null;
-    subscribers: Array<string>;
+    subscribers: string[];
     user_presence: { [key: string]: number };
     access: ServiceAccess;
     visibility: ServiceVisibility;
-    whitelist: Array<string>;
+    whitelist: string[];
+    publish_user_presence: boolean;
+    publish_subscribers: boolean;
+    publish_subscriber_count: boolean;
+    publish_whitelist: boolean;
   };
 }
 
@@ -447,13 +470,45 @@ export function serviceFromJson(jsonService: JsonService): Service {
 
 export function serviceMetadataFromJson(jsonMeta: JsonService['meta']): ServiceMetadata {
   return new ServiceMetadata({
+    title: jsonMeta.title,
+    description: jsonMeta.description,
     last_sent_presence: jsonMeta.last_sent_presence,
     subscribers: jsonMeta.subscribers,
     user_presence: new Map(Object.entries(jsonMeta.user_presence)),
     access: jsonMeta.access,
     visibility: jsonMeta.visibility,
     whitelist: jsonMeta.whitelist,
+    publish_user_presence: jsonMeta.publish_user_presence,
+    publish_subscribers: jsonMeta.publish_subscribers,
+    publish_subscriber_count: jsonMeta.publish_subscriber_count,
+    publish_whitelist: jsonMeta.publish_whitelist,
   });
+}
+
+export function publicServiceMetadataFromJson(jsonMeta: any): PublicServiceMetadata {
+  return {
+    title: jsonMeta.title,
+    description: jsonMeta.description,
+    last_sent_presence: jsonMeta.last_sent_presence,
+    subscribers: jsonMeta.subscribers,
+    subscriber_count: jsonMeta.subscriber_count,
+    user_presence: jsonMeta.user_presence ? new Map(Object.entries(jsonMeta.user_presence)) : undefined,
+    access: jsonMeta.access as ServiceAccess,
+    visibility: jsonMeta.visibility as ServiceVisibility,
+    whitelist: jsonMeta.whitelist,
+  };
+}
+
+export interface PublicServiceMetadata {
+  title?: string;
+  description?: string;
+  last_sent_presence: number | null;
+  subscribers?: string[],
+  subscriber_count?: number;
+  user_presence?: Map<string, number>;
+  access: ServiceAccess;
+  visibility: ServiceVisibility;
+  whitelist?: string[];
 }
 
 export enum PeerActivityType {
@@ -517,7 +572,7 @@ export class Profile {
 }
 
 export interface PeerData {
-  hostedServices: Service[];
+  hostedServices: PublicService[];
   profile: Profile;
   activity: PeerActivity;
 }
@@ -628,8 +683,8 @@ export function getRecencyText(diff:number) {
   return days === 1 ? "1 day ago" : `${days} days ago`;
 }
 
-export function getAllServicesFromPeerMap(peerMap: PeerMap): Service[] {
-  const allServices: Service[] = [];
+export function getAllServicesFromPeerMap(peerMap: PeerMap): PublicService[] {
+  const allServices: PublicService[] = [];
   
   peerMap.forEach(peer => {
     if (peer.peerData && peer.peerData.hostedServices) {
@@ -642,7 +697,7 @@ export function getAllServicesFromPeerMap(peerMap: PeerMap): Service[] {
 
 export function sortServices(services) {
   return services.sort((a, b) => {
-    const subDiff = b.meta.subscribers.length - a.meta.subscribers.length;
+    const subDiff = b.meta.subscribers.size - a.meta.subscribers.size;
     if (subDiff !== 0) return subDiff;
 
     const aMaxTime = a.meta.last_sent_presence ?? 0;

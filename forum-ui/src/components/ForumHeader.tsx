@@ -64,7 +64,7 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
             color:'gray',
           }}
         >
-          {serviceMetadata.subscribers.length} online
+          {serviceMetadata.subscribers && serviceMetadata.subscribers.length} online
         </div>
       }
     </div>

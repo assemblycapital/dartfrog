@@ -251,13 +251,13 @@ fn handle_http_server_request(
                     update_consumer(channel_id, local_user)?;
                     state.save(); // Save after updating profile
                 },
-                DartfrogInput::CreateService(service_name, process_name, access, visibility, whitelist) => {
-                    let address_str = format!("{}@{}", our.node, process_name);
+                DartfrogInput::CreateService(options) => {
+                    let address_str = format!("{}@{}", our.node, options.process_name);
                     let address = Address::from_str(address_str.as_str());
                     match address {
                         Ok(address) => {
                             // forward the request
-                            let req = ProviderInput::DartfrogRequest(DartfrogToProvider::CreateService(service_name, access, visibility, whitelist));
+                            let req = ProviderInput::DartfrogRequest(DartfrogToProvider::CreateService(options));
                             poke(&address, req)?;
                         }
                         _ => {

@@ -16,7 +16,6 @@ function App() {
   const onServiceMessage = (msg: any) => {
     if (msg.Radio) {
       if (msg.Radio.StationState) {
-        console.log(msg.Radio)
         let [newPlaying, newMediaStore] = msg.Radio.StationState;
         setPlayingMedia(newPlaying);
       } else if (msg.Radio.PlayMedia) {
