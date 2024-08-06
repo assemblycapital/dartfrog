@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import useDartStore from '../../store/dart';
-import { Peer, getClassForNameColor, NameColor, Profile, getRecencyText, DEFAULT_PFP } from '@dartfrog/puddle/index';
+import { Peer, getClassForNameColor, NameColor, Profile, getRecencyText, DEFAULT_PFP, ActivitySetting } from '@dartfrog/puddle/index';
 import { useNavigate } from 'react-router-dom';
 
 import { useParams } from 'react-router-dom';
@@ -45,7 +45,7 @@ const renderConnectionStatus = (peer: Peer | null, isBadConnection: boolean) => 
 const NodeProfile: React.FC<NodeProps> = ({ }) => {
     const { node } = useParams<{ node: string }>();
 
-    const { peerMap, delPeerMap, localFwdPeerRequest, requestSetProfile, localDeletePeer, setCurrentPage } = useDartStore();
+    const { peerMap, delPeerMap, localFwdPeerRequest, requestSetProfile, localDeletePeer, setCurrentPage, requestSetActivitySetting } = useDartStore();
 
     const [peer, setPeer] = useState<Peer|null>(null);
     const [profileImage, setProfileImage] = useState<string>(DEFAULT_PFP);
@@ -57,6 +57,7 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
     const [selectedBio, setSelectedBio] = useState<string>('');
     const [selectedNameColor, setSelectedNameColor] = useState<NameColor>(NameColor.Default);
     const [isLoadingImage, setIsLoadingImage] = useState(false);
+    const [activitySetting, setActivitySetting] = useState<ActivitySetting>(ActivitySetting.Public);
 
     const navigate = useNavigate();
 
@@ -94,12 +95,17 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
         setSelectedBio(event.target.value);
     };
 
+    const handleActivitySettingChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        setActivitySetting(event.target.value as ActivitySetting);
+    };
+
     const handleSave = useCallback(() => {
         setIsEditMode(false);
         const newProfile = new Profile(selectedBio, selectedNameColor, selectedProfileImage)
         requestSetProfile(newProfile);
+        requestSetActivitySetting(activitySetting);
         localFwdPeerRequest(node);
-    }, [selectedBio, selectedNameColor, selectedProfileImage]);
+    }, [selectedBio, selectedNameColor, selectedProfileImage, activitySetting]);
 
 
     useEffect(() => {
@@ -372,10 +378,35 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                         style={{
                           color:'gray',
                           cursor:'default',
+                          display:"flex",
+                          flexDirection:"row",
                         }}
                       >
-                        {getActivityMessage(peer)}
-                      </div>
+                        <div>
+                          {getActivityMessage(peer)}
+                        </div>
+
+                        {isEditMode &&
+                              <div
+                                style={{
+                                  marginLeft:"1rem",
+                                }}
+                              >
+                                <select
+                                  name="activitySettingOption"
+                                  id="activitySettingOption"
+                                  value={activitySetting}
+                                  onChange={handleActivitySettingChange}
+                                  style={{
+                                    width:"auto"
+                                  }}
+                                >
+                                  <option value={ActivitySetting.Public}>share activity</option>
+                                  <option value={ActivitySetting.Private}>make activity private</option>
+                                </select>
+                              </div>
+                            }
+                          </div>
                       {isEditMode ? (
                           <div style={{ marginTop: "1rem" }}>
                             <textarea
@@ -415,6 +446,7 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                         </div>
                       }
 
+                        
                     </div>
                     <div
                       style={{
@@ -437,7 +469,7 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
     export function getActivityMessage(peer) {
       if (peer && peer.peerData) {
         if (peer.peerData.activity.type === 'Private') {
-          return 'has activity set to private';
+          return 'ghost mode';
         }
 
         const activity = peer.peerData.activity;

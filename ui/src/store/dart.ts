@@ -58,6 +58,7 @@ export interface DartStore {
   requestSetProfile: (profile) => void,
   activitySetting: ActivitySetting | null,
   setActivitySetting: (setting) => void,
+  requestSetActivitySetting: (setting) => void,
   // 
   currentPage: DartfrogWebpageType,
   setCurrentPage: (page: DartfrogWebpageType) => void,
@@ -195,6 +196,17 @@ const useDartStore = create<DartStore>()(
     },
     activitySetting: null,
     setActivitySetting: (setting) => set({ activitySetting: setting }),
+    requestSetActivitySetting: (setting) => {
+      const { api } = get()
+      if (!(api)) return;
+      api.send({data:
+        {
+          "SetActivitySetting": 
+            setting
+        }
+      })
+
+    },
     // 
     currentPage: 'home',
     setCurrentPage: (page) => set({ currentPage: page }),

@@ -245,6 +245,12 @@ fn handle_http_server_request(
                     update_consumer(channel_id, local_user)?;
                     state.save(); // Save after updating profile
                 },
+                DartfrogInput::SetActivitySetting(setting) => {
+                    state.activity_setting = setting;
+                    let local_user = DartfrogOutput::LocalUser(state.profile.clone(), state.activity.clone(), state.activity_setting.clone());
+                    update_consumer(channel_id, local_user)?;
+                    state.save(); // Save after updating profile
+                },
                 DartfrogInput::CreateService(service_name, process_name, access, visibility, whitelist) => {
                     let address_str = format!("{}@{}", our.node, process_name);
                     let address = Address::from_str(address_str.as_str());
@@ -538,13 +544,17 @@ fn handle_dartfrog_input(
         }
         DartfrogInput::RemoteRequestPeer => {
             let address = get_server_address(&source.node());
+            let activity = match state.activity_setting {
+                ActivitySetting::Public => state.activity.clone(),
+                ActivitySetting::Private => PeerActivity::Private,
+            };
             let my_peer_data = PeerData {
                 profile: state.profile.clone(),
                 hosted_services: state.local_services.values()
                     .filter(|service| matches!(service.meta.visibility, ServiceVisibility::Visible))
                     .cloned()
                     .collect(),
-                activity: state.activity.clone(),
+                activity,
             };
             poke(&address, DartfrogInput::RemoteResponsePeer(my_peer_data))?;
         }

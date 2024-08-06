@@ -180,6 +180,7 @@ pub enum DartfrogInput {
     CreateService(String, String, ServiceAccess, ServiceVisibility, Vec<String>), // service_name, process_name, access, visibility, whitelist
     DeleteService(String),
     SetProfile(Profile),
+    SetActivitySetting(ActivitySetting),
     //
     Heartbeat,
     //
