@@ -109,7 +109,7 @@ const ServiceList = ({services }) => {
               >
                 { (service.meta.access === "Public") ||
                  (service.meta.access === "HostOnly" && hostNode === window.our?.node) ||
-                 (service.meta.access === "Whitelist" && (hostNode === window.our?.node || service.meta.whitelist.includes(window.our?.node))) ? (
+                 (service.meta.access === "Whitelist" && (hostNode === window.our?.node || (service.meta.whitelist && service.meta.whitelist.includes(window.our?.node)))) ? (
                   <a
                     style={{
                       cursor: "pointer",
@@ -133,6 +133,7 @@ const ServiceList = ({services }) => {
                       justifyContent: "center",
                       alignItems: "center",
                       textAlign: "center",
+                      padding: "0.5rem 0",
                     }}
                   >
                     private

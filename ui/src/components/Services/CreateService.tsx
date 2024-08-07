@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { validateServiceName } from "./Services";
 import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, PAGE_PLUGIN, PIANO_PLUGIN, RADIO_PLUGIN, FORUM_PLUGIN } from "../../store/dart";
 import { ServiceCreationOptions, ServiceVisibility, ServiceAccess } from "@dartfrog/puddle/index";
@@ -32,10 +32,44 @@ const CreateService: React.FC<{ }> = ({ }) => {
   const [publishSubscribers, setPublishSubscribers] = useState(true);
   const [publishWhitelist, setPublishWhitelist] = useState(false);
   const [publishSubscriberCount, setPublishSubscriberCount] = useState(false);
+  const [whitelist, setWhitelist] = useState<string[]>([]);
+  const [availablePeers, setAvailablePeers] = useState<string[]>([]);
+  const [isCustomWhitelist, setIsCustomWhitelist] = useState(false);
+  const [customWhitelistPeer, setCustomWhitelistPeer] = useState('');
 
   const navigate = useNavigate();
 
-  const { requestLocalServiceList, createService } = useDartStore();
+  const { requestLocalServiceList, createService, peerMap } = useDartStore();
+
+  useEffect(() => {
+    setAvailablePeers(Array.from(peerMap.keys()));
+  }, [peerMap]);
+
+  const handleAddToWhitelist = (peer: string) => {
+    if (peer === 'custom') {
+      setIsCustomWhitelist(true);
+    } else if (peer && !whitelist.includes(peer)) {
+      setWhitelist([...whitelist, peer]);
+      setIsCustomWhitelist(false);
+      setCustomWhitelistPeer('');
+    }
+  };
+
+  const handleCustomWhitelistChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomWhitelistPeer(e.target.value);
+  };
+
+  const handleAddCustomWhitelist = () => {
+    if (customWhitelistPeer && !whitelist.includes(customWhitelistPeer)) {
+      setWhitelist([...whitelist, customWhitelistPeer]);
+      setCustomWhitelistPeer('');
+      setIsCustomWhitelist(false);
+    }
+  };
+
+  const handleRemoveFromWhitelist = (peer: string) => {
+    setWhitelist(whitelist.filter(p => p !== peer));
+  };
 
   const handleCreateInputChange = (e) => {
     const value = e.target.value;
@@ -60,7 +94,7 @@ const CreateService: React.FC<{ }> = ({ }) => {
         processName: selectedPlugin,
         visibility: selectedVisibility,
         access: selectedAccess,
-        whitelist: [],
+        whitelist: whitelist,
         title: title || undefined,
         description: description || undefined,
         publishUserPresence,
@@ -78,8 +112,8 @@ const CreateService: React.FC<{ }> = ({ }) => {
       }, 100);
     }
   }, [inputCreateServiceName, selectedPlugin, selectedVisibility, selectedAccess, isCreateInputValid,
-      title, description, publishUserPresence, publishSubscribers, publishWhitelist, publishSubscriberCount]);
-  
+      title, description, publishUserPresence, publishSubscribers, publishWhitelist, publishSubscriberCount, whitelist]);
+
   const createFromShortcut = (shortProcessName: string) => {
     let numString = Math.floor(Math.random() * 10000).toString();
     let serviceName = `${shortProcessName}-${numString}`;
@@ -293,6 +327,44 @@ const CreateService: React.FC<{ }> = ({ }) => {
                   checked={publishSubscriberCount}
                   onChange={(e) => setPublishSubscriberCount(e.target.checked)}
                 />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                <span style={{ marginBottom: "0.5rem" }}>Whitelist:</span>
+                <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", gap: "0.5rem" }}>
+                  {whitelist.map(peer => (
+                    <div key={peer} style={{ padding: "0.2rem 0.5rem", borderRadius: "4px" }}>
+                      {peer}
+                      <button onClick={() => handleRemoveFromWhitelist(peer)} style={{ width:"auto", marginLeft: "0.5rem", background: "none", border: "none", color: "red", cursor: "pointer" }}>
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", marginTop: "0.5rem", gap: "0.5rem" }}>
+                  <select
+                    onChange={(e) => handleAddToWhitelist(e.target.value)}
+                    value=""
+                    style={{ width:"auto" }}
+                  >
+                    <option value="" disabled>Add peer to whitelist</option>
+                    <option value="custom">custom</option>
+                    {availablePeers.filter(peer => !whitelist.includes(peer)).map(peer => (
+                      <option key={peer} value={peer}>{peer}</option>
+                    ))}
+                  </select>
+                  {isCustomWhitelist && (
+                    <>
+                      <input
+                        type="text"
+                        value={customWhitelistPeer}
+                        onChange={handleCustomWhitelistChange}
+                        placeholder="Enter custom peer"
+                        style={{ width: 'auto' }}
+                      />
+                      <button onClick={handleAddCustomWhitelist} style={{ width: 'auto' }}>Add</button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 

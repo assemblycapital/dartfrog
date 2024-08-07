@@ -285,6 +285,7 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
                             display:"inline-block",
                             height:"10vh",
                             width:"23vh",
+                            minWidth:"23vh",
                           }}
                         >
                           {/* cover the bottom of the profile */}
