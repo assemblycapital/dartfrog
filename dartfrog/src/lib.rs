@@ -190,7 +190,8 @@ fn handle_http_server_request(
             let my_peer_data = PeerData {
                 profile: state.profile.clone(),
                 hosted_services: state.local_services.values()
-                    .cloned()
+                    .filter(|service| matches!(service.meta.visibility, ServiceVisibility::Visible))
+                    .map(|service| service.clone().to_public())
                     .collect(),
                 activity: state.activity.clone(),
             };
@@ -552,7 +553,7 @@ fn handle_dartfrog_input(
                 profile: state.profile.clone(),
                 hosted_services: state.local_services.values()
                     .filter(|service| matches!(service.meta.visibility, ServiceVisibility::Visible))
-                    .cloned()
+                    .map(|service| service.clone().to_public())
                     .collect(),
                 activity,
             };
@@ -699,7 +700,9 @@ fn init(our: Address) {
         .send()
         .unwrap();
 
+    println!("here");
     let mut state = DartfrogState::load(&our);
+    println!("there");
     if state.network_hub.is_none() {
         state.network_hub = Some(NETWORK_HUB.to_string());
     }

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import {Peer, PeerMap, Service, ServiceApi, ServiceConnectionStatus, ServiceMetadata} from '@dartfrog/puddle';
+import {Peer, PeerMap, Service, ServiceApi, ServiceConnectionStatus, ServiceMetadata, ServiceCreationOptions} from '@dartfrog/puddle';
 import { maybePlaySoundEffect, maybePlayTTS } from '../utils';
 
 export type ChatState = {
@@ -32,7 +32,7 @@ export interface ChatStore {
   api: ServiceApi | null,
   setApi: (api: ServiceApi) => void
   //
-  createService: (serviceName, visibility, access, whitelist) => void
+  createService: (options: ServiceCreationOptions) => void
   deleteService: (name: string) => void
   requestPeer: (node:string) => void
   requestMyServices: () => void
@@ -66,15 +66,10 @@ const useChatStore = create<ChatStore>((set, get) => ({
   api: null,
   setApi: (api) => set({ api }),
   //
-  createService: (serviceName, access, visibility, whitelist) => {
+  createService: (options: ServiceCreationOptions) => {
     const { api } = get()
     if (!(api)) return;
-    api.createService(
-          serviceName,
-          access,
-          visibility,
-          whitelist,
-    )
+    api.createService(options)
   },
   deleteService: (name) => {
     const { api } = get();

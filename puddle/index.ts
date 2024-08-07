@@ -200,18 +200,24 @@ export class ServiceApi {
     this.sendRequest(req);
   }
 
-  public createService(serviceName, access, visibility, whitelist) {
+  public createService(options: ServiceCreationOptions) {
     let req = {
-      "Meta" :
-      {
-      "CreateService": [
-        serviceName,
-        access,
-        visibility,
-        whitelist
-        ]
+      "Meta": {
+        "CreateService": {
+          service_name: options.serviceName,
+          process_name: options.processName,
+          access: options.access,
+          visibility: options.visibility,
+          whitelist: options.whitelist,
+          title: options.title,
+          description: options.description,
+          publish_user_presence: options.publishUserPresence,
+          publish_subscribers: options.publishSubscribers,
+          publish_subscriber_count: options.publishSubscriberCount,
+          publish_whitelist: options.publishWhitelist
+        }
       }
-  }
+    }
     this.sendRequest(req)
   }
   public deleteService(name:string) {
@@ -285,12 +291,14 @@ export class ServiceApi {
         this.onServiceMetadataChange(this);
         // Collect nodes into a list and request them in a batch
         const nodesToRequest: string[] = [];
-        parsedMeta.user_presence.forEach((_, node) => {
-          if (!this.peerMap.has(node)) {
-            this.peerMap.set(node, Peer.new(node));
-            nodesToRequest.push(node);
-          }
-        });
+        if (parsedMeta.user_presence) {
+          parsedMeta.user_presence.forEach((_, node) => {
+            if (!this.peerMap.has(node)) {
+              this.peerMap.set(node, Peer.new(node));
+              nodesToRequest.push(node);
+            }
+          });
+        }
         if (nodesToRequest.length > 0) {
           this.requestPeerList(nodesToRequest);
         }
@@ -461,6 +469,20 @@ export interface JsonService {
   };
 }
 
+export interface ServiceCreationOptions {
+  serviceName: string;
+  processName: string;
+  access: ServiceAccess;
+  visibility: ServiceVisibility;
+  whitelist: string[];
+  title?: string;
+  description?: string;
+  publishUserPresence: boolean;
+  publishSubscribers: boolean;
+  publishSubscriberCount: boolean;
+  publishWhitelist: boolean;
+}
+
 export function serviceFromJson(jsonService: JsonService): Service {
   return {
     id: new ServiceID(jsonService.id.name, jsonService.id.address),
@@ -485,6 +507,12 @@ export function serviceMetadataFromJson(jsonMeta: JsonService['meta']): ServiceM
   });
 }
 
+export function publicServiceFromJson(jsonService: any): PublicService {
+  return {
+    id: new ServiceID(jsonService.id.name, jsonService.id.address),
+    meta: publicServiceMetadataFromJson(jsonService.meta)
+  };
+}
 export function publicServiceMetadataFromJson(jsonMeta: any): PublicServiceMetadata {
   return {
     title: jsonMeta.title,
@@ -597,7 +625,7 @@ export class Peer {
 
 export function peerFromJson(json: any): Peer {
   const peerData: PeerData | null = json.peer_data ? {
-    hostedServices: json.peer_data.hosted_services.map((service: any) => serviceFromJson(service)),
+    hostedServices: json.peer_data.hosted_services.map((service: any) => publicServiceFromJson(service)),
     profile: profileFromJson(json.peer_data.profile),
     activity: activityFromJson(json.peer_data.activity)  // Use activityFromJson here
   } : null;
@@ -656,7 +684,7 @@ export function getClassForNameColor(nameColor: NameColor): string {
 export function getServiceRecencyText(service: Service) {
   const now = new Date();
   if (!(service.meta.last_sent_presence)) {
-    return "new"
+    return ""
   }
   const time = service.meta.last_sent_presence
   const diff = now.getTime() - time*1000;
@@ -697,7 +725,10 @@ export function getAllServicesFromPeerMap(peerMap: PeerMap): PublicService[] {
 
 export function sortServices(services) {
   return services.sort((a, b) => {
-    const subDiff = b.meta.subscribers.size - a.meta.subscribers.size;
+    // Handle cases where subscribers might be null or undefined
+    const aSubCount = a.meta.subscribers?.length ?? 0;
+    const bSubCount = b.meta.subscribers?.length ?? 0;
+    const subDiff = bSubCount - aSubCount;
     if (subDiff !== 0) return subDiff;
 
     const aMaxTime = a.meta.last_sent_presence ?? 0;
@@ -706,7 +737,6 @@ export function sortServices(services) {
     return bMaxTime - aMaxTime;
   });
 }
-
 export const getUniqueServices = (services) => {
   return Array.from(new Set(services.map(service => service.id.toString())))
     .map(id => services.find(service => service.id.toString() === id));

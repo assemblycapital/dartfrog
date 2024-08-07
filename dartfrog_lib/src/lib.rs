@@ -51,6 +51,45 @@ impl Service {
             meta: ServiceMetadata::new(),
         }
     }
+    pub fn to_public(self) -> PublicService {
+        let subscriber_count = self.meta.subscribers.len() as u64;
+        PublicService {
+            id: self.id,
+            meta: PublicServiceMetadata {
+                title: self.meta.title,
+                description: self.meta.description,
+                last_sent_presence: self.meta.last_sent_presence,
+                subscribers: if self.meta.publish_subscribers {
+                    Some(self.meta.subscribers)
+                } else {
+                    None
+                },
+                subscriber_count: if self.meta.publish_subscriber_count {
+                    Some(subscriber_count)
+                } else {
+                    None
+                },
+                user_presence: if self.meta.publish_user_presence {
+                    Some(self.meta.user_presence)
+                } else {
+                    None
+                },
+                access: self.meta.access,
+                visibility: self.meta.visibility,
+                whitelist: if self.meta.publish_whitelist {
+                    Some(self.meta.whitelist)
+                } else {
+                    None
+                },
+            },
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PublicService {
+    pub id: ServiceID,
+    pub meta: PublicServiceMetadata,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -170,7 +209,7 @@ impl Profile {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PeerData {
-    pub hosted_services: Vec<Service>,
+    pub hosted_services: Vec<PublicService>,
     pub profile: Profile,
     pub activity: PeerActivity,
 }
@@ -207,6 +246,12 @@ pub struct ServiceCreationOptions {
     pub access: ServiceAccess,
     pub visibility: ServiceVisibility,
     pub whitelist: Vec<String>,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub publish_user_presence: bool,
+    pub publish_subscribers: bool,
+    pub publish_subscriber_count: bool,
+    pub publish_whitelist: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -766,6 +811,12 @@ where
                         service.meta.access = options.access;
                         service.meta.visibility = options.visibility;
                         service.meta.whitelist = options.whitelist.into_iter().collect();
+                        service.meta.title = options.title;
+                        service.meta.description = options.description;
+                        service.meta.publish_user_presence = options.publish_user_presence;
+                        service.meta.publish_subscribers = options.publish_subscribers;
+                        service.meta.publish_subscriber_count = options.publish_subscriber_count;
+                        service.meta.publish_whitelist = options.publish_whitelist;
                         let mut service_state = T::new();
                         service_state.init(our, &service)?;
                         state.services.insert(service.id.to_string(), AppServiceStateWrapper {
@@ -973,6 +1024,12 @@ where
             service.meta.access = options.access;
             service.meta.visibility = options.visibility;
             service.meta.whitelist = options.whitelist.into_iter().collect();
+            service.meta.title = options.title;
+            service.meta.description = options.description;
+            service.meta.publish_user_presence = options.publish_user_presence;
+            service.meta.publish_subscribers = options.publish_subscribers;
+            service.meta.publish_subscriber_count = options.publish_subscriber_count;
+            service.meta.publish_whitelist = options.publish_whitelist;
             state.services.insert(service.id.to_string(), AppServiceStateWrapper {
                 service: service.clone(),
                 state: T::new(),

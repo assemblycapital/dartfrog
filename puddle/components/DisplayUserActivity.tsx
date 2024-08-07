@@ -31,9 +31,9 @@ const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({metadata}) => 
     if (!metadata) return;
     const time = Date.now();
 
-    const newGroupedUsers = Array.from(metadata.user_presence).reduce(
+    const newGroupedUsers = Array.from(metadata.user_presence || []).reduce(
       (groups, [key, lastActivityTime]) => {
-        const isSubscribed = metadata.subscribers.includes(key);
+        const isSubscribed = metadata.subscribers?.includes(key) || false;
         const status = activityStatus(isSubscribed, lastActivityTime*1000, time);
         groups[status].push(key);
         return groups;

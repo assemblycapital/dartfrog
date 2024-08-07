@@ -48,7 +48,7 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
               flex:"2",
               display:"flex",
               flexDirection:"column",
-              alignItems:"center",
+              // alignItems:"center",
               overflow:"hidden",
               flexShrink: 1,
               minWidth: 0,
@@ -66,7 +66,7 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
                   textOverflow: 'ellipsis',
                 }}
               >
-              {service.id.toShortString()}
+                {service.id.toShortString()}
               </span>
             </div>
             <div
@@ -78,9 +78,49 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
                 textOverflow: 'ellipsis',
               }}
             >
-              {service.id.process()}
+                {service.id.process()}
             </div>
-
+ 
+          </div>
+          <div
+            style={{
+              flex:"2",
+              display:"flex",
+              flexDirection:"column",
+              // alignItems:"center",
+              overflow:"hidden",
+              flexShrink: 1,
+              minWidth: 0,
+            }}
+          >
+            <div
+              style={{
+              }}
+            >
+              <span
+                className={''}
+                style={{
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {service.meta.title}
+              
+              </span>
+            </div>
+            <div
+              style={{
+                color:'gray',
+                fontSize:'0.6rem',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {service.meta.description}
+            </div>
+ 
           </div>
           <div
             style={{
@@ -89,7 +129,7 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
               justifyContent: "flex-start",
             }}
           >
-            {service.meta.subscribers.length > 0 && isRecentlyActive() ? (
+            {service.meta.subscribers && service.meta.subscribers.length > 0 && isRecentlyActive() ? (
               <span>
                 {service.meta.subscribers.length} online
               </span>

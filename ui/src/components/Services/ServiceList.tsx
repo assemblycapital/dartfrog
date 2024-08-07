@@ -3,7 +3,7 @@ import useDartStore from '../../store/dart';
 import Spinner from '@dartfrog/puddle/components/Spinner';
 // import { Presence, ServiceAccess } from '@dartfrog/puddle/index';
 import { useNavigate } from 'react-router-dom';
-import { Service, ServiceID, ServiceVisibility, dfLinkToRealLink, getServiceRecencyText, sortServices } from '@dartfrog/puddle/index';
+import { PublicService, Service, ServiceID, ServiceVisibility, dfLinkToRealLink, getServiceRecencyText, sortServices } from '@dartfrog/puddle/index';
 
 const ServiceList = ({services }) => {
   const { localServices, deleteService, requestLocalServiceList, localFwdPeerRequest, peerMap, localFwdAllPeerRequests } = useDartStore();
@@ -32,6 +32,15 @@ const ServiceList = ({services }) => {
       return process
     }
     return known
+  }
+
+  function getOnlineCount(service: PublicService) {
+    if (service.meta.subscribers) {
+      return `${service.meta.subscribers.length} online`;
+    } else if (service.meta.subscriber_count !== null && service.meta.subscriber_count !== null) {
+      return `${service.meta.subscriber_count} online`;
+    }
+    return '';
   }
 
   return (
@@ -108,7 +117,7 @@ const ServiceList = ({services }) => {
                       textAlign: "center",
                     }}
                     className="join-button"
-                    href={dfLinkToRealLink(service.id.toString(), baseOrigin)}
+                    href={dfLinkToRealLink(`df://${service.id.toString()}`, baseOrigin)}
                     onClick={(e) => {
                       e.preventDefault();
                       navigate(`/join/${service.id.toString()}`);
@@ -163,7 +172,7 @@ const ServiceList = ({services }) => {
                 {getServiceRecencyText(service)}
               </div>
               <div style={{ flex: "1" }}>
-                {service.meta.subscribers.length} online
+                {getOnlineCount(service)}
               </div>
             </div>
           );

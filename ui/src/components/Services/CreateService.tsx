@@ -1,12 +1,12 @@
 import { useCallback, useState } from "react";
 import { validateServiceName } from "./Services";
 import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, PAGE_PLUGIN, PIANO_PLUGIN, RADIO_PLUGIN, FORUM_PLUGIN } from "../../store/dart";
+import { ServiceCreationOptions, ServiceVisibility, ServiceAccess } from "@dartfrog/puddle/index";
 
 import './CreateService.css';
 // import { ServiceAccess, ServiceVisibility } from "@dartfrog/puddle";
 import CreateServicePlugins from "./CreateServicePlugins";
 import { useNavigate } from 'react-router-dom';
-import { ServiceAccess, ServiceVisibility } from "@dartfrog/puddle/index";
 
 
 const PLUGIN_MAP = {
@@ -26,6 +26,12 @@ const CreateService: React.FC<{ }> = ({ }) => {
   const [selectedVisibility, setSelectedVisibility] = useState<ServiceVisibility>(ServiceVisibility.Visible);
   const [selectedAccess, setSelectedAccess] = useState<ServiceAccess>(ServiceAccess.Public);
   const [isAdvancedOptionsVisible, setIsAdvancedOptionsVisible] = useState(false);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [publishUserPresence, setPublishUserPresence] = useState(true);
+  const [publishSubscribers, setPublishSubscribers] = useState(true);
+  const [publishWhitelist, setPublishWhitelist] = useState(false);
+  const [publishSubscriberCount, setPublishSubscriberCount] = useState(false);
 
   const navigate = useNavigate();
 
@@ -48,24 +54,55 @@ const CreateService: React.FC<{ }> = ({ }) => {
   const handleInputCreateClick = useCallback(() => {
     if (isCreateInputValid && inputCreateServiceName !== '') {
       let serviceId = `${inputCreateServiceName}:${window.our?.node}@${selectedPlugin}`;
-      createService(inputCreateServiceName, selectedPlugin, selectedVisibility, selectedAccess, []);
-      console.log("service create settings", serviceId, selectedPlugin, selectedVisibility, selectedAccess)
+      
+      const serviceOptions: ServiceCreationOptions = {
+        serviceName: inputCreateServiceName,
+        processName: selectedPlugin,
+        visibility: selectedVisibility,
+        access: selectedAccess,
+        whitelist: [],
+        title: title || undefined,
+        description: description || undefined,
+        publishUserPresence,
+        publishSubscribers,
+        publishWhitelist,
+        publishSubscriberCount,
+      };
+
+      createService(serviceOptions);
+
       setInputCreateServiceName('');
       navigate(`/join/${serviceId}`);
       setTimeout(() => {
         requestLocalServiceList();
       }, 100);
     }
-  }, [inputCreateServiceName, selectedPlugin, selectedVisibility, selectedAccess, isCreateInputValid]);
+  }, [inputCreateServiceName, selectedPlugin, selectedVisibility, selectedAccess, isCreateInputValid,
+      title, description, publishUserPresence, publishSubscribers, publishWhitelist, publishSubscriberCount]);
   
   const createFromShortcut = (shortProcessName: string) => {
     let numString = Math.floor(Math.random() * 10000).toString();
     let serviceName = `${shortProcessName}-${numString}`;
     let processName = PLUGIN_MAP[shortProcessName];
-    createService(serviceName, processName, 'Visible', 'Public', []);
+    
+    const serviceOptions: ServiceCreationOptions = {
+      serviceName,
+      processName,
+      visibility: ServiceVisibility.Visible,
+      access: ServiceAccess.Public,
+      whitelist: [],
+      publishUserPresence: true,
+      publishSubscribers: true,
+      publishWhitelist: false,
+      publishSubscriberCount: false,
+    };
+
+    createService(serviceOptions);
+    
     setTimeout(() => {
       requestLocalServiceList();
     }, 100);
+    
     let serviceId = `${serviceName}:${window.our?.node}@${processName}`;
     navigate(`/join/${serviceId}`);
   }
@@ -193,7 +230,7 @@ const CreateService: React.FC<{ }> = ({ }) => {
                   onChange={handleVisibilityChange}
                 >
                   <option value="Visible">Visible</option>
-                  <option value="VisibleToHost">Invisible</option>
+                  <option value="VisibleToHost">Host Only</option>
                   <option value="Hidden">Hidden</option>
                 </select>
               </div>
@@ -205,6 +242,56 @@ const CreateService: React.FC<{ }> = ({ }) => {
                   value={inputCreateServiceName}
                   onChange={handleCreateInputChange}
                   className={`${isCreateInputValid ? '' : 'invalid'}`}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                <span style={{ marginRight: "0.5rem" }}>Title:</span>
+                <input
+                  type="text"
+                  placeholder="Service Title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                <span style={{ marginRight: "0.5rem" }}>Description:</span>
+                <input
+                  type="text"
+                  placeholder="Service Description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                <span style={{ marginRight: "0.5rem" }}>Publish User Presence:</span>
+                <input
+                  type="checkbox"
+                  checked={publishUserPresence}
+                  onChange={(e) => setPublishUserPresence(e.target.checked)}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                <span style={{ marginRight: "0.5rem" }}>Publish Subscribers:</span>
+                <input
+                  type="checkbox"
+                  checked={publishSubscribers}
+                  onChange={(e) => setPublishSubscribers(e.target.checked)}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                <span style={{ marginRight: "0.5rem" }}>Publish Whitelist:</span>
+                <input
+                  type="checkbox"
+                  checked={publishWhitelist}
+                  onChange={(e) => setPublishWhitelist(e.target.checked)}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                <span style={{ marginRight: "0.5rem" }}>Publish Subscriber Count:</span>
+                <input
+                  type="checkbox"
+                  checked={publishSubscriberCount}
+                  onChange={(e) => setPublishSubscriberCount(e.target.checked)}
                 />
               </div>
             </div>

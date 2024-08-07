@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useEffect } from 'react';
-import { getServiceRecencyText, ServiceApi } from "@dartfrog/puddle";
+import { getServiceRecencyText, ServiceApi, ServiceCreationOptions, ServiceAccess, ServiceVisibility } from "@dartfrog/puddle";
 import { useNavigate } from 'react-router-dom';
 import useChatStore from '../store/chat';
 
@@ -151,7 +151,18 @@ const NoServiceView = ({ processName, websocketUrl, ourNode }: { processName: st
           }}
           onClick={() => {
             const randomNumber = Math.floor(Math.random() * 10000) + 1;
-            createService(randomNumber.toString(), 'Public', 'Visible', [])
+            const serviceOptions: ServiceCreationOptions = {
+              serviceName: randomNumber.toString(),
+              processName: processName,
+              access: ServiceAccess.Public,
+              visibility: ServiceVisibility.Visible,
+              whitelist: [],
+              publishUserPresence: true,
+              publishSubscribers: true,
+              publishSubscriberCount: true,
+              publishWhitelist: false,
+            };
+            createService(serviceOptions);
           }}
         >
           create a service

@@ -2,7 +2,7 @@ import KinodeClientApi from "@kinode/client-api";
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { HUB_NODE } from '../utils';
-import { ActivitySetting, Peer, PeerMap, Profile, Service,  } from "@dartfrog/puddle/index";
+import { ActivitySetting, Peer, PeerMap, Profile, Service, ServiceCreationOptions } from "@dartfrog/puddle/index";
 
 export const PACKAGE_ID = "dartfrog:herobrine.os";
 export const CHAT_PLUGIN = `chat:${PACKAGE_ID}`;
@@ -37,7 +37,7 @@ export interface DartStore {
   localFwdAllPeerRequests: () => void
   localDeletePeer: (node:string) => void
   deleteService: (serviceIdStr: string) => void
-  createService: (serviceName, processName, visibility, access, whitelist) => void
+  createService: (options: ServiceCreationOptions) => void
   // 
   localServices: Service[],
   setLocalServices: (services: Service[]) => void,
@@ -144,18 +144,24 @@ const useDartStore = create<DartStore>()(
       })
 
     },
-    createService: (serviceName, processName, visibility, access, whitelist) => {
+    createService: (options: ServiceCreationOptions) => {
       const { api } = get()
       if (!(api)) return;
       api.send({data:
         {
-          "CreateService": [
-            serviceName,
-            processName,
-            access,
-            visibility,
-            whitelist
-          ]
+          "CreateService": {
+            service_name: options.serviceName,
+            process_name: options.processName,
+            access: options.access,
+            visibility: options.visibility,
+            whitelist: options.whitelist,
+            title: options.title,
+            description: options.description,
+            publish_user_presence: options.publishUserPresence,
+            publish_subscribers: options.publishSubscribers,
+            publish_subscriber_count: options.publishSubscriberCount,
+            publish_whitelist: options.publishWhitelist
+          }
         }
       })
     },
