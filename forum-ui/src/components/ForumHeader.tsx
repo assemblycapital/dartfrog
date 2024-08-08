@@ -16,7 +16,10 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
       style={{
         display: "flex",
         flexDirection: "row",
-        gap: "0.3rem",
+        gap: "1rem",
+        height:"32px",
+        marginBottom:"0.8rem",
+        boxSizing:"border-box",
       }}
       >
         {includeForumButton && (
@@ -24,7 +27,7 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
           style={{
             width: 'auto',
             height: 'auto',
-            padding: '0.5rem 1rem',
+            // padding: '0.5rem 1rem',
           }}
           onClick={() => {
             navigate(`/df/service/${serviceId}/forum`)
@@ -38,8 +41,9 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
         display: "flex",
         flexDirection: "row",
         gap: "1.3rem",
-        margin: "1rem 0.7rem",
-        alignItems: "flex-end"
+        // margin: "1rem 0.7rem",
+        alignItems: "flex-end",
+        paddingBottom:"3px",
       }}
     >
       

@@ -18,7 +18,6 @@ const HomePage: React.FC = () => {
         overflowY:"auto",
       }}
     >
-      <ForumHeader />
       <div
         style={{
           display:"flex",
@@ -31,7 +30,7 @@ const HomePage: React.FC = () => {
           style={{
             width:'auto',
             height:'auto',
-            padding:'0.5rem 1rem',
+            padding:'0.2rem 1rem',
           }}
           onClick={()=>{
             navigate(`/df/service/${serviceId}/new`)
@@ -43,7 +42,7 @@ const HomePage: React.FC = () => {
           style={{
             width:'auto',
             height:'auto',
-            padding:'0.5rem 1rem',
+            padding:'0.2rem 1rem',
           }}
           onClick={()=>{
             navigate(`/df/service/${serviceId}/chat`)
@@ -56,7 +55,7 @@ const HomePage: React.FC = () => {
             style={{
               width:'auto',
               height:'auto',
-              padding:'0.5rem 1rem',
+              padding:'0.2rem 1rem',
             }}
             onClick={()=>{
               navigate(`/df/service/${serviceId}/admin`)

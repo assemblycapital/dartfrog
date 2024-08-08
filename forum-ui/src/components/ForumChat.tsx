@@ -15,10 +15,10 @@ const ForumChat: React.FC = () => {
         flexDirection:"column",
         height:"100%",
         maxHeight:"100%",
+        overflow:"hidden",
       }}
 
     >
-      <ForumHeader includeForumButton={true} />
       <ChatBox chatState={chatState} />
       <DisplayUserActivity metadata={serviceMetadata} />
     </div>

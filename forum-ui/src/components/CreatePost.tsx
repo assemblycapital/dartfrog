@@ -50,7 +50,6 @@ const CreatePost: React.FC = () => {
         maxHeight: "100%",
       }}
     >
-      <ForumHeader includeForumButton={true} />
       <form onSubmit={handleSubmit}
         style={{
           display: "flex",

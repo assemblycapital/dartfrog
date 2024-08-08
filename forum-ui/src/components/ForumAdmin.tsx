@@ -35,7 +35,6 @@ const ForumAdmin: React.FC = () => {
         maxHeight: "100%",
       }}
     >
-      <ForumHeader includeForumButton={true} />
       <div
         style={{
           display: "flex",
@@ -51,7 +50,7 @@ const ForumAdmin: React.FC = () => {
             gap: "1rem",
           }}
         >
-          <div>update forum metadata</div>
+          <div>set title and description</div>
           <input
             type="text"
             value={newTitle}

@@ -12,27 +12,56 @@ import HomePage from './HomePage';
 import CreatePost from './CreatePost';
 import ForumChat from './ForumChat';
 import ForumAdmin from './ForumAdmin';
+import ForumHeader from './ForumHeader';
 
 const Forum: React.FC = () => {
 
   return (
-    <Routes>
-        <Route path="/post/:postId" element={
-          <PostDetail />
+    <div
+      style={{
+        height:"100vh",
+        maxHeight:"100vh",
+        width:"100%",
+        maxWidth:"100%",
+        display:"flex",
+        flexDirection:"column",
+        padding:"20px",
+        boxSizing: "border-box",
+      }}
+    >
+      <Routes>
+          <Route path="/post/:postId" element={
+            <>
+              <ForumHeader includeForumButton />
+              <PostDetail />
+            </>
+            } />
+          <Route path="/*" element={
+            <>
+              <ForumHeader />
+              <HomePage />
+            </>
           } />
-        <Route path="/*" element={
-          <HomePage />
-        } />
-        <Route path="/new" element={
-          <CreatePost />
-        } />
-        <Route path="/chat" element={
-          <ForumChat />
-        } />
-        <Route path="/admin" element={
-          <ForumAdmin />
-        } />
-      </Routes>
+          <Route path="/new" element={
+            <>
+              <ForumHeader includeForumButton />
+              <CreatePost/>
+            </>
+          } />
+          <Route path="/chat" element={
+            <>
+              <ForumHeader includeForumButton />
+              <ForumChat />
+            </>
+          } />
+          <Route path="/admin" element={
+            <>
+              <ForumHeader includeForumButton />
+              <ForumAdmin />
+            </>
+          } />
+        </Routes>
+    </div>
   );
 };
 

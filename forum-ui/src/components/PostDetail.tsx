@@ -67,7 +67,6 @@ const PostDetail: React.FC = () => {
       }}
 
     >
-      <ForumHeader includeForumButton={true} />
       <PostCard post={post} showFullContents />
       <div
         style={{

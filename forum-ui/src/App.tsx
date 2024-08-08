@@ -1,10 +1,7 @@
-
 import "@dartfrog/puddle/components/App.css";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import NoServiceView from "@dartfrog/puddle/components/NoServiceView";
 import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
-import usePageStore from "./store/forum";
-import HalfChat from "@dartfrog/puddle/components/HalfChat";
 import ServiceView from "@dartfrog/puddle/components/ServiceView";
 import Forum from "./components/Forum";
 import useForumStore from "./store/forum";
@@ -33,7 +30,7 @@ function App() {
             websocketUrl={WEBSOCKET_URL}
             onServiceMessage={onServiceMessage}
             Element={Forum}
-            // hideTopBar
+            fullscreen
            />
         } />
       </Routes>

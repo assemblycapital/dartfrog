@@ -17,7 +17,7 @@ interface ServiceViewProps {
   ourNode: string;
   websocketUrl?: string;
   enableChatSounds?: boolean;
-  hideTopBar?: boolean;
+  fullscreen?: boolean;
 }
 
 export const renderConnectionStatus = (
@@ -64,7 +64,7 @@ export const renderConnectionStatus = (
   return null;
 };
 
-const ServiceView : React.FC<ServiceViewProps> = ({ onServiceMessage, onClientMessage, Element, processName, websocketUrl, ourNode, enableChatSounds = false, hideTopBar = false }) => {
+const ServiceView : React.FC<ServiceViewProps> = ({ onServiceMessage, onClientMessage, Element, processName, websocketUrl, ourNode, enableChatSounds = false, fullscreen = false }) => {
   const { id } = useParams<{ id?: string; }>();
   const paramServiceId = id ?? '';
   const [isApiConnected, setIsApiConnected] = useState(false);
@@ -209,6 +209,19 @@ const ServiceView : React.FC<ServiceViewProps> = ({ onServiceMessage, onClientMe
     }
   };
 
+  if (fullscreen) {
+    return (
+      <div
+        style={{
+        }}
+      >
+        {renderConnectionStatus(serviceConnectionStatus, isConnectingTooLong) || (
+          <Element />
+        )}
+      </div>
+    )
+  }
+
   return (
     <div
       style={{
@@ -220,7 +233,7 @@ const ServiceView : React.FC<ServiceViewProps> = ({ onServiceMessage, onClientMe
         boxSizing: "border-box",
       }}
     >
-      {!hideTopBar && <TopBar serviceId={paramServiceId} /> }
+      <TopBar serviceId={paramServiceId} />
       <div
         style={{
           flex: '1 1 100%',
