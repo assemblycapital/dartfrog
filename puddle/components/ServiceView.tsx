@@ -138,10 +138,13 @@ const ServiceView : React.FC<ServiceViewProps> = ({ onServiceMessage, onClientMe
         setServiceConnectionStatus(api.serviceConnectionStatus)
       },
       onServiceMetadataChange(api) {
-        setServiceMetadata(api.serviceMetadata)
         if (!isPageVisible.current) {
-          setUpdateCount(prevCount => prevCount + 1);
+          if (api.serviceMetadata && serviceMetadata && serviceMetadata.subscribers !== api.serviceMetadata.subscribers) {
+            // somebody joined or left, otherwise, dont update the count
+            setUpdateCount(prevCount => prevCount + 1);
+          }
         }
+        setServiceMetadata(api.serviceMetadata)
       },
       onPeerMapChange(api) {
         setPeerMap(api.peerMap);
@@ -213,6 +216,7 @@ const ServiceView : React.FC<ServiceViewProps> = ({ onServiceMessage, onClientMe
     return (
       <div
         style={{
+          height:"100%",
         }}
       >
         {renderConnectionStatus(serviceConnectionStatus, isConnectingTooLong) || (

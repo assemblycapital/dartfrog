@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import useForumStore, { ForumComment } from '../store/forum';
+import useForumStore from '../store/forum';
 import useChatStore from '@dartfrog/puddle/store/chat';
 import ProfilePicture from '@dartfrog/puddle/components/ProfilePicture';
 import { getPeerNameColor, getRecencyText, nodeProfileLink, ServiceID } from '@dartfrog/puddle';

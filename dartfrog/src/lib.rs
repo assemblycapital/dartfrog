@@ -700,9 +700,7 @@ fn init(our: Address) {
         .send()
         .unwrap();
 
-    println!("here");
     let mut state = DartfrogState::load(&our);
-    println!("there");
     if state.network_hub.is_none() {
         state.network_hub = Some(NETWORK_HUB.to_string());
     }

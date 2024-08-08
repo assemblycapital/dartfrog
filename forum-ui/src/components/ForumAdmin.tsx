@@ -33,6 +33,7 @@ const ForumAdmin: React.FC = () => {
         flexDirection: "column",
         height: "100%",
         maxHeight: "100%",
+        overflowY:"auto",
       }}
     >
       <div
@@ -91,7 +92,7 @@ const ForumAdmin: React.FC = () => {
               cursor: "pointer",
             }}
           >
-            update metadata
+            save
           </button>
         </form>
 
@@ -176,6 +177,14 @@ const ForumAdmin: React.FC = () => {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+      <div>
+        <div>
+          service settings
+        </div>
+        <div>
+          todo
         </div>
       </div>
     </div>

@@ -1,109 +1,145 @@
 import { useNavigate, useParams } from "react-router-dom";
 import useForumStore from "../store/forum";
 import useChatStore from "@dartfrog/puddle/store/chat";
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import PostCard from "./PostCard";
-import Comment from "./Comment";
 import ForumHeader from "./ForumHeader";
 
 const PostDetail: React.FC = () => {
-  const { postId } = useParams<{ postId?: string; }>();
-  const { posts, vote, createComment } = useForumStore();
+  const { postId } = useParams<{ postId?: string }>();
+  const { posts, vote, createComment, getPost } = useForumStore();
   const { api, serviceId } = useChatStore();
-  const post = posts.find(p => p.id === postId);
+  const post = posts.find(p => p.id === Number(postId));
   const [newComment, setNewComment] = useState('');
-  const [sortOption, setSortOption] = useState<string>('highestScore');
+  const [imageUrl, setImageUrl] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [sortOption, setSortOption] = useState<string>('mostRecent');
+  const [missingComments, setMissingComments] = useState<number[]>([]);
 
   const navigate = useNavigate();
 
-  const sortedComments = useMemo(() => {
-    if (!post) return [];
-    
-    return [...post.comments].sort((a, b) => {
-      switch (sortOption) {
-        case 'mostRecent':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        case 'leastRecent':
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        case 'highestScore':
-          return (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes);
-        case 'lowestScore':
-          return (a.upvotes - a.downvotes) - (b.upvotes - b.downvotes);
-        default:
-          return 0;
-      }
-    });
-  }, [post, sortOption]);
+  const comments = post ? posts.filter(p => p.thread_id === post.id) : [];
 
-  if (!post) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
-          maxHeight: "100%",
-        }}
-      >
-        <ForumHeader includeForumButton={true} />
-        <div>Post not found</div>
-      </div>
-    );
-  }
+  const sortedComments = [...comments].sort((a, b) => {
+    switch (sortOption) {
+      case 'mostRecent':
+        return b.created_at - a.created_at;
+      case 'leastRecent':
+        return a.created_at - b.created_at;
+      case 'highestScore':
+        return (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes);
+      case 'lowestScore':
+        return (a.upvotes - a.downvotes) - (b.upvotes - b.downvotes);
+      default:
+        return 0;
+    }
+  });
+
+  useEffect(() => {
+    if (post && post.comments) {
+      const missing = post.comments.filter(
+        commentId => !posts.some(p => p.id === commentId)
+      );
+      if (missing.length > 0) {
+        setMissingComments(missing);
+      }
+      if (missing.length === 0) {
+        setMissingComments([]);
+      }
+    }
+  }, [post, posts]);
 
   const handleSubmitComment = (e: React.FormEvent) => {
     e.preventDefault();
-    createComment(api, postId, newComment);
+    createComment(api, post.id, newComment, imageUrl, isAnonymous);
     setNewComment('');
+    setImageUrl('');
+    setIsAnonymous(false);
   };
 
   return (
     <div
       style={{
-        display:"flex",
-        flexDirection:"column",
-        height:"100%",
-        maxHeight:"100%",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        maxHeight: "100%",
       }}
-
     >
-      <PostCard post={post} showFullContents />
+      <PostCard post_id={Number(postId)} showFullContents />
       <div
         style={{
-          marginTop:"1rem",
-          borderTop:"1px solid #333",
-          paddingTop:"1rem",
+          marginTop: "1rem",
+          borderTop: "1px solid #333",
+          paddingTop: "1rem",
         }}
       >
-        <form onSubmit={handleSubmitComment}
+        <form
+          onSubmit={handleSubmitComment}
           style={{
-            margin:"none",
-            display:"flex",
-            flexDirection:"row",
-
+            margin: "none",
+            display: "flex",
+            flexDirection: "row",
           }}
         >
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="write a comment..."
-            required
+          <div
             style={{
-              resize:'both',
-              margin:"none",
-              fontFamily: 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
-            }}
-          />
-          <button
-            type="submit"
-            style={{
-              width:'auto',
-              height:'auto',
-              padding:'0.5rem 1rem',
+              display: "flex",
+              flexDirection: "column",
+              gap:"0.5rem",
             }}
           >
-            comment
-          </button>
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="write a comment..."
+              required
+              style={{
+                resize: "both",
+                margin: "none",
+                fontFamily: "Inter, system-ui, Avenir, Helvetica, Arial, sans-serif",
+              }}
+            />
+            <input
+              type="text"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="image URL"
+              style={{
+                fontFamily: "Inter, system-ui, Avenir, Helvetica, Arial, sans-serif",
+                border:"1px solid #333",
+              }}
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-end",
+              gap:"0.5rem",
+            }}
+          >
+            <div>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={isAnonymous}
+                  onChange={(e) => setIsAnonymous(e.target.checked)}
+                />
+                Post anonymously
+              </label>
+            </div>
+            <button
+              type="submit"
+              style={{
+                width: "auto",
+                height: "auto",
+                padding: "0.5rem 1rem",
+              }}
+            >
+              comment
+            </button>
+          </div>
         </form>
         <div style={{ marginTop: "1rem", marginBottom: "1rem" }}>
           <label htmlFor="sortComments">sort comments by: </label>
@@ -112,9 +148,9 @@ const PostDetail: React.FC = () => {
             value={sortOption}
             onChange={(e) => setSortOption(e.target.value)}
             style={{
-              padding: '0.25rem',
-              fontFamily: 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
-              width:"auto",
+              padding: "0.25rem",
+              fontFamily: "Inter, system-ui, Avenir, Helvetica, Arial, sans-serif",
+              width: "auto",
             }}
           >
             <option value="mostRecent">newest</option>
@@ -123,9 +159,12 @@ const PostDetail: React.FC = () => {
             <option value="lowestScore">unpopular</option>
           </select>
         </div>
-        <div>
+        <div style={{ paddingBottom: "3rem" }}>
           {sortedComments.map((comment) => (
-            <Comment key={comment.id} comment={comment} />
+            <PostCard key={comment.id} post_id={comment.id} isComment />
+          ))}
+          {missingComments.map((commentId) => (
+            <PostCard key={commentId} post_id={commentId} isComment />
           ))}
         </div>
       </div>

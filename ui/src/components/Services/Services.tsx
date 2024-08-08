@@ -97,6 +97,7 @@ const Services: React.FC<ServicesProps> = ({ }) => {
         flexDirection: "column",
         gap: "1rem",
         marginTop:"1rem",
+        overflowY:"auto",
       }}
     >
       <ServiceList

@@ -11,6 +11,7 @@ const CreatePost: React.FC = () => {
   const [newPostLink, setNewPostLink] = useState('');
   const [newPostImage, setNewPostImage] = useState('');
   const [isSticky, setIsSticky] = useState(false);
+  const [isAnon, setIsAnon] = useState(false);
   const { createPost, createStickyPost } = useForumStore();
   const { api, serviceId } = useChatStore();
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ const CreatePost: React.FC = () => {
       text_contents: newPostContent,
       link: newPostLink || undefined,
       image_url: newPostImage || undefined,
+      is_anon: isAnon,
     };
 
     if (isSticky) {
@@ -38,6 +40,7 @@ const CreatePost: React.FC = () => {
     setNewPostLink('');
     setNewPostImage('');
     setIsSticky(false);
+    setIsAnon(false);
     navigate("..")
   };
 
@@ -116,6 +119,16 @@ const CreatePost: React.FC = () => {
           }}
           className="color-white"
         />
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <input
+            type="checkbox"
+            id="anonToggle"
+            checked={isAnon}
+            onChange={(e) => setIsAnon(e.target.checked)}
+            style={{ margin: 0 }}
+          />
+          <label htmlFor="anonToggle">post anonymously</label>
+        </div>
         {isAdmin && (
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <input

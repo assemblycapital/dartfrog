@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use dartfrog_lib::*;
-use kinode_process_lib::{call_init, http, Address};
+use kinode_process_lib::{call_init, println, http, Address};
 use serde::{Serialize, Deserialize};
 
 wit_bindgen::generate!({
@@ -66,6 +66,7 @@ impl AppServiceState for AppService {
     }
 
     fn handle_request(&mut self, from: String, req: String, our: &Address, service: &Service) -> anyhow::Result<()> {
+        println!("req {:?}", req);
         let request = serde_json::from_str::<AppRequest>(&req)?;
         match request {
             AppRequest::Chat(chat_request) => {
@@ -82,7 +83,7 @@ impl AppServiceState for AppService {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ForumPost {
-    id: String,
+    id: u64,
     title: String,
     text_contents: String,
     link: Option<String>,
@@ -90,15 +91,17 @@ pub struct ForumPost {
     author: String,
     upvotes: u32,
     downvotes: u32,
-    comments: Vec<ForumComment>,
+    comments: Vec<u64>,
     created_at: u64,
     voted_users: HashMap<String, bool>,
     is_sticky: bool,
+    is_anon: bool,
+    thread_id: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublicForumPost {
-    id: String,
+    id: u64,
     title: String,
     text_contents: String,
     link: Option<String>,
@@ -106,25 +109,27 @@ pub struct PublicForumPost {
     author: Option<String>,
     upvotes: u32,
     downvotes: u32,
-    comments: Vec<PublicForumComment>,
+    comments: Vec<u64>,
     created_at: u64,
     is_sticky: bool,
+    thread_id: Option<u64>,
 }
 
 impl ForumPost {
     pub fn to_public(&self, include_author: bool) -> PublicForumPost {
         PublicForumPost {
-            id: self.id.clone(),
+            id: self.id,
             title: self.title.clone(),
             text_contents: self.text_contents.clone(),
             link: self.link.clone(),
             image_url: self.image_url.clone(),
-            author: if include_author { Some(self.author.clone()) } else { None },
+            author: if self.is_anon { None } else if include_author { Some(self.author.clone()) } else { None },
             upvotes: self.upvotes,
             downvotes: self.downvotes,
-            comments: self.comments.iter().map(|c| c.to_public(include_author)).collect(),
+            comments: self.comments.clone(),
             created_at: self.created_at,
             is_sticky: self.is_sticky,
+            thread_id: self.thread_id,
         }
     }
 }
@@ -134,21 +139,12 @@ pub enum ForumUpdate {
     TopPosts(Vec<PublicForumPost>),
     NewPost(PublicForumPost),
     UpdatedPost(PublicForumPost),
-    NewComment(PublicForumComment),
-    UpdatedComment {
-        post_id: String,
-        comment: PublicForumComment,
-    },
-    DeletedComment {
-        post_id: String,
-        comment_id: String,
-    },
     Metadata {
         title: String,
         description: String,
     },
     BannedUsers(Vec<String>),
-    DeletedPost(String),
+    DeletedPost(u64),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -158,17 +154,15 @@ pub enum ForumRequest {
         text_contents: String,
         link: Option<String>,
         image_url: Option<String>,
+        is_anon: bool,
+        thread_id: Option<u64>,
     },
     Vote {
-        post_id: String,
+        post_id: u64,
         is_upvote: bool,
     },
-    CreateComment {
-        post_id: String,
-        text: String,
-    },
     GetPost {
-        post_id: String,
+        post_id: u64,
     },
     UpdateMetadata {
         title: Option<String>,
@@ -181,70 +175,24 @@ pub enum ForumRequest {
         user: String,
     },
     DeletePost {
-        post_id: String,
+        post_id: u64,
     },
     CreateStickyPost {
         title: String,
         text_contents: String,
         link: Option<String>,
         image_url: Option<String>,
-    },
-    VoteComment {
-        post_id: String,
-        comment_id: String,
-        is_upvote: bool,
-    },
-    DeleteComment {
-        post_id: String,
-        comment_id: String,
+        is_anon: bool,
     },
     ToggleSticky {
-        post_id: String,
+        post_id: u64,
     },
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ForumComment {
-    id: String,
-    post_id: String,
-    author: String,
-    text: String,
-    created_at: u64,
-    upvotes: u32,
-    downvotes: u32,
-    voted_users: HashMap<String, bool>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PublicForumComment {
-    id: String,
-    post_id: String,
-    author: Option<String>,
-    text: String,
-    created_at: u64,
-    upvotes: u32,
-    downvotes: u32,
-}
-
-impl ForumComment {
-    pub fn to_public(&self, include_author: bool) -> PublicForumComment {
-        PublicForumComment {
-            id: self.id.clone(),
-            post_id: self.post_id.clone(),
-            author: if include_author { Some(self.author.clone()) } else { None },
-            text: self.text.clone(),
-            created_at: self.created_at,
-            upvotes: self.upvotes,
-            downvotes: self.downvotes,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ForumServiceState {
-    pub posts: HashMap<String, ForumPost>,
+    pub posts: HashMap<u64, ForumPost>,
     pub next_post_id: u64,
-    pub next_comment_id: u64,
     pub title: String,
     pub description: String,
     pub banned_users: HashSet<String>,
@@ -255,7 +203,6 @@ impl ForumServiceState {
         ForumServiceState {
             posts: HashMap::new(),
             next_post_id: 1,
-            next_comment_id: 1,
             title: "Default Forum Title".to_string(),
             description: "Welcome to the forum!".to_string(),
             banned_users: HashSet::new(),
@@ -276,8 +223,11 @@ impl ForumServiceState {
             }
         });
         
-        // Take up to 30 most recent posts (including sticky posts)
-        let top_posts = public_posts.into_iter().take(30).collect();
+        // Take up to 30 most recent top-level posts (including sticky posts)
+        let top_posts: Vec<PublicForumPost> = public_posts.into_iter()
+            .filter(|post| post.thread_id.is_none())
+            .take(30)
+            .collect();
         
         let upd = ForumUpdate::TopPosts(top_posts);
         update_subscriber(AppUpdate::Forum(upd), &subscriber_node, our, service)?;
@@ -298,7 +248,7 @@ impl ForumServiceState {
 
     fn handle_request(&mut self, from: String, req: ForumRequest, our: &Address, service: &Service) -> anyhow::Result<()> {
         match req {
-            ForumRequest::CreatePost { .. } | ForumRequest::CreateComment { .. } => {
+            ForumRequest::CreatePost { .. } => {
                 if self.banned_users.contains(&from) {
                     return Ok(());
                 }
@@ -307,12 +257,12 @@ impl ForumServiceState {
         }
 
         match req {
-            ForumRequest::CreatePost { title, text_contents, link, image_url } => {
-                let post_id = self.next_post_id.to_string();
+            ForumRequest::CreatePost { title, text_contents, link, image_url, is_anon, thread_id } => {
+                let post_id = self.next_post_id;
                 self.next_post_id += 1;
                 
                 let new_post = ForumPost {
-                    id: post_id.clone(),
+                    id: post_id,
                     title,
                     text_contents,
                     link,
@@ -324,7 +274,15 @@ impl ForumServiceState {
                     created_at: get_now(),
                     voted_users: HashMap::new(),
                     is_sticky: false,
+                    is_anon,
+                    thread_id,
                 };
+
+                if let Some(thread_id) = thread_id {
+                    if let Some(parent_post) = self.posts.get_mut(&thread_id) {
+                        parent_post.comments.push(post_id);
+                    }
+                }
 
                 self.posts.insert(post_id, new_post.clone());
                 update_subscribers(AppUpdate::Forum(ForumUpdate::NewPost(new_post.to_public(true))), our, service)?;
@@ -357,26 +315,6 @@ impl ForumServiceState {
                     }
 
                     update_subscribers(AppUpdate::Forum(ForumUpdate::UpdatedPost(post.to_public(true))), our, service)?;
-                }
-            }
-            ForumRequest::CreateComment { post_id, text } => {
-                if let Some(post) = self.posts.get_mut(&post_id) {
-                    let comment_id = self.next_comment_id.to_string();
-                    self.next_comment_id += 1;
-
-                    let new_comment = ForumComment {
-                        id: comment_id,
-                        post_id: post_id.clone(),
-                        author: from,
-                        text,
-                        created_at: get_now(),
-                        upvotes: 0,
-                        downvotes: 0,
-                        voted_users: HashMap::new(),
-                    };
-
-                    post.comments.push(new_comment.clone());
-                    update_subscribers(AppUpdate::Forum(ForumUpdate::NewComment(new_comment.to_public(true))), our, service)?;
                 }
             }
             ForumRequest::GetPost { post_id } => {
@@ -429,13 +367,13 @@ impl ForumServiceState {
                 }
             }
 
-            ForumRequest::CreateStickyPost { title, text_contents, link, image_url } => {
+            ForumRequest::CreateStickyPost { title, text_contents, link, image_url, is_anon } => {
                 if from == our.node {
-                    let post_id = self.next_post_id.to_string();
+                    let post_id = self.next_post_id;
                     self.next_post_id += 1;
                     
                     let new_post = ForumPost {
-                        id: post_id.clone(),
+                        id: post_id,
                         title,
                         text_contents,
                         link,
@@ -447,60 +385,12 @@ impl ForumServiceState {
                         created_at: get_now(),
                         voted_users: HashMap::new(),
                         is_sticky: true,
+                        is_anon: is_anon,
+                        thread_id: None,
                     };
 
                     self.posts.insert(post_id, new_post.clone());
                     update_subscribers(AppUpdate::Forum(ForumUpdate::NewPost(new_post.to_public(true))), our, service)?;
-                }
-            }
-
-            ForumRequest::VoteComment { post_id, comment_id, is_upvote } => {
-                if let Some(post) = self.posts.get_mut(&post_id) {
-                    if let Some(comment) = post.comments.iter_mut().find(|c| c.id == comment_id) {
-                        let has_voted = comment.voted_users.contains_key(&from);
-                        let previous_vote = comment.voted_users.get(&from).cloned();
-
-                        match (has_voted, previous_vote, is_upvote) {
-                            (false, _, true) => {
-                                comment.upvotes += 1;
-                                comment.voted_users.insert(from.clone(), true);
-                            }
-                            (false, _, false) => {
-                                comment.downvotes += 1;
-                                comment.voted_users.insert(from.clone(), false);
-                            }
-                            (true, Some(true), false) => {
-                                comment.upvotes -= 1;
-                                comment.downvotes += 1;
-                                comment.voted_users.insert(from.clone(), false);
-                            }
-                            (true, Some(false), true) => {
-                                comment.downvotes -= 1;
-                                comment.upvotes += 1;
-                                comment.voted_users.insert(from.clone(), true);
-                            }
-                            _ => {} // No change if the vote is the same as before
-                        }
-
-                        let update = ForumUpdate::UpdatedComment {
-                            post_id: post_id.clone(),
-                            comment: comment.to_public(true),
-                        };
-                        update_subscribers(AppUpdate::Forum(update), our, service)?;
-                    }
-                }
-            }
-
-            ForumRequest::DeleteComment { post_id, comment_id } => {
-                if from == our.node {
-                    if let Some(post) = self.posts.get_mut(&post_id) {
-                        post.comments.retain(|c| c.id != comment_id);
-                        let update = ForumUpdate::DeletedComment {
-                            post_id: post_id.clone(),
-                            comment_id,
-                        };
-                        update_subscribers(AppUpdate::Forum(update), our, service)?;
-                    }
                 }
             }
 

@@ -1,10 +1,10 @@
-import { getPeerNameColor, Service, ServiceID, ServiceMetadata } from '@dartfrog/puddle/index';
+import { getPeerNameColor, PublicServiceMetadata, Service, ServiceID, ServiceMetadata } from '@dartfrog/puddle/index';
 import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import useChatStore from '../store/chat';
 
 interface DisplayUserActivityProps {
-  metadata: ServiceMetadata;
+  metadata: PublicServiceMetadata;
 }
 
 const DisplayUserActivity: React.FC<DisplayUserActivityProps> = ({metadata}) => {

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { ServiceApi } from '@dartfrog/puddle'
 
 export interface ForumPost {
-  id: string
+  id: number
   title: string
   text_contents: string
   link?: string
@@ -10,19 +10,11 @@ export interface ForumPost {
   author?: string
   upvotes: number
   downvotes: number
-  comments: ForumComment[]
+  comments: number[]
   created_at: number
   is_sticky: boolean
-}
-
-export interface ForumComment {
-  id: string
-  post_id: string
-  author?: string // Optional, as it might be excluded for privacy
-  text: string
-  created_at: number
-  upvotes: number
-  downvotes: number
+  is_anon: boolean
+  thread_id?: number
 }
 
 export interface ForumStore {
@@ -31,17 +23,15 @@ export interface ForumStore {
   description: string
   bannedUsers: string[]
   createPost: (api: ServiceApi, post: Omit<ForumPost, 'id' | 'author' | 'upvotes' | 'downvotes' | 'comments' | 'created_at' | 'is_sticky'>) => void
-  createStickyPost: (api: ServiceApi, post: Omit<ForumPost, 'id' | 'author' | 'upvotes' | 'downvotes' | 'comments' | 'created_at' | 'is_sticky'>) => void
-  vote: (api: ServiceApi, postId: string, isUpvote: boolean) => void
-  createComment: (api: ServiceApi, postId: string, text: string) => void
-  voteComment: (api: ServiceApi, postId: string, commentId: string, isUpvote: boolean) => void
-  deleteComment: (api: ServiceApi, postId: string, commentId: string) => void
-  getPost: (api: ServiceApi, postId: string) => void
+  createStickyPost: (api: ServiceApi, post: Omit<ForumPost, 'id' | 'author' | 'upvotes' | 'downvotes' | 'comments' | 'created_at' | 'is_sticky' | 'thread_id'>) => void
+  vote: (api: ServiceApi, postId: number, isUpvote: boolean) => void
+  createComment: (api: ServiceApi, threadId: number, text: string, imageUrl: string, isAnonymous: boolean) => void
+  deletePost: (api: ServiceApi, postId: number) => void
+  getPost: (api: ServiceApi, postId: number) => void
   updateMetadata: (api: ServiceApi, title?: string, description?: string) => void
   banUser: (api: ServiceApi, user: string) => void
   unbanUser: (api: ServiceApi, user: string) => void
-  deletePost: (api: ServiceApi, postId: string) => void
-  toggleSticky: (api: ServiceApi, postId: string) => void
+  toggleSticky: (api: ServiceApi, postId: number) => void
   handleUpdate: (update: ForumUpdate) => void
   get: () => ForumStore
   set: (partial: ForumStore | Partial<ForumStore>) => void
@@ -51,12 +41,9 @@ export type ForumUpdate =
   | { TopPosts: ForumPost[] }
   | { NewPost: ForumPost }
   | { UpdatedPost: ForumPost }
-  | { NewComment: ForumComment }
-  | { UpdatedComment: { post_id: string, comment: ForumComment } }
-  | { DeletedComment: { post_id: string, comment_id: string } }
   | { Metadata: { title: string, description: string } }
   | { BannedUsers: string[] }
-  | { DeletedPost: string }
+  | { DeletedPost: number }
 
 const useForumStore = create<ForumStore>((set, get) => ({
   posts: [],
@@ -72,6 +59,8 @@ const useForumStore = create<ForumStore>((set, get) => ({
           text_contents: post.text_contents,
           link: post.link,
           image_url: post.image_url,
+          is_anon: post.is_anon,
+          thread_id: post.thread_id,
         },
       },
     }
@@ -86,6 +75,7 @@ const useForumStore = create<ForumStore>((set, get) => ({
           text_contents: post.text_contents,
           link: post.link,
           image_url: post.image_url,
+          is_anon: post.is_anon,
         },
       },
     }
@@ -104,37 +94,26 @@ const useForumStore = create<ForumStore>((set, get) => ({
     api.sendToService(req)
   },
 
-  createComment: (api, postId, text) => {
+  createComment: (api, threadId, text, imageUrl, isAnonymous) => {
     const req = {
       Forum: {
-        CreateComment: {
-          post_id: postId,
-          text,
+        CreatePost: {
+          title: '',
+          text_contents: text,
+          image_url: imageUrl,
+          is_anon: isAnonymous,
+          thread_id: threadId,
         },
       },
     }
     api.sendToService(req)
   },
 
-  voteComment: (api, postId, commentId, isUpvote) => {
+  deletePost: (api, postId) => {
     const req = {
       Forum: {
-        VoteComment: {
+        DeletePost: {
           post_id: postId,
-          comment_id: commentId,
-          is_upvote: isUpvote,
-        },
-      },
-    }
-    api.sendToService(req)
-  },
-
-  deleteComment: (api, postId, commentId) => {
-    const req = {
-      Forum: {
-        DeleteComment: {
-          post_id: postId,
-          comment_id: commentId,
         },
       },
     }
@@ -186,17 +165,6 @@ const useForumStore = create<ForumStore>((set, get) => ({
     api.sendToService(req)
   },
 
-  deletePost: (api, postId) => {
-    const req = {
-      Forum: {
-        DeletePost: {
-          post_id: postId,
-        },
-      },
-    }
-    api.sendToService(req)
-  },
-
   toggleSticky: (api, postId) => {
     const req = {
       Forum: {
@@ -213,7 +181,6 @@ const useForumStore = create<ForumStore>((set, get) => ({
       if ('TopPosts' in update) {
         return { posts: update.TopPosts }
       } else if ('NewPost' in update) {
-        // Sort posts to ensure sticky posts are at the top
         const updatedPosts = [...state.posts, update.NewPost].sort((a, b) => {
           if (a.is_sticky === b.is_sticky) {
             return b.created_at - a.created_at
@@ -222,52 +189,28 @@ const useForumStore = create<ForumStore>((set, get) => ({
         })
         return { posts: updatedPosts }
       } else if ('UpdatedPost' in update) {
-        const updatedPosts = state.posts.map(post =>
-          post.id === update.UpdatedPost.id ? update.UpdatedPost : post
-        ).sort((a, b) => {
+        let updatedPosts = state.posts;
+        const existingPostIndex = state.posts.findIndex(post => post.id === update.UpdatedPost.id);
+        
+        if (existingPostIndex !== -1) {
+          // Update existing post
+          updatedPosts = state.posts.map(post =>
+            post.id === update.UpdatedPost.id ? update.UpdatedPost : post
+          );
+        } else {
+          // Insert new post
+          updatedPosts = [...state.posts, update.UpdatedPost];
+        }
+        
+        // Sort the posts
+        updatedPosts.sort((a, b) => {
           if (a.is_sticky === b.is_sticky) {
-            return b.created_at - a.created_at
+            return b.created_at - a.created_at;
           }
-          return a.is_sticky ? -1 : 1
-        })
-        return { posts: updatedPosts }
-      } else if ('NewComment' in update) {
-        const updatedPosts = state.posts.map(post => {
-          if (post.id === update.NewComment.post_id) {
-            return {
-              ...post,
-              comments: [...post.comments, update.NewComment]
-            }
-          }
-          return post
-        })
-        return { posts: updatedPosts }
-      } else if ('UpdatedComment' in update) {
-        const updatedPosts = state.posts.map(post => {
-          if (post.id === update.UpdatedComment.post_id) {
-            return {
-              ...post,
-              comments: post.comments.map(comment =>
-                comment.id === update.UpdatedComment.comment.id
-                  ? update.UpdatedComment.comment
-                  : comment
-              )
-            }
-          }
-          return post
-        })
-        return { posts: updatedPosts }
-      } else if ('DeletedComment' in update) {
-        const updatedPosts = state.posts.map(post => {
-          if (post.id === update.DeletedComment.post_id) {
-            return {
-              ...post,
-              comments: post.comments.filter(comment => comment.id !== update.DeletedComment.comment_id)
-            }
-          }
-          return post
-        })
-        return { posts: updatedPosts }
+          return a.is_sticky ? -1 : 1;
+        });
+        
+        return { posts: updatedPosts };
       } else if ('Metadata' in update) {
         return {
           title: update.Metadata.title,

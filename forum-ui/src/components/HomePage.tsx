@@ -14,8 +14,10 @@ const HomePage: React.FC = () => {
       style={{
         display: "flex",
         flexDirection: "column",
-        overflowX:"hidden",
-        overflowY:"auto",
+        // overflowX:"hidden",
+        // overflowY:"auto",
+        height:"100%",
+        maxHeight:"100%",
       }}
     >
       <div

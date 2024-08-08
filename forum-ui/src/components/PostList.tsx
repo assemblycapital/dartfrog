@@ -7,11 +7,13 @@ const PostList: React.FC = () => {
   const { api, peerMap } = useChatStore();
 
   // Sort posts: sticky posts first, then by created_at in descending order
-  const sortedPosts = [...posts].sort((a, b) => {
-    if (a.is_sticky && !b.is_sticky) return -1;
-    if (!a.is_sticky && b.is_sticky) return 1;
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  });
+  const sortedPosts = [...posts]
+    .filter(post => !post.thread_id)
+    .sort((a, b) => {
+      if (a.is_sticky && !b.is_sticky) return -1;
+      if (!a.is_sticky && b.is_sticky) return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
   return (
     <div
@@ -19,13 +21,15 @@ const PostList: React.FC = () => {
         display: "flex",
         flexDirection: "column",
         gap: "5px",
-        overflowX:"hidden",
-        overflowY:"auto",
+        paddingBottom:"3rem",
+        // height:"100%",
+        // overflowX:"hidden",
+        // overflowY:"auto",
       }}
     >
       {sortedPosts.map((post) => (
         <div key={post.id}>
-          <PostCard post={post} />
+          <PostCard post_id={post.id} />
         </div>
       ))}
     </div>

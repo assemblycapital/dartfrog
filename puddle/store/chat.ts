@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import {Peer, PeerMap, Service, ServiceApi, ServiceConnectionStatus, ServiceMetadata, ServiceCreationOptions} from '@dartfrog/puddle';
+import {Peer, PeerMap, Service, ServiceApi, ServiceConnectionStatus, ServiceMetadata, ServiceCreationOptions, PublicServiceMetadata} from '@dartfrog/puddle';
 import { maybePlaySoundEffect, maybePlayTTS } from '../utils';
 
 export type ChatState = {
@@ -17,8 +17,8 @@ export type ChatMessage = {
 export interface ChatStore {
   serviceId: string | null,
   setServiceId: (service: string) => void
-  serviceMetadata: ServiceMetadata | null,
-  setServiceMetadata: (meta: ServiceMetadata) => void,
+  serviceMetadata: PublicServiceMetadata | null,
+  setServiceMetadata: (meta: PublicServiceMetadata) => void,
   serviceConnectionStatus: ServiceConnectionStatus | null,
   setServiceConnectionStatus: (status: ServiceConnectionStatus) => void,
   //

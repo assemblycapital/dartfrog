@@ -11,6 +11,40 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
   const {title, description} = useForumStore();
   const navigate = useNavigate();
 
+  const renderOnlineCountMessage = () => {
+    if (!serviceMetadata) {
+      return <div />
+    }
+
+    if (serviceMetadata.subscriber_count) {
+        return (
+          <div
+            style={{
+              fontSize: "0.8rem",
+              color: 'gray',
+            }}
+          >
+            {serviceMetadata.subscriber_count} online
+          </div>
+        )
+    }
+
+    if (serviceMetadata.subscribers) {
+        return (
+          <div
+            style={{
+              fontSize: "0.8rem",
+              color: 'gray',
+            }}
+          >
+            {serviceMetadata.subscribers.length} online
+          </div>
+        )
+    }
+
+    return <div></div>;
+  };
+
   return (
     <div
       style={{
@@ -41,7 +75,6 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
         display: "flex",
         flexDirection: "row",
         gap: "1.3rem",
-        // margin: "1rem 0.7rem",
         alignItems: "flex-end",
         paddingBottom:"3px",
       }}
@@ -61,16 +94,7 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
       >
         {description}
       </div>
-      {serviceMetadata &&
-        <div
-          style={{
-            fontSize: "0.8rem",
-            color:'gray',
-          }}
-        >
-          {serviceMetadata.subscribers && serviceMetadata.subscribers.length} online
-        </div>
-      }
+      {renderOnlineCountMessage()}
     </div>
     </div>
   )
