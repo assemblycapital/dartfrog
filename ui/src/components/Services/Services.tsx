@@ -100,19 +100,12 @@ const Services: React.FC<ServicesProps> = ({ }) => {
         overflowY:"auto",
       }}
     >
-      <ServiceList
-        services={allServices}
-      />
-
-      <CreateService />
-
-      <hr />
       <div
         style={{
           // flex: 1,
         }}
       >
-        <div
+        {/* <div
           style={{
             cursor: "default",
             userSelect: "none",
@@ -120,32 +113,40 @@ const Services: React.FC<ServicesProps> = ({ }) => {
           }}
         >
           join service by id:
-        </div>
-      <div
-          style={{
-            display: "flex",
-          }}
-        >
-          <input type="text" placeholder="df://service:node.os@app:pkg:dev.os" 
-            value={inputJoinServiceLink}
-            onChange={handleJoinServiceLinkInputChange}
-            className={`${isJoinServiceLinkInputValid ? '' : 'invalid'}`}
+        </div> */}
+        <div
             style={{
-              flexGrow:"1",
-            }}
-          />
-          <button
-            style={{
-              cursor: "pointer",
-            }}
-            onClick={() => {
-              handleLinkInputJoinClick();
+              display: "flex",
             }}
           >
-            join
-          </button>
+            <input type="text" placeholder="df://service:node.os@app:pkg:dev.os" 
+              value={inputJoinServiceLink}
+              onChange={handleJoinServiceLinkInputChange}
+              className={`${isJoinServiceLinkInputValid ? '' : 'invalid'}`}
+              style={{
+                flexGrow:"1",
+              }}
+            />
+            <button
+              style={{
+                cursor: "pointer",
+              }}
+              onClick={() => {
+                handleLinkInputJoinClick();
+              }}
+            >
+              join
+            </button>
+        </div>
       </div>
-      </div>
+
+
+      <ServiceList
+        services={allServices}
+      />
+      {/* <hr /> */}
+
+      <CreateService />
 
     </div>
   )

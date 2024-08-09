@@ -90,7 +90,6 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
         padding: "0.8rem",
         border: post.is_sticky ? "1px solid #333" : "none",
         marginLeft: isComment ? "1rem" : "0",
-        borderLeft: isComment ? "2px solid #333" : "none",
       }}
       className={isComment ? "forum-comment" : "forum-post"}
     >

@@ -66,7 +66,6 @@ impl AppServiceState for AppService {
     }
 
     fn handle_request(&mut self, from: String, req: String, our: &Address, service: &Service) -> anyhow::Result<()> {
-        println!("req {:?}", req);
         let request = serde_json::from_str::<AppRequest>(&req)?;
         match request {
             AppRequest::Chat(chat_request) => {

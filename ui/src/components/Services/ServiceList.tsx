@@ -163,9 +163,14 @@ const ServiceList = ({services }) => {
               <div style={{
                   flex: "3",
                   // padding: "0.5rem 0",
+                  cursor: 'pointer',
+                }}
+                onClick={()=>{
+                  navigate(`/services/${service.id.toString()}`);
                 }}
                 >
-                {service.id.toShortString()}</div>
+                {service.id.toShortString()}
+              </div>
               <div style={{ flex: "4" }}>
                 {getProcessText(service.id.address)}
               </div>
