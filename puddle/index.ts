@@ -750,8 +750,36 @@ export function sortServices(services) {
     return bMaxTime - aMaxTime;
   });
 }
-export const getUniqueServices = (services) => {
-  return Array.from(new Set(services.map(service => service.id.toString())))
-    .map(id => services.find(service => service.id.toString() === id));
+export const getUniqueServices = (services: Service[], publicServices: PublicService[]): PublicService[] => {
+  const uniqueServices = new Map<string, PublicService>();
+
+  // Add all public services to the map
+  publicServices.forEach(service => {
+    uniqueServices.set(service.id.toString(), service);
+  });
+
+  // Convert and add private services if they're not already in the map
+  services.forEach(service => {
+    const serviceId = service.id.toString();
+    if (!uniqueServices.has(serviceId)) {
+      const publicService: PublicService = {
+        id: service.id,
+        meta: {
+          title: service.meta.title,
+          description: service.meta.description,
+          last_sent_presence: service.meta.last_sent_presence,
+          subscribers: service.meta.subscribers,
+          subscriber_count: service.meta.subscribers.length,
+          user_presence: service.meta.user_presence,
+          access: service.meta.access,
+          visibility: service.meta.visibility,
+          whitelist: service.meta.whitelist,
+        }
+      };
+      uniqueServices.set(serviceId, publicService);
+    }
+  });
+
+  return Array.from(uniqueServices.values());
 };
 

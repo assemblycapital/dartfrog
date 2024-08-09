@@ -43,10 +43,20 @@ const Services: React.FC<ServicesProps> = ({ }) => {
   const [inputJoinServiceHostNode, setInputJoinServiceHostNode] = useState('');
   const [inputJoinServiceLink, setInputJoinServiceLink] = useState('');
   const [isJoinServiceLinkInputValid, setIsJoinServiceLinkInputValid] = useState(true);
+  const [allServices, setAllServices] = useState([]);
 
   const navigate = useNavigate();
 
   const {localServices, peerMap, setCurrentPage} = useDartStore();
+
+  useEffect(() => {
+    const updatedServices = getUniqueServices(
+      localServices,
+      getAllServicesFromPeerMap(peerMap),
+    );
+    setAllServices(updatedServices);
+
+  }, [localServices, peerMap]);
 
   const handleJoinServiceNameInputChange = (e) => {
     const value = e.target.value;
@@ -76,11 +86,6 @@ const Services: React.FC<ServicesProps> = ({ }) => {
 
     }
   }, [inputJoinServiceLink]);
-
-  const allServices = getUniqueServices([
-    ...localServices,
-    ...getAllServicesFromPeerMap(peerMap).filter(service => service.id.hostNode() !== window.our?.node)
-  ]);
 
   useEffect(()=>{
     setCurrentPage('services')
@@ -144,7 +149,6 @@ const Services: React.FC<ServicesProps> = ({ }) => {
       <ServiceList
         services={allServices}
       />
-      {/* <hr /> */}
 
       <CreateService />
 
