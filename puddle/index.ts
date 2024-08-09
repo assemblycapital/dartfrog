@@ -483,6 +483,19 @@ export interface ServiceCreationOptions {
   publishWhitelist: boolean;
 }
 
+export interface ServiceEditOptions {
+  title?: string;
+  description?: string;
+  access?: ServiceAccess;
+  visibility?: ServiceVisibility;
+  whitelist?: string[];
+  publishUserPresence?: boolean;
+  publishSubscribers?: boolean;
+  publishSubscriberCount?: boolean;
+  publishWhitelist?: boolean;
+}
+
+
 export function serviceFromJson(jsonService: JsonService): Service {
   return {
     id: new ServiceID(jsonService.id.name, jsonService.id.address),

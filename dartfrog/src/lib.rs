@@ -266,6 +266,19 @@ fn handle_http_server_request(
                     }
 
                 },
+                DartfrogInput::EditService{id, options} => {
+                    let maybe_service_id = ServiceID::from_string(&id);
+                    match maybe_service_id {
+                        Some(service_id) => {
+                            // Forward the edit request to the service provider
+                            let req = ProviderInput::DartfrogRequest(DartfrogToProvider::EditService(id, options));
+                            poke(&service_id.address, req)?;
+                        }
+                        _ => {
+                            println!("Failed to parse service ID: {:?}", id);
+                        }
+                    }
+                },
                 DartfrogInput::DeleteService(id) => {
                     let maybe_service_id = ServiceID::from_string(&id);
                     match maybe_service_id {

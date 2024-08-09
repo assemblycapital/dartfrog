@@ -255,8 +255,25 @@ pub struct ServiceCreationOptions {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ServiceEditOptions {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub access: Option<ServiceAccess>,
+    pub visibility: Option<ServiceVisibility>,
+    pub whitelist: Option<Vec<String>>,
+    pub publish_user_presence: Option<bool>,
+    pub publish_subscribers: Option<bool>,
+    pub publish_subscriber_count: Option<bool>,
+    pub publish_whitelist: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DartfrogInput {
-    CreateService(ServiceCreationOptions), // service_name, process_name, access, visibility, whitelist
+    CreateService(ServiceCreationOptions),
+    EditService {
+        id: String,
+        options: ServiceEditOptions,
+    },
     DeleteService(String),
     SetProfile(Profile),
     SetActivitySetting(ActivitySetting),
@@ -404,6 +421,7 @@ pub enum FrontendChannelUpdate {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum DartfrogToProvider {
     CreateService(ServiceCreationOptions),
+    EditService(String, ServiceEditOptions),
     DeleteService(String),
     Peer(Peer),
     PeerList(Vec<Peer>),
@@ -1039,6 +1057,52 @@ where
             let req = ProviderOutput::Service(service);
             poke(&get_server_address(&our.node), req)?;
 
+        }
+        DartfrogToProvider::EditService(id, options) => {
+            if source != &get_server_address(&our.node) {
+                return Ok(());
+            }
+            if let Some(mut service_wrapper) = state.services.get_mut(&id) {
+                let service = &mut service_wrapper.service;
+                if let Some(title) = options.title {
+                    service.meta.title = Some(title);
+                }
+                if let Some(description) = options.description {
+                    service.meta.description = Some(description);
+                }
+                if let Some(access) = options.access {
+                    service.meta.access = access;
+                }
+                if let Some(visibility) = options.visibility {
+                    service.meta.visibility = visibility;
+                }
+                if let Some(whitelist) = options.whitelist {
+                    service.meta.whitelist = whitelist.into_iter().collect();
+                }
+                if let Some(publish_user_presence) = options.publish_user_presence {
+                    service.meta.publish_user_presence = publish_user_presence;
+                }
+                if let Some(publish_subscribers) = options.publish_subscribers {
+                    service.meta.publish_subscribers = publish_subscribers;
+                }
+                if let Some(publish_subscriber_count) = options.publish_subscriber_count {
+                    service.meta.publish_subscriber_count = publish_subscriber_count;
+                }
+                if let Some(publish_whitelist) = options.publish_whitelist {
+                    service.meta.publish_whitelist = publish_whitelist;
+                }
+
+                // Notify dartfrog about the changes
+                let req = ProviderOutput::Service(service.clone());
+                poke(&get_server_address(&our.node), req)?;
+
+                // Notify all consumers about the updated service
+                let services: Vec<Service> = state.services.values()
+                    .map(|wrapper| wrapper.service.clone())
+                    .collect();
+                let response_message = FrontendUpdate::Meta(FrontendMetaUpdate::MyServices(services));
+                update_all_consumers(state, response_message)?;
+            }
         }
         DartfrogToProvider::DeleteService(service_id) => {
             if source != &get_server_address(&our.node) {

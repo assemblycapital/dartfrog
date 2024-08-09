@@ -2,7 +2,7 @@ import KinodeClientApi from "@kinode/client-api";
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { HUB_NODE } from '../utils';
-import { ActivitySetting, Peer, PeerMap, Profile, Service, ServiceCreationOptions } from "@dartfrog/puddle/index";
+import { ActivitySetting, Peer, PeerMap, Profile, Service, ServiceCreationOptions, ServiceEditOptions } from "@dartfrog/puddle/index";
 
 export const PACKAGE_ID = "dartfrog:herobrine.os";
 export const CHAT_PLUGIN = `chat:${PACKAGE_ID}`;
@@ -15,6 +15,7 @@ export const FORUM_PLUGIN = `forum:${PACKAGE_ID}`;
 export const STANDARD_PLUGINS = [CHAT_PLUGIN, PIANO_PLUGIN, PAGE_PLUGIN, CHESS_PLUGIN, RADIO_PLUGIN, FORUM_PLUGIN];
 
 export type DartfrogWebpageType = 'home' | 'nodes' | 'messages' | 'services';
+
 
 export interface DartStore {
   api: KinodeClientApi | null,
@@ -38,6 +39,7 @@ export interface DartStore {
   localDeletePeer: (node:string) => void
   deleteService: (serviceIdStr: string) => void
   createService: (options: ServiceCreationOptions) => void
+  editService: (serviceId: string, options: ServiceEditOptions) => void
   // 
   localServices: Service[],
   setLocalServices: (services: Service[]) => void,
@@ -164,6 +166,28 @@ const useDartStore = create<DartStore>()(
           }
         }
       })
+    },
+    editService: (serviceId: string, options: ServiceEditOptions) => {
+      const { api } = get();
+      if (!api) return;
+      api.send({
+        data: {
+          "EditService": {
+            id: serviceId,
+            options: {
+              title: options.title,
+              description: options.description,
+              access: options.access,
+              visibility: options.visibility,
+              whitelist: options.whitelist,
+              publish_user_presence: options.publishUserPresence,
+              publish_subscribers: options.publishSubscribers,
+              publish_subscriber_count: options.publishSubscriberCount,
+              publish_whitelist: options.publishWhitelist
+            }
+          }
+        }
+      });
     },
     // 
     localServices: [],
