@@ -19,7 +19,7 @@ const Home: React.FC = () => {
     setCurrentPage('home');
 
     const updateServices = () => {
-      const updatedServices = sortServices(getUniqueServices([...localServices, ...getAllServicesFromPeerMap(peerMap)]));
+      const updatedServices = sortServices(getUniqueServices(localServices, getAllServicesFromPeerMap(peerMap)));
       setAllServices(updatedServices);
     };
 
