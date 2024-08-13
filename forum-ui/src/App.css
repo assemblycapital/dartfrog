@@ -1,4 +1,3 @@
-
 #root {
   /* max-width: 1280px; */
   /* margin: 0 auto; */
@@ -34,23 +33,24 @@ html, body {
 
 .upvote-button {
   background-color: #00000000;
-  transition: background-color 0.25s;
+  transition: background-color 0.25s, color 0.25s;
 }
 
 .upvote-button:hover {
-  background-color:rgb(108, 65, 15);
-  transition: background-color 0.25s;
+  background-color: rgb(213, 103, 0);
+  color: #ffffff;
+  transition: background-color 0.25s, color 0.25s;
 }
 
 .downvote-button {
   background-color: #00000000;
-  transition: background-color 0.25s;
-
+  transition: background-color 0.25s, color 0.25s;
 }
 
 .downvote-button:hover {
-  background-color:rgb(47, 65, 168);
-  transition: background-color 0.25s;
+  background-color: rgb(48, 74, 220);
+  color: #ffffff;
+  transition: background-color 0.25s, color 0.25s;
 }
 
 .forum-post {

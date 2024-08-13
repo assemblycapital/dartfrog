@@ -21,17 +21,30 @@ const PostList: React.FC = () => {
         display: "flex",
         flexDirection: "column",
         gap: "5px",
-        paddingBottom:"3rem",
-        // height:"100%",
-        // overflowX:"hidden",
-        // overflowY:"auto",
+        paddingBottom: "3rem",
+        flexGrow: "1",
       }}
     >
-      {sortedPosts.map((post) => (
-        <div key={post.id}>
-          <PostCard post_id={post.id} />
+      {sortedPosts.length > 0 ? (
+        sortedPosts.map((post) => (
+          <div key={post.id}>
+            <PostCard post_id={post.id} />
+          </div>
+        ))
+      ) : (
+        <div style={{
+          color: "gray",
+          textAlign: "center",
+          padding: "20px",
+          flexGrow: "1",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100%"
+        }}>
+          No posts yet
         </div>
-      ))}
+      )}
     </div>
   );
 };

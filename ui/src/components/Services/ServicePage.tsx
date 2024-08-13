@@ -170,11 +170,17 @@ const ServicePage: React.FC = () => {
                 </div>
             </div>
 
-            <EditServiceForm
-                service={service}
-                onSubmit={handleEditService}
-                availablePeers={availablePeers}
-            />
+            <div
+                style={{
+                    marginTop:"1rem",
+                }}
+            >
+                <EditServiceForm
+                    service={service}
+                    onSubmit={handleEditService}
+                    availablePeers={availablePeers}
+                />
+            </div>
         </div>
     );
 };

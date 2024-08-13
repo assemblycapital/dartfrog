@@ -129,7 +129,20 @@ const Messages: React.FC = () => {
                 overflowY: "auto",
               }}
             >
-                {sortedEntries.map(([node, value]) => (
+              {sortedEntries.length === 0 ? (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "100%",
+                    color: "gray",
+                  }}
+                >
+                  No messages yet
+                </div>
+              ) : (
+                sortedEntries.map(([node, value]) => (
                         <div key={node}
                           style={{
                             display:"flex",
@@ -203,8 +216,8 @@ const Messages: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                    ))}
-
+                    ))
+              )}
             </div>
         </div>
     );

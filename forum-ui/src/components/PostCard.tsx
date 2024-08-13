@@ -87,9 +87,8 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
       style={{
         display: "flex",
         flexDirection: "column",
-        padding: "0.8rem",
+        padding: "8px",
         border: post.is_sticky ? "1px solid #333" : "none",
-        marginLeft: isComment ? "1rem" : "0",
       }}
       className={isComment ? "forum-comment" : "forum-post"}
     >
@@ -229,7 +228,7 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
           display: "flex",
           flexDirection: "row",
           gap: "1rem",
-          marginTop: "0.4rem",
+          marginTop: "0.7rem",
           alignItems: "center",
         }}
       >

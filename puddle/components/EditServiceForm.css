@@ -1,0 +1,10 @@
+.whitelist-remove-node-button {
+  width: auto;
+  margin-left: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.whitelist-remove-node-button:hover {
+  color:red;
+}

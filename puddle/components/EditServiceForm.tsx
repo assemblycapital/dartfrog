@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Service, ServiceAccess, ServiceVisibility, ServiceEditOptions } from '@dartfrog/puddle/index';
+import "./EditServiceForm.css";
 
 interface EditServiceFormProps {
     service: Service;
@@ -138,19 +139,19 @@ const EditServiceForm: React.FC<EditServiceFormProps> = ({ service, onSubmit, av
         />
       </div>
       <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-        <span style={{ marginRight: "0.5rem" }}>Publish Whitelist:</span>
-        <input
-          type="checkbox"
-          checked={publishWhitelist}
-          onChange={(e) => setPublishWhitelist(e.target.checked)}
-        />
-      </div>
-      <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
         <span style={{ marginRight: "0.5rem" }}>Publish Subscriber Count:</span>
         <input
           type="checkbox"
           checked={publishSubscriberCount}
           onChange={(e) => setPublishSubscriberCount(e.target.checked)}
+        />
+      </div>
+      <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+        <span style={{ marginRight: "0.5rem" }}>Publish Whitelist:</span>
+        <input
+          type="checkbox"
+          checked={publishWhitelist}
+          onChange={(e) => setPublishWhitelist(e.target.checked)}
         />
       </div>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
@@ -159,7 +160,12 @@ const EditServiceForm: React.FC<EditServiceFormProps> = ({ service, onSubmit, av
           {whitelist.map(peer => (
             <div key={peer} style={{ padding: "0.2rem 0.5rem", borderRadius: "4px" }}>
               {peer}
-              <button onClick={() => handleRemoveFromWhitelist(peer)} style={{ width:"auto", marginLeft: "0.5rem", background: "none", border: "none", color: "red", cursor: "pointer" }}>
+              <button
+                onClick={() => {
+                  handleRemoveFromWhitelist(peer)
+                }}
+                className="whitelist-remove-node-button"
+                >
                 ×
               </button>
             </div>
@@ -191,6 +197,8 @@ const EditServiceForm: React.FC<EditServiceFormProps> = ({ service, onSubmit, av
           )}
         </div>
       </div>
+      <div>
+
       <button
         style={{
           cursor: 'pointer',
@@ -201,6 +209,7 @@ const EditServiceForm: React.FC<EditServiceFormProps> = ({ service, onSubmit, av
       >
         edit service
       </button>
+      </div>
     </div>
   );
 };

@@ -52,6 +52,7 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
         flexDirection: "row",
         gap: "1rem",
         height:"32px",
+        maxHeight:"32px",
         marginBottom:"0.8rem",
         boxSizing:"border-box",
       }}

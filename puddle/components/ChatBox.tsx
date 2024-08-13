@@ -262,9 +262,14 @@ export function formatTimestamp(timestamp: number): string {
   const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
   if (date < oneWeekAgo) {
-    const month = date.getMonth() + 1; // getMonth() is zero-based
-    const year = date.getFullYear().toString().slice(-2); // get last two digits of the year
-    return `${month}/${year}`;
+    return date.toLocaleString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }).replace(',', '');
   } else {
     const isToday = date.toDateString() === now.toDateString();
     const isYesterday = date.toDateString() === yesterday.toDateString();

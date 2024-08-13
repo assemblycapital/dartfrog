@@ -69,9 +69,9 @@ const PostDetail: React.FC = () => {
       <PostCard post_id={Number(postId)} showFullContents />
       <div
         style={{
-          marginTop: "1rem",
+          marginTop: "0.5rem",
           borderTop: "1px solid #333",
-          paddingTop: "1rem",
+          paddingTop: "0.5rem",
         }}
       >
         <form
@@ -125,6 +125,7 @@ const PostDetail: React.FC = () => {
                   type="checkbox"
                   checked={isAnonymous}
                   onChange={(e) => setIsAnonymous(e.target.checked)}
+                  style={{ marginRight: '0.5rem' }}
                 />
                 Post anonymously
               </label>
