@@ -713,12 +713,18 @@ export function getServiceRecencyText(service: Service) {
 }
 
 export function getRecencyText(diff:number) {
-  if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)} hr ago`;
+  if (diff < 3600000) {
+    const mins = Math.floor(diff / 60000);
+    return `${mins} ${mins === 1 ? 'min' : 'mins'} ago`;
+  }
+  if (diff < 86400000) {
+    const hrs = Math.floor(diff / 3600000);
+    return `${hrs} ${hrs === 1 ? 'hr' : 'hrs'} ago`;
+  }
   if (diff > 7307200000) {
     const years = Math.floor(diff / 31536000000);
     const months = Math.floor((diff % 31536000000) / 2592000000);
-    return `${years} yrs ${months} months ago`;
+    return `${years} ${years === 1 ? 'yr' : 'yrs'} ${months} ${months === 1 ? 'month' : 'months'} ago`;
   }
   const days = Math.floor(diff / 86400000);
   return days === 1 ? "1 day ago" : `${days} days ago`;

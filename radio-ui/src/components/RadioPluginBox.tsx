@@ -276,6 +276,10 @@ const RadioPluginBox: React.FC = ({ }) => {
                   play
                   </button>
                 </div>
+                <div className="radio-quick-start-buttons" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  <button onClick={() => setInputMediaUrl('https://youtu.be/MLbvd1HAttE')}>runescape music</button>
+                  <button onClick={() => setInputMediaUrl('https://youtu.be/1wOAhRAqb40')}>animal crossing music</button>
+                </div>
                 </>
               }
             </div>

@@ -88,11 +88,12 @@ const Home: React.FC = () => {
                 }}
               >
                 <img 
-                  src="https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_images/kino.webp"
+                  src="https://i.postimg.cc/kX9MXBjS/image.png"
                   style={{
+                    height: "100%",
+                    maxHeight: "14rem",
+                    objectFit: "cover",
                     maxWidth: "100%",
-                    maxHeight: "100%",
-                    objectFit: "contain",
                   }}
                 />
               </div>
@@ -114,7 +115,7 @@ const Home: React.FC = () => {
                     fontSize: "0.8rem",
                   }}
                 >
-                  secure subdomains, custom profiles, and more!
+                  ghost mode, custom app persistence, editable service configurations, and more!
                 </div>
               </div>
             </div>
