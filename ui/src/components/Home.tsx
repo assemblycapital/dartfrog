@@ -9,6 +9,8 @@ import CurrentPageHeader from './CurrentPageHeader';
 import { PROCESS_NAME } from '../utils';
 import { useNavigate } from 'react-router-dom';
 import Spinner from '@dartfrog/puddle/components/Spinner';
+import ChatBox from '@dartfrog/puddle/components/ChatBox';
+import RumorsBox from './RumorsBox';
 
 const Home: React.FC = () => {
   const {localServices, peerMap, setCurrentPage, isClientConnected} = useDartStore();
@@ -61,7 +63,7 @@ const Home: React.FC = () => {
         >
           <div
             style={{
-              flex: "2",
+              flex: "3",
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
@@ -76,56 +78,19 @@ const Home: React.FC = () => {
                 display: "flex",
                 flexDirection: "row",
                 width: "100%",
+                overflowY: "hidden",
               }}
             >
-              <div
-                style={{
-                  flex: "1",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  margin:"1rem",
-                }}
-              >
-                <img 
-                  src="https://i.postimg.cc/kX9MXBjS/image.png"
-                  style={{
-                    height: "100%",
-                    maxHeight: "14rem",
-                    objectFit: "cover",
-                    maxWidth: "100%",
-                  }}
-                />
-              </div>
-              <div
-                style={{
-                  flex: "1",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  padding:"2rem",
-                }}
-              >
-                <div>
-                  dartfrog v0.3.1
-                </div>
-                <div
-                  style={{
-                    fontSize: "0.8rem",
-                  }}
-                >
-                  ghost mode, custom app persistence, editable service configurations, and more!
-                </div>
-              </div>
+              <RumorsBox />
             </div>
             <div
               style={{
-                flex: "2",
+                flex: "1",
                 display: "flex",
                 flexDirection: "column",
                 marginTop:"1rem",
                 overflow:"hidden",
+                flexShrink:"0",
                 // justifyContent: "center",
                 // alignItems: "center",
                 fontSize: "0.8rem",
@@ -236,7 +201,7 @@ const Home: React.FC = () => {
           </div>
           <div
             style={{
-              flexGrow: "1",
+              // flexGrow: "1",
               flex: "1",
               display: "flex",
               flexDirection: "column",

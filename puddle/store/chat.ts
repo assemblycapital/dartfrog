@@ -5,8 +5,8 @@ import { maybePlaySoundEffect, maybePlayTTS } from '../utils';
 export type ChatState = {
   messages: Map<number, ChatMessage>;
   lastUpdateType: "history" | "message";
-
 }
+
 export type ChatMessage = {
   id: number;
   from: string;

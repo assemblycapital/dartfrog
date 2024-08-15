@@ -16,7 +16,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 function App() {
 
-  const {setApi, closeApi, setIsClientConnected, setProfile, pokeHeartbeat, pokeRequestVersion, putMessageStoreMap, setMessageStoreMap, localFwdAllPeerRequests, setActivitySetting, peerMap, putPeerMap, localServices, setLocalServices } = useDartStore();
+  const {setApi, closeApi, rumors, setRumors, addRumor, requestAllRumors, setIsClientConnected, setProfile, pokeHeartbeat, pokeRequestVersion, putMessageStoreMap, setMessageStoreMap, localFwdAllPeerRequests, setActivitySetting, peerMap, putPeerMap, localServices, setLocalServices } = useDartStore();
 
   const [versionOutdated, setVersionOutdated] = useState(false);
 
@@ -33,6 +33,7 @@ function App() {
           console.log("Connected to Kinode");
           setIsClientConnected(true);
           localFwdAllPeerRequests();
+          requestAllRumors();
           if (reconnectInterval) {
             clearInterval(reconnectInterval);
             reconnectInterval = null;
@@ -95,6 +96,11 @@ function App() {
             if (version !== "v0.3.1") {
               setVersionOutdated(true);
             }
+          } else if (data["Rumor"]) {
+            // append rumor to rumors
+            addRumor(data["Rumor"])
+          } else if (data["RumorList"]) {
+            setRumors(data["RumorList"])
           } else {
             console.log("unhandled update", data)
           }
