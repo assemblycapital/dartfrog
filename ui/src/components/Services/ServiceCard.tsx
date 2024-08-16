@@ -85,12 +85,19 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
           <div
             style={{
               flex:"2",
-              display:"flex",
-              flexDirection:"column",
-              // alignItems:"center",
               overflow:"hidden",
               flexShrink: 1,
               minWidth: 0,
+              display:"flex",
+              flexDirection:"row",
+            }}
+          >
+
+          <div
+            style={{
+              display:"flex",
+              flexDirection:"column",
+              overflow:"hidden",
             }}
           >
             <div
@@ -122,11 +129,29 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
             </div>
  
           </div>
+            {service.id.hostNode() === window.our?.node && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(`/services/${service.id.toString()}`);
+                }}
+                style={{
+                  padding: '5px 10px',
+                  cursor: 'pointer',
+                  marginLeft: "1rem",
+                }}
+              >
+                edit
+              </button>
+            )}
+
+          </div>
           <div
             style={{
               flex:"1",
               display: "flex",
               justifyContent: "flex-start",
+              alignItems: "center",
             }}
           >
             {service.meta.subscribers && service.meta.subscribers.length > 0 && isRecentlyActive() ? (
@@ -142,6 +167,7 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
                 {getServiceRecencyText(service)}
               </span>
             )}
+           
           </div>
         </a>
     );

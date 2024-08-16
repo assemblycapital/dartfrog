@@ -759,30 +759,31 @@ export function sortServices(services) {
 export const getUniqueServices = (services: Service[], publicServices: PublicService[]): PublicService[] => {
   const uniqueServices = new Map<string, PublicService>();
 
-  // Add all public services to the map
-  publicServices.forEach(service => {
-    uniqueServices.set(service.id.toString(), service);
-  });
-
-  // Convert and add private services if they're not already in the map
+  // Convert and add private services first
   services.forEach(service => {
     const serviceId = service.id.toString();
+    const publicService: PublicService = {
+      id: service.id,
+      meta: {
+        title: service.meta.title,
+        description: service.meta.description,
+        last_sent_presence: service.meta.last_sent_presence,
+        subscribers: service.meta.subscribers,
+        subscriber_count: service.meta.subscribers.length,
+        user_presence: service.meta.user_presence,
+        access: service.meta.access,
+        visibility: service.meta.visibility,
+        whitelist: service.meta.whitelist,
+      }
+    };
+    uniqueServices.set(serviceId, publicService);
+  });
+
+  // Add public services only if they're not already in the map
+  publicServices.forEach(service => {
+    const serviceId = service.id.toString();
     if (!uniqueServices.has(serviceId)) {
-      const publicService: PublicService = {
-        id: service.id,
-        meta: {
-          title: service.meta.title,
-          description: service.meta.description,
-          last_sent_presence: service.meta.last_sent_presence,
-          subscribers: service.meta.subscribers,
-          subscriber_count: service.meta.subscribers.length,
-          user_presence: service.meta.user_presence,
-          access: service.meta.access,
-          visibility: service.meta.visibility,
-          whitelist: service.meta.whitelist,
-        }
-      };
-      uniqueServices.set(serviceId, publicService);
+      uniqueServices.set(serviceId, service);
     }
   });
 

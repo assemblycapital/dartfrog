@@ -67,8 +67,8 @@ function App() {
             }
             // console.log("parsed peers", parsedPeers)
           } else if (data["Peer"]){
-              let peer = peerFromJson(data["Peer"]);
-              putPeerMap(peer)
+            let peer = peerFromJson(data["Peer"]);
+            putPeerMap(peer)
           } else if (data["LocalService"]) {
             const localService = serviceFromJson(data["LocalService"]);
             // Check if there is a service with service.id in localServices

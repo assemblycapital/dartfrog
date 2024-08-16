@@ -160,10 +160,13 @@ const ServiceList = ({services }) => {
                 )}
               </div>
 
-              <div style={{
+              <div
+                style={{
                   flex: "3",
-                  // padding: "0.5rem 0",
                   cursor: 'pointer',
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
                 }}
                 onClick={()=>{
                   navigate(`/services/${service.id.toString()}`);
@@ -171,7 +174,14 @@ const ServiceList = ({services }) => {
                 >
                 {service.id.toShortString()}
               </div>
-              <div style={{ flex: "4" }}>
+              <div 
+                style={{
+                  flex: "4",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+                >
                 {getProcessText(service.id.address)}
               </div>
               <div style={{ flex: "1" }}>

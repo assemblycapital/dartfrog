@@ -131,6 +131,8 @@ const NodeProfile: React.FC<NodeProps> = ({ }) => {
           setNameColorClass(gotClass);
           setSelectedNameColor(peer.peerData.profile.nameColor); // Set the initial selected color
           setSelectedBio(peer.peerData.profile.bio); // Set the initial bio
+          setActivitySetting(peer.peerData.activity.type === 'Private' ? ActivitySetting.Private : ActivitySetting.Public);
+
         }
     }, [peer]);
 
