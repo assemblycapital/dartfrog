@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import useDartStore from '../store/dart';
 
 const RumorsBox: React.FC = () => {
-  const { rumors, requestCreateNewRumor } = useDartStore();
+  const { rumors, requestCreateNewRumor, setCurrentPage } = useDartStore();
   const [inputValue, setInputValue] = useState('');
+
+
+  useEffect(()=>{
+    setCurrentPage('rumors')
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +25,8 @@ const RumorsBox: React.FC = () => {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        padding: "0rem 1rem",
+        padding: "1rem",
+        // backgroundColor:"#df7bdf",
         gap: "0.5rem",
         overflowY: "hidden",
       }}

@@ -89,6 +89,7 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
         flexDirection: "column",
         padding: "8px",
         border: post.is_sticky ? "1px solid #333" : "none",
+        gap: "0.4rem",
       }}
       className={isComment ? "forum-comment" : "forum-post"}
     >
@@ -98,7 +99,7 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
           flexDirection: "row",
           gap: "10px",
           alignItems: "flex-end",
-          fontSize: "0.9rem",
+          fontSize: "0.8rem",
         }}
       >
         {!post.author ? (
@@ -107,7 +108,7 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
               cursor:"default",
             }}
           >
-            anon
+            anonymous
           </span>
         ) : (
           <div
@@ -190,7 +191,8 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
             <div
               style={{
                 fontWeight: "bold",
-                margin: "0.5rem 0rem",
+                // margin: "0.5rem 0rem",
+                marginBottom:"0.3rem",
                 maxHeight: showFullContents ? 'none' : '3em',
                 overflow: showFullContents ? 'visible' : 'hidden',
                 textOverflow: showFullContents ? 'clip' : 'ellipsis',
@@ -228,7 +230,7 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
           display: "flex",
           flexDirection: "row",
           gap: "1rem",
-          marginTop: "0.7rem",
+          marginTop: "0.3rem",
           alignItems: "center",
         }}
       >

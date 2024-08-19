@@ -14,7 +14,7 @@ export const FORUM_PLUGIN = `forum:${PACKAGE_ID}`;
 
 export const STANDARD_PLUGINS = [CHAT_PLUGIN, PIANO_PLUGIN, PAGE_PLUGIN, CHESS_PLUGIN, RADIO_PLUGIN, FORUM_PLUGIN];
 
-export type DartfrogWebpageType = 'home' | 'nodes' | 'messages' | 'services';
+export type DartfrogWebpageType = 'home' | 'nodes' | 'messages' | 'services' | 'rumors';
 
 
 export interface DartStore {

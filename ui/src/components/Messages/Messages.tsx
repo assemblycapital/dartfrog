@@ -12,6 +12,7 @@ export const hasUnreadHistory = (history: DirectMessage[]) => {
 
 const Messages: React.FC = () => {
     const {setCurrentPage, messageStoreMap, peerMap} = useDartStore();
+
     useEffect(()=>{
         setCurrentPage('messages')
     }, [])

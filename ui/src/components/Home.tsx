@@ -68,20 +68,70 @@ const Home: React.FC = () => {
               flexDirection: "column",
               justifyContent: "center",
               alignItems: "center",
-              marginTop:"1rem",
+              // marginTop:"1rem",
               overflow:"hidden",
             }}
           >
             <div
               style={{
-                flex: "1",
-                display: "flex",
-                flexDirection: "row",
+                flex: "0 0 auto", // Change this line
                 width: "100%",
                 overflowY: "hidden",
+                marginTop:"1rem",
               }}
             >
-              <RumorsBox />
+              <div
+                style={{
+                  backgroundColor:"#444",
+                  borderRadius: "1rem",
+                  width:"10rem",
+                  height:"10rem",
+                  cursor:"pointer",
+                  alignContent:"flex-end",
+                  display:"inline-block",
+                  marginRight:"1rem",
+                }}
+              >
+                <div
+                  style={{
+                    margin:"1rem",
+                    // color:"#333",
+                    fontSize:"bold",
+                  }}
+                >
+                  hub
+                </div>
+              </div>
+              <a
+                style={{
+                  backgroundColor:"rgb(187, 119, 221)",
+                  borderRadius: "1rem",
+                  width:"10rem",
+                  height:"10rem",
+                  cursor:"pointer",
+                  alignContent:"flex-end",
+                  display:"inline-block",
+                  marginRight:"1rem",
+                }}
+                href={`/${PROCESS_NAME}/rumors`}
+                onClick={(event) => {
+                  event.preventDefault();
+                  navigate('/rumors');
+                }}
+              >
+                <div
+                  style={{
+                    margin:"1rem",
+                    color:"#333",
+                    fontSize:"bold",
+                  }}
+                >
+                  rumors
+                </div>
+              </a>
+              
+              {/* <RumorsBox /> */}
+
             </div>
             <div
               style={{
@@ -91,6 +141,7 @@ const Home: React.FC = () => {
                 marginTop:"1rem",
                 overflow:"hidden",
                 flexShrink:"0",
+                flexGrow:"1",
                 // justifyContent: "center",
                 // alignItems: "center",
                 fontSize: "0.8rem",

@@ -743,16 +743,24 @@ export function getAllServicesFromPeerMap(peerMap: PeerMap): PublicService[] {
 }
 
 export function sortServices(services) {
-  return services.sort((a, b) => {
-    // Handle cases where subscribers might be null or undefined
-    const aSubCount = a.meta.subscribers?.length ?? 0;
-    const bSubCount = b.meta.subscribers?.length ?? 0;
-    const subDiff = bSubCount - aSubCount;
-    if (subDiff !== 0) return subDiff;
+  const fiveMinutesAgo = Date.now() / 1000 - 5 * 60; // Convert to seconds and subtract 5 minutes
 
+  return services.sort((a, b) => {
+    const aAffectedByBug = (a.meta.last_sent_presence ?? 0) < fiveMinutesAgo;
+    const bAffectedByBug = (b.meta.last_sent_presence ?? 0) < fiveMinutesAgo;
+
+    if (!aAffectedByBug && !bAffectedByBug) {
+      // If neither is affected by the bug, sort by subscriber count
+      const aSubCount = a.meta.subscriber_count ?? a.meta.subscribers?.length ?? 0;
+      const bSubCount = b.meta.subscriber_count ?? b.meta.subscribers?.length ?? 0;
+      const subDiff = bSubCount - aSubCount;
+      if (subDiff !== 0) return subDiff;
+    }
+
+    // If one or both are affected by the bug, or if subscriber counts are equal,
+    // sort by last_sent_presence
     const aMaxTime = a.meta.last_sent_presence ?? 0;
     const bMaxTime = b.meta.last_sent_presence ?? 0;
-
     return bMaxTime - aMaxTime;
   });
 }

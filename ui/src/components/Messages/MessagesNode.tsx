@@ -276,58 +276,71 @@ const MessagesNode: React.FC = () => {
                         alignItems: "flex-end",
                         justifyItems: "flex-end",
                     }}>
-                        {messageStore.history.map((message, index) => (
-                            <div key={index}
-                                className='chat-message'
-                                style={{
-                                    display:"flex",
-                                    flexDirection:"row",
-                                    width:"100%",
-                                    gap:"1rem",
-                                    padding: "10px 0rem",
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        userSelect:"none",
-                                        paddingLeft: "10px",
-                                    }}
-                                >
-                                    <a
-                                        href={nodeProfileLink(message.from, baseOrigin)}
-                                    >
-                                        <ProfilePicture size="40px" node={message.from} />
-                                    </a>
-                                </div>
-                                <div
+                        {messageStore.history.length === 0 ? (
+                            <div style={{
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                height: "100%",
+                                color: "gray",
+                                fontSize: "1rem",
+                            }}>
+                                No messages yet
+                            </div>
+                        ) : (
+                            messageStore.history.map((message, index) => (
+                                <div key={index}
+                                    className='chat-message'
                                     style={{
                                         display:"flex",
-                                        flexDirection:"column",
+                                        flexDirection:"row",
                                         width:"100%",
-                                        gap:"3px",
+                                        gap:"1rem",
+                                        padding: "10px 0rem",
                                     }}
                                 >
-                                    <div style={{ verticalAlign: "top", lineHeight: "1" }}>
-                                        <a style={{ display: "inline-block", marginRight: "8px", cursor: "pointer", fontSize: "0.9rem", }}
-                                            className={getPeerNameColor(peerMap.get(message.from))}
+                                    <div
+                                        style={{
+                                            userSelect:"none",
+                                            paddingLeft: "10px",
+                                        }}
+                                    >
+                                        <a
                                             href={nodeProfileLink(message.from, baseOrigin)}
-                                            onClick={(e)=>{
-                                                e.preventDefault();
-                                                navigate(`/nodes/${message.from}`)
-                                            }}
                                         >
-                                            <span>{message.from}:</span>
+                                            <ProfilePicture size="40px" node={message.from} />
                                         </a>
-                                        <div style={{ color: "#ffffff77", fontSize: "0.7rem", display: "inline-block", marginRight: "5px", cursor: "default", userSelect: "none", }}>
-                                            <span>{formatTimestamp(message.time_received)}</span>
-                                        </div>
                                     </div>
-                                    <span style={{ cursor: "default", wordWrap: "break-word", overflowWrap: "break-word", whiteSpace: "pre-wrap", fontSize: "0.9rem" }}>
-                                        {getMessageInnerText(message.contents)}
-                                    </span>
+                                    <div
+                                        style={{
+                                            display:"flex",
+                                            flexDirection:"column",
+                                            width:"100%",
+                                            gap:"3px",
+                                        }}
+                                    >
+                                        <div style={{ verticalAlign: "top", lineHeight: "1" }}>
+                                            <a style={{ display: "inline-block", marginRight: "8px", cursor: "pointer", fontSize: "0.9rem", }}
+                                                className={getPeerNameColor(peerMap.get(message.from))}
+                                                href={nodeProfileLink(message.from, baseOrigin)}
+                                                onClick={(e)=>{
+                                                    e.preventDefault();
+                                                    navigate(`/nodes/${message.from}`)
+                                                }}
+                                            >
+                                                <span>{message.from}:</span>
+                                            </a>
+                                            <div style={{ color: "#ffffff77", fontSize: "0.7rem", display: "inline-block", marginRight: "5px", cursor: "default", userSelect: "none", }}>
+                                                <span>{formatTimestamp(message.time_received)}</span>
+                                            </div>
+                                        </div>
+                                        <span style={{ cursor: "default", wordWrap: "break-word", overflowWrap: "break-word", whiteSpace: "pre-wrap", fontSize: "0.9rem" }}>
+                                            {getMessageInnerText(message.contents)}
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                         <div ref={messagesEndRef} style={{height:"1px"}} />
                     </div>
 

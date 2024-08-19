@@ -103,8 +103,10 @@ const NoServiceView = ({ processName, websocketUrl, ourNode }: { processName: st
                     flex:"1",
                     cursor:"pointer"
                   }}
-                  onClick={()=>{
-                    deleteService(service.id.name)
+                  onClick={() => {
+                    if (window.confirm(`Are you sure you want to delete ${service.id.toString()}?`)) {
+                      deleteService(service.id.name);
+                    }
                   }}
                 >
                   delete

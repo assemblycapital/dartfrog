@@ -39,8 +39,24 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
               flex:"1",
               display: "flex",
               justifyContent: "flex-end",
+              alignItems: "center",
             }}
           >
+            {service.id.hostNode() === window.our?.node && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(`/services/${service.id.toString()}`);
+                }}
+                style={{
+                  // padding: '5px 10px',
+                  cursor: 'pointer',
+                  marginRight: "1rem",
+                }}
+              >
+                edit
+              </button>
+            )}
             <ProfilePicture node={service.id.hostNode()} size={'36px'} />
           </div>
           <div
@@ -129,21 +145,6 @@ const ServiceCard: React.FC<ServiceCard> = ({ service }) => {
             </div>
  
           </div>
-            {service.id.hostNode() === window.our?.node && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate(`/services/${service.id.toString()}`);
-                }}
-                style={{
-                  padding: '5px 10px',
-                  cursor: 'pointer',
-                  marginLeft: "1rem",
-                }}
-              >
-                edit
-              </button>
-            )}
 
           </div>
           <div
