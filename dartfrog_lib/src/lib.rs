@@ -404,7 +404,8 @@ pub enum FrontendMetaRequest {
 pub enum FrontendChannelRequest {
     Heartbeat,
     MessageClient(String),
-    MessageServer(String)
+    MessageServer(String),
+    MessageProcess(String)
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -484,6 +485,7 @@ pub enum UpdateFromService {
     AppMessageToClient(String),
     AppMessageToFrontend(String),
     PublicMetadata(PublicServiceMetadata),
+    Metadata(ServiceMetadata),
     SubscribeAck,
     SubscribeNack(SubscribeNack),
     Kick(KickReason),
@@ -534,15 +536,17 @@ pub fn get_drive_path(our: &Address) -> String {
 }
 
 #[derive(Debug, Clone)]
-pub struct ProviderState<T, U>
+pub struct ProviderState<T, U, V>
 where
     T: AppServiceState,
-    U: AppClientState
+    U: AppClientState,
 {
     pub services: HashMap<String, AppServiceStateWrapper<T>>,
     pub clients: HashMap<String, AppClientStateWrapper<U>>,
+    pub process: V,
     pub consumers: HashMap<u32, Consumer>,
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProviderSaveState {
     pub services: HashMap<String, Service>,
@@ -550,10 +554,11 @@ pub struct ProviderSaveState {
     pub consumers: HashMap<u32, Consumer>,
 }
 
-impl<T, U> ProviderState<T, U>
+impl<T, U, V> ProviderState<T, U, V>
 where
-    T: AppServiceState + Serialize + serde::de::DeserializeOwned,
-    U: AppClientState + Serialize + serde::de::DeserializeOwned
+    T: AppServiceState,
+    U: AppClientState,
+    V: AppProcessState,
 {
     pub fn new(our: &Address) -> Self {
         let _ = create_drive(our.package_id(), "dartfrog-provider", None);
@@ -562,12 +567,13 @@ where
         ProviderState {
             services: HashMap::new(),
             clients: HashMap::new(),
+            process: V::new(),
             consumers: HashMap::new(),
         }
     }
 
     /// Helper function to serialize and save the process state.
-    pub fn save(&mut self, our:&Address) -> anyhow::Result<()> {
+    pub fn save(&mut self, _our:&Address) -> anyhow::Result<()> {
         let mut services = HashMap::new();
         let mut clients = HashMap::new();
     
@@ -604,6 +610,7 @@ where
         let mut provider_state = ProviderState {
             services: HashMap::new(),
             clients: HashMap::new(),
+            process: V::new(),
             consumers: saved_state.consumers,
         };
 
@@ -627,7 +634,6 @@ where
                 state,
             });
         }
-
         provider_state
     }
 }
@@ -726,7 +732,7 @@ pub trait AppServiceState: {
     }
 }
 
-pub trait AppClientState: std::fmt::Debug + DeserializeOwned + Serialize {
+pub trait AppClientState: std::fmt::Debug {
     fn new() -> Self;
 
     fn init(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
@@ -748,6 +754,21 @@ pub trait AppClientState: std::fmt::Debug + DeserializeOwned + Serialize {
         Ok(())
     }
 }
+pub trait AppProcessState: std::fmt::Debug {
+    fn new() -> Self;
+    fn init(&mut self, _our: &Address) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn save(&mut self, _our: &Address) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn handle_frontend_message(&mut self, _message: String, _our: &Address) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn handle_new_frontend(&mut self, _our: &Address) -> anyhow::Result<()> {
+        Ok(())
+    }
+}
 
 pub fn get_now() -> u64 {
     SystemTime::now()
@@ -756,15 +777,16 @@ pub fn get_now() -> u64 {
         .as_secs()
 }
 
-fn handle_websocket_push<T, U>(
+fn handle_websocket_push<T, U, V>(
     our: &Address,
-    state: &mut ProviderState<T, U>,
+    state: &mut ProviderState<T, U, V>,
     channel_id: u32,
     message_type: WsMessageType,
 ) -> anyhow::Result<()> 
 where
     T: AppServiceState,
     U: AppClientState,
+    V: AppProcessState,
 {
     let Some(consumer) = state.consumers.get_mut(&channel_id) else {
         return Ok(());
@@ -944,6 +966,9 @@ where
                             )
                         )?;
                     }
+                    FrontendChannelRequest::MessageProcess(msg) => {
+                        state.process.handle_frontend_message(msg, our)?;
+                    }
                 }
             }
         }
@@ -951,15 +976,16 @@ where
     Ok(())
 }
 
-pub fn handle_provider_http<T, U>(
+pub fn handle_provider_http<T, U, V>(
     our: &Address,
-    state: &mut ProviderState<T, U>,
+    state: &mut ProviderState<T, U, V>,
     source: &Address,
     body: &[u8],
 ) -> anyhow::Result<()>
 where
     T: AppServiceState,
     U: AppClientState,
+    V: AppProcessState,
 {
     let Ok(server_request) = serde_json::from_slice::<HttpServerRequest>(body) else {
         // Fail silently if we can't parse the request
@@ -975,6 +1001,8 @@ where
     match server_request {
         HttpServerRequest::WebSocketOpen { channel_id, .. } => {
             state.consumers.insert(channel_id, Consumer::new(channel_id));
+            state.process.handle_new_frontend(our)?;
+
         }
         HttpServerRequest::WebSocketPush { channel_id, message_type} => {
             handle_websocket_push(our, state, channel_id, message_type)?;
@@ -1010,8 +1038,8 @@ fn update_consumer (
     Ok(())
 }
 
-fn update_all_consumers_with_service_id<T, U>(
-    state: &ProviderState<T, U>,
+fn update_all_consumers_with_service_id<T, U, V>(
+    state: &ProviderState<T, U, V>,
     service_id: String,
     update: FrontendUpdate,
 ) -> anyhow::Result<()> 
@@ -1027,8 +1055,8 @@ where
     Ok(())
 }
 
-fn update_all_consumers<T, U>(
-    state: &ProviderState<T, U>,
+fn update_all_consumers<T, U, V>(
+    state: &ProviderState<T, U, V>,
     update: FrontendUpdate,
 ) -> anyhow::Result<()>
 where
@@ -1041,7 +1069,7 @@ where
     Ok(())
 }
 
-pub fn handle_dartfrog_to_provider<T, U>(our: &Address, state: &mut ProviderState<T, U>, source: &Address, app_message: DartfrogToProvider) -> anyhow::Result<()> 
+pub fn handle_dartfrog_to_provider<T, U, V>(our: &Address, state: &mut ProviderState<T, U, V>, source: &Address, app_message: DartfrogToProvider) -> anyhow::Result<()> 
 where
     T: AppServiceState,
     U: AppClientState,
@@ -1170,9 +1198,9 @@ fn kick_inactive_users(service: &mut Service, source: &Address, service_id: Stri
     Ok(())
 }
 
-pub fn handle_provider_input<T, U>(
+pub fn handle_provider_input<T, U, V>(
     our: &Address,
-    state: &mut ProviderState<T, U>,
+    state: &mut ProviderState<T, U, V>,
     source: &Address,
     request: ProviderInput,
 ) -> anyhow::Result<()> 
@@ -1221,7 +1249,12 @@ where
                                 FrontendChannelUpdate::PublicMetadata(meta)
                             );
                             update_all_consumers_with_service_id(state, service_id, update)?;
-
+                        }
+                        UpdateFromService::Metadata(meta) => {
+                            let update = FrontendUpdate::Channel(
+                                FrontendChannelUpdate::Metadata(meta)
+                            );
+                            update_all_consumers_with_service_id(state, service_id, update)?;
                         }
                         UpdateFromService::Kick(kick_reason) => {
                             let update = FrontendUpdate::Channel(
@@ -1472,10 +1505,11 @@ pub fn publish_metadata(our: &Address, service: &Service) -> anyhow::Result<()> 
     Ok(())
 }
 
-pub fn provider_handle_message<T, U>(our: &Address, state: &mut ProviderState<T, U>) -> anyhow::Result<()>
+pub fn provider_handle_message<T, U, V>(our: &Address, state: &mut ProviderState<T, U, V>) -> anyhow::Result<()>
 where
-    T: AppServiceState + Serialize + DeserializeOwned,
-    U: AppClientState + Serialize + DeserializeOwned,
+    T: AppServiceState,
+    U: AppClientState,
+    V: AppProcessState,
 {
     let message = await_message()?;
 
@@ -1493,7 +1527,6 @@ where
     } else {
         if let Ok(provider_input) = serde_json::from_slice::<ProviderInput>(&body) {
             handle_provider_input(our, state, source, provider_input)?;
-            state.save(our)?;
         }
     }
     Ok(())
@@ -1535,6 +1568,16 @@ impl AppClientState for DefaultAppClientState {
         DefaultAppClientState
     }
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DefaultAppProcessState;
+
+impl AppProcessState for DefaultAppProcessState {
+    fn new() -> Self {
+        DefaultAppProcessState
+    }
+}
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ChatUpdate {

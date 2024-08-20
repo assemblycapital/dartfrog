@@ -186,6 +186,15 @@ export class ServiceApi {
     this.sendRequest(req);
   }
 
+  public sendToProcess(data:any) {
+    let req = {"Channel":
+                {"MessageProcess":
+                  JSON.stringify(data)
+                }
+              };
+    this.sendRequest(req);
+  }
+
   public sendHeartbeat() {
     let req = {"Channel": "Heartbeat"};
     this.sendRequest(req);

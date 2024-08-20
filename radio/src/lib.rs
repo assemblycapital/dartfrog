@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use dartfrog_lib::*;
 use kinode_process_lib::{call_init, http, Address};
 use serde::{Serialize, Deserialize};
-use constants::DEFAULT_PAGE;
 
 mod constants;
 
@@ -12,7 +11,7 @@ wit_bindgen::generate!({
     world: "process-v0",
 });
 
-type AppProviderState = ProviderState<AppService, DefaultAppClientState>;
+type RadioProviderState = ProviderState<AppService, DefaultAppClientState, DefaultAppProcessState>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppService {
@@ -34,13 +33,13 @@ pub enum AppRequest {
 
 #[derive(Debug, Clone)]
 pub struct AppState {
-    pub provider: AppProviderState,
+    pub provider: RadioProviderState,
 }
 
 impl AppState {
     pub fn new(our: &Address) -> Self {
         AppState {
-            provider: AppProviderState::new(our),
+            provider: RadioProviderState::new(our),
         }
     }
 }
@@ -272,7 +271,7 @@ call_init!(init);
 fn init(our: Address) {
     println!("init radio");
     let mut state = AppState::new(&our);
-    let loaded_provider = AppProviderState::load(&our);
+    let loaded_provider = RadioProviderState::load(&our);
     state.provider = loaded_provider;
 
     let try_ui = http::secure_serve_ui(&our, "radio-ui", vec!["/", "*"]);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import useForumStore from '../store/forum';
-import useChatStore from '@dartfrog/puddle/store/chat';
+import useServiceStore from '@dartfrog/puddle/store/chat';
 import ProfilePicture from '@dartfrog/puddle/components/ProfilePicture';
 import { getPeerNameColor, getRecencyText, nodeProfileLink, ServiceID } from '@dartfrog/puddle';
 import { Routes, Route, useParams } from "react-router-dom";
@@ -15,6 +15,7 @@ import ForumAdmin from './ForumAdmin';
 import ForumHeader from './ForumHeader';
 
 const Forum: React.FC = () => {
+  const { peerMap, serviceMetadata, } = useServiceStore();
 
   return (
     <div
@@ -58,6 +59,22 @@ const Forum: React.FC = () => {
             <>
               <ForumHeader includeForumButton />
               <ForumAdmin />
+            </>
+          } />
+          <Route path="/metadata" element={
+            <>
+              <ForumHeader includeForumButton />
+              <div>
+              {serviceMetadata ? (
+                Object.entries(serviceMetadata).map(([key, value]) => (
+                  <div key={key}>
+                    <strong>{key}:</strong> {JSON.stringify(value)}
+                  </div>
+                ))
+              ) : (
+                <p>No metadata available</p>
+              )}
+              </div>
             </>
           } />
         </Routes>

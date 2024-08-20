@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import Spinner from '@dartfrog/puddle/components/Spinner';
 import ChatBox from '@dartfrog/puddle/components/ChatBox';
 import RumorsBox from './RumorsBox';
+import AppGrid from './AppGrid/AppGrid';
 
 const Home: React.FC = () => {
   const {localServices, peerMap, setCurrentPage, isClientConnected} = useDartStore();
@@ -77,61 +78,9 @@ const Home: React.FC = () => {
                 flex: "0 0 auto", // Change this line
                 width: "100%",
                 overflowY: "hidden",
-                marginTop:"1rem",
               }}
             >
-              <div
-                style={{
-                  backgroundColor:"#444",
-                  borderRadius: "1rem",
-                  width:"10rem",
-                  height:"10rem",
-                  cursor:"pointer",
-                  alignContent:"flex-end",
-                  display:"inline-block",
-                  marginRight:"1rem",
-                }}
-              >
-                <div
-                  style={{
-                    margin:"1rem",
-                    // color:"#333",
-                    fontSize:"bold",
-                  }}
-                >
-                  hub
-                </div>
-              </div>
-              <a
-                style={{
-                  backgroundColor:"rgb(187, 119, 221)",
-                  borderRadius: "1rem",
-                  width:"10rem",
-                  height:"10rem",
-                  cursor:"pointer",
-                  alignContent:"flex-end",
-                  display:"inline-block",
-                  marginRight:"1rem",
-                }}
-                href={`/${PROCESS_NAME}/rumors`}
-                onClick={(event) => {
-                  event.preventDefault();
-                  navigate('/rumors');
-                }}
-              >
-                <div
-                  style={{
-                    margin:"1rem",
-                    color:"#333",
-                    fontSize:"bold",
-                  }}
-                >
-                  rumors
-                </div>
-              </a>
-              
-              {/* <RumorsBox /> */}
-
+              <AppGrid />
             </div>
             <div
               style={{
@@ -237,7 +186,8 @@ const Home: React.FC = () => {
                       cursor: "pointer",
                       padding: "0.5rem 1rem",
                       width:"100%",
-                      borderTop:"1px solid #333"
+                      borderTop:"1px solid #333",
+                      userSelect:"none",
                     }}
                     onClick={(event) => {
                       event.preventDefault();

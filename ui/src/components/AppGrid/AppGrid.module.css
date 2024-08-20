@@ -1,0 +1,76 @@
+.gridItem {
+  border-radius: 1rem;
+  width: 10rem;
+  height: 10rem;
+  cursor: pointer;
+  align-content: flex-end;
+  display: inline-block;
+  margin-top: 1rem;
+  margin-right: 1rem;
+  position: relative;
+}
+
+.marginTop {
+  margin-top: 1rem;
+}
+
+.itemTitle {
+  margin: 1rem;
+  user-select: none;
+}
+
+.hubTitle {
+  color: inherit;
+}
+
+.iconWrapper {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  cursor: pointer;
+  background-color: #333;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+}
+
+.iconWrapper svg {
+  fill: white;
+  width: 18px;
+  height: 18px;
+}
+
+.dialog {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  transform: translateX(50%);
+  background-color: #333;
+  color:gray;
+  cursor: default;
+  /* border: 1px solid #ccc; */
+  border-radius: 4px;
+  padding: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+  user-select:"none";
+}
+
+
+.newGridItem {
+  justify-content: center;
+  align-items: center;
+  background-color: transparent;
+  color: #ccc;
+  border: 2px solid transparent;
+  box-sizing: border-box;
+}
+
+.newGridItem:hover {
+  border: 2px dashed #ccc;
+}

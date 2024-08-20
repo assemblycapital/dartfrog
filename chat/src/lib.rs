@@ -7,7 +7,7 @@ wit_bindgen::generate!({
     world: "process-v0",
 });
 
-type AppProviderState = ProviderState<AppService, DefaultAppClientState>;
+type AppProviderState = ProviderState<AppService, DefaultAppClientState, DefaultAppProcessState>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppService {

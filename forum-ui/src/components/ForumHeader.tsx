@@ -1,6 +1,7 @@
 import useChatStore from "@dartfrog/puddle/store/chat";
 import useForumStore from "../store/forum";
 import { useNavigate } from "react-router-dom";
+import { PROCESS_NAME } from "../utils";
 
 interface ForumHeaderProps {
   includeForumButton?: boolean;
@@ -13,7 +14,11 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
 
   const renderOnlineCountMessage = () => {
     if (!serviceMetadata) {
-      return <div />
+      return (
+        <div>
+          meta
+        </div>
+      )
     }
 
     if (serviceMetadata.subscriber_count) {
@@ -95,7 +100,19 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
       >
         {description}
       </div>
-      {renderOnlineCountMessage()}
+      <a
+        style={{
+          cursor:"pointer",
+        }}
+        href={`/${PROCESS_NAME}/df/service/${serviceId.toString()}/metadata`}
+        onClick={(e)=>{
+
+          e.preventDefault();
+          navigate(`/df/service/${serviceId.toString()}/metadata`)
+        }}
+      >
+        {renderOnlineCountMessage()}
+      </a>
     </div>
     </div>
   )

@@ -14,7 +14,7 @@ export type ChatMessage = {
   time: number;
 }
 
-export interface ChatStore {
+export interface ServiceStore {
   serviceId: string | null,
   setServiceId: (service: string) => void
   serviceMetadata: PublicServiceMetadata | null,
@@ -47,11 +47,11 @@ export interface ChatStore {
   // 
   sendChat: (text: string) => void
   // 
-  get: () => ChatStore 
-  set: (partial: ChatStore | Partial<ChatStore>) => void
+  get: () => ServiceStore 
+  set: (partial: ServiceStore | Partial<ServiceStore>) => void
 }
 
-const useChatStore = create<ChatStore>((set, get) => ({
+const useServiceStore = create<ServiceStore>((set, get) => ({
   serviceId: null,
   setServiceId: (serviceId) => set({ serviceId }),
   //
@@ -128,4 +128,4 @@ const useChatStore = create<ChatStore>((set, get) => ({
   set,
 }))
 
-export default useChatStore;
+export default useServiceStore;

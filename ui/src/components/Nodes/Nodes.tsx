@@ -42,6 +42,7 @@ const Nodes: React.FC = () => {
           type="text" 
           value={inputValue} 
           onChange={(e) => setInputValue(e.target.value)} 
+          placeholder='node-to-search.os'
           style={{
             flexGrow:"1",
           }}
