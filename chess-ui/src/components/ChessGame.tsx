@@ -3,7 +3,7 @@ import Chessboard from 'chessboardjsx';
 import { Chess } from 'chess.js';
 import useChessStore, { ChessState } from '../store/chess';
 import './ChessPluginBox.css';
-import useChatStore from '@dartfrog/puddle/store/chat';
+import useChatStore from '@dartfrog/puddle/store/service';
 import { getPeerNameColor } from '@dartfrog/puddle';
 
 interface ChessGameProps {

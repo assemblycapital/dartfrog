@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import useForumStore, { ForumPost } from '../store/forum';
-import useChatStore from '@dartfrog/puddle/store/chat';
+import useChatStore from '@dartfrog/puddle/store/service';
 import ProfilePicture from '@dartfrog/puddle/components/ProfilePicture';
 import { getPeerNameColor, getRecencyText, nodeProfileLink, dfLinkToRealLink } from '@dartfrog/puddle';
 import IconBxsComment from './IconBxsComment';

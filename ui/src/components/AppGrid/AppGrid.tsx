@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { PROCESS_NAME } from '../../utils';
 import styles from './AppGrid.module.css';
 import { HamburgerIcon } from '@dartfrog/puddle/components/Icons';
+import { getPackageName, processToSubdomain } from '../JoinPage';
 
 interface AppGridItemProps {
   title: string;
   backgroundColor: string;
   textColor: string;
-  link: string;
+  protocolLink?: string;
+  serviceLink?: string;
   imageUrl?: string;
   isDialogOpen: boolean;
   onOpenDialog: () => void;
@@ -16,14 +18,28 @@ interface AppGridItemProps {
 }
 
 const AppGridItem: React.FC<AppGridItemProps> = ({ 
-  title, backgroundColor, textColor, link, imageUrl, isDialogOpen, onOpenDialog, onCloseDialog 
+  title, backgroundColor, textColor, protocolLink, serviceLink, imageUrl, isDialogOpen, onOpenDialog, onCloseDialog 
 }) => {
   const navigate = useNavigate();
   const [showHamburger, setShowHamburger] = useState(false);
 
+  const baseOrigin = window.origin.split(".").slice(1).join(".")
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     if (!isDialogOpen) {
-      navigate(link);
+      if (protocolLink) {
+        window.location.href = `http://${baseOrigin}/${protocolLink}/`;
+        const packageName = getPackageName(protocolLink)
+        if (packageName !== "dartfrog:herobrine.os") {
+          let url = `http://${baseOrigin}/${protocolLink}/`;
+          window.location.replace(url);
+        } else {
+          const packageSubdomain = processToSubdomain(protocolLink)
+          let url = `http://${packageSubdomain}.${baseOrigin}/${protocolLink}/`;
+          window.location.replace(url);
+        }
+      } else if (serviceLink) {
+        navigate(`/join/${serviceLink.slice(5)}`);
+      }
     }
   };
 
@@ -64,11 +80,11 @@ const AppGridItem: React.FC<AppGridItemProps> = ({
               flexDirection:"column",
             }}
           >
-            <div>
-              button
+            <div className={styles.dialogOption}>
+              info
             </div>
-            <div>
-              other button
+            <div className={styles.dialogOption}>
+              delete
             </div>
           </div>
         </div>
@@ -116,9 +132,9 @@ const AppGrid: React.FC = () => {
   };
 
   const appGridItems = [
-    { title: "hub", backgroundColor: "#444", textColor: "#ccc", link: "/hub", imageUrl: "https://example.com/hub-image.jpg" },
-    { title: "radio", backgroundColor: "#444", textColor: "#ccc", link: "/hub", imageUrl: "https://bwyl.nyc3.digitaloceanspaces.com/radio/radio.png"},
-    { title: "rumors", backgroundColor: "rgb(187, 119, 221)", textColor: "black", link: "/rumors", imageUrl: "https://example.com/rumors-image.jpg" },
+    { title: "hub", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@radio:dartfrog:herobrine.os", imageUrl: "https://example.com/hub-image.jpg" },
+    { title: "radio", backgroundColor: "#444", textColor: "#ccc", protocolLink: "radio:dartfrog:herobrine.os", imageUrl: "https://bwyl.nyc3.digitaloceanspaces.com/radio/radio.png"},
+    { title: "rumors", backgroundColor: "rgb(187, 119, 221)", textColor: "black", protocolLink: "rumors:dartfrog:herobrine.os", imageUrl: "https://example.com/rumors-image.jpg" },
   ];
 
   return (

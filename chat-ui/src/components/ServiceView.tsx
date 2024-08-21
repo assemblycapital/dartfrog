@@ -4,7 +4,7 @@ import TopBar from '@dartfrog/puddle/components/TopBar';
 import { ServiceApi, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceMetadata } from '@dartfrog/puddle';
 import { PROCESS_NAME } from '../App';
 import { WEBSOCKET_URL, } from '../utils';
-import useChatStore, { ChatState, ChatMessage } from '@dartfrog/puddle/store/chat';
+import useChatStore, { ChatState, ChatMessage } from '@dartfrog/puddle/store/service';
 import ChatBox from '@dartfrog/puddle/components/ChatBox';
 import Spinner from '@dartfrog/puddle/components/Spinner';
 import { maybePlaySoundEffect, maybePlayTTS } from '@dartfrog/puddle/utils';

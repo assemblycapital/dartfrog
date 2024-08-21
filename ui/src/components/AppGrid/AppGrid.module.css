@@ -61,6 +61,13 @@
   user-select:"none";
 }
 
+.dialogOption {
+  cursor: pointer;
+}
+
+.dialogOption:hover {
+  text-decoration: underline;
+}
 
 .newGridItem {
   justify-content: center;

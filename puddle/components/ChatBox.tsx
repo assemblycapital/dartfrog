@@ -2,7 +2,7 @@ import * as React from 'react';
 import {useRef, useState, useEffect, useCallback} from 'react';
 import ChatInput from './ChatInput';
 import ChatHeader from './ChatHeader';
-import useChatStore, { ChatState, ChatMessage } from '@dartfrog/puddle/store/chat';
+import useChatStore, { ChatState, ChatMessage } from '@dartfrog/puddle/store/service';
 import Split from 'react-split';
 import './ChatBox.css';
 import { dfLinkRegex, dfLinkToRealLink, getPeerNameColor, nodeProfileLink } from '@dartfrog/puddle';

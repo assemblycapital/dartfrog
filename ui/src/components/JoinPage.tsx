@@ -17,6 +17,21 @@ enum ServiceStatus {
   PLUGIN_ISSUE = "plugin issue?"
 }
 
+export function getPackageName(process:string) {
+    const processParts = process.split(":")
+    if (processParts.length !== 3)  {
+      return null
+    }
+
+    return processParts.slice(1).join(":");
+}
+
+export function processToSubdomain(process:string) {
+    let parts = process.split(":");
+    let pkg = parts.slice(1).join(":")
+
+    return pkg.replace(/[.:]/g, '-');
+  }
 const JoinPage = () => {
   const { id } = useParams<{ id: string }>();
 
@@ -73,7 +88,6 @@ const JoinPage = () => {
   }, [peerMap, localServices])
 
   useEffect(()=>{
-
     if (!serviceMetadata) {
       return;
     }
@@ -97,21 +111,7 @@ const JoinPage = () => {
   }, [serviceMetadata])
 
   
-  function processToSubdomain(process:string) {
-    let parts = process.split(":");
-    let pkg = parts.slice(1).join(":")
 
-    return pkg.replace(/[.:]/g, '-');
-  }
-
-  function getPackageName(process:string) {
-      const processParts = process.split(":")
-      if (processParts.length !== 3)  {
-        return null
-      }
-
-      return processParts.slice(1).join(":");
-  }
 
   useEffect(() => {
     if (serviceStatus === ServiceStatus.PLUGIN_READY) {

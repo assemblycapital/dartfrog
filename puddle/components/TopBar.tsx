@@ -74,7 +74,7 @@ const TopBar = ({ serviceId }) => {
           }}
           onClick={handleCopyClick}
         >
-          {serviceIdDisplayText}
+          df://{serviceIdDisplayText}
         </div>
       </div>
       {/* <div

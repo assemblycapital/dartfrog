@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import useForumStore from '../store/forum';
-import useServiceStore from '@dartfrog/puddle/store/chat';
+import useServiceStore from '@dartfrog/puddle/store/service';
 import ProfilePicture from '@dartfrog/puddle/components/ProfilePicture';
 import { getPeerNameColor, getRecencyText, nodeProfileLink, ServiceID } from '@dartfrog/puddle';
 import { Routes, Route, useParams } from "react-router-dom";

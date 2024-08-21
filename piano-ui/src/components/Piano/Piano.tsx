@@ -4,7 +4,7 @@ import { Howl } from 'howler';
 import PianoKey from './PianoKey';
 import './Piano.css';
 import usePianoStore from '../../store/piano';
-import useChatStore from '@dartfrog/puddle/store/chat';
+import useChatStore from '@dartfrog/puddle/store/service';
 import { PROCESS_NAME } from '../../utils';
 import { getPeerNameColor } from '@dartfrog/puddle';
 

@@ -3,7 +3,7 @@ import useChessStore, { ChessState } from '../store/chess';
 import ChessQueue from './ChessQueue';
 import ChessGame from './ChessGame';
 import { ServiceID } from '@dartfrog/puddle';
-import useChatStore from '@dartfrog/puddle/store/chat';
+import useChatStore from '@dartfrog/puddle/store/service';
 
 interface ChessPluginBoxProps {
 }

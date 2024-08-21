@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import TopBar from '@dartfrog/puddle/components/TopBar';
 import { ServiceApi, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceID, ServiceMetadata } from '@dartfrog/puddle';
-import useChatStore from '@dartfrog/puddle/store/chat';
+import useServiceStore from '@dartfrog/puddle/store/service';
 import ChatBox from '@dartfrog/puddle/components/ChatBox';
 import DisplayUserActivity from '@dartfrog/puddle/components/DisplayUserActivity';
 import Split from 'react-split';
@@ -24,7 +24,6 @@ interface HalfChatProps {
 const HalfChat: React.FC<HalfChatProps> = ({ onServiceMessage, onClientMessage, Element, processName, websocketUrl, ourNode, enableChatSounds = false }) => {
   const { id } = useParams<{ id?: string; }>();
   const paramServiceId = id ?? '';
-  const [isApiConnected, setIsApiConnected] = useState(false);
   const reconnectTimer = useRef<NodeJS.Timeout | null>(null);
   const [updateCount, setUpdateCount] = useState(0);
   const isPageVisible = useRef(true);
@@ -33,8 +32,8 @@ const HalfChat: React.FC<HalfChatProps> = ({ onServiceMessage, onClientMessage, 
   const {
     setApi, api, serviceId, requestPeer, setPeerMap, setServiceId, setChatHistory,
     addChatMessage, chatState, setServiceConnectionStatus, serviceConnectionStatus,
-    setServiceMetadata, serviceMetadata, setChatSoundsEnabled,
-  } = useChatStore();
+    setServiceMetadata, serviceMetadata, setChatSoundsEnabled, isClientConnected, setIsClientConnected
+  } = useServiceStore();
 
   useEffect(()=> {
     setChatSoundsEnabled(enableChatSounds)
@@ -113,14 +112,14 @@ const HalfChat: React.FC<HalfChatProps> = ({ onServiceMessage, onClientMessage, 
         }
       },
       onOpen: (api) => {
-        setIsApiConnected(true);
+        setIsClientConnected(true);
         if (reconnectTimer.current) {
           clearTimeout(reconnectTimer.current);
           reconnectTimer.current = null;
         }
       },
       onClose() {
-        setIsApiConnected(false);
+        setIsClientConnected(false);
         scheduleReconnect();
       },
     });

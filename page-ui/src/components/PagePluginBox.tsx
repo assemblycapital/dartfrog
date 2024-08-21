@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { ServiceID } from '@dartfrog/puddle';
 import usePageStore from '../store/page';
-import useChatStore from '@dartfrog/puddle/store/chat';
+import useChatStore from '@dartfrog/puddle/store/service';
 
 
 interface PagePluginBoxProps {

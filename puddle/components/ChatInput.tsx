@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useCallback, useState } from 'react';
-import useChatStore from '@dartfrog/puddle/store/chat';
+import useChatStore from '@dartfrog/puddle/store/service';
 import { maybeReplaceWithImage } from '@dartfrog/puddle/utils';
 
 interface ChatInputProps {

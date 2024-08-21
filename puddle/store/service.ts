@@ -43,6 +43,8 @@ export interface ServiceStore {
   setChatHistory: (history: ChatMessage[]) => void
   chatSoundsEnabled: boolean
   setChatSoundsEnabled: (enabled: boolean) => void
+  isClientConnected: boolean,
+  setIsClientConnected: (isConnected: boolean) => void,
 
   // 
   sendChat: (text: string) => void
@@ -123,6 +125,8 @@ const useServiceStore = create<ServiceStore>((set, get) => ({
     if (!api) { return; }
     api.requestPeer(node);
   },
+  isClientConnected: false,
+  setIsClientConnected: (isConnected: boolean) => set({ isClientConnected: isConnected }),
   //
   get,
   set,
