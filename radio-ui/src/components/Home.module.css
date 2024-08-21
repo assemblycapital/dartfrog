@@ -1,0 +1,28 @@
+.navContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  border-top: 1px #333 solid;
+  border-bottom: 1px #333 solid;
+}
+
+.navItem {
+  flex: 1;
+  cursor: pointer;
+  text-align: center;
+}
+
+.navItem:hover {
+  text-decoration: underline;
+}
+
+.actionButton {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #f0f0f0;
+}
+
+.actionButton:hover {
+  background-color: #e0e0e0;
+}

@@ -7,6 +7,7 @@ import useRadioStore from "./store/radio";
 import HalfChat from "@dartfrog/puddle/components/HalfChat";
 import RadioPluginBox from "./components/RadioPluginBox";
 import { useCallback } from "react";
+import Home from "./components/Home";
 
 
 function App() {
@@ -32,6 +33,10 @@ function App() {
     <Router basename={`/${PROCESS_NAME}`}>
       <Routes>
         <Route path="/" element={
+          <Home />
+        }
+        />
+        <Route path="/df" element={
           <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
         } />
         <Route path="/df/service/:id" element={

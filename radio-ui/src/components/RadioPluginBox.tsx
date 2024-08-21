@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { ServiceID } from '@dartfrog/puddle';
 import useRadioStore from '../store/radio';
-import useChatStore from '@dartfrog/puddle/store/chat';
+import useChatStore from '@dartfrog/puddle/store/service';
 import ReactPlayer from 'react-player'
 
 interface RadioPluginBoxProps {
