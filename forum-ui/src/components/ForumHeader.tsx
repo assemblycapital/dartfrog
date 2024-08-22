@@ -1,4 +1,4 @@
-import useChatStore from "@dartfrog/puddle/store/chat";
+import useChatStore from "@dartfrog/puddle/store/service";
 import useForumStore from "../store/forum";
 import { useNavigate } from "react-router-dom";
 import { PROCESS_NAME } from "../utils";

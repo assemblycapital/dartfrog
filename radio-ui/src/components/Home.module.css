@@ -10,6 +10,8 @@
   flex: 1;
   cursor: pointer;
   text-align: center;
+  color:black;
+  padding: 0.3rem;
 }
 
 .navItem:hover {
@@ -21,6 +23,7 @@
   padding: 4px 8px;
   border-radius: 4px;
   background-color: #f0f0f0;
+  color:black;
 }
 
 .actionButton:hover {

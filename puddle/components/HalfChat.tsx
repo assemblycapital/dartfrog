@@ -8,6 +8,7 @@ import ChatBox from '@dartfrog/puddle/components/ChatBox';
 import DisplayUserActivity from '@dartfrog/puddle/components/DisplayUserActivity';
 import Split from 'react-split';
 import { renderConnectionStatus } from '@dartfrog/puddle/components/ServiceView';
+import "@dartfrog/puddle/components/App.css";
 
 const SplitComponent = Split as unknown as React.FC<any>;
 

@@ -1,0 +1,91 @@
+#root {
+  margin: 0 auto;
+  width: 100%;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  text-decoration: none;
+}
+
+
+.underline-on-hover {
+  text-decoration: none;
+}
+
+.underline-on-hover:hover {
+  text-decoration: underline;
+}
+
+#root {
+  /* max-width: 1280px; */
+  /* margin: 0 auto; */
+  /* padding: 0.8rem 2rem; */
+  width: 100%;
+  height: 100%;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.radio-quick-start-buttons button {
+  padding: 1rem;
+}
+#root {
+  /* max-width: 1280px; */
+  margin: 0 auto;
+  /* padding: 0.8rem 2rem; */
+  width: 100%;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.gutter.gutter-horizontal {
+  cursor: col-resize;
+  background-color: transparent;
+  width: 10px !important;
+  position: relative;
+}
+.gutter.gutter-horizontal::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #888;
+  width: 1px;
+  height: 100%;
+}
+.gutter.gutter-horizontal:hover {
+  cursor: col-resize;
+}
+.gutter.gutter-vertical {
+  cursor: row-resize;
+  background-color: transparent;
+  height: 10px !important;
+  position: relative;
+}
+.gutter.gutter-vertical::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #888;
+  height: 1px;
+  width: 100%;
+}
+.gutter.gutter-vertical:hover {
+  cursor: row-resize;
+}

@@ -36,6 +36,7 @@ const ChatInput: React.FC<ChatInputProps> = ({  }) => {
       }}
     >
       <textarea
+        className="puddle"
         style={{
           flexGrow: 1,
           fontFamily: 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
@@ -52,7 +53,11 @@ const ChatInput: React.FC<ChatInputProps> = ({  }) => {
         }}
       />
       <div>
-      <button style={{ cursor: 'pointer', height: '100%', borderLeft:"none" }} onClick={sendChatCallback}>
+      <button 
+        className="puddle"
+        style={{ cursor: 'pointer', height: '100%', borderLeft:"none" }} 
+        onClick={sendChatCallback}
+      >
         Send
       </button>
       </div>

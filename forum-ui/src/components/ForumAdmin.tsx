@@ -1,4 +1,4 @@
-import useChatStore from "@dartfrog/puddle/store/chat";
+import useChatStore from "@dartfrog/puddle/store/service";
 import { useState } from "react";
 import useForumStore from "../store/forum";
 import ForumHeader from "./ForumHeader";

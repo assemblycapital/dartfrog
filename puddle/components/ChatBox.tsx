@@ -84,7 +84,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
         return (
           <span>
             <a
-              className="link"
+              className="link puddle"
               style={{
                 textDecoration: "underline",
                 cursor: "pointer",
@@ -107,7 +107,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                 fontSize: "1rem",
               }}
               href={realLink}
-              className="link"
+              className="link puddle"
             >
               {message}
             </a>
@@ -123,15 +123,25 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
 
   return (
     <div
-      style={{
-        width:"100%",
-        maxWidth:"100%",
-        height:"100%",
-        maxHeight:"100%",
-        display:"flex",
-        flexDirection:"column",
-        overflow:"hidden",
-      }}
+    style={{
+      width: "100%",
+      maxWidth: "100%",
+      height: "100%",
+      maxHeight: "100%",
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden",
+      fontFamily: "Inter, system-ui, Avenir, Helvetica, Arial, sans-serif",
+      lineHeight: 1.5,
+      fontWeight: 400,
+      colorScheme: "dark",
+      color: "#d1d1d1",
+      backgroundColor: "#242424",
+      fontSynthesis: "none",
+      textRendering: "optimizeLegibility",
+      WebkitFontSmoothing: "antialiased",
+      MozOsxFontSmoothing: "grayscale",
+    }}
     >
       <div>
         <ChatHeader />
@@ -198,6 +208,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                   >
                     <a
                       href={nodeProfileLink(message.from, baseOrigin)}
+                      className="puddle"
                     >
                     <ProfilePicture size="40px" node={message.from} />
                     </a>
@@ -212,7 +223,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                   >
                     <div style={{ verticalAlign: "top",  lineHeight: "0.9" }}>
                       <a style={{ display: "inline-block", marginRight: "8px", cursor: "pointer", fontSize: "0.9rem" }}
-                        className={getPeerNameColor(peerMap.get(message.from))}
+                        className={`${getPeerNameColor(peerMap.get(message.from))} puddle`}
                         href={nodeProfileLink(message.from, baseOrigin)}
                       >
                         <span>{message.from}:</span>

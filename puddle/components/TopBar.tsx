@@ -3,13 +3,13 @@ import { useState } from 'react';
 import { HamburgerIcon, HomeIcon } from '@dartfrog/puddle/components/Icons';
 
 const TopBar = ({ serviceId }) => {
-  const [serviceIdDisplayText, setServiceIdDisplayText] = useState(serviceId);
+  const [serviceIdDisplayText, setServiceIdDisplayText] = useState(`df://${serviceId}`);
 
   const handleCopyClick = () => {
     navigator.clipboard.writeText(`df://${serviceId}`);
     setServiceIdDisplayText("copied link to clipboard!");
     setTimeout(() => {
-      setServiceIdDisplayText(serviceId);
+      setServiceIdDisplayText(`df://${serviceId}`);
     }, 2000); // Revert back after 2 seconds
   };
 
@@ -74,7 +74,7 @@ const TopBar = ({ serviceId }) => {
           }}
           onClick={handleCopyClick}
         >
-          df://{serviceIdDisplayText}
+          {serviceIdDisplayText}
         </div>
       </div>
       {/* <div

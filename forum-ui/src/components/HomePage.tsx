@@ -1,5 +1,5 @@
 import { ServiceID } from "@dartfrog/puddle";
-import useChatStore from "@dartfrog/puddle/store/chat";
+import useChatStore from "@dartfrog/puddle/store/service";
 import { useNavigate } from "react-router-dom";
 import PostList from "./PostList";
 import ForumHeader from "./ForumHeader";

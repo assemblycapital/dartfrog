@@ -1,7 +1,7 @@
 import { useState } from "react";
 import useForumStore from "../store/forum";
 import { useNavigate } from "react-router-dom";
-import useChatStore from "@dartfrog/puddle/store/chat";
+import useChatStore from "@dartfrog/puddle/store/service";
 import ForumHeader from "./ForumHeader";
 import { ServiceID } from "@dartfrog/puddle";
 

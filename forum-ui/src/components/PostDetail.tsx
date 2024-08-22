@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import useForumStore from "../store/forum";
-import useChatStore from "@dartfrog/puddle/store/chat";
+import useChatStore from "@dartfrog/puddle/store/service";
 import { useState, useEffect } from "react";
 import PostCard from "./PostCard";
 import ForumHeader from "./ForumHeader";

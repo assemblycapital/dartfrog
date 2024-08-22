@@ -1,6 +1,6 @@
 import ChatBox from "@dartfrog/puddle/components/ChatBox";
 import DisplayUserActivity from "@dartfrog/puddle/components/DisplayUserActivity";
-import useChatStore from "@dartfrog/puddle/store/chat";
+import useChatStore from "@dartfrog/puddle/store/service";
 import { useNavigate } from "react-router-dom";
 import ForumHeader from "./ForumHeader";
 
