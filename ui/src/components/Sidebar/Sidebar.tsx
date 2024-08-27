@@ -203,7 +203,7 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
                 cursor:"default"
               }}
             >
-              dartfrog v0.3.0
+              dartfrog v0.3.1
             </span>
           </div>
         </div>

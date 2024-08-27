@@ -11,7 +11,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::hash::{Hash, Hasher};
 use kinode_process_lib::{await_message, get_blob, println, Address, LazyLoadBlob, ProcessId, Request, get_typed_state, set_state};
 
-pub const DARTFROG_VERSION: &str = "v0.3.0";
+pub const DARTFROG_VERSION: &str = "v0.3.1";
 
 #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct ServiceID {

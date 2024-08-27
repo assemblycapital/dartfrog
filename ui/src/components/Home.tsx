@@ -106,7 +106,7 @@ const Home: React.FC = () => {
                 }}
               >
                 <div>
-                  dartfrog v0.3.0
+                  dartfrog v0.3.1
                 </div>
                 <div
                   style={{
