@@ -2,11 +2,11 @@ import * as React from 'react';
 import { useEffect } from 'react';
 import { getServiceRecencyText, ServiceApi, ServiceCreationOptions, ServiceAccess, ServiceVisibility } from "@dartfrog/puddle";
 import { useNavigate } from 'react-router-dom';
-import useChatStore from '../store/service';
+import useServiceStore from '../store/service';
 // import "@dartfrog/puddle/components/App.css";
 
 const NoServiceView = ({ processName, websocketUrl, ourNode }: { processName: string, websocketUrl: string, ourNode:string}) => {
-  const {api, setApi, createService, deleteService, requestMyServices, setPeerMap, localServices, setLocalServices,} = useChatStore();
+  const {api, setApi, createService, deleteService, requestMyServices, setPeerMap, localServices, setLocalServices,} = useServiceStore();
 
   const navigate = useNavigate();
   useEffect(()=>{

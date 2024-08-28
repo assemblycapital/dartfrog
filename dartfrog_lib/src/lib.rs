@@ -672,11 +672,32 @@ pub fn default_load_service<T: DeserializeOwned>(
     service_state: &mut T,
 ) -> anyhow::Result<()> {
     let file_path = format!("{}/service.{}", &get_drive_path(our), service_id);
-    let file = open_file(&file_path, true, None)?;
-    let buf = file.read()?;
-    let state = serde_json::from_slice(&buf)?;
-    *service_state = state;
-    Ok(())
+    match open_file(&file_path, true, None) {
+        Ok(file) => {
+            match file.read() {
+                Ok(buf) => {
+                    match serde_json::from_slice(&buf) {
+                        Ok(state) => {
+                            *service_state = state;
+                            Ok(())
+                        },
+                        Err(e) => {
+                            println!("Error deserializing service state: {:?}", e);
+                            Ok(())
+                        }
+                    }
+                },
+                Err(e) => {
+                    println!("Error reading service file: {:?}", e);
+                    Ok(())
+                }
+            }
+        },
+        Err(e) => {
+            println!("Error opening service file: {:?}", e);
+            Ok(())
+        }
+    }
 }
 
 pub fn default_load_client<U: DeserializeOwned>(
@@ -1005,8 +1026,9 @@ where
 
         }
         HttpServerRequest::WebSocketPush { channel_id, message_type} => {
-            handle_websocket_push(our, state, channel_id, message_type)?;
-        }
+            if let Err(e) = handle_websocket_push(our, state, channel_id, message_type) {
+                println!("Error handling WebSocket push: {:?}", e);
+            }        }
         HttpServerRequest::WebSocketClose(channel_id) => {
             state.consumers.remove(&channel_id);
         }
