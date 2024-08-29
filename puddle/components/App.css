@@ -1,5 +1,22 @@
-.color-white {
+#root.df {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
   color: #d1d1d1;
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --text-color-primary: #d1d1d1;
+
+}
+
+.color-white {
+  color: var(--text-color-primary);
 }
 
 .color-gray {
@@ -103,7 +120,7 @@ transition: background-color 0.3s ease;
   cursor: row-resize;
 }
 
-a.puddle {
+a.df {
   text-decoration: none;
 }
 
@@ -117,18 +134,18 @@ a.puddle {
   transition: transform 0.3s ease, color 0.3s ease;
 }
 
-h1.puddle {
+h1.df {
   font-size: 3.2em;
   line-height: 1.1;
 }
 
-ul.puddle {
+ul.df {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-select.puddle {
+select.df {
   width: 5rem;
   height: 27px;
   display: inline-block;
@@ -140,17 +157,17 @@ select.puddle {
   cursor: pointer;
 }
 
-input[type="radio"].puddle {
+input[type="radio"].df {
   margin: 0 5px 0 0;
   vertical-align: middle;
 }
 
-label.puddle {
+label.df {
   color: #ffffff66;
   font-size: 0.9rem;
 }
 
-button.puddle {
+button.df {
   border: none;
   width:5rem;
   background-color: #1f1f1f;
@@ -160,12 +177,12 @@ button.puddle {
   border: 1px solid #333;
 }
 
-button.puddle:hover {
+button.df:hover {
   background-color: #181818;
 }
 
-textarea.puddle,
-input[type="text"].puddle {
+textarea.df,
+input[type="text"].df {
   background-color: #1f1f1f;
   border: 1px solid #333;
   padding: 3px;
@@ -174,22 +191,22 @@ input[type="text"].puddle {
   transition: background-color 0.25s;
 }
 
-textarea.puddle:hover {
+textarea.df:hover {
   background-color: #1d1d1d;
 }
 
-textarea.puddle:focus {
+textarea.df:focus {
   background-color: #1b1b1b;
   outline:none;
 }
 
-input[type="text"].puddle {
+input[type="text"].df {
   padding: 4px 8px;
   /* border-radius: 4px; */
   border: 2px solid #555;
 }
 
-input[type="text"].puddle.invalid {
+input[type="text"].df.invalid {
   padding: 4px 8px;
   /* border-radius: 4px; */
   border: 1px solid #ff000066;

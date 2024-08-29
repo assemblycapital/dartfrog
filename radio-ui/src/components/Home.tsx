@@ -36,7 +36,7 @@ const Home: React.FC = () => {
         setLocalServices(api.localServices)
       },
       onClose() {
-        setIsClientConnected(false);
+      setIsClientConnected(false);
       },
     });
     setApi(newApi);
@@ -50,16 +50,17 @@ const Home: React.FC = () => {
         display: 'flex',
         flexDirection: 'column',
         padding: '20px',
+        // paddingTop: '0px',
         boxSizing: "border-box",
         gap: "1rem",
         fontFamily: "monospace",
-        color: "black",
-        backgroundColor: "white",
-        colorScheme: "light",
+        // color: "black",
+        // backgroundColor: "white",
+        // colorScheme: "light",
 
       }}
     >
-      <div
+      {/* <div
         style={{
           display: "flex",
           flexDirection: "row",
@@ -116,11 +117,28 @@ const Home: React.FC = () => {
             {window.our?.node}
           </a>
         </div>
-      </div>
+      </div> */}
       <div className={styles.navContainer}>
-        <Link to="/" className={styles.navItem}>home</Link>
-        {['create', 'stations', 'media', 'help'].map((item) => (
-          <Link key={item} to={`/${item}`} className={styles.navItem}>
+        <div
+          style={{
+            display:"flex",
+            flexDirection:"row",
+            gap:"0.5rem",
+
+          }}
+        >
+          <a
+            className={`${styles.navItem} df`}
+            href={`http://${baseOrigin}/dartfrog:dartfrog:herobrine.os`}
+          >
+            df
+          </a>
+          <Link to="/" className={styles.navItem}>radio</Link>
+        </div>
+        {['create', 'stations', 'media'].map((item) => (
+          <Link key={item} to={`/${item}`}
+            className={`${styles.navItem} df`}
+          >
             {item}
           </Link>
         ))}

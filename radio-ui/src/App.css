@@ -1,0 +1,12 @@
+
+html, body {
+  background-color: #242424;
+}
+
+a {
+  text-decoration: none;
+}
+
+.underline-on-hover:hover {
+  text-decoration: hover;
+}

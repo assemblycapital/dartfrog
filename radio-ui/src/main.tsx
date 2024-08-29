@@ -1,5 +1,5 @@
 import ReactDOM from 'react-dom/client';
-import App from './App'; // Adjust the import if your App component file extension is .tsx
+import App from './App';
 import './index.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

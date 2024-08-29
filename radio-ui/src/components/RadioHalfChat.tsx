@@ -6,6 +6,9 @@ import Split from 'react-split';
 import { ServiceID } from '@dartfrog/puddle';
 import { PROCESS_NAME } from '../utils';
 import { useNavigate } from 'react-router-dom';
+import ChatBox from '@dartfrog/puddle/components/ChatBox';
+import DisplayUserActivity from '@dartfrog/puddle/components/DisplayUserActivity';
+
 
 interface RadioHalfChatProps {
 }
@@ -41,13 +44,13 @@ const RadioHalfChat: React.FC<RadioHalfChatProps> = ({ }) => {
         <a
           style={{
             fontFamily:"monospace",
-            // border:"1px solid black",
+            // border:"1px solid #d1d1d1",
             display:"inline-block",
             cursor:"pointer",
             padding:"0.4rem",
-            color:"black",
+            // color:"black",
           }}
-          className='underline-on-hover'
+          className='underline-on-hover color-white'
           href={`http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/`}
         >
           df
@@ -62,25 +65,25 @@ const RadioHalfChat: React.FC<RadioHalfChatProps> = ({ }) => {
             href={`/${PROCESS_NAME}/`}
             onClick={(event) => {
               event.preventDefault();
-              navigate(`/nodes/${window.our?.node}`);
+              navigate(`/`);
             }}
           >
           📻
           </a>
 
         </div>
-        <div
+        {/* <div
           style={{
             fontFamily:"monospace",
-            border:"1px solid black",
             display:"inline-block",
             cursor:"pointer",
             padding:"0.4rem",
+            border:"1px solid #d1d1d1",
           }}
           className='underline-on-hover'
         >
           navigation
-        </div>
+        </div> */}
         <div
           style={{
             display: 'flex',
@@ -149,13 +152,9 @@ const RadioHalfChat: React.FC<RadioHalfChatProps> = ({ }) => {
             }}
           >
             <div style={{ flex: 1, overflow: 'auto' }}>
-              {/* <ChatBox chatState={chatState} /> */}
-              todo radio chatbox
+              <ChatBox chatState={chatState} />
             </div>
-            <div>
-              todo radio user activity
-            </div>
-            {/* <DisplayUserActivity metadata={serviceMetadata} /> */}
+            <DisplayUserActivity metadata={serviceMetadata} />
           </div>
         </Split>
       </div>

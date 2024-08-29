@@ -13,6 +13,7 @@ import CreatePost from './CreatePost';
 import ForumChat from './ForumChat';
 import ForumAdmin from './ForumAdmin';
 import ForumHeader from './ForumHeader';
+import "@dartfrog/puddle/components/App.css";
 
 const Forum: React.FC = () => {
   const { peerMap, serviceMetadata, } = useServiceStore();

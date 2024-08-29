@@ -9,7 +9,8 @@ import { useCallback } from "react";
 import Home from "./components/Home";
 import ServiceView from "@dartfrog/puddle/components/ServiceView";
 import RadioHalfChat from "./components/RadioHalfChat";
-
+import "@dartfrog/puddle/components/App.css";
+import './App.css';
 
 function App() {
 

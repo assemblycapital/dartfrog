@@ -171,6 +171,7 @@ const RadioPluginBox: React.FC = ({ }) => {
               border: 'none',
               borderRadius: '5px',
             }}
+            className='df'
           >
             interact with the page to continue
           </button>
@@ -272,13 +273,14 @@ const RadioPluginBox: React.FC = ({ }) => {
                     borderLeft: "none",
                     padding: "0 10px",
                   }}
+                  className='df'
                   >
                   play
                   </button>
                 </div>
                 <div className="radio-quick-start-buttons" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  <button onClick={() => setInputMediaUrl('https://youtu.be/MLbvd1HAttE')}>runescape music</button>
-                  <button onClick={() => setInputMediaUrl('https://youtu.be/1wOAhRAqb40')}>animal crossing music</button>
+                  <button className='df' onClick={() => setInputMediaUrl('https://youtu.be/MLbvd1HAttE')}>runescape music</button>
+                  <button className='df' onClick={() => setInputMediaUrl('https://youtu.be/1wOAhRAqb40')}>animal crossing music</button>
                 </div>
                 </>
               }
@@ -319,6 +321,7 @@ const RadioPluginBox: React.FC = ({ }) => {
                       value={inputMediaUrl}
                       onChange={(e) => setInputMediaUrl(e.target.value)}
                       placeholder="media url"
+                      className='df' 
                       style={{
                         flexGrow: "1",
                         border: "1px solid #333",
@@ -329,6 +332,7 @@ const RadioPluginBox: React.FC = ({ }) => {
                     />
                     <button
                       onClick={handlePlayMedia}
+                      className='df' 
                       style={{
                         cursor: 'pointer',
                         borderRadius: '0px',
@@ -360,6 +364,7 @@ const RadioPluginBox: React.FC = ({ }) => {
                       width: "auto",
                       padding: "0 10px",
                     }}
+                    className='df' 
                   >
                     {autoSync ? "disable autosync" : "enable autosync"}
                   </button>
@@ -373,6 +378,7 @@ const RadioPluginBox: React.FC = ({ }) => {
                         width: "auto",
                         padding: "0 10px",
                       }}
+                      className='df' 
                     >
                       set timestamp
                     </button>
@@ -397,6 +403,7 @@ const RadioPluginBox: React.FC = ({ }) => {
                 userSelect: "none",
                 height: "32px",
               }}
+              className='df' 
             >
               {showControls ? "hide controls" : "controls"}
             </button>
@@ -411,6 +418,7 @@ const RadioPluginBox: React.FC = ({ }) => {
                   height: "32px",
                   userSelect: "none",
                 }}
+                className='df' 
               >
                 sync
               </button>

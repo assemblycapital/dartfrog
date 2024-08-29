@@ -208,7 +208,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                   >
                     <a
                       href={nodeProfileLink(message.from, baseOrigin)}
-                      className="puddle"
+                      className="df"
                     >
                     <ProfilePicture size="40px" node={message.from} />
                     </a>
