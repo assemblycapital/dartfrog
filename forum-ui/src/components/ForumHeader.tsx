@@ -50,6 +50,7 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
     return <div></div>;
   };
 
+  const baseOrigin = window.origin.split(".").slice(1).join(".")
   return (
     <div
       style={{
@@ -62,6 +63,18 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
         boxSizing:"border-box",
       }}
       >
+        <a
+          style={{
+            fontFamily:"monospace",
+            display:"inline-block",
+            cursor:"pointer",
+            padding:"0.4rem",
+          }}
+          className='underline-on-hover color-white'
+          href={`http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/`}
+        >
+          df
+        </a>
         {includeForumButton && (
         <button
           style={{
@@ -69,6 +82,7 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
             height: 'auto',
             // padding: '0.5rem 1rem',
           }}
+          className="df"
           onClick={() => {
             navigate(`/df/service/${serviceId}/forum`)
           }}

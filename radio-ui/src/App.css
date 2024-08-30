@@ -8,5 +8,5 @@ a {
 }
 
 .underline-on-hover:hover {
-  text-decoration: hover;
+  text-decoration: underline;
 }

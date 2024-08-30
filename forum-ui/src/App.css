@@ -13,6 +13,17 @@ html, body {
   padding: 0;
 }
 
+.underline-on-hover {
+  text-decoration: none;
+}
+.underline-on-hover:hover {
+  text-decoration: underline;
+}
+
+a {
+  text-decoration: none;
+}
+
 .delete-post-button {
   background-color:#333;
   transition: background-color 0.25s;
@@ -60,4 +71,59 @@ html, body {
   background-color: #1d1d1d;
   transition: background-color 0.25s;
 
+}
+
+button {
+  border-radius: 4px;
+  /* padding-top: 2px 10px; */
+  background-color: #1f1f1f;
+  border: 1px solid #333;
+  color: #ffffff66;
+  cursor: pointer;
+  transition: background-color 0.25s, color 0.25s;
+}
+
+button:hover {
+  background-color: #191919;
+  color: #999;
+  transition: background-color 0.25s, color 0.25s;
+}
+
+select {
+  width: 5rem;
+  height: 27px;
+  display: inline-block;
+  margin-right: 10px;
+  vertical-align: middle;
+  background-color: #00000022;
+  color: #ffffff66;
+  border: none;
+  cursor: pointer;
+}
+input[type="radio"] {
+  margin: 0 5px 0 0;
+  vertical-align: middle;
+}
+label {
+  color: #ffffff66;
+  font-size: 0.9rem;
+}
+
+
+textarea, input[type="text"] {
+  background-color: #00000022;
+  border-color: #333;
+  margin-right:10px;
+}
+
+input[type="text"] {
+  padding: 4px 8px;
+  /* border-radius: 4px; */
+  border: 1px solid #333;
+}
+
+input[type="text"].invalid {
+  padding: 4px 8px;
+  /* border-radius: 4px; */
+  border: 1px solid #ff000066;
 }

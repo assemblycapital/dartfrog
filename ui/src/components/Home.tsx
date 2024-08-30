@@ -75,9 +75,11 @@ const Home: React.FC = () => {
           >
             <div
               style={{
-                flex: "0 0 auto", // Change this line
+                flex: "0 0 auto",
                 width: "100%",
-                overflowY: "hidden",
+                overflowX: "hidden",
+                overflowY: "scroll",
+                maxHeight: "14rem"
               }}
             >
               <AppGrid />

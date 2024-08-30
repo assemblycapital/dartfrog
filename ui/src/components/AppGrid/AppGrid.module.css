@@ -76,6 +76,15 @@
   color: #ccc;
   border: 2px solid transparent;
   box-sizing: border-box;
+  border-radius: 1rem;
+  width: 3rem;
+  height: 10rem;
+  cursor: pointer;
+  align-content: flex-end;
+  display: inline-block;
+  margin-top: 1rem;
+  margin-right: 1rem;
+  position: relative;
 }
 
 .newGridItem:hover {

@@ -1,4 +1,5 @@
 import "@dartfrog/puddle/components/App.css";
+import "./App.css";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import NoServiceView from "@dartfrog/puddle/components/NoServiceView";
 import HalfChat from "@dartfrog/puddle/components/HalfChat";

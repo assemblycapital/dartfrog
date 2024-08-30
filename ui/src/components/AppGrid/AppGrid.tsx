@@ -99,7 +99,7 @@ const AppGridItem: React.FC<AppGridItemProps> = ({
 const NewAppGridItem: React.FC = () => {
   return (
     <div
-      className={`${styles.gridItem} ${styles.newGridItem}`}
+      className={`${styles.newGridItem}`}
     >
       <div className={styles.itemTitle}>
         +
@@ -132,13 +132,18 @@ const AppGrid: React.FC = () => {
   };
 
   const appGridItems = [
-    { title: "hub", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@radio:dartfrog:herobrine.os", imageUrl: "https://example.com/hub-image.jpg" },
     { title: "radio", backgroundColor: "white", textColor: "black", protocolLink: "radio:dartfrog:herobrine.os", imageUrl: "https://bwyl.nyc3.digitaloceanspaces.com/radio/radio.png"},
-    { title: "rumors", backgroundColor: "rgb(187, 119, 221)", textColor: "black", protocolLink: "rumors:dartfrog:herobrine.os", imageUrl: "https://example.com/rumors-image.jpg" },
+    { title: "rumors", backgroundColor: "rgb(187, 119, 221)", textColor: "black", protocolLink: "rumors:dartfrog:herobrine.os" },
+    { title: "hub", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@radio:dartfrog:herobrine.os", imageUrl: "https://i.postimg.cc/MKmrbvDF/forum-icon.png" },
+    // { title: "forum", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@radio:dartfrog:herobrine.os", imageUrl: "https://example.com/hub-image.jpg" },
+    // { title: "chess", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@radio:dartfrog:herobrine.os", imageUrl: "https://example.com/hub-image.jpg" },
+    // { title: "piano", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@radio:dartfrog:herobrine.os", imageUrl: "https://example.com/hub-image.jpg" },
+    // { title: "page", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@radio:dartfrog:herobrine.os", imageUrl: "https://example.com/hub-image.jpg" },
   ];
 
   return (
     <div>
+      <NewAppGridItem />
       {appGridItems.map((item, index) => (
         <AppGridItem
           key={index}
@@ -148,7 +153,6 @@ const AppGrid: React.FC = () => {
           onCloseDialog={handleCloseDialog}
         />
       ))}
-      <NewAppGridItem />
     </div>
   );
 };

@@ -1,5 +1,6 @@
 
 import "@dartfrog/puddle/components/App.css";
+import "./App.css";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import NoServiceView from "@dartfrog/puddle/components/NoServiceView";
 import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";

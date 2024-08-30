@@ -74,7 +74,7 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(BASE_URL, ''),
       },
-      [`${RADIO_URL}`]: {
+      [`${PIANO_URL}`]: {
         target: APPLET_PROXY_URL,
         changeOrigin: true,
         rewrite: (path) => path.replace(BASE_URL, ''),
