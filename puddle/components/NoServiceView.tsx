@@ -106,7 +106,7 @@ const NoServiceView = ({ processName, websocketUrl, ourNode }: { processName: st
                   }}
                   onClick={() => {
                     if (window.confirm(`Are you sure you want to delete ${service.id.toString()}?`)) {
-                      deleteService(service.id.name);
+                      deleteService(service.id.toString());
                     }
                   }}
                 >

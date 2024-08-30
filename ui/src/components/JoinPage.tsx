@@ -145,7 +145,7 @@ const JoinPage = () => {
             
           </div>
           <div>
-            <a href={`http://${baseOrigin}/main:app_store:sys/app-details/${packageName}`}>
+            <a href={`http://${baseOrigin}/main:app_store:sys/app/${packageName}`}>
               go to {packageName} in the app store
             </a>
           </div>

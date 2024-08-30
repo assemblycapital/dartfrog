@@ -129,8 +129,8 @@ const ServiceView : React.FC<ServiceViewProps> = ({ onServiceMessage, onClientMe
   const createServiceApi = () => {
     const newApi = new ServiceApi({
       our: {
-        "node": ourNode,
-        "process": processName,
+        node: ourNode,
+        process: processName,
       },
       serviceId: paramServiceId,
       websocket_url: websocketUrl,

@@ -62,6 +62,7 @@ interface ConstructorArgs {
   onClientMessage?: (message: any) => void;
   onPeerMapChange?: (api) => void;
   onLocalServicesChange?: (api) => void;
+  disableAutoReconnect?: boolean;
 }
 
 export class ServiceApi {
@@ -84,6 +85,9 @@ export class ServiceApi {
   private onClientMessage: (message: any) => void;
   private onPeerMapChange: (api) => void;
   private onLocalServicesChange: (api) => void;
+  private autoReconnectEnabled = true;
+  private reconnectInterval = null;
+  private reconnectAttempts = 0;
 
   private heartbeatInterval: NodeJS.Timeout | null = null;
 
@@ -99,7 +103,10 @@ export class ServiceApi {
     onClientMessage = (message) => {},
     onPeerMapChange = (api) => {},
     onLocalServicesChange = (api) => {},
+    disableAutoReconnect = false,
   }: ConstructorArgs) {
+    this.our = our;
+    this.websocket_url = websocket_url;
     this.onOpen = onOpen;
     this.onClose = onClose;
     this.serviceId = serviceId;
@@ -109,27 +116,35 @@ export class ServiceApi {
     this.onClientMessage = onClientMessage;
     this.onPeerMapChange = onPeerMapChange;
     this.onLocalServicesChange = onLocalServicesChange;
-    this.initialize(our, websocket_url);
+    this.autoReconnectEnabled = !disableAutoReconnect;
+    this.initialize();
   }
-  private initialize(our, websocket_url) {
-    // console.log("Attempting to connect to Kinode...", our, websocket_url);
-    if (!(our.node && our.process)) {
-      // console.log("exit", our.node, our.process)
+
+  private initialize() {
+    console.log("Attempting to connect to Kinode...", this.our, this.websocket_url);
+    if (!(this.our.node && this.our.process)) {
       return;
     }
     this.serviceMetadata = null;
     this.serviceConnectionStatus = null;
 
     const newApi = new KinodeClientApi({
-      uri: websocket_url,
-      nodeId: our.node,
-      processId: our.process,
+      uri: this.websocket_url,
+      nodeId: this.our.node,
+      processId: this.our.process,
       onClose: (event) => {
+        console.log("Disconnected from Kinode");
         this.setConnectionStatus(ConnectionStatusType.Disconnected);
         this.onClose();
         if (this.heartbeatInterval) {
           clearInterval(this.heartbeatInterval);
           this.heartbeatInterval = null;
+        }
+        if (this.autoReconnectEnabled) {
+          console.log("Auto-reconnect is enabled. Will attempt to reconnect...");
+          this.startReconnectInterval();
+        } else {
+          console.log("Auto-reconnect is disabled. No reconnection attempts will be made.");
         }
       },
       onOpen: (event, api) => {
@@ -146,6 +161,7 @@ export class ServiceApi {
         }, 60*1000);
 
         this.setConnectionStatus(ConnectionStatusType.Connected);
+        this.stopReconnectInterval();
       },
       onMessage: (json, api) => {
         this.updateHandler(json);
@@ -156,6 +172,28 @@ export class ServiceApi {
     });
 
     this.api = newApi;
+  }
+
+  private startReconnectInterval() {
+    if (!this.reconnectInterval) {
+      this.reconnectAttempts = 0;
+      this.reconnectInterval = setInterval(() => {
+        this.reconnectAttempts++;
+        console.log(`Attempting to reconnect... (Attempt ${this.reconnectAttempts})`);
+        this.initialize();
+      }, 5000);
+    }
+  }
+
+  private stopReconnectInterval() {
+    if (this.reconnectInterval) {
+      clearInterval(this.reconnectInterval);
+      this.reconnectInterval = null;
+      if (this.reconnectAttempts > 0) {
+        console.log(`Successfully reconnected after ${this.reconnectAttempts} attempt(s)`);
+      }
+      this.reconnectAttempts = 0;
+    }
   }
 
   private setConnectionStatus(status: ConnectionStatusType) {

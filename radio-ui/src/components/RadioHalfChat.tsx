@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import RadioPluginBox from './RadioPluginBox';
 
 import useServiceStore from '@dartfrog/puddle/store/service';
@@ -20,6 +20,16 @@ const RadioHalfChat: React.FC<RadioHalfChatProps> = ({ }) => {
   const baseOrigin = window.origin.split(".").slice(1).join(".")
   const navigate = useNavigate();
   const shortServiceId = serviceId ? ServiceID.fromString(serviceId).toShortString() : '';
+
+  const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div
@@ -97,16 +107,43 @@ const RadioHalfChat: React.FC<RadioHalfChatProps> = ({ }) => {
               fontWeight:"bold",
             }}
           >
-            df://{shortServiceId}
+            df://{serviceId}
           </div>
           <div
             style={{
               flex:"1",
               color:"gray",
+              display:"flex",
+              flexDirection:"row",
+              gap:"0.8rem",
             }}
           >
-            description
+            <div
+              style={{
+                fontWeight:"bold",
+                display:"inline-block"
+              }}
+            >
+              {serviceMetadata?.title || 'title'}
+            </div>
+            <div
+              style={{
+                display:"inline-block"
+              }}
+            >
+              {serviceMetadata?.description || 'description'}
+            </div>
           </div>
+        </div>
+        <div
+          style={{
+            marginLeft: 'auto',
+            fontFamily: 'monospace',
+            cursor: 'pointer',
+          }}
+          onClick={() => alert('Current time: ' + currentTime)}
+        >
+          {currentTime}
         </div>
       </div>
       <div

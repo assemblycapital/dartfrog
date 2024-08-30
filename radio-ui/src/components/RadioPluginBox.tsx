@@ -255,6 +255,7 @@ const RadioPluginBox: React.FC = ({ }) => {
                   value={inputMediaUrl}
                   onChange={(e) => setInputMediaUrl(e.target.value)}
                   placeholder="media url"
+                  className='df'
                   style={{
                     flexGrow: "1",
                     border: "1px solid #333",

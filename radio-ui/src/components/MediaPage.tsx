@@ -9,6 +9,12 @@ const MediaPage: React.FC<MediaPageProps> = () => {
     <div className="media-page">
       <h1>Media Page</h1>
       {/* Add your media content here */}
+      <div>
+        your personal database of public media URLs
+      </div>
+      <div>
+        coming soon....
+      </div>
     </div>
   );
 };

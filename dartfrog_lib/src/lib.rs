@@ -906,9 +906,8 @@ where
                         let response_message = FrontendUpdate::Meta(FrontendMetaUpdate::MyServices(services));
                         update_consumer(channel_id, response_message)?;
                     }
-                    FrontendMetaRequest::DeleteService(name) => {
-                        let dummy_service = Service::new(&name, our.clone());
-                        if let Some(mut service) = state.services.remove(&dummy_service.id.to_string()) {
+                    FrontendMetaRequest::DeleteService(service_id_string) => {
+                        if let Some(mut service) = state.services.remove(&service_id_string) {
                             service.state.kill(our, &service.service)?;
                             let service_id = service.service.id.to_string();
                             

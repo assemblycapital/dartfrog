@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
+import { ServiceCreationOptions, ServiceAccess, ServiceVisibility } from "@dartfrog/puddle";
+import { useNavigate } from 'react-router-dom';
+import useServiceStore from '@dartfrog/puddle/store/service';
+import { PROCESS_NAME } from '../utils';
 
 const CreatePage: React.FC = () => {
+  const { createService } = useServiceStore();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     serviceName: '',
-    processName: '',
-    access: 'public',
-    visibility: 'visible',
-    whitelist: '',
+    processName: PROCESS_NAME,
+    access: ServiceAccess.Public,
+    visibility: ServiceVisibility.Visible,
+    whitelist: [],
     title: '',
     description: '',
-    publishUserPresence: false,
-    publishSubscribers: false,
+    publishUserPresence: true,
+    publishSubscribers: true,
     publishSubscriberCount: false,
     publishWhitelist: false,
   });
@@ -23,10 +30,19 @@ const CreatePage: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would call the createService function with formData
-    console.log('Form submitted:', formData);
+    const serviceOptions: ServiceCreationOptions = {
+      ...formData,
+    };
+    try {
+      await createService(serviceOptions);
+      let serviceId = `${formData.serviceName}:${window.our?.node}@${PROCESS_NAME}`
+      navigate(`/df/service/${serviceId}`);
+    } catch (error) {
+      console.error('Error creating service:', error);
+      // Handle error (e.g., show error message to user)
+    }
   };
 
   return (
@@ -37,11 +53,7 @@ const CreatePage: React.FC = () => {
           <label htmlFor="serviceName">Service Name:</label>
           <input type="text" id="serviceName" name="serviceName" value={formData.serviceName} onChange={handleChange} required />
         </div>
-        <div>
-          <label htmlFor="processName">Process Name:</label>
-          <input type="text" id="processName" name="processName" value={formData.processName} onChange={handleChange} required />
-        </div>
-        <div>
+        {/* <div>
           <label htmlFor="access">Access:</label>
           <select id="access" name="access" value={formData.access} onChange={handleChange}>
             <option value="public">Public</option>
@@ -58,16 +70,16 @@ const CreatePage: React.FC = () => {
         <div>
           <label htmlFor="whitelist">Whitelist:</label>
           <input type="text" id="whitelist" name="whitelist" value={formData.whitelist} onChange={handleChange} />
-        </div>
-        <div>
+        </div> */}
+        <div> 
           <label htmlFor="title">Title:</label>
-          <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} required />
+          <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} />
         </div>
         <div>
           <label htmlFor="description">Description:</label>
           <textarea id="description" name="description" value={formData.description} onChange={handleChange} />
         </div>
-        <div>
+        {/* <div>
           <label>
             <input type="checkbox" name="publishUserPresence" checked={formData.publishUserPresence} onChange={handleChange} />
             Publish User Presence
@@ -90,7 +102,7 @@ const CreatePage: React.FC = () => {
             <input type="checkbox" name="publishWhitelist" checked={formData.publishWhitelist} onChange={handleChange} />
             Publish Whitelist
           </label>
-        </div>
+        </div> */}
         <button type="submit">Create Station</button>
       </form>
     </div>

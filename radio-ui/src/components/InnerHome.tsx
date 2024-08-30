@@ -7,7 +7,7 @@ import { PROCESS_NAME } from '../utils';
 import ProfilePicture from '@dartfrog/puddle/components/ProfilePicture';
 
 const InnerHome: React.FC = () => {
-  const { localServices } = useServiceStore();
+  const { localServices, peerMap, deleteService } = useServiceStore();
   const navigate = useNavigate();
 
   const isRecentlyActive = (service: Service) => {
@@ -19,22 +19,57 @@ const InnerHome: React.FC = () => {
   return (
     <div style={{ display: "flex", flexDirection: "row", flex: 1 }}>
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        <div>
-          <div>join the hub</div>
-          <div>4 online, 5 mins ago</div>
+        <div style={{flex: 1, padding: "1rem"}}>
+          <div
+              style={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                cursor: "pointer",
+              }}
+              className="hover-dark-gray"
+              onClick={() => {
+                const hubHost = 'waterhouse.os';
+                const hubServiceId = `hub:${hubHost}@radio:dartfrog:herobrine.os`;
+                navigate(`/df/service/${hubServiceId}`);
+              }}
+            >
+            <div>
+              <img src="https://bwyl.nyc3.digitaloceanspaces.com/radio/radio.png" alt="Radio Icon" style={{ width: '72px', height: '72px' }} />
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <div>join the hub</div>
+            </div>
+          </div>
+        </div>
+        <div style={{flex:3}}>
+          {/* <div>
+            services...
+          </div> */}
+
         </div>
       </div>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "1rem" }}>
-        <div
-          className='hover-gray'
+        <button
+          className='df'
           style={{
             cursor:"pointer",
             padding:"1rem",
-
+            width:"auto",
+          }}
+          onClick={()=>{
+            navigate("/create")
           }}
         >
           create a new station
-        </div>
+        </button>
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "1rem" }}>
           {localServices.map((service, index) => (
@@ -60,7 +95,13 @@ const InnerHome: React.FC = () => {
                   </div>
                 </div>
               )}
-              <div style={{ fontSize: "0.7rem" }}>
+              <div
+                style={{
+                  fontSize: "0.7rem",
+                  color:"#646cff",
+
+                }}
+              >
                 df://{service.id.toString()}
               </div>
               <div style={{ marginLeft: "0.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
@@ -70,11 +111,20 @@ const InnerHome: React.FC = () => {
                   >
                     join
                   </Link>
-                  <div className={styles.actionButton}>copy link</div>
-                  {service.id.hostNode() === window.our?.node && (
+                  {/* <div className={styles.actionButton}>copy link</div> */}
+                  {/* {service.id.hostNode() === window.our?.node && (
                     <div className={styles.actionButton} onClick={() => navigate(`/services/${service.id.toString()}`)}>edit</div>
-                  )}
-                  <div className={styles.actionButton}>delete</div>
+                  )} */}
+                  <div className={styles.actionButton}
+                     onClick={() => {
+                      if (window.confirm(`Are you sure you want to delete ${service.id.toString()}?`)) {
+                        deleteService(service.id.toString());
+                      }
+                    }}
+
+                  >
+                    delete
+                    </div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "row", gap: "1rem", fontSize: "0.7rem" }}>
                   {service.meta.subscribers && service.meta.subscribers.length > 0 && isRecentlyActive(service) ? (

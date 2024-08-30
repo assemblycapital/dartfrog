@@ -135,13 +135,13 @@ const Home: React.FC = () => {
           </a>
           <Link to="/" className={styles.navItem}>radio</Link>
         </div>
-        {['create', 'stations', 'media'].map((item) => (
+        {/* {['create', 'stations', 'media'].map((item) => (
           <Link key={item} to={`/${item}`}
             className={`${styles.navItem} df`}
           >
             {item}
           </Link>
-        ))}
+        ))} */}
       </div>
       <div
         style={{
@@ -158,7 +158,6 @@ const Home: React.FC = () => {
             <Route path="/create" element={<CreatePage />} />
             <Route path="/stations" element={<StationsPage />} />
             <Route path="/media" element={<MediaPage />} />
-            <Route path="/help" element={<HelpPage />} />
           </Routes>
         )}
       </div>
