@@ -24,6 +24,7 @@ export const renderConnectionStatus = (
   serviceConnectionStatus: ServiceConnectionStatus | null,
   isConnectingTooLong: boolean
 ): React.ReactNode => {
+  const baseOrigin = window.origin.split(".").slice(1).join(".")
   const containerStyle: React.CSSProperties = {
     height: "100%",
     display: "flex",
@@ -51,6 +52,32 @@ export const renderConnectionStatus = (
         <Spinner />
       </div>
     );
+  }
+
+  if (serviceConnectionStatus.status === ServiceConnectionStatusType.ServiceDoesNotExist) {
+    return (
+      <div style={containerStyle}>
+        <div>
+          this service doesn't exist
+        </div>
+        <div>
+          <a
+            href={`http://${baseOrigin}/dartfrog:dartfrog:herobrine.os`}
+          >
+
+            <button
+              style={{
+                padding:"1rem",
+                width:"auto",
+              }}
+            >
+              home
+            </button>
+          </a>
+
+        </div>
+      </div>
+    )
   }
 
   if (serviceConnectionStatus.status !== ServiceConnectionStatusType.Connected) {

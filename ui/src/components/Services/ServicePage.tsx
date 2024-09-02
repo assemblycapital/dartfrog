@@ -133,7 +133,11 @@ const ServicePage: React.FC = () => {
 
             }}
         >
-            <div >
+            <div
+                style={{
+                    margin:"1rem"
+                }}
+            >
                 <div >
                     <label htmlFor="quickTitle">Title:</label>
                     <input
@@ -160,7 +164,7 @@ const ServicePage: React.FC = () => {
                     marginTop:"1rem",
                 }}
             >
-                full service form:
+                {/* full service form: */}
             </div>
 
             <div

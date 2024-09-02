@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import ProfilePicture from '../ProfilePicture';
 import { getPeerNameColor } from '@dartfrog/puddle/index';
 import { formatTimestamp } from '@dartfrog/puddle/components/ChatBox';
+import { HUB_NODE } from '@dartfrog/puddle/utils';
 
 export const hasUnreadHistory = (history: DirectMessage[]) => {
   return history.some(message => message.is_unread);
@@ -134,13 +135,30 @@ const Messages: React.FC = () => {
                 <div
                   style={{
                     display: "flex",
+                    flexDirection: "column",
                     justifyContent: "center",
                     alignItems: "center",
                     height: "100%",
                     color: "gray",
+                    gap:"1rem",
                   }}
                 >
-                  No messages yet
+                  <div>
+                    No messages yet
+                  </div>
+                  <button
+
+                    style={{
+                      width:"auto"
+                    }}
+                    onClick={()=>{
+                      navigate(`/messages/${HUB_NODE}`)
+                    }}
+                  >
+                    say hi to {HUB_NODE}
+
+                  </button>
+
                 </div>
               ) : (
                 sortedEntries.map(([node, value]) => (

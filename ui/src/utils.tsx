@@ -1,7 +1,5 @@
 
 
-export const IS_FAKE = false;
-export const HUB_NODE = IS_FAKE ? "fake.dev" : "waterhouse.os";
 export const PACKAGE_SUBDOMAIN = "dartfrog-herobrine-os";
 export const PROCESS_NAME = "dartfrog:dartfrog:herobrine.os";
 

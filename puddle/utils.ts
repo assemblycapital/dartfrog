@@ -1,3 +1,5 @@
+export const IS_FAKE = true;
+export const HUB_NODE = IS_FAKE ? "fake.dev" : "waterhouse.os";
 
 export const soundEffectCommands = {
   '/fart': 'https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/chat_sounds/wet.mp3',

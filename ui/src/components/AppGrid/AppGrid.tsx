@@ -134,7 +134,7 @@ const AppGrid: React.FC = () => {
   const appGridItems = [
     { title: "radio", backgroundColor: "white", textColor: "black", protocolLink: "radio:dartfrog:herobrine.os", imageUrl: "https://bwyl.nyc3.digitaloceanspaces.com/radio/radio.png"},
     { title: "rumors", backgroundColor: "rgb(187, 119, 221)", textColor: "black", protocolLink: "rumors:dartfrog:herobrine.os" },
-    { title: "hub", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@radio:dartfrog:herobrine.os", imageUrl: "https://i.postimg.cc/MKmrbvDF/forum-icon.png" },
+    { title: "hub", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@forum:dartfrog:herobrine.os", imageUrl: "https://i.postimg.cc/MKmrbvDF/forum-icon.png" },
     // { title: "forum", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@radio:dartfrog:herobrine.os", imageUrl: "https://example.com/hub-image.jpg" },
     // { title: "chess", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@radio:dartfrog:herobrine.os", imageUrl: "https://example.com/hub-image.jpg" },
     // { title: "piano", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@radio:dartfrog:herobrine.os", imageUrl: "https://example.com/hub-image.jpg" },
