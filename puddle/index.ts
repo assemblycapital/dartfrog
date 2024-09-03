@@ -240,7 +240,7 @@ export class ServiceApi {
 
   public unsubscribeService() {
     let req = {"Meta": "Unsubscribe"}
-    this.sendRequest(req);
+    // this.sendRequest(req);
   }
   public setService(fullServiceId:string) {
     let req = {"Meta": {"SetService": fullServiceId}}

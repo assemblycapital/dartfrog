@@ -146,8 +146,8 @@ const Messages: React.FC = () => {
                   <div>
                     No messages yet
                   </div>
-                  <button
 
+                  <button
                     style={{
                       width:"auto"
                     }}
@@ -156,7 +156,6 @@ const Messages: React.FC = () => {
                     }}
                   >
                     say hi to {HUB_NODE}
-
                   </button>
 
                 </div>

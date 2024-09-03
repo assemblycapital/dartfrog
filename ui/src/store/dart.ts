@@ -1,7 +1,6 @@
 import KinodeClientApi from "@kinode/client-api";
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import { HUB_NODE } from '../utils';
 import { ActivitySetting, Peer, PeerMap, Profile, Service, ServiceCreationOptions, ServiceEditOptions } from "@dartfrog/puddle/index";
 
 export const PACKAGE_ID = "dartfrog:herobrine.os";

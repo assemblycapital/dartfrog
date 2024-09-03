@@ -10,6 +10,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use std::hash::{Hash, Hasher};
 use kinode_process_lib::{await_message, get_blob, println, Address, LazyLoadBlob, ProcessId, Request, get_typed_state, set_state};
+use kinode_process_lib::timer::set_timer;
 
 pub const DARTFROG_VERSION: &str = "v0.3.1";
 
@@ -545,6 +546,7 @@ where
     pub clients: HashMap<String, AppClientStateWrapper<U>>,
     pub process: V,
     pub consumers: HashMap<u32, Consumer>,
+    pub timer_active: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -569,6 +571,7 @@ where
             clients: HashMap::new(),
             process: V::new(),
             consumers: HashMap::new(),
+            timer_active: false,
         }
     }
 
@@ -612,6 +615,7 @@ where
             clients: HashMap::new(),
             process: V::new(),
             consumers: saved_state.consumers,
+            timer_active: false,
         };
 
         // Load services
@@ -682,7 +686,7 @@ pub fn default_load_service<T: DeserializeOwned>(
                             Ok(())
                         },
                         Err(e) => {
-                            // println!("Error deserializing service state: {:?}", e);
+                            println!("Error deserializing service state: {:?}", e);
                             // failed to load prev state
                             Ok(())
                         }
@@ -1535,22 +1539,65 @@ where
 {
     let message = await_message()?;
 
-    let body = message.body();
-    let source = message.source();
-
     if !message.is_request() {
+        // Handle timer response
+        if message.source().process == "timer:distro:sys" {
+            // Check if any service has subscribers
+            let has_subscribers = state.services.values().any(|s| !s.service.meta.subscribers.is_empty());
+            
+            if has_subscribers {
+                // Perform timer-based actions here
+                for (service_id, service_wrapper) in state.services.iter_mut() {
+                    let now = get_now();
+                    let mut inactive_subscribers = Vec::new();
+
+                    for (subscriber, last_active) in &service_wrapper.service.meta.user_presence {
+                        if service_wrapper.service.meta.subscribers.contains(subscriber) && now - last_active > 3 * 60 {
+                            inactive_subscribers.push(subscriber.clone());
+                        } else {
+
+                        }
+                    }
+
+                    for inactive_subscriber in inactive_subscribers.clone() {
+                        service_wrapper.service.meta.subscribers.remove(&inactive_subscriber);
+
+                        // Notify the kicked subscriber
+                        let kick_reason = KickReason::Custom("Inactivity".to_string());
+                        let update = UpdateFromService::Kick(kick_reason);
+                        let _ = poke_client(&get_process_address(&inactive_subscriber, PROCESS_NAME), service_id.clone(), update);
+                    }
+
+                    if !inactive_subscribers.is_empty() {
+                        // Update metadata if any subscribers were kicked
+                        let _ = publish_metadata(our, &service_wrapper.service);
+                    }
+                }
+
+                // Set the timer again for the next 60 seconds
+                set_timer(60000, None);
+            }
+            return Ok(());
+        }
         return Err(anyhow::anyhow!("unexpected Response: {:?}", message));
     }
+
+    let body = message.body();
+    let source = message.source();
     
-    if message.source().node == our.node
-    && message.source().process == "http_server:distro:sys" {
+    if message.source().node == our.node && message.source().process == "http_server:distro:sys" {
         handle_provider_http(our, state, source, body)?;
-        // state.save(our);
-    } else {
-        if let Ok(provider_input) = serde_json::from_slice::<ProviderInput>(&body) {
-            handle_provider_input(our, state, source, provider_input)?;
+    } else if let Ok(provider_input) = serde_json::from_slice::<ProviderInput>(&body) {
+        handle_provider_input(our, state, source, provider_input)?;
+        
+        // Check if this is the first subscriber and set the timer if needed
+        let has_subscribers = state.services.values().any(|s| !s.service.meta.subscribers.is_empty());
+        if has_subscribers && !state.timer_active {
+            set_timer(60000, None);
+            state.timer_active = true;
         }
     }
+
     Ok(())
 }
 
