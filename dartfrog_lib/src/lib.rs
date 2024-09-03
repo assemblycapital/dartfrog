@@ -606,8 +606,12 @@ where
     /// Helper function to deserialize the process state.
     pub fn load(our: &Address) -> Self {
         let saved_state = match get_typed_state(|bytes| Ok(bincode::deserialize::<ProviderSaveState>(bytes)?)) {
-            Some(loaded) => loaded,
-            _ => return Self::new(our),
+            Some(loaded) => {
+                loaded
+            }
+            _ => {
+                return Self::new(our)
+            }
         };
 
         let mut provider_state = ProviderState {
@@ -686,7 +690,7 @@ pub fn default_load_service<T: DeserializeOwned>(
                             Ok(())
                         },
                         Err(e) => {
-                            println!("Error deserializing service state: {:?}", e);
+                            // println!("Error deserializing service state: {:?}", e);
                             // failed to load prev state
                             Ok(())
                         }
@@ -1577,6 +1581,7 @@ where
                 // Set the timer again for the next 60 seconds
                 set_timer(60000, None);
             }
+            state.save(our)?;
             return Ok(());
         }
         return Err(anyhow::anyhow!("unexpected Response: {:?}", message));
