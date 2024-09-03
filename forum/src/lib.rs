@@ -144,6 +144,10 @@ pub enum ForumUpdate {
     },
     BannedUsers(Vec<String>),
     DeletedPost(u64),
+    PostAuthor {
+        post_id: u64,
+        author: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -184,6 +188,9 @@ pub enum ForumRequest {
         is_anon: bool,
     },
     ToggleSticky {
+        post_id: u64,
+    },
+    GetPostAuthor {
         post_id: u64,
     },
 }
@@ -398,6 +405,18 @@ impl ForumServiceState {
                     if let Some(post) = self.posts.get_mut(&post_id) {
                         post.is_sticky = !post.is_sticky;
                         update_subscribers(AppUpdate::Forum(ForumUpdate::UpdatedPost(post.to_public(true))), our, service)?;
+                    }
+                }
+            }
+
+            ForumRequest::GetPostAuthor { post_id } => {
+                if from == our.node {
+                    if let Some(post) = self.posts.get(&post_id) {
+                        let author_update = ForumUpdate::PostAuthor {
+                            post_id,
+                            author: post.author.clone(),
+                        };
+                        update_subscriber(AppUpdate::Forum(author_update), &from, our, service)?;
                     }
                 }
             }

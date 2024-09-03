@@ -8,6 +8,7 @@ export interface ForumPost {
   link?: string
   image_url?: string
   author?: string
+  authorRequested?: boolean
   upvotes: number
   downvotes: number
   comments: number[]
@@ -35,6 +36,7 @@ export interface ForumStore {
   handleUpdate: (update: ForumUpdate) => void
   get: () => ForumStore
   set: (partial: ForumStore | Partial<ForumStore>) => void
+  getPostAuthor: (api: ServiceApi, postId: number) => void
 }
 
 export type ForumUpdate =
@@ -44,6 +46,7 @@ export type ForumUpdate =
   | { Metadata: { title: string, description: string } }
   | { BannedUsers: string[] }
   | { DeletedPost: number }
+  | { PostAuthor: { post_id: number, author: string } }
 
 const useForumStore = create<ForumStore>((set, get) => ({
   posts: [],
@@ -176,6 +179,23 @@ const useForumStore = create<ForumStore>((set, get) => ({
     api.sendToService(req)
   },
 
+  getPostAuthor: (api, postId) => {
+    const req = {
+      Forum: {
+        GetPostAuthor: {
+          post_id: postId,
+        },
+      },
+    }
+    api.sendToService(req)
+    // Mark the author as requested
+    set((state) => ({
+      posts: state.posts.map(post => 
+        post.id === postId ? { ...post, authorRequested: true } : post
+      )
+    }))
+  },
+
   handleUpdate: (update: ForumUpdate) => {
     set((state) => {
       if ('TopPosts' in update) {
@@ -220,6 +240,14 @@ const useForumStore = create<ForumStore>((set, get) => ({
         return { bannedUsers: update.BannedUsers }
       } else if ('DeletedPost' in update) {
         return { posts: state.posts.filter(post => post.id !== update.DeletedPost) }
+      } else if ('PostAuthor' in update) {
+        return {
+          posts: state.posts.map(post => 
+            post.id === update.PostAuthor.post_id
+              ? { ...post, author: update.PostAuthor.author }
+              : post
+          )
+        }
       }
       return state
     })

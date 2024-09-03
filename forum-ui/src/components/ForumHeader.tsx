@@ -65,7 +65,6 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
       >
         <a
           style={{
-            fontFamily:"monospace",
             display:"inline-block",
             cursor:"pointer",
             padding:"0.4rem",

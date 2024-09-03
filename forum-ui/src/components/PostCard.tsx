@@ -17,7 +17,7 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, isComment = false }) => {
-  const { posts, vote, deletePost, toggleSticky, getPost } = useForumStore();
+  const { posts, vote, deletePost, toggleSticky, getPost, getPostAuthor } = useForumStore();
   const { api, peerMap, serviceId } = useChatStore();
   const baseOrigin = window.origin.split(".").slice(1).join(".")
   const navigate = useNavigate();
@@ -65,6 +65,10 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
     if (window.confirm(`Are you sure you want to ${post.is_sticky ? 'unstick' : 'stick'} this post?`)) {
       toggleSticky(api, post_id);
     }
+  };
+
+  const handleRequestAuthor = () => {
+    getPostAuthor(api, post_id);
   };
 
   const post = posts.find(p => p.id === post_id);
@@ -356,6 +360,26 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
               </div>
             }
           </>
+        )}
+        {isAdmin && !post.author && (
+          <div
+            onClick={handleRequestAuthor}
+            className="request-author-button"
+            style={{
+              padding: "0.1rem 0.5rem",
+              fontSize: "0.7rem",
+              display: "flex",
+              flexDirection: "row",
+              gap: "0.7rem",
+              alignItems: "center",
+              cursor: "pointer",
+              height: "1.2rem",
+              color: "gray",
+            }}
+          >
+            {/* <IconUserFill /> */}
+            {post.authorRequested ? "requested" : "get author"}
+          </div>
         )}
       </div>
     </div>
