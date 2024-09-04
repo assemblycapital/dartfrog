@@ -113,7 +113,7 @@ const CreatePost: React.FC = () => {
             onChange={(e) => setIsAnon(e.target.checked)}
             style={{ margin: 0 }}
           />
-          <label htmlFor="anonToggle">post anonymously</label>
+          <label htmlFor="anonToggle">anonymous</label>
         </div>
         {isAdmin && (
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>

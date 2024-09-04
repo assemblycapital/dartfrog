@@ -1,19 +1,41 @@
-import useChatStore from "@dartfrog/puddle/store/service";
-import { useState } from "react";
+import useServiceStore from "@dartfrog/puddle/store/service";
+import { useEffect, useState } from "react";
 import useForumStore from "../store/forum";
 import ForumHeader from "./ForumHeader";
+import { ServiceEditOptions, serviceMetadataToEditOptions } from "@dartfrog/puddle";
 
+
+const DEFAULT_TITLE = 'forum title';
+const DEFAULT_DESCRIPTION = 'description';
 
 const ForumAdmin: React.FC = () => {
-  const { api, serviceId, serviceMetadata } = useChatStore();
-  const { title, description, updateMetadata, banUser, unbanUser, bannedUsers } = useForumStore();
-  const [newTitle, setNewTitle] = useState(title);
-  const [newDescription, setNewDescription] = useState(description);
+  const { api, serviceId, serviceMetadata, editService, fullServiceMetadata } = useServiceStore();
+  const { banUser, unbanUser, bannedUsers } = useForumStore();
+  const [newTitle, setNewTitle] = useState(DEFAULT_TITLE);
+  const [newDescription, setNewDescription] = useState(DEFAULT_DESCRIPTION);
   const [userToBan, setUserToBan] = useState('');
+
+
+  useEffect(()=>{
+
+    if (!serviceMetadata) return;
+
+    setNewTitle(serviceMetadata.title || DEFAULT_TITLE);
+    setNewDescription(serviceMetadata.description || DEFAULT_DESCRIPTION);
+
+  }, [serviceMetadata])
 
   const handleUpdateMetadata = (e: React.FormEvent) => {
     e.preventDefault();
-    updateMetadata(api, newTitle, newDescription);
+    if (!serviceId) return;
+
+    if (!fullServiceMetadata) return;
+
+    let serviceOptions: ServiceEditOptions = serviceMetadataToEditOptions(fullServiceMetadata);
+    serviceOptions.title = newTitle;
+    serviceOptions.description = newDescription;
+
+    editService(serviceId, serviceOptions);
   };
 
   const handleBanUser = (e: React.FormEvent) => {

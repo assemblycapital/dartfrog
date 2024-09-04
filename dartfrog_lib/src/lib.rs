@@ -395,6 +395,7 @@ pub enum FrontendMetaRequest {
     RequestMyServices,
     CreateService(ServiceCreationOptions), // service_name, access, visibility, whitelist,
     DeleteService(String),
+    EditService(String, ServiceEditOptions),
     SetService(String),
     Unsubscribe,
     RequestPeer(String),
@@ -948,6 +949,52 @@ where
                             }
                         }
                     }
+                    FrontendMetaRequest::EditService(service_id_string, options) => {
+                        if let Some(service_wrapper) = state.services.get_mut(&service_id_string) {
+                            let service = &mut service_wrapper.service;
+                            
+                            // Update service metadata
+                            if let Some(access) = options.access {
+                                service.meta.access = access;
+                            }
+                            if let Some(visibility) = options.visibility {
+                                service.meta.visibility = visibility;
+                            }
+                            if let Some(whitelist) = options.whitelist {
+                                service.meta.whitelist = whitelist.into_iter().collect();
+                            }
+                            if let Some(title) = options.title {
+                                service.meta.title = Some(title);
+                            }
+                            if let Some(description) = options.description {
+                                service.meta.description = Some(description);
+                            }
+                            if let Some(publish_user_presence) = options.publish_user_presence {
+                                service.meta.publish_user_presence = publish_user_presence;
+                            }
+                            if let Some(publish_subscribers) = options.publish_subscribers {
+                                service.meta.publish_subscribers = publish_subscribers;
+                            }
+                            if let Some(publish_subscriber_count) = options.publish_subscriber_count {
+                                service.meta.publish_subscriber_count = publish_subscriber_count;
+                            }
+                            if let Some(publish_whitelist) = options.publish_whitelist {
+                                service.meta.publish_whitelist = publish_whitelist;
+                            }
+
+                            // Notify dartfrog about the changes
+                            let req = ProviderOutput::Service(service.clone());
+                            poke(&get_server_address(&our.node), req)?;
+
+                            // Publish updated metadata to all subscribers
+                            publish_metadata(our, service)?;
+                        }
+                        let services: Vec<Service> = state.services.values()
+                            .map(|wrapper| wrapper.service.clone())
+                            .collect();
+                        let response_message = FrontendUpdate::Meta(FrontendMetaUpdate::MyServices(services));
+                        update_all_consumers(state, response_message)?;
+                    }
                     FrontendMetaRequest::RequestPeer(node) => {
                         let req = ProviderOutput::RequestPeer(node);
                         poke(&get_server_address(&our.node), req)?;
@@ -1103,6 +1150,7 @@ pub fn handle_dartfrog_to_provider<T, U, V>(our: &Address, state: &mut ProviderS
 where
     T: AppServiceState,
     U: AppClientState,
+    V: AppProcessState,
 {
     match app_message {
         DartfrogToProvider::CreateService(options) => {
@@ -1237,6 +1285,7 @@ pub fn handle_provider_input<T, U, V>(
 where
     T: AppServiceState,
     U: AppClientState,
+    V: AppProcessState,
 {
     match request {
         ProviderInput::DartfrogRequest(df_req) => {
@@ -1531,6 +1580,17 @@ pub fn publish_metadata(our: &Address, service: &Service) -> anyhow::Result<()> 
             process: our.process.clone(),
         };
         poke(&address, req)?;
+
+         // If the client is the host, also send the full Metadata
+         if client == &service.id.address.node {
+            let host_req = ProviderInput::ProviderUserInput(
+                service.id.to_string(),
+                ProviderUserInput::FromService(
+                    UpdateFromService::Metadata(service.meta.clone())
+                )
+            );
+            poke(&address, host_req)?;
+        }
     }    
     Ok(())
 }

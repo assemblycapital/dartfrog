@@ -135,10 +135,6 @@ pub enum ForumUpdate {
     TopPosts(Vec<PublicForumPost>),
     NewPost(PublicForumPost),
     UpdatedPost(PublicForumPost),
-    Metadata {
-        title: String,
-        description: String,
-    },
     BannedUsers(Vec<String>),
     DeletedPost(u64),
     PostAuthor {
@@ -162,10 +158,6 @@ pub enum ForumRequest {
     },
     GetPost {
         post_id: u64,
-    },
-    UpdateMetadata {
-        title: Option<String>,
-        description: Option<String>,
     },
     BanUser {
         user: String,
@@ -194,8 +186,6 @@ pub enum ForumRequest {
 pub struct ForumServiceState {
     pub posts: HashMap<u64, ForumPost>,
     pub next_post_id: u64,
-    pub title: String,
-    pub description: String,
     pub banned_users: HashSet<String>,
 }
 
@@ -204,8 +194,6 @@ impl ForumServiceState {
         ForumServiceState {
             posts: HashMap::new(),
             next_post_id: 1,
-            title: "Default Forum Title".to_string(),
-            description: "Welcome to the forum!".to_string(),
             banned_users: HashSet::new(),
         }
     }
@@ -232,13 +220,6 @@ impl ForumServiceState {
         
         let upd = ForumUpdate::TopPosts(top_posts);
         update_subscriber(AppUpdate::Forum(upd), &subscriber_node, our, service)?;
-        
-        // Send forum metadata
-        let metadata_update = ForumUpdate::Metadata {
-            title: self.title.clone(),
-            description: self.description.clone(),
-        };
-        update_subscriber(AppUpdate::Forum(metadata_update), &subscriber_node, our, service)?;
         
         // Send banned users list
         let banned_users_update = ForumUpdate::BannedUsers(self.banned_users.iter().cloned().collect());
@@ -325,42 +306,18 @@ impl ForumServiceState {
                     update_subscriber(AppUpdate::Forum(ForumUpdate::UpdatedPost(post.to_public(true))), &from, our, service)?;
                 }
             }
-            ForumRequest::UpdateMetadata { title, description } => {
-                if from == our.node {
-                    let old_title = self.title.clone();
-                    let old_description = self.description.clone();
-                    
-                    if let Some(new_title) = title {
-                        self.title = new_title;
-                    }
-                    if let Some(new_description) = description {
-                        self.description = new_description;
-                    }
-
-                    if self.title != old_title || self.description != old_description {
-                        let metadata_update = ForumUpdate::Metadata {
-                            title: self.title.clone(),
-                            description: self.description.clone(),
-                        };
-                        update_subscribers(AppUpdate::Forum(metadata_update), our, service)?;
-                    }
-                }
-            }
-
             ForumRequest::BanUser { user } => {
                 if from == our.node {
                     self.banned_users.insert(user);
                     self.send_banned_users_update(our, service)?;
                 }
             }
-
             ForumRequest::UnbanUser { user } => {
                 if from == our.node {
                     self.banned_users.remove(&user);
                     self.send_banned_users_update(our, service)?;
                 }
             }
-
             ForumRequest::DeletePost { post_id } => {
                 if from == our.node {
                     if let Some(removed_post) = self.posts.remove(&post_id) {
@@ -369,7 +326,6 @@ impl ForumServiceState {
                     }
                 }
             }
-
             ForumRequest::CreateStickyPost { text_contents, link, image_url, is_anon } => {
                 if from == our.node {
                     let post_id = self.next_post_id;
@@ -395,7 +351,6 @@ impl ForumServiceState {
                     update_subscribers(AppUpdate::Forum(ForumUpdate::NewPost(new_post.to_public(true))), our, service)?;
                 }
             }
-
             ForumRequest::ToggleSticky { post_id } => {
                 if from == our.node {
                     if let Some(post) = self.posts.get_mut(&post_id) {
@@ -404,7 +359,6 @@ impl ForumServiceState {
                     }
                 }
             }
-
             ForumRequest::GetPostAuthor { post_id } => {
                 if from == our.node {
                     if let Some(post) = self.posts.get(&post_id) {

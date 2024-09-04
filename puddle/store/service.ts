@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import {Peer, PeerMap, Service, ServiceApi, ServiceConnectionStatus, ServiceMetadata, ServiceCreationOptions, PublicServiceMetadata} from '@dartfrog/puddle';
+import {Peer, PeerMap, Service, ServiceApi, ServiceConnectionStatus, ServiceMetadata, ServiceCreationOptions, PublicServiceMetadata, ServiceEditOptions} from '@dartfrog/puddle';
 import { maybePlaySoundEffect, maybePlayTTS } from '../utils';
 
 export type ChatState = {
@@ -51,6 +51,10 @@ export interface ServiceStore {
   // 
   get: () => ServiceStore 
   set: (partial: ServiceStore | Partial<ServiceStore>) => void
+
+  editService: (serviceId: string, options: ServiceEditOptions) => void
+  fullServiceMetadata: ServiceMetadata | null,
+  setFullServiceMetadata: (metadata: ServiceMetadata | null) => void,
 }
 
 const useServiceStore = create<ServiceStore>((set, get) => ({
@@ -66,7 +70,9 @@ const useServiceStore = create<ServiceStore>((set, get) => ({
   setLocalServices: (localServices) => set({localServices}),
   //
   api: null,
-  setApi: (api) => set({ api }),
+  setApi: (api) => {
+    set({ api });
+  },
   //
   createService: (options: ServiceCreationOptions) => {
     const { api } = get()
@@ -128,6 +134,13 @@ const useServiceStore = create<ServiceStore>((set, get) => ({
   isClientConnected: false,
   setIsClientConnected: (isConnected: boolean) => set({ isClientConnected: isConnected }),
   //
+  editService: (serviceId: string, options: ServiceEditOptions) => {
+    const { api } = get();
+    if (!api) { return; }
+    api.editService(serviceId, options);
+  },
+  fullServiceMetadata: null,
+  setFullServiceMetadata: (meta) => set({fullServiceMetadata: meta}),
   get,
   set,
 }))

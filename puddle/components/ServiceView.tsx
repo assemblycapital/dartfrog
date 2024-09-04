@@ -104,6 +104,7 @@ const ServiceView : React.FC<ServiceViewProps> = ({ onServiceMessage, onClientMe
     setApi, api, serviceId, requestPeer, setPeerMap, setServiceId, setChatHistory,
     addChatMessage, chatState, setServiceConnectionStatus, serviceConnectionStatus,
     setServiceMetadata, serviceMetadata, setChatSoundsEnabled,
+    setFullServiceMetadata,
   } = useChatStore();
 
   useEffect(()=> {
@@ -172,6 +173,10 @@ const ServiceView : React.FC<ServiceViewProps> = ({ onServiceMessage, onClientMe
           }
         }
         setServiceMetadata(api.serviceMetadata)
+      },
+      onFullServiceMetadataChange(api) {
+
+        setFullServiceMetadata(api.fullServiceMetadata)
       },
       onPeerMapChange(api) {
         setPeerMap(api.peerMap);

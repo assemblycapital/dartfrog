@@ -58,6 +58,7 @@ interface ConstructorArgs {
   serviceId?: string;
   onServiceConnectionStatusChange?: (api) => void;
   onServiceMetadataChange?: (api) => void;
+  onFullServiceMetadataChange?: (api) => void;
   onServiceMessage?: (message: any) => void;
   onClientMessage?: (message: any) => void;
   onPeerMapChange?: (api) => void;
@@ -73,6 +74,7 @@ export class ServiceApi {
 
   public serviceId: string | null;
   public serviceMetadata: PublicServiceMetadata | null;
+  public fullServiceMetadata: ServiceMetadata | null;
   public serviceConnectionStatus: ServiceConnectionStatus | null;
   public peerMap: PeerMap = new Map();
   public localServices = [];
@@ -81,6 +83,7 @@ export class ServiceApi {
   private onClose: () => void;
   private onServiceConnectionStatusChange: (api) => void;
   private onServiceMetadataChange: (api) => void;
+  private onFullServiceMetadataChange: (api) => void;
   private onServiceMessage: (message: any) => void;
   private onClientMessage: (message: any) => void;
   private onPeerMapChange: (api) => void;
@@ -99,6 +102,7 @@ export class ServiceApi {
     serviceId = null,
     onServiceConnectionStatusChange = (api) => {},
     onServiceMetadataChange = (api) => {},
+    onFullServiceMetadataChange = (api) => {},
     onServiceMessage = (message) => {},
     onClientMessage = (message) => {},
     onPeerMapChange = (api) => {},
@@ -112,6 +116,7 @@ export class ServiceApi {
     this.serviceId = serviceId;
     this.onServiceConnectionStatusChange = onServiceConnectionStatusChange;
     this.onServiceMetadataChange = onServiceMetadataChange;
+    this.onFullServiceMetadataChange = onFullServiceMetadataChange;
     this.onServiceMessage = onServiceMessage;
     this.onClientMessage = onClientMessage;
     this.onPeerMapChange = onPeerMapChange;
@@ -126,6 +131,7 @@ export class ServiceApi {
       return;
     }
     this.serviceMetadata = null;
+    this.fullServiceMetadata = null;
     this.serviceConnectionStatus = null;
 
     const newApi = new KinodeClientApi({
@@ -242,6 +248,7 @@ export class ServiceApi {
     let req = {"Meta": "Unsubscribe"}
     this.sendRequest(req);
   }
+
   public setService(fullServiceId:string) {
     let req = {"Meta": {"SetService": fullServiceId}}
     this.sendRequest(req);
@@ -269,6 +276,19 @@ export class ServiceApi {
   }
   public deleteService(name:string) {
     let req = {"Meta": {"DeleteService": name}}
+    this.sendRequest(req);
+  }
+
+  public editService(serviceId: string, options: ServiceEditOptions) {
+    const req = {
+      "Meta": {
+        "EditService": [
+          serviceId,
+          options
+        ]
+      }
+    };
+    console.log("editing service", req)
     this.sendRequest(req);
   }
 
@@ -330,6 +350,11 @@ export class ServiceApi {
         } else if (nack === "AccessDenied") {
           this.setServiceConnectionStatus(ServiceConnectionStatusType.AccessDenied);
         }
+      } else if (channelUpd["Metadata"]) {
+        const meta = channelUpd["Metadata"]
+        const parsedMeta = serviceMetadataFromJson(meta);
+        this.fullServiceMetadata = parsedMeta;
+        this.onFullServiceMetadataChange(this);
       } else if (channelUpd["PublicMetadata"]) {
         this.setServiceConnectionStatus(ServiceConnectionStatusType.Connected);
         const meta = channelUpd["PublicMetadata"]
@@ -349,6 +374,11 @@ export class ServiceApi {
         if (nodesToRequest.length > 0) {
           this.requestPeerList(nodesToRequest);
         }
+      } else if (channelUpd["Metadata"]) {
+        const fullMeta = channelUpd["Metadata"]
+        const parsedFullMeta = serviceMetadataFromJson(fullMeta);
+        this.fullServiceMetadata = parsedFullMeta;
+        this.onFullServiceMetadataChange(this);
       } else if (channelUpd["Kick"]) {
         const kick = channelUpd["Kick"]
         if (kick === "ServiceDeleted")
@@ -740,6 +770,19 @@ export function getClassForNameColor(nameColor: NameColor): string {
   }
 }
 
+export function serviceMetadataToEditOptions(metadata: ServiceMetadata): ServiceEditOptions {
+  return {
+    title: metadata.title,
+    description: metadata.description,
+    access: metadata.access,
+    visibility: metadata.visibility,
+    whitelist: metadata.whitelist,
+    publishUserPresence: metadata.publish_user_presence,
+    publishSubscribers: metadata.publish_subscribers,
+    publishSubscriberCount: metadata.publish_subscriber_count,
+    publishWhitelist: metadata.publish_whitelist,
+  };
+}
 
 export function getServiceRecencyText(service: Service) {
   const now = new Date();

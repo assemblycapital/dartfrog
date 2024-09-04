@@ -131,7 +131,7 @@ const PostDetail: React.FC = () => {
                   onChange={(e) => setIsAnonymous(e.target.checked)}
                   style={{ marginRight: '0.5rem' }}
                 />
-                Post anonymously
+                anonymous
               </label>
             </div>
             <button

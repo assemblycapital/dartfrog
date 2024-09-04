@@ -20,8 +20,6 @@ export interface ForumPost {
 
 export interface ForumStore {
   posts: ForumPost[]
-  title: string
-  description: string
   bannedUsers: string[]
   createPost: (api: ServiceApi, post: Omit<ForumPost, 'id' | 'author' | 'upvotes' | 'downvotes' | 'comments' | 'created_at' | 'is_sticky'>) => void
   createStickyPost: (api: ServiceApi, post: Omit<ForumPost, 'id' | 'author' | 'upvotes' | 'downvotes' | 'comments' | 'created_at' | 'is_sticky' | 'thread_id'>) => void
@@ -29,7 +27,6 @@ export interface ForumStore {
   createComment: (api: ServiceApi, threadId: number, text: string, imageUrl: string, isAnonymous: boolean) => void
   deletePost: (api: ServiceApi, postId: number) => void
   getPost: (api: ServiceApi, postId: number) => void
-  updateMetadata: (api: ServiceApi, title?: string, description?: string) => void
   banUser: (api: ServiceApi, user: string) => void
   unbanUser: (api: ServiceApi, user: string) => void
   toggleSticky: (api: ServiceApi, postId: number) => void
@@ -43,15 +40,12 @@ export type ForumUpdate =
   | { TopPosts: ForumPost[] }
   | { NewPost: ForumPost }
   | { UpdatedPost: ForumPost }
-  | { Metadata: { title: string, description: string } }
   | { BannedUsers: string[] }
   | { DeletedPost: number }
   | { PostAuthor: { post_id: number, author: string } }
 
 const useForumStore = create<ForumStore>((set, get) => ({
   posts: [],
-  title: '',
-  description: '',
   bannedUsers: [],
 
   createPost: (api, post) => {
@@ -128,18 +122,6 @@ const useForumStore = create<ForumStore>((set, get) => ({
       Forum: {
         GetPost: {
           post_id: postId,
-        },
-      },
-    }
-    api.sendToService(req)
-  },
-
-  updateMetadata: (api, title, description) => {
-    const req = {
-      Forum: {
-        UpdateMetadata: {
-          title,
-          description,
         },
       },
     }
@@ -231,11 +213,6 @@ const useForumStore = create<ForumStore>((set, get) => ({
         });
         
         return { posts: updatedPosts };
-      } else if ('Metadata' in update) {
-        return {
-          title: update.Metadata.title,
-          description: update.Metadata.description,
-        }
       } else if ('BannedUsers' in update) {
         return { bannedUsers: update.BannedUsers }
       } else if ('DeletedPost' in update) {

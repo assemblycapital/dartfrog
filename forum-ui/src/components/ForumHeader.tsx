@@ -9,7 +9,6 @@ interface ForumHeaderProps {
 
 const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false }) => {
   const { serviceId, serviceMetadata} = useChatStore();
-  const {title, description} = useForumStore();
   const navigate = useNavigate();
 
   const renderOnlineCountMessage = () => {
@@ -86,7 +85,12 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
           // className='color-white'
           href={`http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/`}
         >
-          <button>
+          <button
+            className="df"
+            style={{
+              width:"auto",
+            }}
+          >
           df
           </button>
         </a>
@@ -121,14 +125,14 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
           fontWeight: "bold",
         }}
       >
-        {title}
+        {serviceMetadata?.title || 'forum title'}
       </div>
       <div
         style={{
           fontSize: "0.8rem",
         }}
       >
-        {description}
+        {serviceMetadata?.description || 'description'}
       </div>
       <a
         style={{
