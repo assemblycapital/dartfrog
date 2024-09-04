@@ -4,7 +4,8 @@ import useDartStore from '../store/dart';
 import { ServiceID, ServiceMetadata } from '@dartfrog/puddle/index';
 import Spinner from '@dartfrog/puddle/components/Spinner';
 import { PROCESS_NAME } from '../utils';
-// import { Service, ServiceMetadata, parseServiceId } from '@dartfrog/puddle/index';
+
+// Remove DEBUG_MODE and debugLog function
 
 enum ServiceStatus {
   INVALID_SERVICE_ID = "invalid service id",
@@ -61,7 +62,9 @@ const JoinPage = () => {
     let gotService = null;
     if (serviceId.hostNode() === window.our?.node) {
       gotService = localServices.find(service => service.id.toString() === serviceId.toString());
-
+      if (!gotService) {
+        setServiceStatus(ServiceStatus.SERVICE_DOES_NOT_EXIST)
+      }
     } else {
       let gotPeer = peerMap.get(serviceId.hostNode());
       if (!(gotPeer)) {
@@ -100,23 +103,21 @@ const JoinPage = () => {
         if (!response.ok) {
           setServiceStatus(ServiceStatus.PLUGIN_NOT_INSTALLED)
         } else {
-          // TODO also check access settings
           setServiceStatus(ServiceStatus.PLUGIN_READY)
         }
       } catch (error) {
-          setServiceStatus(ServiceStatus.PLUGIN_ISSUE);
+        console.error("Error checking plugin:", error);
+        setServiceStatus(ServiceStatus.PLUGIN_ISSUE);
       }
     };
     checkProcessAvailability();
   }, [serviceMetadata])
 
-  
-
-
   useEffect(() => {
     if (serviceStatus === ServiceStatus.PLUGIN_READY) {
       const process = serviceId.process();
       const packageName = getPackageName(process)
+
       if (packageName !== "dartfrog:herobrine.os") {
         let url = `http://${baseOrigin}/${process}/df/service/${serviceId}`;
         window.location.replace(url);
@@ -252,7 +253,7 @@ const JoinPage = () => {
           style={{
           }}
         >
-          {serviceIdString}
+          df://{serviceIdString}
         </span>
       </div>
 

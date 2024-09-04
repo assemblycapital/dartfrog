@@ -22,7 +22,7 @@ const CreateService: React.FC<{ }> = ({ }) => {
 
   const [inputCreateServiceName, setInputCreateServiceName] = useState('');
   const [isCreateInputValid, setIsCreateInputValid] = useState(true);
-  const [selectedPlugin, setSelectedPlugin] = useState(PAGE_PLUGIN);
+  const [selectedPlugin, setSelectedPlugin] = useState(FORUM_PLUGIN);
   const [selectedVisibility, setSelectedVisibility] = useState<ServiceVisibility>(ServiceVisibility.Visible);
   const [selectedAccess, setSelectedAccess] = useState<ServiceAccess>(ServiceAccess.Public);
   const [isAdvancedOptionsVisible, setIsAdvancedOptionsVisible] = useState(false);
