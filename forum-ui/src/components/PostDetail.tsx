@@ -51,6 +51,10 @@ const PostDetail: React.FC = () => {
 
   const handleSubmitComment = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newComment && !imageUrl) {
+      alert("Please provide either a comment or an image URL.");
+      return;
+    }
     createComment(api, post.id, newComment, imageUrl, isAnonymous);
     setNewComment('');
     setImageUrl('');
@@ -93,7 +97,7 @@ const PostDetail: React.FC = () => {
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="write a comment..."
-              required
+              required={!imageUrl}
               style={{
                 resize: "both",
                 margin: "none",
@@ -162,10 +166,10 @@ const PostDetail: React.FC = () => {
         </div>
         <div style={{ paddingBottom: "3rem" }}>
           {sortedComments.map((comment) => (
-            <PostCard key={comment.id} post_id={comment.id} isComment />
+            <PostCard key={comment.id} post_id={comment.id} isComment showFullContents />
           ))}
           {missingComments.map((commentId) => (
-            <PostCard key={commentId} post_id={commentId} isComment />
+            <PostCard key={commentId} post_id={commentId} isComment showFullContents />
           ))}
         </div>
       </div>

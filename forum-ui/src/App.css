@@ -11,6 +11,7 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  background-color:#242424;
 }
 
 .underline-on-hover {
@@ -64,13 +65,21 @@ a {
   transition: background-color 0.25s, color 0.25s;
 }
 
-.forum-post {
+.hover-dim {
   transition: background-color 0.25s;
 }
-.forum-post:hover {
-  background-color: #1d1d1d;
+.hover-dim:hover {
+  background-color: #212121;
   transition: background-color 0.25s;
 
+}
+
+.green-text {
+  color: #579c57;
+}
+
+blockquote {
+  margin: 0px;
 }
 
 button {

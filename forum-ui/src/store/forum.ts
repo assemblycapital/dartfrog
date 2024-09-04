@@ -3,7 +3,7 @@ import { ServiceApi } from '@dartfrog/puddle'
 
 export interface ForumPost {
   id: number
-  title: string
+  // title: string // Removed
   text_contents: string
   link?: string
   image_url?: string
@@ -58,7 +58,7 @@ const useForumStore = create<ForumStore>((set, get) => ({
     const req = {
       Forum: {
         CreatePost: {
-          title: post.title,
+          // title: post.title, // Removed
           text_contents: post.text_contents,
           link: post.link,
           image_url: post.image_url,
@@ -74,7 +74,7 @@ const useForumStore = create<ForumStore>((set, get) => ({
     const req = {
       Forum: {
         CreateStickyPost: {
-          title: post.title,
+          // title: post.title, // Removed
           text_contents: post.text_contents,
           link: post.link,
           image_url: post.image_url,
@@ -101,7 +101,7 @@ const useForumStore = create<ForumStore>((set, get) => ({
     const req = {
       Forum: {
         CreatePost: {
-          title: '',
+          // title: '', // Removed
           text_contents: text,
           image_url: imageUrl,
           is_anon: isAnonymous,

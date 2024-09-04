@@ -83,7 +83,6 @@ impl AppServiceState for AppService {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ForumPost {
     id: u64,
-    title: String,
     text_contents: String,
     link: Option<String>,
     image_url: Option<String>,
@@ -101,7 +100,6 @@ pub struct ForumPost {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublicForumPost {
     id: u64,
-    title: String,
     text_contents: String,
     link: Option<String>,
     image_url: Option<String>,
@@ -118,7 +116,6 @@ impl ForumPost {
     pub fn to_public(&self, include_author: bool) -> PublicForumPost {
         PublicForumPost {
             id: self.id,
-            title: self.title.clone(),
             text_contents: self.text_contents.clone(),
             link: self.link.clone(),
             image_url: self.image_url.clone(),
@@ -153,7 +150,6 @@ pub enum ForumUpdate {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ForumRequest {
     CreatePost {
-        title: String,
         text_contents: String,
         link: Option<String>,
         image_url: Option<String>,
@@ -181,7 +177,6 @@ pub enum ForumRequest {
         post_id: u64,
     },
     CreateStickyPost {
-        title: String,
         text_contents: String,
         link: Option<String>,
         image_url: Option<String>,
@@ -263,13 +258,15 @@ impl ForumServiceState {
         }
 
         match req {
-            ForumRequest::CreatePost { title, text_contents, link, image_url, is_anon, thread_id } => {
+            ForumRequest::CreatePost { mut text_contents, link, image_url, is_anon, thread_id } => {
+                // Sanitize text_contents
+                text_contents = sanitize_text(text_contents);
+                
                 let post_id = self.next_post_id;
                 self.next_post_id += 1;
                 
                 let new_post = ForumPost {
                     id: post_id,
-                    title,
                     text_contents,
                     link,
                     image_url,
@@ -373,14 +370,13 @@ impl ForumServiceState {
                 }
             }
 
-            ForumRequest::CreateStickyPost { title, text_contents, link, image_url, is_anon } => {
+            ForumRequest::CreateStickyPost { text_contents, link, image_url, is_anon } => {
                 if from == our.node {
                     let post_id = self.next_post_id;
                     self.next_post_id += 1;
                     
                     let new_post = ForumPost {
                         id: post_id,
-                        title,
                         text_contents,
                         link,
                         image_url,
@@ -391,7 +387,7 @@ impl ForumServiceState {
                         created_at: get_now(),
                         voted_users: HashMap::new(),
                         is_sticky: true,
-                        is_anon: is_anon,
+                        is_anon,
                         thread_id: None,
                     };
 
@@ -428,6 +424,27 @@ impl ForumServiceState {
         let banned_users_update = ForumUpdate::BannedUsers(self.banned_users.iter().cloned().collect());
         update_subscribers(AppUpdate::Forum(banned_users_update), our, service)
     }
+}
+
+fn sanitize_text(text: String) -> String {
+    // Replace continuous whitespace areas
+    let sanitized = regex::Regex::new(r"\s+")
+        .unwrap()
+        .replace_all(&text, |caps: &regex::Captures| {
+            let matched = caps.get(0).unwrap().as_str();
+            if matched.contains('\n') {
+                if matched.matches('\n').count() > 1 {
+                    "\n\n"
+                } else {
+                    "\n"
+                }
+            } else {
+                " "
+            }
+        })
+        .to_string();
+
+    sanitized
 }
 
 call_init!(init);

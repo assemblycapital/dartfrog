@@ -22,6 +22,7 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
   const baseOrigin = window.origin.split(".").slice(1).join(".")
   const navigate = useNavigate();
   const [requested, setRequested] = useState(false);
+  const [showFullImage, setShowFullImage] = useState(false);
 
   const parsedServiceId = ServiceID.fromString(serviceId);
   const isAdmin = parsedServiceId.hostNode() === window.our?.node;
@@ -95,7 +96,7 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
         border: post.is_sticky ? "1px solid #333" : "none",
         gap: "0.4rem",
       }}
-      className={isComment ? "forum-comment" : "forum-post"}
+      className="hover-dim"
     >
       <div
         style={{
@@ -132,7 +133,7 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
               }}
               className={getPeerNameColor(peerMap.get(post.author))}
             >
-                {post.author}
+              {post.author}
             </a>
           </div>
         )}
@@ -167,8 +168,9 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
       <div
         style={{
           cursor: (showFullContents || isComment) ? 'default' : 'pointer',
-          display: 'flex',
-          gap: '1rem',
+          // display: 'flex',
+          // flexWrap: 'wrap',
+          // alignItems: 'flex-start',
         }}
         onClick={() => {
           if (showFullContents) return;
@@ -177,57 +179,58 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
         }}
       >
         {post.image_url && (
-          <div style={{ flexShrink: 0 }}>
             <img 
               src={post.image_url} 
               alt="Post image" 
+              onClick={(e) => {
+                if (showFullContents) {
+                  e.stopPropagation();
+                  setShowFullImage(!showFullImage);
+                }
+              }}
               style={{ 
-                maxWidth: '200px', 
-                maxHeight: '200px',
+                maxWidth: showFullImage ? '100%' : '200px',
+                width:'auto',
+                height:'auto',
+                maxHeight: showFullImage ? '100%' : '200px',
+                float:"left",
+                marginRight:"9px",
                 objectFit: 'cover',
-                margin: "4px",
+                cursor: 'pointer',
+                display: showFullImage ? 'block' : 'inline-block',
               }} 
             />
+        )}
+        <blockquote
+          style={{
+            fontSize: "0.8rem",
+            maxHeight: showFullContents ? 'none' : '190px',
+            overflow: showFullContents ? 'visible' : 'hidden',
+            textOverflow: showFullContents ? 'clip' : 'ellipsis',
+            WebkitLineClamp: showFullContents ? 'none' : 3,
+            wordWrap: 'break-word',
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          {post.text_contents.split(/\n/)
+            .map((line, index, array) => (
+              <React.Fragment key={index}>
+                <span
+                  className={`${line.startsWith('>') ? 'green-text' : ''}`}
+                  // style={{ display: 'inline-block', width: '100%' }}
+                >
+                  {line}
+                </span>
+                {index < array.length - 1 && <br />}
+              </React.Fragment>
+            ))}
+        </blockquote>
+        
+        {post.link && (
+          <div style={{ marginTop: '0.5rem', fontSize: '0.8rem' }}>
+            {renderLink(post.link)}
           </div>
         )}
-        <div style={{ flex: 1, overflow: 'hidden' }}>
-          {!isComment &&
-            <div
-              style={{
-                fontWeight: "bold",
-                // margin: "0.5rem 0rem",
-                marginBottom:"0.3rem",
-                maxHeight: showFullContents ? 'none' : '3em',
-                overflow: showFullContents ? 'visible' : 'hidden',
-                textOverflow: showFullContents ? 'clip' : 'ellipsis',
-                display: '-webkit-box',
-                WebkitLineClamp: showFullContents ? 'none' : 2,
-                WebkitBoxOrient: 'vertical',
-              }}
-            >
-              {post.title}
-            </div>
-          }
-          <div
-            style={{
-              fontSize: "0.8rem",
-              maxHeight: showFullContents ? 'none' : '4.8em',
-              overflow: showFullContents ? 'visible' : 'hidden',
-              textOverflow: showFullContents ? 'clip' : 'ellipsis',
-              display: '-webkit-box',
-              WebkitLineClamp: showFullContents ? 'none' : 3,
-              WebkitBoxOrient: 'vertical',
-            }}
-          >
-            {post.text_contents}
-          </div>
-          
-          {post.link && (
-            <div style={{ marginTop: '0.5rem', fontSize: '0.8rem' }}>
-              {renderLink(post.link)}
-            </div>
-          )}
-        </div>
       </div>
       <div
         style={{
@@ -263,6 +266,7 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
               margin:"0px",
               paddingLeft:"0.4rem",
               border: "none",
+              borderRadius: "0px",
             }}
           >
             ▲
@@ -278,6 +282,7 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
               justifyContent: "center",
               margin:"0px",
               border: "none",
+              borderRadius: "0px",
             }}
           >
             {post.upvotes - post.downvotes}
@@ -292,6 +297,7 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
               padding: "4px",
               paddingRight:"0.4rem",
               border: "none",
+              borderRadius: "0px",
               margin:"0px",
             }}
           >

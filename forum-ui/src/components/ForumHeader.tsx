@@ -56,23 +56,39 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
       style={{
         display: "flex",
         flexDirection: "row",
-        gap: "1rem",
+        // gap: "0.5rem",
         height:"32px",
         maxHeight:"32px",
         marginBottom:"0.8rem",
         boxSizing:"border-box",
+        alignItems: "flex-end",
+
       }}
+      >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          gap: "0.5rem",
+          marginRight:"0.7rem",
+        }}
       >
         <a
           style={{
             display:"inline-block",
             cursor:"pointer",
-            padding:"0.4rem",
+            fontSize:"0.8rem",
+            // height:"100%",
+            alignSelf: "flex-end",
+
           }}
-          className='underline-on-hover color-white'
+          // className='underline-on-hover color-white'
+          // className='color-white'
           href={`http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/`}
         >
+          <button>
           df
+          </button>
         </a>
         {includeForumButton && (
         <button
@@ -89,13 +105,14 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
           forum
         </button>
       )}
+    </div>
     <div
       style={{
         display: "flex",
         flexDirection: "row",
         gap: "1.3rem",
         alignItems: "flex-end",
-        paddingBottom:"3px",
+        // paddingBottom:"3px",
       }}
     >
       

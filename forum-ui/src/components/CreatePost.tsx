@@ -6,7 +6,6 @@ import ForumHeader from "./ForumHeader";
 import { ServiceID } from "@dartfrog/puddle";
 
 const CreatePost: React.FC = () => {
-  const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
   const [newPostLink, setNewPostLink] = useState('');
   const [newPostImage, setNewPostImage] = useState('');
@@ -21,9 +20,12 @@ const CreatePost: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newPostContent && !newPostLink && !newPostImage) {
+      // alert("Please provide either content, a link, or an image.");
+      return;
+    }
     const postData = {
-      title: newPostTitle,
-      text_contents: newPostContent,
+      text_contents: newPostContent || undefined,
       link: newPostLink || undefined,
       image_url: newPostImage || undefined,
       is_anon: isAnon,
@@ -35,7 +37,6 @@ const CreatePost: React.FC = () => {
       createPost(api, postData);
     }
 
-    setNewPostTitle('');
     setNewPostContent('');
     setNewPostLink('');
     setNewPostImage('');
@@ -61,25 +62,10 @@ const CreatePost: React.FC = () => {
           padding: "1rem",
         }}
       >
-        <input
-          type="text"
-          value={newPostTitle}
-          onChange={(e) => setNewPostTitle(e.target.value)}
-          placeholder="Post title"
-          required
-          style={{
-            padding: "0.5rem",
-            fontSize: "1rem",
-            borderRadius: "4px",
-            margin: "0",
-          }}
-          className="color-white"
-        />
         <textarea
           value={newPostContent}
           onChange={(e) => setNewPostContent(e.target.value)}
           placeholder="Post content"
-          required
           style={{
             fontFamily: 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
             padding: "0.5rem",
