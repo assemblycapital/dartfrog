@@ -1594,6 +1594,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f86854cf50259291520509879a5c294c3c9a4c334e9ff65071c51e42ef1e2343"
 
 [[package]]
+name = "rumors"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "dartfrog_lib",
+ "kinode_process_lib",
+ "serde",
+ "serde_json",
+ "wit-bindgen",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -22,6 +22,7 @@ const PAGE_URL = `/${manifest[3].process_name}:${metadata.properties.package_nam
 const CHESS_URL = `/${manifest[4].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 const RADIO_URL = `/${manifest[5].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 const FORUM_URL = `/${manifest[6].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
+const RUMORS_URL = `/${manifest[7].process_name}:${metadata.properties.package_name}:${metadata.properties.publisher}`;
 
 // This is the proxy URL, it must match the node you are developing against
 const PROXY_URL = (process.env.VITE_NODE_URL || `http://${PACKAGE_SUBDOMAIN}.localhost:8080`)
@@ -74,7 +75,7 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(BASE_URL, ''),
       },
-      [`${FORUM_URL}`]: {
+      [`${RUMORS_URL}`]: {
         target: APPLET_PROXY_URL,
         changeOrigin: true,
         rewrite: (path) => path.replace(BASE_URL, ''),

@@ -9,6 +9,7 @@ members = [
     "chess",
     "radio",
     "forum",
+    "rumors",
 ]
 
 [profile.release]
