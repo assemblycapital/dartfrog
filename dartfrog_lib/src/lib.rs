@@ -393,13 +393,14 @@ pub enum FrontendRequest {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum FrontendMetaRequest {
     RequestMyServices,
-    CreateService(ServiceCreationOptions), // service_name, access, visibility, whitelist,
+    CreateService(ServiceCreationOptions),
     DeleteService(String),
     EditService(String, ServiceEditOptions),
     SetService(String),
     Unsubscribe,
     RequestPeer(String),
     RequestPeerList(Vec<String>),
+    MessageProcess(String),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -407,7 +408,6 @@ pub enum FrontendChannelRequest {
     Heartbeat,
     MessageClient(String),
     MessageServer(String),
-    MessageProcess(String)
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -420,6 +420,7 @@ pub enum FrontendMetaUpdate {
     MyServices(Vec<Service>),
     Peer(Peer),
     PeerList(Vec<Peer>),
+    FromProcess(String),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -775,13 +776,13 @@ pub trait AppClientState: std::fmt::Debug {
     fn kill(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
         Ok(())
     }
-    fn handle_service_message(&mut self, _upd: String, _our: &Address, _client: &Client) -> anyhow::Result<()> {
+    fn handle_service_message(&mut self, _message: String, _our: &Address, _client: &Client) -> anyhow::Result<()> {
         Ok(())
     }
-    fn handle_frontend_message(&mut self, _upd: String, _our: &Address, _client: &Client) -> anyhow::Result<()> {
+    fn handle_frontend_message(&mut self, _message: String, _our: &Address, _client: &Client, _consumer: &Consumer) -> anyhow::Result<()> {
         Ok(())
     }
-    fn handle_new_frontend(&mut self, _our: &Address, _client: &Client) -> anyhow::Result<()> {
+    fn handle_new_frontend(&mut self, _our: &Address, _client: &Client, _consumer: &Consumer) -> anyhow::Result<()> {
         Ok(())
     }
 }
@@ -793,10 +794,15 @@ pub trait AppProcessState: std::fmt::Debug {
     fn save(&mut self, _our: &Address) -> anyhow::Result<()> {
         Ok(())
     }
-    fn handle_frontend_message(&mut self, _message: String, _our: &Address) -> anyhow::Result<()> {
+    fn handle_message(&mut self, _source: &Address, _message: String, _our: &Address) -> anyhow::Result<()> {
         Ok(())
     }
-    fn handle_new_frontend(&mut self, _our: &Address) -> anyhow::Result<()> {
+    fn handle_frontend_message(&mut self, _message: String, _our: &Address, _consumer: &Consumer) -> anyhow::Result<()> {
+        // Add logic to handle frontend messages here
+        Ok(())
+    }
+
+    fn handle_new_frontend(&mut self, _our: &Address, _consumer: &Consumer) -> anyhow::Result<()> {
         Ok(())
     }
 }
@@ -1003,6 +1009,9 @@ where
                         let req = ProviderOutput::RequestPeerList(node_list);
                         poke(&get_server_address(&our.node), req)?;
                     }
+                    FrontendMetaRequest::MessageProcess(msg) => {
+                        state.process.handle_frontend_message(msg, our, consumer)?;
+                    }
                 }
             }
             FrontendRequest::Channel(s_req) => {
@@ -1030,7 +1039,7 @@ where
                     }
                     FrontendChannelRequest::MessageClient(msg) => {
                         if let Some(cw) = state.clients.get_mut(service_id_string) {
-                            cw.state.handle_frontend_message(msg, our, &cw.client)?;
+                            cw.state.handle_frontend_message(msg, our, &cw.client, consumer)?;
                         }
                     }
                     FrontendChannelRequest::MessageServer(msg) => {
@@ -1041,9 +1050,6 @@ where
                                 ProviderServiceInput::AppMessage(msg)
                             )
                         )?;
-                    }
-                    FrontendChannelRequest::MessageProcess(msg) => {
-                        state.process.handle_frontend_message(msg, our)?;
                     }
                 }
             }
@@ -1076,8 +1082,9 @@ where
 
     match server_request {
         HttpServerRequest::WebSocketOpen { channel_id, .. } => {
-            state.consumers.insert(channel_id, Consumer::new(channel_id));
-            state.process.handle_new_frontend(our)?;
+            let consumer = Consumer::new(channel_id);
+            state.consumers.insert(channel_id, consumer.clone());
+            state.process.handle_new_frontend(our, &consumer)?;
 
         }
         HttpServerRequest::WebSocketPush { channel_id, message_type} => {
@@ -1094,7 +1101,7 @@ where
     Ok(())
 }
 
-fn update_consumer (
+pub fn update_consumer (
     websocket_id: u32,
     update: FrontendUpdate,
 ) -> anyhow::Result<()> {

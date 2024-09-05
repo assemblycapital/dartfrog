@@ -7,6 +7,7 @@ import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
 import HalfChat from "@dartfrog/puddle/components/HalfChat";
 import RumorsBox from "./components/RumorsBox";
 import ServiceView from "@dartfrog/puddle/components/ServiceView";
+import RumorsHome from "./components/RumorsHome";
 
 
 function App() {
@@ -19,7 +20,11 @@ function App() {
   return (
     <Router basename={`/${PROCESS_NAME}`}>
       <Routes>
-        <Route path="/" element={
+        <Route path="/*" element={
+          <RumorsHome />
+        }
+        />
+        <Route path="/df/" element={
           <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
         } />
         <Route path="/df/service/:id" element={

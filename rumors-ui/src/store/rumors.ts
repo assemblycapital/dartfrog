@@ -7,7 +7,7 @@ export const PLUGIN_NAME = "rumors:dartfrog:herobrine.os";
 
 
 export interface RumorsStore {
-  sendRumor: (api:ServiceApi, text: string) => void
+  createRumor: (api:ServiceApi, text: string) => void
   // 
   get: () => RumorsStore 
   set: (partial: RumorsStore | Partial<RumorsStore>) => void
@@ -15,15 +15,13 @@ export interface RumorsStore {
 
 const useRumorsStore = create<RumorsStore>((set, get) => ({
   // 
-  sendRumor: (api, text) => {
+  createRumor: (api, text) => {
     let req = 
       {
-      "Page": {
-        "EditPage": 
+        "CreateRumor": 
           text
-      }
     }
-    api.sendToService(req);
+    api.sendToProcess(req);
   },
   // 
   get,

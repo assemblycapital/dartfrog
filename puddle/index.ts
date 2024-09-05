@@ -61,6 +61,7 @@ interface ConstructorArgs {
   onFullServiceMetadataChange?: (api) => void;
   onServiceMessage?: (message: any) => void;
   onClientMessage?: (message: any) => void;
+  onProcessMessage?: (message: any) => void;
   onPeerMapChange?: (api) => void;
   onLocalServicesChange?: (api) => void;
   disableAutoReconnect?: boolean;
@@ -86,6 +87,7 @@ export class ServiceApi {
   private onFullServiceMetadataChange: (api) => void;
   private onServiceMessage: (message: any) => void;
   private onClientMessage: (message: any) => void;
+  private onProcessMessage: (message: any) => void;
   private onPeerMapChange: (api) => void;
   private onLocalServicesChange: (api) => void;
   private autoReconnectEnabled = true;
@@ -105,6 +107,7 @@ export class ServiceApi {
     onFullServiceMetadataChange = (api) => {},
     onServiceMessage = (message) => {},
     onClientMessage = (message) => {},
+    onProcessMessage = (message) => {},
     onPeerMapChange = (api) => {},
     onLocalServicesChange = (api) => {},
     disableAutoReconnect = false,
@@ -119,6 +122,7 @@ export class ServiceApi {
     this.onFullServiceMetadataChange = onFullServiceMetadataChange;
     this.onServiceMessage = onServiceMessage;
     this.onClientMessage = onClientMessage;
+    this.onProcessMessage = onProcessMessage;
     this.onPeerMapChange = onPeerMapChange;
     this.onLocalServicesChange = onLocalServicesChange;
     this.autoReconnectEnabled = !disableAutoReconnect;
@@ -231,7 +235,7 @@ export class ServiceApi {
   }
 
   public sendToProcess(data:any) {
-    let req = {"Channel":
+    let req = {"Meta":
                 {"MessageProcess":
                   JSON.stringify(data)
                 }
@@ -336,6 +340,10 @@ export class ServiceApi {
         }
         this.localServices = parsedMyServices;
         this.onLocalServicesChange(this);
+      } else if (metaUpd["FromProcess"]) {
+        const fromProcess = metaUpd["FromProcess"]
+        const msg = JSON.parse(fromProcess);
+        this.onProcessMessage(msg);
       } else {
         console.log("todo handle metaupdate'", metaUpd)
       }
