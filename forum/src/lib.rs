@@ -403,7 +403,7 @@ fn sanitize_text(text: String) -> String {
 
 call_init!(init);
 fn init(our: Address) {
-    println!("init forum");
+    // println!("init forum");
     let mut state = AppState::new(&our);
     let loaded_provider = AppProviderState::load(&our);
     state.provider = loaded_provider;

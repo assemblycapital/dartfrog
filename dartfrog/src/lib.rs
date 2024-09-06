@@ -141,7 +141,6 @@ fn update_provider_consumer(
     update: DartfrogToProvider,
 ) -> anyhow::Result<()> {
     let req = ProviderInput::DartfrogRequest(update);
-    println!("poking provider with update");
     poke(source, req)?;
     Ok(())
 }
@@ -527,7 +526,6 @@ fn handle_provider_output(
             let known_peers: Vec<Peer> = state.peers.values().cloned().collect();
             
             // Send the list of known peers back to the requesting provider
-            println!("requestknownpeers");
             let update = DartfrogToProvider::PeerList(known_peers);
             update_provider_consumer(source, state, update)?;
         }

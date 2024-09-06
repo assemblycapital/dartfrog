@@ -8,12 +8,16 @@ import HalfChat from "@dartfrog/puddle/components/HalfChat";
 import RumorsBox from "./components/RumorsBox";
 import ServiceView from "@dartfrog/puddle/components/ServiceView";
 import RumorsHome from "./components/RumorsHome";
+import useRumorsStore from "./store/rumors";
 
 
 function App() {
 
+  const {handleUpdate} = useRumorsStore();
+
   const onServiceMessage = (msg) => {
     if (msg.Rumors) {
+      handleUpdate(msg.Rumors)
     }
   };
 
@@ -21,10 +25,6 @@ function App() {
     <Router basename={`/${PROCESS_NAME}`}>
       <Routes>
         <Route path="/*" element={
-          <RumorsHome />
-        }
-        />
-        <Route path="/df/" element={
           <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
         } />
         <Route path="/df/service/:id" element={

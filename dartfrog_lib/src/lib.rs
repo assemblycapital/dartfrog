@@ -1049,6 +1049,7 @@ where
                         }
                     }
                     FrontendChannelRequest::MessageServer(msg) => {
+                        println!("message server {:?} {:?}", service_id_string, msg);
                         poke(
                             &service_id.address,
                             ProviderInput::ProviderServiceInput(

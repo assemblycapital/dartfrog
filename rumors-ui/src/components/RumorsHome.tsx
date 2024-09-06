@@ -4,7 +4,6 @@ import useServiceStore from '@dartfrog/puddle/store/service';
 import useRumorsStore from '../store/rumors';
 import { PROCESS_NAME, WEBSOCKET_URL } from '../utils';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import PeersPage from './PeersPage';
 
 const RumorsHome: React.FC = () => {
   const { api, setApi, setIsClientConnected, setPeerMap } = useServiceStore();
@@ -72,35 +71,14 @@ const RumorsHome: React.FC = () => {
             df
         </a>
         <Link to="/" style={{ marginRight: '15px' }}>rumors</Link>
-        <Link to="/peers">peers</Link>
       </nav>
 
       <Routes>
-        <Route path="/peers" element={<PeersPage />} />
         <Route path="/" element={
           <>
             <div style={{ display: 'flex', gap: '20px' }}>
-              <input
-                type="text"
-                value={newRumorText}
-                onChange={(e) => setNewRumorText(e.target.value)}
-                placeholder="Enter a new rumor"
-                style={{ flex: 1, marginRight: '10px', padding: '5px' }}
-              />
-              <button
-                onClick={handleCreateRumor}
-                disabled={!newRumorText.trim()}
-                style={{ padding: '5px 10px' }}
-              >
-                Create Rumor
-              </button>
-            </div>
-            <div style={{ overflowY: 'auto', flex: 1, gap: "4px",}}>
-              {sortedRumors.map((rumor) => (
-                <div key={rumor.uuid} style={{ }}>
-                  {rumor.text_contents}
-                </div>
-              ))}
+                todo default hub service here
+              
             </div>
           </>
         } />

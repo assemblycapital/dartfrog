@@ -1,40 +1,78 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { ServiceID } from '@dartfrog/puddle';
-import useServiceStore from '@dartfrog/puddle/store/service';
+import React, { useEffect, useState } from 'react';
 import useRumorsStore from '../store/rumors';
+import useServiceStore from '@dartfrog/puddle/store/service';
 
+const RumorsBox: React.FC = () => {
+  const { rumors, createRumor } = useRumorsStore();
+  const { api } = useServiceStore();
+  const [inputValue, setInputValue] = useState('');
 
-interface PagePluginBoxProps {
-}
-
-const PagePluginBox: React.FC = ({ }) => {
-  const [isAuthor, setIsAuthor] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-
-  const {api, serviceId} = useServiceStore();
-
-  useEffect(() => {
-    const parsedServiceId = ServiceID.fromString(serviceId);
-    if (!parsedServiceId) return;
-    setIsAuthor(parsedServiceId.hostNode() === window.our?.node);
-  }, [serviceId]);
-
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputValue.trim() && api) {
+      createRumor(api, inputValue.trim());
+      setInputValue('');
+    }
+  };
 
   return (
     <div
       style={{
-        // height: '500px',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        width: '100%',
-        boxSizing: 'border-box',
-        // border: '1px solid red',
+        flex: "1",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: "1rem",
+        gap: "0.5rem",
+        overflowY: "hidden",
       }}
     >
-      TODO rumors
+      <form onSubmit={handleSubmit} style={{ display: "flex", width: "100%"}}>
+        <input
+          type="text"
+          placeholder="rumor has it that..."
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          style={{
+            flexGrow: 1,
+            minWidth: 0,
+            margin: "0px",
+          }}
+        />
+      </form>
+      <div
+        style={{
+          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.5rem",
+          width:"100%",
+        }}
+      >
+        {rumors && rumors.length > 0 ? (
+          rumors.map((rumor, index) => (
+            <div
+              key={index}
+              style={{
+                width: "auto",
+                textAlign: "center",
+                padding: "0.5rem",
+              }}
+            >
+              <div>{rumor.text}</div>
+              <div style={{ fontSize: "0.8em", marginTop: "0.25rem" }}>
+                {new Date(rumor.time*1000).toLocaleString()}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div style={{ textAlign: "center", }}>
+            No rumors yet. Be the first to start one!
+          </div>
+        )}
+      </div>
     </div>
-  )
+  );
 };
 
-export default PagePluginBox;
+export default RumorsBox;
