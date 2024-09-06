@@ -36,10 +36,11 @@ type AppProviderState = ProviderState<DefaultAppServiceState, DefaultAppClientSt
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RumorPost {
+    uuid: String,
     text_contents: String,
     time: u64,
-    source: Option<String>,
     hops: u32,
+    heard_from: Option<String>,
     claims_relay: bool,
 }
 
@@ -67,7 +68,7 @@ pub enum RumorsRequest {
 pub enum FrontendRequest {
     AddPeers(Vec<String>),
     RemovePeers(Vec<String>),
-    Post(RumorPost),
+    CreateNewRumor(String),
 }
 
 #[derive(Debug, Clone)]
@@ -106,9 +107,50 @@ impl AppProcessState for AppProcess {
         // Add logic to handle frontend messages here
         Ok(())
     }
-    fn handle_frontend_message(&mut self, message: String, _our: &Address, _consumer: &Consumer) -> Result<()> {
-        println!("rumors frontend message! {:?}", message);
+    fn handle_frontend_message(&mut self, message: String, _our: &Address, consumer: &Consumer) -> Result<()> {
+        let parsed_message = serde_json::from_str::<FrontendRequest>(&message)?;
         // Add logic to handle frontend messages here
+        // println!("rumors frontend message! {:?}", message);
+        match parsed_message {
+            FrontendRequest::AddPeers(peers) => {
+                // Add new peers to the list, avoiding duplicates
+                for peer in peers {
+                    if !self.peers.contains(&peer) {
+                        self.peers.push(peer);
+                    }
+                }
+                // Notify the frontend about the updated peer list
+                let peers_update = RumorsUpdate::Peers(self.peers.clone());
+                update_consumer_from_process(consumer, peers_update)?;
+            }
+            FrontendRequest::RemovePeers(peers) => {
+                // Remove specified peers from the list
+                self.peers.retain(|p| !peers.contains(p));
+                // Notify the frontend about the updated peer list
+                let peers_update = RumorsUpdate::Peers(self.peers.clone());
+                update_consumer_from_process(consumer, peers_update)?;
+            }
+            FrontendRequest::CreateNewRumor(text) => {
+                println!("create rumor {:?}", text);
+                // Create a new RumorPost
+                let new_rumor = RumorPost {
+                    uuid: generate_uuid_v4(),
+                    text_contents: text,
+                    time: std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs(),
+                    hops: 0,
+                    heard_from: None,
+                    claims_relay: true,
+                };
+                // Add the new rumor to the list
+                self.rumors.push(new_rumor.clone());
+                // Notify the frontend about the new rumor
+                let rumor_update = RumorsUpdate::NewRumor(new_rumor);
+                update_consumer_from_process(consumer, rumor_update)?;
+            }
+        }
         Ok(())
     }
 
@@ -117,15 +159,11 @@ impl AppProcessState for AppProcess {
         
         // Send rumors update
         let rumors_update = RumorsUpdate::Rumors(self.rumors.clone());
-        let serialized_rumors = serde_json::to_string(&rumors_update)?;
-        let update = FrontendUpdate::Meta(FrontendMetaUpdate::FromProcess(serialized_rumors));
-        update_consumer(consumer.ws_channel_id, update)?;
+        update_consumer_from_process(consumer, rumors_update)?;
 
         // Send peers update
         let peers_update = RumorsUpdate::Peers(self.peers.clone());
-        let serialized_peers = serde_json::to_string(&peers_update)?;
-        let update = FrontendUpdate::Meta(FrontendMetaUpdate::FromProcess(serialized_peers));
-        update_consumer(consumer.ws_channel_id, update)?;
+        update_consumer_from_process(consumer, peers_update)?;
         
         Ok(())
     }

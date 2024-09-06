@@ -319,18 +319,30 @@ export class ServiceApi {
     this.sendRequest(req);
   }
 
+  public requestKnownPeers() {
+    let req = {"Meta": 
+      "RequestKnownPeers"
+    }
+    this.sendRequest(req);
+  }
+
   private updateHandler(jsonString: any) {
     const data = JSON.parse(jsonString)
 
     if (data["Meta"]) {
       const metaUpd = data["Meta"]
-      // TODO
       if (metaUpd["Peer"]) {
         const jsonPeer = metaUpd["Peer"]
         let peer = peerFromJson(jsonPeer);
         this.peerMap.set(peer.node, peer)
         this.onPeerMapChange(this);
-
+      } else if (metaUpd["PeerList"]) {
+        const jsonPeers = metaUpd["PeerList"]
+        for (const jsonPeer of jsonPeers) {
+          let peer = peerFromJson(jsonPeer);
+          this.peerMap.set(peer.node, peer);
+        }
+        this.onPeerMapChange(this);
       } else if (metaUpd["MyServices"]) {
         const myServices = metaUpd["MyServices"]
         let parsedMyServices = []

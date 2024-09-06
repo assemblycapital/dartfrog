@@ -140,25 +140,9 @@ fn update_provider_consumer(
     state: &mut DartfrogState,
     update: DartfrogToProvider,
 ) -> anyhow::Result<()> {
-    let consumer = state.provider_consumers.entry(source.clone()).or_insert_with(|| {
-        Consumer {
-            ws_channel_id: 0,
-            last_active: get_now(),
-        }
-    });
     let req = ProviderInput::DartfrogRequest(update);
+    println!("poking provider with update");
     poke(source, req)?;
-    Ok(())
-}
-
-fn update_all_provider_consumers(
-    state: &DartfrogState,
-    update: DartfrogToProvider,
-) -> anyhow::Result<()> {
-    for address in state.provider_consumers.keys() {
-        let req = ProviderInput::DartfrogRequest(update.clone());
-        poke(address, req)?;
-    }
     Ok(())
 }
 
@@ -533,6 +517,19 @@ fn handle_provider_output(
                 // TODO more efficient to respond with a peerlist instead of one at a time.
                 handle_request_peer(our, state, source, &node)?;
             }
+        }
+        ProviderOutput::RequestKnownPeers => {
+            if our.node != source.node {
+                return Ok(());
+            }
+            
+            // Collect the keys (node names) from the peers map
+            let known_peers: Vec<Peer> = state.peers.values().cloned().collect();
+            
+            // Send the list of known peers back to the requesting provider
+            println!("requestknownpeers");
+            let update = DartfrogToProvider::PeerList(known_peers);
+            update_provider_consumer(source, state, update)?;
         }
         ProviderOutput::FrontendActivity => {
             if our.node != source.node {

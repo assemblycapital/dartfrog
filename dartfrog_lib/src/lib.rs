@@ -400,6 +400,7 @@ pub enum FrontendMetaRequest {
     Unsubscribe,
     RequestPeer(String),
     RequestPeerList(Vec<String>),
+    RequestKnownPeers,
     MessageProcess(String),
 }
 
@@ -501,6 +502,7 @@ pub enum ProviderOutput {
     RequestPeer(String),
     RequestPeerList(Vec<String>),
     FrontendActivity,
+    RequestKnownPeers,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -1009,6 +1011,10 @@ where
                         let req = ProviderOutput::RequestPeerList(node_list);
                         poke(&get_server_address(&our.node), req)?;
                     }
+                    FrontendMetaRequest::RequestKnownPeers => {
+                        let req = ProviderOutput::RequestKnownPeers;
+                        poke(&get_server_address(&our.node), req)?;
+                    }
                     FrontendMetaRequest::MessageProcess(msg) => {
                         state.process.handle_frontend_message(msg, our, consumer)?;
                     }
@@ -1153,6 +1159,12 @@ where
     Ok(())
 }
 
+pub fn update_consumer_from_process<T: Serialize>(consumer: &Consumer, update: T) -> anyhow::Result<()> {
+    let serialized = serde_json::to_string(&update)?;
+    let frontend_update = FrontendUpdate::Meta(FrontendMetaUpdate::FromProcess(serialized));
+    update_consumer(consumer.ws_channel_id, frontend_update)
+}
+
 pub fn handle_dartfrog_to_provider<T, U, V>(our: &Address, state: &mut ProviderState<T, U, V>, source: &Address, app_message: DartfrogToProvider) -> anyhow::Result<()> 
 where
     T: AppServiceState,
@@ -1182,7 +1194,6 @@ where
             // notify dartfrog
             let req = ProviderOutput::Service(service);
             poke(&get_server_address(&our.node), req)?;
-
         }
         DartfrogToProvider::EditService(id, options) => {
             if source != &get_server_address(&our.node) {
@@ -1241,10 +1252,16 @@ where
             }
         }
         DartfrogToProvider::Peer(peer) => {
+            if source != &get_server_address(&our.node) {
+                return Ok(());
+            }
             let update = FrontendUpdate::Meta(FrontendMetaUpdate::Peer(peer));
             update_all_consumers(state, update)?;
         }
         DartfrogToProvider::PeerList(peers) => {
+            if source != &get_server_address(&our.node) {
+                return Ok(());
+            }
             let update = FrontendUpdate::Meta(FrontendMetaUpdate::PeerList(peers));
             update_all_consumers(state, update)?;
         }
