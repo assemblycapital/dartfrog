@@ -1,21 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import useDartStore from '../store/dart';
 import { getAllServicesFromPeerMap, getUniqueServices, sortServices } from '@dartfrog/puddle/index';
-import ServiceList from './Services/ServiceList';
-import PeerList from './Nodes/PeerList';
 import ServiceCard from './Services/ServiceCard';
-import { HomeIcon } from '@dartfrog/puddle/components/Icons';
-import CurrentPageHeader from './CurrentPageHeader';
-import { PROCESS_NAME } from '../utils';
 import { useNavigate } from 'react-router-dom';
-import Spinner from '@dartfrog/puddle/components/Spinner';
-import ChatBox from '@dartfrog/puddle/components/ChatBox';
 import AppGrid from './AppGrid/AppGrid';
+import { useMediaQuery } from 'react-responsive';
+import { PROCESS_NAME } from '../utils';
+import PeerList from './Nodes/PeerList';
 
 const Home: React.FC = () => {
   const {localServices, peerMap, setCurrentPage, isClientConnected} = useDartStore();
   const navigate = useNavigate();
   const [allServices, setAllServices] = useState([]);
+  const isMobile = useMediaQuery({ maxWidth: 767 });
 
   useEffect(() => {
     setCurrentPage('home');
@@ -25,12 +22,18 @@ const Home: React.FC = () => {
       setAllServices(updatedServices);
     };
 
-    updateServices(); // Initial update
-
-    const intervalId = setInterval(updateServices, 60000); // Update every 60 seconds
-
-    return () => clearInterval(intervalId); // Cleanup on component unmount
+    updateServices();
+    const intervalId = setInterval(updateServices, 60000);
+    return () => clearInterval(intervalId);
   }, [localServices, peerMap]);
+
+  if (isMobile) {
+    return (
+      <div style={{ height: "100%", overflow: "auto" }}>
+        <AppGrid />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -78,7 +81,8 @@ const Home: React.FC = () => {
                 width: "100%",
                 overflowX: "hidden",
                 overflowY: "scroll",
-                maxHeight: "14rem"
+                maxHeight: "24rem",
+                
               }}
             >
               <AppGrid />
@@ -88,7 +92,7 @@ const Home: React.FC = () => {
                 flex: "1",
                 display: "flex",
                 flexDirection: "column",
-                marginTop:"1rem",
+                // marginTop:"1rem",
                 overflow:"hidden",
                 flexShrink:"0",
                 flexGrow:"1",

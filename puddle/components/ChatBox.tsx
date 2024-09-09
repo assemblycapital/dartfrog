@@ -219,6 +219,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                       flexDirection:"column",
                       width:"100%",
                       gap: "3px",
+                      minWidth: 0,
                     }}
                   >
                     <div style={{ verticalAlign: "top",  lineHeight: "0.9" }}>
@@ -232,7 +233,14 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
                         <span>{formatTimestamp(message.time)}</span>
                       </div>
                     </div>
-                    <span style={{ fontSize: "0.9rem", cursor: "default", wordWrap: "break-word", overflowWrap: "break-word", whiteSpace: "pre-wrap" }}>
+                    <span style={{ 
+                      fontSize: "0.9rem", 
+                      cursor: "default", 
+                      wordWrap: "break-word", 
+                      overflowWrap: "break-word", 
+                      whiteSpace: "pre-wrap",
+                      maxWidth: "100%",
+                    }}>
                       {getMessageInnerText(message.msg)}
                     </span>
                   </div>

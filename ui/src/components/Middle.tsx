@@ -16,6 +16,7 @@ import Spinner from '@dartfrog/puddle/components/Spinner';
 import CurrentPageHeader from './CurrentPageHeader';
 import MessagesNode from './Messages/MessagesNode';
 import ServicePage from './Services/ServicePage';
+import { useMediaQuery } from 'react-responsive';
 
 interface MiddleProps {
 }
@@ -43,7 +44,7 @@ export const renderLoading = () => {
   }
 const Middle: React.FC<MiddleProps> = ({ }) => {
   const { isSidebarOpen, isClientConnected } = useDartStore();
-
+  const isMobile = useMediaQuery({ maxWidth: 767 });
 
   const renderPage = (page, isLoaded) => {
     return (
@@ -67,8 +68,60 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
     )
   }
 
+  const content = (
+    <div
+      style={{
+        height: "100%",
+        maxHeight: "100%",
+        overflowY: 'hidden',
+      }}
+    >
+      <Routes>
+        <Route path="/" element={
+            renderPage(() => <Home />, isClientConnected)
+        } />
+        <Route path="/services" element={
+            renderPage(() => <Services />, isClientConnected)
+        } />
+        <Route path="/services/:id" element={
+            renderPage(() => <ServicePage />, isClientConnected)
+        } />
+        <Route path="/messages" element={
+            renderPage(() => <Messages />, isClientConnected)
+        } />
+        <Route path="/messages/:node" element={
+            renderPage(() => <MessagesNode />, isClientConnected)
+        } />
+        <Route path="/nodes" element={
+            renderPage(() => <Nodes />, isClientConnected)
+        } />
+        <Route path="/nodes/:node" element={
+            renderPage(() => <NodeProfile />, isClientConnected)
+        } />
+        <Route path="/join/:id" element={
+            renderPage(() => <JoinPage />, isClientConnected)
+        } />
+      </Routes>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <div style={{
+        height: '100%',
+        flexGrow: 1,
+        maxHeight: '100%',
+        overflowY: 'hidden',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        {content}
+      </div>
+    );
+  }
+
   return (
-    
     <div style={{
       height: '100%',
       flexGrow: 1,
@@ -78,7 +131,6 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
       display: 'flex',
       flexDirection: 'column',
     }}>
-
       <Split
         sizes={isSidebarOpen ? [80, 20] : [100, 0]}
         minSize={isSidebarOpen ? [60, 60] : [0, 0]}
@@ -94,45 +146,11 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
           overflowY: 'hidden',
         }}
       >
-        <div
-          style={{
-            height:"100%",
-            maxHeight:"100%",
-            overflowY: 'hidden',
-          }}
-        >
-        <Routes>
-          <Route path="/" element={
-              renderPage(() => <Home />, isClientConnected)
-          } />
-          <Route path="/services" element={
-              renderPage(() => <Services />, isClientConnected)
-          } />
-          <Route path="/services/:id" element={
-              renderPage(() => <ServicePage />, isClientConnected)
-          } />
-          <Route path="/messages" element={
-              renderPage(() => <Messages />, isClientConnected)
-          } />
-          <Route path="/messages/:node" element={
-              renderPage(() => <MessagesNode />, isClientConnected)
-          } />
-          <Route path="/nodes" element={
-              renderPage(() => <Nodes />, isClientConnected)
-          } />
-          <Route path="/nodes/:node" element={
-              renderPage(() => <NodeProfile />, isClientConnected)
-          } />
-          <Route path="/join/:id" element={
-              renderPage(() => <JoinPage />, isClientConnected)
-          } />
-        </Routes>
-        </div>
-
+        {content}
         {isSidebarOpen ? (
-            <div>
-              <Sidebar />
-            </div>
+          <div>
+            <Sidebar />
+          </div>
         ) : (
           <div></div>
         )}

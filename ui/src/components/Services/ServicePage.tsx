@@ -152,6 +152,7 @@ const ServicePage: React.FC = () => {
                         type="text"
                         value={quickTitle}
                         onChange={(e) => setQuickTitle(e.target.value)}
+                        autoComplete="off"
                     />
                 </div>
                 <div className={styles.quickMenuField}>
@@ -161,6 +162,8 @@ const ServicePage: React.FC = () => {
                         type="text"
                         value={quickDescription}
                         onChange={(e) => setQuickDescription(e.target.value)}
+                        autoComplete="off"
+
                     />
                 </div>
                 <button onClick={handleQuickEdit}>Update</button>

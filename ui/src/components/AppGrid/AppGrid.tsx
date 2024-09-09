@@ -143,17 +143,33 @@ const AppGrid: React.FC = () => {
   ];
 
   return (
-    <div>
-      <NewAppGridItem />
-      {appGridItems.map((item, index) => (
-        <AppGridItem
-          key={index}
-          {...item}
-          isDialogOpen={openDialogIndex === index}
-          onOpenDialog={() => handleOpenDialog(index)}
-          onCloseDialog={handleCloseDialog}
-        />
-      ))}
+    <div
+      style={{
+        marginTop:"1rem"
+      }}
+    >
+
+      <div>
+        {/* <div
+        >
+          <button
+            style={{
+              margin:"4px 0rem"
+            }}
+          >
+            get apps
+          </button>
+        </div> */}
+        {appGridItems.map((item, index) => (
+          <AppGridItem
+            key={index}
+            {...item}
+            isDialogOpen={openDialogIndex === index}
+            onOpenDialog={() => handleOpenDialog(index)}
+            onCloseDialog={handleCloseDialog}
+          />
+        ))}
+      </div>
     </div>
   );
 };
