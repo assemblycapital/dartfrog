@@ -1,5 +1,4 @@
 
-import "@dartfrog/puddle/components/App.css";
 import "./App.css";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import NoServiceView from "@dartfrog/puddle/components/NoServiceView";
@@ -9,7 +8,6 @@ import RumorsBox from "./components/RumorsBox";
 import ServiceView from "@dartfrog/puddle/components/ServiceView";
 import RumorsHome from "./components/RumorsHome";
 import useRumorsStore from "./store/rumors";
-
 
 function App() {
 
@@ -35,6 +33,7 @@ function App() {
             websocketUrl={WEBSOCKET_URL}
             onServiceMessage={onServiceMessage}
             enableChatSounds
+            fullscreen
            />
         } />
       </Routes>

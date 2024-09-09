@@ -183,15 +183,6 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
           >
             nodes
           </a>
-          <a className={`sidebar-option ${getBoldClass('rumors')}`}
-            href={`/${PROCESS_NAME}/rumors`}
-            onClick={(event) => {
-              event.preventDefault();
-              navigate('/rumors');
-            }}
-          >
-            rumors
-          </a>
           <div
             style={{ 
               display: 'flex', 

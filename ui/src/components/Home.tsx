@@ -10,7 +10,6 @@ import { PROCESS_NAME } from '../utils';
 import { useNavigate } from 'react-router-dom';
 import Spinner from '@dartfrog/puddle/components/Spinner';
 import ChatBox from '@dartfrog/puddle/components/ChatBox';
-import RumorsBox from './RumorsBox';
 import AppGrid from './AppGrid/AppGrid';
 
 const Home: React.FC = () => {

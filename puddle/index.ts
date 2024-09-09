@@ -705,7 +705,7 @@ export class Profile {
   constructor(public bio: string, public nameColor: NameColor, public pfp?: string) {}
 
   static new(node: string): Profile {
-    return new Profile("", NameColor.Blue, undefined);
+    return new Profile("", NameColor.Default, undefined);
   }
 }
 

@@ -25,6 +25,9 @@ const RumorsBox: React.FC = () => {
         padding: "1rem",
         gap: "0.5rem",
         overflowY: "hidden",
+        height:"100vh",
+        maxHeight:"100vh",
+        boxSizing:"border-box"
       }}
     >
       <form onSubmit={handleSubmit} style={{ display: "flex", width: "100%"}}>
@@ -39,6 +42,9 @@ const RumorsBox: React.FC = () => {
             margin: "0px",
           }}
         />
+        <button>
+          send
+        </button>
       </form>
       <div
         style={{
@@ -56,11 +62,11 @@ const RumorsBox: React.FC = () => {
               style={{
                 width: "auto",
                 textAlign: "center",
-                padding: "0.5rem",
+                padding: "0.2rem",
               }}
             >
               <div>{rumor.text}</div>
-              <div style={{ fontSize: "0.8em", marginTop: "0.25rem" }}>
+              <div style={{ display:"none" }}>
                 {new Date(rumor.time*1000).toLocaleString()}
               </div>
             </div>

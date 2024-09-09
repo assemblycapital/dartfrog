@@ -16,7 +16,6 @@ import Spinner from '@dartfrog/puddle/components/Spinner';
 import CurrentPageHeader from './CurrentPageHeader';
 import MessagesNode from './Messages/MessagesNode';
 import ServicePage from './Services/ServicePage';
-import RumorsBox from './RumorsBox';
 
 interface MiddleProps {
 }
@@ -126,9 +125,6 @@ const Middle: React.FC<MiddleProps> = ({ }) => {
           } />
           <Route path="/join/:id" element={
               renderPage(() => <JoinPage />, isClientConnected)
-          } />
-          <Route path="/rumors" element={
-              renderPage(() => <RumorsBox />, isClientConnected)
           } />
         </Routes>
         </div>

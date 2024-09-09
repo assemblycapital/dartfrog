@@ -299,17 +299,7 @@ pub enum DartfrogInput {
     LocalDirectMessages(LocalDirectMessagePoke),
     RemoteDirectMessages(RemoteDirectMessagePoke),
     //
-    Rumors(RumorRequest),
-    //
     RequestVersion,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum RumorRequest {
-    CreateNewRumor(String),
-    UpdateNewRumor(String),
-    RequestAllRumors,
-    UpdateAllRumors(Vec<String>),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -364,9 +354,6 @@ pub enum DartfrogOutput {
     MessageStoreList(Vec<MessageStore>),
     //
     RequestVersionResponse(String, String),
-    //
-    Rumor(String),
-    RumorList(Vec<String>),
 }
 
 pub fn check_subscribe_permission(service: &Service, source: &Address) -> bool {

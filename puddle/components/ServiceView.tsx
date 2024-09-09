@@ -245,17 +245,9 @@ const ServiceView : React.FC<ServiceViewProps> = ({ onServiceMessage, onClientMe
   };
 
   if (fullscreen) {
-    return (
-      <div
-        style={{
-          height:"100%",
-        }}
-      >
-        {renderConnectionStatus(serviceConnectionStatus, isConnectingTooLong) || (
-          <Element />
-        )}
-      </div>
-    )
+      const status = renderConnectionStatus(serviceConnectionStatus, isConnectingTooLong);
+      if (status) return status;
+      return <Element />;
   }
 
   return (

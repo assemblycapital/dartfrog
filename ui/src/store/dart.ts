@@ -13,7 +13,7 @@ export const FORUM_PLUGIN = `forum:${PACKAGE_ID}`;
 
 export const STANDARD_PLUGINS = [CHAT_PLUGIN, PIANO_PLUGIN, PAGE_PLUGIN, CHESS_PLUGIN, RADIO_PLUGIN, FORUM_PLUGIN];
 
-export type DartfrogWebpageType = 'home' | 'nodes' | 'messages' | 'services' | 'rumors';
+export type DartfrogWebpageType = 'home' | 'nodes' | 'messages' | 'services';
 
 
 export interface DartStore {
@@ -66,12 +66,6 @@ export interface DartStore {
   // 
   get: () => DartStore 
   set: (partial: DartStore | Partial<DartStore>) => void,
-  // New properties for Rumors
-  requestCreateNewRumor: (rumor: string) => void,
-  requestAllRumors: () => void,
-  rumors: string[];
-  setRumors: (rumors: string[]) => void;
-  addRumor: (rumor: string) => void;
 }
 
 const useDartStore = create<DartStore>()(
@@ -291,19 +285,7 @@ const useDartStore = create<DartStore>()(
         }
       })
     },
-    requestCreateNewRumor: (rumor: string) => {
-      const { api } = get();
-      if (!api) return;
-      api.send({ data: { Rumors: { CreateNewRumor: rumor } } });
-    },
-    requestAllRumors: () => {
-      const { api } = get();
-      if (!api) return;
-      api.send({ data: { Rumors: "RequestAllRumors" } });
-    },
-    rumors: [],
-    setRumors: (rumors) => set({ rumors }),
-    addRumor: (rumor: string) => set((state) => ({ rumors: [rumor, ...state.rumors] })),
+   
   })
 )
 

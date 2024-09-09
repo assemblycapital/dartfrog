@@ -225,20 +225,7 @@ fn handle_http_server_request(
                     let network_hub_address = get_server_address(NETWORK_HUB);
                     poke(&network_hub_address, VersionControl::RequestVersion)?;
                 }
-                DartfrogInput::Rumors(rumor_request) => {
-                    let network_hub_address = get_server_address(NETWORK_HUB);
-                    match rumor_request.clone() {
-                        RumorRequest::CreateNewRumor(rumor_text) => {
-                            let trimmed_rumor_text = rumor_text.chars().take(2048).collect::<String>();
-                            poke(&network_hub_address, DartfrogInput::Rumors(RumorRequest::CreateNewRumor(trimmed_rumor_text)))?;
-
-                        }
-                        RumorRequest::RequestAllRumors => {
-                            poke(&network_hub_address, DartfrogInput::Rumors(rumor_request))?;
-                        }
-                        _ => {}
-                    }
-                }
+              
                 DartfrogInput::SetProfile(profile) => {
                     state.profile = profile;
                     let local_user = DartfrogOutput::LocalUser(state.profile.clone(), state.activity.clone(), state.activity_setting.clone());
@@ -655,40 +642,6 @@ fn handle_dartfrog_input(
                     
                     state.save(); // Save after adding a new message
                 }
-            }
-        }
-        DartfrogInput::Rumors(rumor_request) => {
-            match rumor_request {
-                RumorRequest::CreateNewRumor(rumor) => {
-                    let trimmed_rumor = rumor.chars().take(2048).collect::<String>();
-                    state.rumors.insert(0, trimmed_rumor.clone());
-                    if state.rumors.len() > MAX_RUMORS {
-                        state.rumors.pop();
-                    }
-                    for peer in state.peers.keys() {
-                        let address = get_server_address(peer);
-                        poke(&address, DartfrogInput::Rumors(RumorRequest::UpdateNewRumor(trimmed_rumor.clone())))?;
-                    }
-                },
-                RumorRequest::RequestAllRumors => {
-                    let address = get_server_address(&source.node());
-                    poke(&address, DartfrogInput::Rumors(RumorRequest::UpdateAllRumors(state.rumors.clone())))?;
-                },
-                RumorRequest::UpdateNewRumor(rumor) => {
-                    if source.node != NETWORK_HUB { return Ok(()); }
-                    if our.node != NETWORK_HUB {
-                        state.rumors.insert(0, rumor.clone());
-                        if state.rumors.len() > MAX_RUMORS {
-                            state.rumors.pop();
-                        }
-                    }
-                    update_all_consumers(state, DartfrogOutput::Rumor(rumor))?;
-                },
-                RumorRequest::UpdateAllRumors(all_rumors) => {
-                    if source.node != NETWORK_HUB { return Ok(()); }
-                    state.rumors = all_rumors;
-                    update_all_consumers(state, DartfrogOutput::RumorList(state.rumors.clone()))?;
-                },
             }
         }
         _ => {
