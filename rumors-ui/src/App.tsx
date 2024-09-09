@@ -22,10 +22,10 @@ function App() {
   return (
     <Router basename={`/${PROCESS_NAME}`}>
       <Routes>
-        <Route path="/*" element={
+        <Route path="/" element={
           <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
         } />
-        <Route path="/df/service/:id" element={
+        <Route path="/df/service/:id/*" element={
           <ServiceView
             ourNode={window.our.node}
             Element={RumorsBox}

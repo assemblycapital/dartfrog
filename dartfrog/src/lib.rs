@@ -82,7 +82,10 @@ impl DartfrogState {
 
     pub fn load(our: &Address) -> Self {
         match get_typed_state(|bytes| Ok(bincode::deserialize::<DartfrogState>(bytes)?)) {
-            Some(state) => state,
+            Some(mut state) => {
+                state.local_services = HashMap::new();
+                state
+            }
             None => DartfrogState::new(our)
         }
     }
@@ -725,7 +728,7 @@ fn init(our: Address) {
     let network_hub_address = get_server_address(NETWORK_HUB);
     poke(&network_hub_address, DartfrogInput::RemoteRequestAllPeerNodes).unwrap();
 
-    state.save(); // Save initial state if changes were made
+    state.save();
 
     loop {
         if let Err(e) = handle_message(&our, &mut state) {

@@ -214,7 +214,7 @@ const Home: React.FC = () => {
           >
             <div
               style={{
-                overflowY: "scroll",
+                overflowY: "hidden",
                 flexGrow: 1,
               }}
             >

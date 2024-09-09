@@ -55,7 +55,7 @@ const Nodes: React.FC = () => {
           margin:"1rem",
           height:"100%",
           maxHeight:"100%",
-          overflowY:"scroll",
+          overflowY:"hidden",
         }}
       >
         <PeerList />

@@ -264,17 +264,19 @@ const MessagesNode: React.FC = () => {
                         flexGrow:"1",
                         display: "flex",
                         flexDirection: "column",
-                        overflow:"auto"
+                        overflow:"hidden"
                       }}
                     >
                     {/* Message history */}
                     <div style={{
                         flexGrow: 1,
                         overflowY: "auto",
+                        overflowX: "hidden",
                         justifyContent: "flex-end",
                         alignContent: "flex-end",
                         alignItems: "flex-end",
                         justifyItems: "flex-end",
+                        width: "100%",
                     }}>
                         {messageStore.history.length === 0 ? (
                             <div style={{
@@ -292,17 +294,18 @@ const MessagesNode: React.FC = () => {
                                 <div key={index}
                                     className='chat-message'
                                     style={{
-                                        display:"flex",
-                                        flexDirection:"row",
-                                        width:"100%",
-                                        gap:"1rem",
+                                        display: "flex",
+                                        flexDirection: "row",
+                                        width: "100%",
+                                        gap: "1rem",
                                         padding: "10px 0rem",
                                     }}
                                 >
                                     <div
                                         style={{
-                                            userSelect:"none",
+                                            userSelect: "none",
                                             paddingLeft: "10px",
+                                            flexShrink: 0, // Prevent profile picture from shrinking
                                         }}
                                     >
                                         <a
@@ -313,10 +316,11 @@ const MessagesNode: React.FC = () => {
                                     </div>
                                     <div
                                         style={{
-                                            display:"flex",
-                                            flexDirection:"column",
-                                            width:"100%",
-                                            gap:"3px",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            flexGrow: 1, // Allow this div to grow and fill available space
+                                            minWidth: 0, // Allow content to shrink below its minimum size
+                                            gap: "3px",
                                         }}
                                     >
                                         <div style={{ verticalAlign: "top", lineHeight: "1" }}>
@@ -334,7 +338,13 @@ const MessagesNode: React.FC = () => {
                                                 <span>{formatTimestamp(message.time_received)}</span>
                                             </div>
                                         </div>
-                                        <span style={{ cursor: "default", wordWrap: "break-word", overflowWrap: "break-word", whiteSpace: "pre-wrap", fontSize: "0.9rem" }}>
+                                        <span style={{ 
+                                            cursor: "default", 
+                                            wordBreak: "break-word",
+                                            overflowWrap: "break-word", 
+                                            whiteSpace: "pre-wrap", 
+                                            fontSize: "0.9rem",
+                                        }}>
                                             {getMessageInnerText(message.contents)}
                                         </span>
                                     </div>
@@ -353,10 +363,10 @@ const MessagesNode: React.FC = () => {
                         <textarea
                             style={{
                                 flexGrow: 1,
-                                marginRight: '8px',
                                 resize: "none",
                                 height: '100%',
                                 fontFamily: 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
+                                margin:'0px',
                             }}
                             value={chatMessageInputText}
                             onChange={handleInputChange}
@@ -372,6 +382,8 @@ const MessagesNode: React.FC = () => {
                                 cursor: 'pointer',
                                 height: '100%',
                                 minWidth: '60px',
+                                borderRadius: '0px',
+                                borderLeft:"0px"
                             }}
                             onClick={sendChatCallback}
                         >

@@ -9,8 +9,20 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #362531; /* Dark pink background */
+  background-color: #303030; /* Dark pink background */
   color: #bebebe;
+  color-scheme: dark;
+}
+
+.underline-on-hover {
+  text-decoration: none;
+}
+.underline-on-hover:hover {
+  text-decoration: underline;
+}
+
+.green-text {
+  color: #579c57;
 }
 
 a {
@@ -68,3 +80,4 @@ input[type="text"].invalid {
   /* border-radius: 4px; */
   border: 1px solid #ff000066;
 }
+

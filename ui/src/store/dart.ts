@@ -10,8 +10,9 @@ export const PAGE_PLUGIN = `page:${PACKAGE_ID}`;
 export const CHESS_PLUGIN = `chess:${PACKAGE_ID}`;
 export const RADIO_PLUGIN = `radio:${PACKAGE_ID}`;
 export const FORUM_PLUGIN = `forum:${PACKAGE_ID}`;
+export const RUMORS_PLUGIN= `rumors:${PACKAGE_ID}`;
 
-export const STANDARD_PLUGINS = [CHAT_PLUGIN, PIANO_PLUGIN, PAGE_PLUGIN, CHESS_PLUGIN, RADIO_PLUGIN, FORUM_PLUGIN];
+export const STANDARD_PLUGINS = [CHAT_PLUGIN, PIANO_PLUGIN, PAGE_PLUGIN, CHESS_PLUGIN, RADIO_PLUGIN, FORUM_PLUGIN, RUMORS_PLUGIN];
 
 export type DartfrogWebpageType = 'home' | 'nodes' | 'messages' | 'services';
 

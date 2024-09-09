@@ -70,6 +70,7 @@ const PeerList = () => {
         }}
         style={{
           overflowX:"hidden",
+          marginRight:"5px",
         }}
       >
         <div

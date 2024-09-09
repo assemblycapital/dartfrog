@@ -52,8 +52,15 @@ const ServicePage: React.FC = () => {
         }
     }, [service, editService]);
 
-    const [quickTitle, setQuickTitle] = useState(service?.meta.title || '');
-    const [quickDescription, setQuickDescription] = useState(service?.meta.description || '');
+    const [quickTitle, setQuickTitle] = useState('');
+    const [quickDescription, setQuickDescription] = useState('');
+
+    useEffect(() => {
+        if (service) {
+            setQuickTitle(service.meta.title || '');
+            setQuickDescription(service.meta.description || '');
+        }
+    }, [service]);
 
     const handleQuickEdit = () => {
         if (service) {

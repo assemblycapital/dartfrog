@@ -618,9 +618,10 @@ where
             let mut state = T::new();
             let _ = state.init(our, &service);
             provider_state.services.insert(service_id, AppServiceStateWrapper {
-                service,
+                service: service.clone(),
                 state,
             });
+            let _ = poke(&get_server_address(our.node()), ProviderOutput::Service(service));
         }
 
         // Load clients
