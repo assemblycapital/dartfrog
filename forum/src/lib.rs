@@ -55,7 +55,6 @@ impl AppServiceState for AppService {
     }
 
     fn save(&mut self, our: &Address, service: &Service) -> anyhow::Result<()> {
-        println!("saving forum");
         default_save_service::<Self>(our, &service.id.to_string(), self)
     }
 

@@ -54,6 +54,7 @@ impl AppServiceState for AppService {
 
     fn handle_subscribe(&mut self, subscriber_node: String, our: &Address, service: &Service) -> anyhow::Result<()> {
         self.rumors.handle_subscribe(subscriber_node, our, service)?;
+        self.save(our, service)?;
         Ok(())
     }
 

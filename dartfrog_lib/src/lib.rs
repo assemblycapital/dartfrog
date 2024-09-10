@@ -691,7 +691,8 @@ pub fn default_load_service<T: DeserializeOwned>(
                             Ok(())
                         },
                         Err(e) => {
-                            println!("Error deserializing service state: {:?} {:?}", service_id, e,);
+                            println!("service couldn't load: {:?}", service_id);
+                            // println!("Error deserializing service state: {:?} {:?}", service_id, e,);
                             // failed to load prev state
                             Ok(())
                         }

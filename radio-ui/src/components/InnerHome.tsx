@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import useServiceStore from '@dartfrog/puddle/store/service';
 import styles from './Home.module.css';
 import { Link, useNavigate } from 'react-router-dom';
-import { Service, getServiceRecencyText } from '@dartfrog/puddle/index';
+import { Service, ServiceAccess, ServiceCreationOptions, ServiceVisibility, getServiceRecencyText } from '@dartfrog/puddle/index';
 import {PROCESS_NAME } from '../utils';
 import ProfilePicture from '@dartfrog/puddle/components/ProfilePicture';
 import { HUB_NODE } from '@dartfrog/puddle/utils';
@@ -113,6 +113,36 @@ const ServiceList: React.FC = () => {
 
 const InnerHome: React.FC = () => {
   const navigate = useNavigate();
+  const {localServices, createService} = useServiceStore();
+  const [hasMyService, setHasMyService] = useState(false);
+
+  useEffect(()=>{
+
+    for (const service of localServices) {
+      if (service.id.name === 'radio-hub') {
+        setHasMyService(true);
+        break;
+      }
+    }
+  }, [localServices])
+
+  const handleClickMyService = useCallback(() => {
+    if (!hasMyService) {
+      const serviceOptions: ServiceCreationOptions = {
+        serviceName: 'radio-hub',
+        processName:  PROCESS_NAME,
+        visibility: ServiceVisibility.Visible,
+        access: ServiceAccess.Public,
+        whitelist: [],
+        publishUserPresence: true,
+        publishSubscribers: true,
+        publishWhitelist: false,
+        publishSubscriberCount: false,
+      };
+      createService(serviceOptions);
+    }
+    navigate(`/df/service/radio-hub:${window.our?.node}@radio:dartfrog:herobrine.os`);
+  }, [hasMyService])
 
   return (
       <div style={{ display: "flex", flexDirection: "row", gap: "1rem", width:"100%",}}>
@@ -130,7 +160,7 @@ const InnerHome: React.FC = () => {
               className="hover-dark-gray"
               onClick={() => {
                 const hubHost = HUB_NODE
-                const hubServiceId = `hub:${hubHost}@radio:dartfrog:herobrine.os`;
+                const hubServiceId = `radio-hub:${hubHost}@radio:dartfrog:herobrine.os`;
                 navigate(`/df/service/${hubServiceId}`);
               }}
         >
@@ -194,17 +224,23 @@ const InnerHome: React.FC = () => {
               zIndex: 1,
             }}
           />
-          <div
-            className="hover-dark-gray"
+          <a
+            className="hover-dark-gray color-white"
             style={{
               cursor: "pointer",
               padding: "1rem",
               position: "relative",
               zIndex: 0,
             }}
+            href=""
+            onClick={(e)=>{
+              e.preventDefault()
+              handleClickMyService()
+
+            }}
           >
             my station
-          </div>
+          </a>
         </div>
         <hr />
         <div
@@ -217,14 +253,44 @@ const InnerHome: React.FC = () => {
 
           }}
         >
-          <div className="hover-dark-gray big-category-button">
+          <div className="hover-dark-gray big-category-button"
+            onClick={() => {
+              const hubHost = HUB_NODE
+              const serviceId = `music:${hubHost}@radio:dartfrog:herobrine.os`;
+              navigate(`/df/service/${serviceId}`);
+            }}
+          >
             music
           </div>
-          <div className="hover-dark-gray big-category-button">
-            gaming
+          <div style={{
+            borderLeft: "1px solid #444",
+            height: "100%"
+          }}
+          />
+
+          <div className="hover-dark-gray big-category-button"
+            onClick={() => {
+              const hubHost = HUB_NODE
+              const serviceId = `learn:${hubHost}@radio:dartfrog:herobrine.os`;
+              navigate(`/df/service/${serviceId}`);
+            }}
+          >
+            learn
           </div>
-          <div className="hover-dark-gray big-category-button">
-            funny
+
+          <div style={{
+            borderLeft: "1px solid #444",
+            height: "100%"
+          }}
+          />
+          <div className="hover-dark-gray big-category-button"
+            onClick={() => {
+              const hubHost = HUB_NODE
+              const serviceId = `random:${hubHost}@radio:dartfrog:herobrine.os`;
+              navigate(`/df/service/${serviceId}`);
+            }}
+          >
+            random
           </div>
         </div>
       </div>
@@ -241,11 +307,17 @@ const InnerHome: React.FC = () => {
             width="100%"
             height="20rem"
             controls
+            style={{
+              backgroundColor:"#1b1b1b"
+            }}
           />
           <ReactPlayer url={'https://youtu.be/7ENMpzR54us'} 
             width="100%"
             height="20rem"
             controls
+            style={{
+              backgroundColor:"#1b1b1b"
+            }}
           />
         </div>
       </div>
