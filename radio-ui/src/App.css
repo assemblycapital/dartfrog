@@ -1,6 +1,10 @@
-
+#root {
+  height:100%;
+}
 html, body {
   background-color: #242424;
+  height:100%;
+  width:100%;
 }
 
 a {
@@ -9,4 +13,31 @@ a {
 
 .underline-on-hover:hover {
   text-decoration: underline;
+}
+
+hr {
+  width: 100%;
+  background-color: #444;
+  height: 1px;
+  border: none;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.big-category-button {
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex:1;
+  height:100%;
 }

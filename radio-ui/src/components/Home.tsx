@@ -89,7 +89,7 @@ const Home: React.FC = () => {
             radio
           </div>
           <div>
-            watch, listen, and chat together
+            watch, listen, and chat with friends
           </div>
         </div>
         <div
@@ -109,9 +109,9 @@ const Home: React.FC = () => {
           <a
             href={nodeProfileLink(window.our?.node, baseOrigin)}
             style={{
-              color:"black",
               display:"inline-block",
               cursor:"pointer",
+              color:"#bebebe"
             }}
           >
             {window.our?.node}
@@ -135,13 +135,13 @@ const Home: React.FC = () => {
           </a>
           <Link to="/" className={styles.navItem}>radio</Link>
         </div>
-        {/* {['create', 'stations', 'media'].map((item) => (
+        {['create', 'stations', 'media'].map((item) => (
           <Link key={item} to={`/${item}`}
             className={`${styles.navItem} df`}
           >
             {item}
           </Link>
-        ))} */}
+        ))}
       </div>
       <div
         style={{

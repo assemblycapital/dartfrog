@@ -3,11 +3,13 @@ import useServiceStore from '@dartfrog/puddle/store/service';
 import styles from './Home.module.css';
 import { Link, useNavigate } from 'react-router-dom';
 import { Service, getServiceRecencyText } from '@dartfrog/puddle/index';
-import { PROCESS_NAME } from '../utils';
+import {PROCESS_NAME } from '../utils';
 import ProfilePicture from '@dartfrog/puddle/components/ProfilePicture';
+import { HUB_NODE } from '@dartfrog/puddle/utils';
+import ReactPlayer from 'react-player';
 
-const InnerHome: React.FC = () => {
-  const { localServices, peerMap, deleteService } = useServiceStore();
+const ServiceList: React.FC = () => {
+  const { localServices, deleteService } = useServiceStore();
   const navigate = useNavigate();
 
   const isRecentlyActive = (service: Service) => {
@@ -17,132 +19,234 @@ const InnerHome: React.FC = () => {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "row", flex: 1 }}>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        <div style={{flex: 1, padding: "1rem"}}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "1rem" }}>
+      {/* <button
+        className='df'
+        style={{
+          cursor:"pointer",
+          padding:"1rem",
+          width:"auto",
+        }}
+        onClick={()=>{
+          navigate("/create")
+        }}
+      >
+        create a new station
+      </button> */}
+
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "1rem" }}>
+        {localServices.map((service, index) => (
+          <div key={index}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.5rem",
+              padding: "1rem",
+            }}
+            className='hover-dark-gray color-white'
+          >
+            {(service.meta.title || service.meta.description) && (
+              <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                <div style={{ flex: 1 }}>
+                  {service.meta.title && (
+                    <span style={{ fontWeight: "bold" }}>{service.meta.title}</span>
+                  )}
+                  {service.meta.title && service.meta.description && <span>{' - '}</span>}
+                  {service.meta.description && (
+                    <span style={{ fontSize: "0.7rem" }}>{service.meta.description}</span>
+                  )}
+                </div>
+              </div>
+            )}
+            <div
+              style={{
+                fontSize: "0.7rem",
+                color:"#646cff",
+
+              }}
+            >
+              df://{service.id.toString()}
+            </div>
+            <div style={{ marginLeft: "0.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <div style={{ display: "flex", flexDirection: "row", gap: "1rem" }}>
+                <Link to={`/df/service/${service.id.toString()}`}
+                  className={`${styles.actionButton} df`}
+                >
+                  join
+                </Link>
+                {/* <div className={styles.actionButton}>copy link</div> */}
+                {/* {service.id.hostNode() === window.our?.node && (
+                  <div className={styles.actionButton} onClick={() => navigate(`/services/${service.id.toString()}`)}>edit</div>
+                )} */}
+                <div className={styles.actionButton}
+                   onClick={() => {
+                    if (window.confirm(`Are you sure you want to delete ${service.id.toString()}?`)) {
+                      deleteService(service.id.toString());
+                    }
+                  }}
+
+                >
+                  delete
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "row", gap: "1rem", fontSize: "0.7rem" }}>
+                {service.meta.subscribers && service.meta.subscribers.length > 0 && isRecentlyActive(service) ? (
+                  <span>{service.meta.subscribers.length} online</span>
+                ) : (
+                  <span style={{ color: "gray" }}>{getServiceRecencyText(service)}</span>
+                )}
+              </div>
+              {/* {service.meta.now_playing && (
+                <div style={{ display: "flex", flexDirection: "row", gap: "1rem", fontSize: "0.7rem" }}>
+                  Now Playing: 
+                  <span>{' '}</span>
+                  <span>{service.meta.now_playing}</span>
+                </div>
+              )} */}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const InnerHome: React.FC = () => {
+  const navigate = useNavigate();
+
+  return (
+      <div style={{ display: "flex", flexDirection: "row", gap: "1rem", width:"100%",}}>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ 
+          padding: "1rem",
+          paddingBottom:"0px",
+          cursor:"pointer",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          // height: "100%",
+        }}
+              className="hover-dark-gray"
+              onClick={() => {
+                const hubHost = HUB_NODE
+                const hubServiceId = `hub:${hubHost}@radio:dartfrog:herobrine.os`;
+                navigate(`/df/service/${hubServiceId}`);
+              }}
+        >
+          <img src="https://i.postimg.cc/J7vfr0d3/38e531b0-c773-4731-9e5d-e405c4436b1c.webp"
+            style={{
+              height:"20rem",
+              width:"20rem",
+              objectFit: "contain",
+            }}
+          />
           <div
               style={{
-                height: "100%",
+                // height: "100%",
                 display: "flex",
                 flexDirection: "row",
                 justifyContent: "center",
                 alignItems: "center",
-                cursor: "pointer",
-              }}
-              className="hover-dark-gray"
-              onClick={() => {
-                const hubHost = 'waterhouse.os';
-                const hubServiceId = `hub:${hubHost}@radio:dartfrog:herobrine.os`;
-                navigate(`/df/service/${hubServiceId}`);
               }}
             >
             <div>
-              <img src="https://bwyl.nyc3.digitaloceanspaces.com/radio/radio.png" alt="Radio Icon" style={{ width: '72px', height: '72px' }} />
+              <img 
+                src="https://bwyl.nyc3.digitaloceanspaces.com/radio/radio.png" 
+                alt="Radio Icon" 
+                style={{ 
+                  width: '72px', 
+                  height: '72px',
+                  animation: 'pulse 2s infinite ease-in-out'
+                }} 
+              />
             </div>
             <div
               style={{
                 display: "flex",
                 flexDirection: "column",
+                paddingRight:"2rem",
               }}
             >
-              <div>join the hub</div>
+              <button className='df' style={{width:"auto", padding:"9px"}}>join the hub!</button>
             </div>
           </div>
         </div>
-        <div style={{flex:3}}>
-          {/* <div>
-            services...
-          </div> */}
-
-        </div>
-      </div>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "1rem" }}>
-        <button
-          className='df'
+        <hr />
+        <div 
           style={{
-            cursor:"pointer",
-            padding:"1rem",
-            width:"auto",
-          }}
-          onClick={()=>{
-            navigate("/create")
+            display: "flex",
+            flexDirection: "column",
+            // padding: "0.6rem",
+            position: "relative",
+            // paddingTop:"32px"
           }}
         >
-          create a new station
-        </button>
+          <img 
+            src="https://media.tenor.com/PWaOCHK8jKEAAAAi/music-notes-sound.gif"
+            style={{
+              width: "48px",
+              height: "48px",
+              position: "absolute",
+              top: "-32px",
+              left: "1rem",
+              transform: "translateX(-50%)",
+              zIndex: 1,
+            }}
+          />
+          <div
+            className="hover-dark-gray"
+            style={{
+              cursor: "pointer",
+              padding: "1rem",
+              position: "relative",
+              zIndex: 0,
+            }}
+          >
+            my station
+          </div>
+        </div>
+        <hr />
+        <div
+          style={{
+            // flex:"1",
+            display: "flex",
+            flexDirection: "row",
+            height:"10rem",
+            gap:"4px",
 
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "1rem" }}>
-          {localServices.map((service, index) => (
-            <div key={index}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.5rem",
-                padding: "1rem",
-              }}
-              className='hover-dark-gray color-white'
-            >
-              {(service.meta.title || service.meta.description) && (
-                <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                  <div style={{ flex: 1 }}>
-                    {service.meta.title && (
-                      <span style={{ fontWeight: "bold" }}>{service.meta.title}</span>
-                    )}
-                    {service.meta.title && service.meta.description && <span>{' - '}</span>}
-                    {service.meta.description && (
-                      <span style={{ fontSize: "0.7rem" }}>{service.meta.description}</span>
-                    )}
-                  </div>
-                </div>
-              )}
-              <div
-                style={{
-                  fontSize: "0.7rem",
-                  color:"#646cff",
-
-                }}
-              >
-                df://{service.id.toString()}
-              </div>
-              <div style={{ marginLeft: "0.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                <div style={{ display: "flex", flexDirection: "row", gap: "1rem" }}>
-                  <Link to={`/df/service/${service.id.toString()}`}
-                    className={`${styles.actionButton} df`}
-                  >
-                    join
-                  </Link>
-                  {/* <div className={styles.actionButton}>copy link</div> */}
-                  {/* {service.id.hostNode() === window.our?.node && (
-                    <div className={styles.actionButton} onClick={() => navigate(`/services/${service.id.toString()}`)}>edit</div>
-                  )} */}
-                  <div className={styles.actionButton}
-                     onClick={() => {
-                      if (window.confirm(`Are you sure you want to delete ${service.id.toString()}?`)) {
-                        deleteService(service.id.toString());
-                      }
-                    }}
-
-                  >
-                    delete
-                    </div>
-                </div>
-                <div style={{ display: "flex", flexDirection: "row", gap: "1rem", fontSize: "0.7rem" }}>
-                  {service.meta.subscribers && service.meta.subscribers.length > 0 && isRecentlyActive(service) ? (
-                    <span>{service.meta.subscribers.length} online</span>
-                  ) : (
-                    <span style={{ color: "gray" }}>{getServiceRecencyText(service)}</span>
-                  )}
-                </div>
-                {/* {service.meta.now_playing && (
-                  <div style={{ display: "flex", flexDirection: "row", gap: "1rem", fontSize: "0.7rem" }}>
-                    Now Playing: 
-                    <span>{' '}</span>
-                    <span>{service.meta.now_playing}</span>
-                  </div>
-                )} */}
-              </div>
-            </div>
-          ))}
+          }}
+        >
+          <div className="hover-dark-gray big-category-button">
+            music
+          </div>
+          <div className="hover-dark-gray big-category-button">
+            gaming
+          </div>
+          <div className="hover-dark-gray big-category-button">
+            funny
+          </div>
+        </div>
+      </div>
+      <div style={{display:"flex", flexDirection:"column", flexGrow:"1"}}>
+        <div 
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            // position: "relative",
+            gap:"1rem",
+          }}
+        >
+          <ReactPlayer url={'https://youtu.be/9bjpX5kerOQ'}
+            width="100%"
+            height="20rem"
+            controls
+          />
+          <ReactPlayer url={'https://youtu.be/7ENMpzR54us'} 
+            width="100%"
+            height="20rem"
+            controls
+          />
         </div>
       </div>
     </div>

@@ -644,11 +644,15 @@ pub fn default_save_service<T: Serialize>(
     service_state: &T
 ) -> anyhow::Result<()> {
     let file_path = format!("{}/service.{}", &get_drive_path(our), service_id);
-    let mut file = open_file(&file_path, true, None)?;
+    let file = open_file(&file_path, true, None)?;
     
     let buffer = serde_json::to_vec(service_state)?;
-    file.write_all(&buffer)?;
-    
+    match file.write(&buffer) {
+        Ok(_) => {}
+        Err(e) => {
+            println!("Error writing service state: {:?}", e);
+        }
+    }    
     Ok(())
 }
 
@@ -658,10 +662,15 @@ pub fn default_save_client<U: Serialize>(
     client_state: &U,
 ) -> anyhow::Result<()> {
     let file_path = format!("{}/client.{}", &get_drive_path(our), client_id);
-    let mut file = open_file(&file_path, true, None)?;
+    let file = open_file(&file_path, true, None)?;
     
     let buffer = serde_json::to_vec(client_state)?;
-    file.write_all(&buffer)?;
+    match file.write(&buffer) {
+        Ok(_) => {}
+        Err(e) => {
+            println!("Error writing client state: {:?}", e);
+        }
+    }
     
     Ok(())
 }
@@ -682,7 +691,7 @@ pub fn default_load_service<T: DeserializeOwned>(
                             Ok(())
                         },
                         Err(e) => {
-                            // println!("Error deserializing service state: {:?}", e);
+                            println!("Error deserializing service state: {:?} {:?}", service_id, e,);
                             // failed to load prev state
                             Ok(())
                         }
@@ -1037,7 +1046,6 @@ where
                         }
                     }
                     FrontendChannelRequest::MessageServer(msg) => {
-                        println!("message server {:?} {:?}", service_id_string, msg);
                         poke(
                             &service_id.address,
                             ProviderInput::ProviderServiceInput(
