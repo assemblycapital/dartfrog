@@ -49,6 +49,7 @@ function App() {
             onServiceMessage={onServiceMessage}
             Element={RadioHalfChat}
             fullscreen
+            enableChatSounds
            />
         } />
       </Routes>

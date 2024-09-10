@@ -183,7 +183,7 @@ const DisplayRumor: React.FC<{ rumor: Rumor; isAdmin: boolean }> = ({ rumor, isA
         alignItems: 'center',
         width: '100%',
         position: 'relative',
-        padding:"0.2rem 0rem"
+        padding:"0.4rem 0rem"
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -196,7 +196,7 @@ const DisplayRumor: React.FC<{ rumor: Rumor; isAdmin: boolean }> = ({ rumor, isA
             marginTop:"6px",
             padding: '2px 5px',
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            color: '#bebebe',
+            color: '#9e9e9e',
             borderRadius: '3px',
             fontSize: '0.8rem',
             textDecoration: 'none',
@@ -314,6 +314,7 @@ const RumorsBox: React.FC = () => {
                 justifyContent: "center",
                 textAlign: "center",
                 overflow:"hidden",
+                marginTop:"0.4rem",
               }}
             >
               <form onSubmit={handleSubmit} style={{ display: "flex", width: "100%", maxWidth: "500px"}}>

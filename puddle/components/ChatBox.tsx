@@ -20,6 +20,11 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
   const chatInputRef = useRef<HTMLDivElement | null>(null);
   const [inputHeight, setInputHeight] = useState(0);
   const [chatMessageList, setChatMessageList] = useState<Array<ChatMessage>>([]);
+  const [showJumpToBottom, setShowJumpToBottom] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement | null>(null);
+  const [isScrolledUp, setIsScrolledUp] = useState(false);
+  const chatboxRef = useRef<HTMLDivElement | null>(null);
+  const [unseenMessagesCount, setUnseenMessagesCount] = useState(0);
 
   const {peerMap, chatSoundsEnabled} = useChatStore();
 
@@ -29,7 +34,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
         setInputHeight(chatInputRef.current.offsetHeight + 6);
       }
     };
-    updateInputHeight(); // Update on mount
+    updateInputHeight();
   }, []);
 
   useEffect(() => {
@@ -40,28 +45,33 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
 
     const sortedMessages = Array.from(chatState.messages.values()).sort((a, b) => a.id - b.id);
     setChatMessageList(sortedMessages);
+    scrollDownChat();
+
   }, [chatState.messages]);
 
   const scrollDownChat = useCallback(() => {
-    if (messagesEndRef.current) {
+    if (messagesEndRef.current && !isScrolledUp) {
       let behavior = "auto";
       if (chatState.lastUpdateType === "message") {
         behavior = "smooth";
       }
       messagesEndRef.current.scrollIntoView({ behavior: behavior as ScrollBehavior, block: 'nearest', inline: 'start' });
+    } else {
+        setUnseenMessagesCount(prevCount => prevCount + 1)
     }
-  }, [messagesEndRef, chatState.lastUpdateType]);
+  }, [messagesEndRef, chatState.lastUpdateType, isScrolledUp, setUnseenMessagesCount]);
+
+  useEffect(()=>{
+    if (!isScrolledUp) {
+      setUnseenMessagesCount(0);
+    }
+  }, [isScrolledUp])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (!isScrolledUp) {
       scrollDownChat();
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [chatMessageList, scrollDownChat]);
-
-  useEffect(() => {
-    scrollDownChat();
-  }, [chatMessageList, scrollDownChat]);
+    }
+  }, [chatMessageList, scrollDownChat, isScrolledUp]);
 
   const baseOrigin = window.origin.split(".").slice(1).join(".")
   const getMessageInnerText = useCallback(
@@ -121,6 +131,29 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
     [scrollDownChat]
   );
 
+  const handleScroll = useCallback(() => {
+    if (chatboxRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = chatboxRef.current;
+      const isScrolledToBottom = scrollTop + clientHeight >= scrollHeight - 10;
+      setIsScrolledUp(!isScrolledToBottom);
+    }
+  }, []);
+
+  useEffect(() => {
+    const chatbox = chatboxRef.current;
+    if (chatbox) {
+      chatbox.addEventListener('scroll', handleScroll);
+      return () => chatbox.removeEventListener('scroll', handleScroll);
+    }
+  }, [handleScroll]);
+
+  const jumpToBottom = () => {
+    if (chatboxRef.current) {
+      chatboxRef.current.scrollTop = chatboxRef.current.scrollHeight;
+    }
+    setIsScrolledUp(false);
+  };
+
   return (
     <div
     style={{
@@ -168,6 +201,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
           }}
         >
           <div
+            ref={chatboxRef}
             style={{
               overflowY: "scroll",
               width:"100%",
@@ -178,7 +212,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
               alignContent: "flex-end",
               alignItems: "flex-end",
               justifyItems: "flex-end",
+              position: "relative",
             }}
+            onScroll={handleScroll}
           >
             <div
               style={{
@@ -249,14 +285,35 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
               <div id="messages-end-ref" ref={messagesEndRef} style={{ display: "inline" }} />
             </div>
           </div>
-          <div
-            ref={chatInputRef}
-            style={{
-              width: "100%",
-              maxWidth: "100%",
-            }}
-          >
-            <ChatInput />
+          <div style={{ position: 'relative' }}>
+            {isScrolledUp && (
+              <button
+                onClick={jumpToBottom}
+                style={{
+                  position: 'absolute',
+                  top: '-40px',
+                  right: '4px',
+                  padding: '8px 12px',
+                  backgroundColor: '#4a4a4a',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  zIndex: 1000,
+                }}
+              >
+                {unseenMessagesCount > 0 ? `${unseenMessagesCount} unseen` : 'latest'}
+              </button>
+            )}
+            <div
+              ref={chatInputRef}
+              style={{
+                width: "100%",
+                maxWidth: "100%",
+              }}
+            >
+              <ChatInput />
+            </div>
           </div>
         </SplitComponent>
       </div>

@@ -8,7 +8,7 @@ interface ChatHeaderProps {
 const ChatHeader: React.FC<ChatHeaderProps> = ({ }) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const {peerMap, chatSoundsEnabled} = useChatStore();
+  const {peerMap, chatSoundsEnabled, setChatSoundsEnabled} = useChatStore();
 
   const headerStyle = {
     display: "flex",
@@ -44,16 +44,17 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ }) => {
         </span>
       </div>
       <div style={menuStyle}>
-        {/* <button // New mute button
+        <button // New mute button
           style={{
             border: "none",
             cursor: "pointer",
             padding: "2px 2px",
           }}
-          onClick={() => setIsMuted(!isMuted)}
+          className='df'
+          onClick={() => setChatSoundsEnabled(!chatSoundsEnabled)}
         >
-          {isMuted ? 'unmute' : 'mute'}
-        </button> */}
+          {(!chatSoundsEnabled) ? 'unmute' : 'mute'}
+        </button>
         
         <div>img: /die /kino /panda /dev /tiger /wow /cry /ok /oops</div>
         {chatSoundsEnabled &&
