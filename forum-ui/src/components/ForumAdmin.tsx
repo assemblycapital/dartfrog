@@ -201,14 +201,14 @@ const ForumAdmin: React.FC = () => {
           </div>
         </div>
       </div>
-      <div>
+      {/* <div>
         <div>
           service settings
         </div>
         <div>
           todo
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

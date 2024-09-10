@@ -20,11 +20,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
   const chatInputRef = useRef<HTMLDivElement | null>(null);
   const [inputHeight, setInputHeight] = useState(0);
   const [chatMessageList, setChatMessageList] = useState<Array<ChatMessage>>([]);
-  const [showJumpToBottom, setShowJumpToBottom] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const [isScrolledUp, setIsScrolledUp] = useState(false);
   const chatboxRef = useRef<HTMLDivElement | null>(null);
   const [unseenMessagesCount, setUnseenMessagesCount] = useState(0);
+  const [showButton, setShowButton] = useState(false);
+  const scrollTimer = useRef<NodeJS.Timeout | null>(null);
 
   const {peerMap, chatSoundsEnabled} = useChatStore();
 
@@ -50,7 +51,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
   }, [chatState.messages]);
 
   const scrollDownChat = useCallback(() => {
-    if (messagesEndRef.current && !isScrolledUp) {
+    if (messagesEndRef.current && !showButton) {
       let behavior = "auto";
       if (chatState.lastUpdateType === "message") {
         behavior = "smooth";
@@ -59,7 +60,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
     } else {
         setUnseenMessagesCount(prevCount => prevCount + 1)
     }
-  }, [messagesEndRef, chatState.lastUpdateType, isScrolledUp, setUnseenMessagesCount]);
+  }, [messagesEndRef, chatState.lastUpdateType, showButton, setUnseenMessagesCount]);
 
   useEffect(()=>{
     if (!isScrolledUp) {
@@ -136,6 +137,18 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
       const { scrollTop, scrollHeight, clientHeight } = chatboxRef.current;
       const isScrolledToBottom = scrollTop + clientHeight >= scrollHeight - 10;
       setIsScrolledUp(!isScrolledToBottom);
+
+      if (scrollTimer.current) {
+        clearTimeout(scrollTimer.current);
+      }
+
+      if (!isScrolledToBottom) {
+        scrollTimer.current = setTimeout(() => {
+          setShowButton(true);
+        }, 500);
+      } else {
+        setShowButton(false);
+      }
     }
   }, []);
 
@@ -143,7 +156,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
     const chatbox = chatboxRef.current;
     if (chatbox) {
       chatbox.addEventListener('scroll', handleScroll);
-      return () => chatbox.removeEventListener('scroll', handleScroll);
+      return () => {
+        chatbox.removeEventListener('scroll', handleScroll);
+        if (scrollTimer.current) {
+          clearTimeout(scrollTimer.current);
+        }
+      };
     }
   }, [handleScroll]);
 
@@ -152,6 +170,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
       chatboxRef.current.scrollTop = chatboxRef.current.scrollHeight;
     }
     setIsScrolledUp(false);
+    setShowButton(false);
+    setUnseenMessagesCount(0);
   };
 
   return (
@@ -286,7 +306,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ chatState }) => {
             </div>
           </div>
           <div style={{ position: 'relative' }}>
-            {isScrolledUp && (
+            {showButton && (
               <button
                 onClick={jumpToBottom}
                 style={{
