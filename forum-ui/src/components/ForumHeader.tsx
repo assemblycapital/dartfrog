@@ -8,7 +8,7 @@ interface ForumHeaderProps {
 }
 
 const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false }) => {
-  const { serviceId, serviceMetadata} = useChatStore();
+  const { serviceId, serviceMetadata, api} = useChatStore();
   const navigate = useNavigate();
 
   const renderOnlineCountMessage = () => {
@@ -84,6 +84,11 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
           // className='underline-on-hover color-white'
           // className='color-white'
           href={`http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/`}
+          onClick={(e)=>{
+            api.unsubscribeService();
+          }}
+
+
         >
           <button
             className="df"

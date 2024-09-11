@@ -86,15 +86,22 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
     );
   }
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (showFullContents || isComment) return;
+    navigate(`/df/service/${serviceId}/post/${post.id}`);
+  };
+
   return (
     <div
       key={post.id}
+      onClick={handleCardClick}
       style={{
         display: "flex",
         flexDirection: "column",
         padding: "8px",
         border: post.is_sticky ? "1px solid #333" : "none",
         gap: "0.4rem",
+        cursor: (!showFullContents && !isComment) ? 'pointer' : 'default',
       }}
       className="hover-dim"
     >
@@ -172,7 +179,7 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
           // flexWrap: 'wrap',
           // alignItems: 'flex-start',
         }}
-        onClick={() => {
+        onClick={(e) => {
           if (showFullContents) return;
           if (isComment) return;
           navigate(`/df/service/${serviceId}/post/${post.id}`)
@@ -255,6 +262,7 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
           <button
             className="upvote-button"
             onClick={(e) => {
+              e.stopPropagation();
               e.preventDefault();
               vote(api, post_id, true)
             }}
@@ -289,7 +297,11 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
           </span>
           <button
             className="downvote-button"
-            onClick={() => vote(api, post_id, false)}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              vote(api, post_id, false);
+            }}
             style={{
               flex:"1",
               width: "auto",
@@ -316,7 +328,8 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
               alignItems: "center",
               cursor:"pointer",
             }}
-            onClick={()=>{
+            onClick={(e)=>{
+              e.stopPropagation();
               navigate(`/df/service/${serviceId}/post/${post_id}`)
             }}
             className="comment-button"
@@ -328,7 +341,10 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
         {isAdmin && (
           <>
             <div
-              onClick={handleDelete}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete();
+              }}
               className="delete-post-button"
               style={{
                 borderRadius: "10px",
@@ -347,7 +363,10 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
             </div>
             {!isComment &&
               <div
-                onClick={handleToggleSticky}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleSticky();
+                }}
                 className="toggle-sticky-button"
                 style={{
                   borderRadius: "10px",

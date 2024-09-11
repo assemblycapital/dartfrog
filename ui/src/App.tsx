@@ -92,7 +92,7 @@ function App() {
             putMessageStoreMap(data["MessageStore"])
           } else if (data["RequestVersionResponse"]) {
             let [node, version] = data["RequestVersionResponse"]
-            if (version !== "v0.3.1") {
+            if (version !== "v0.3.2") {
               setVersionOutdated(true);
             }
           } else {

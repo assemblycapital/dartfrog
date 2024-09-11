@@ -39,7 +39,7 @@ const JoinPage = () => {
   const serviceIdString = id;
 
   const serviceId = ServiceID.fromString(serviceIdString);
-  const {peerMap, localServices, localFwdPeerRequest} = useDartStore();
+  const {peerMap, localServices, localFwdPeerRequest, requestLocalServiceList} = useDartStore();
 
   const [serviceMetadata, setServiceMetadata] = useState<ServiceMetadata | null>(null)
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(null);
@@ -131,7 +131,7 @@ const JoinPage = () => {
 
   const renderServiceStatus = useCallback((status) => {
     if (!(status)) {
-      return "loading";
+      return "loading...";
     }
 
     if (status == ServiceStatus.PLUGIN_NOT_INSTALLED) {
@@ -234,23 +234,27 @@ const JoinPage = () => {
         style={{
           fontSize:"0.8rem",
           backgroundColor:"#333",
-          height:"26px",
-          display:"flex",
-          flexDirection:"row",
-          gap:"0.3rem",
-          boxSizing:"border-box",
-          padding:"3px 10px",
+          minHeight: "26px", // Changed from height to minHeight
+          display: "flex",
+          flexDirection: "row",
+          gap: "0.3rem",
+          boxSizing: "border-box",
+          padding: "3px 10px",
+          alignItems: "center", // Added to vertically center the content
+          flexWrap: "wrap", // Added to allow wrapping
         }}
       >
         <span
           style={{
-            color:"gray",
+            color: "gray",
           }}
         >
           joining:
         </span>
         <span
           style={{
+            wordBreak: "break-all", // Added to allow breaking long words
+            lineHeight: "20px", // Added to match the container's inner height
           }}
         >
           df://{serviceIdString}

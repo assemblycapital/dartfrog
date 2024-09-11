@@ -24,6 +24,7 @@ const ServiceList = ({services }) => {
     "chess:dartfrog:herobrine.os": "chess",
     "radio:dartfrog:herobrine.os": "radio",
     "forum:dartfrog:herobrine.os": "forum",
+    "rumors:dartfrog:herobrine.os": "rumors",
   }
   function getProcessText(address: string) {
     let [node, process] = address.split("@")

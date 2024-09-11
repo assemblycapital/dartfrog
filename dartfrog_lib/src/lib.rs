@@ -4,15 +4,14 @@ use serde::de::DeserializeOwned;
 use serde::{Serialize, Deserialize};
 
 use std::collections::{HashMap, HashSet};
-use std::fs::{create_dir, create_dir_all};
 use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use std::hash::{Hash, Hasher};
-use kinode_process_lib::{await_message, get_blob, println, Address, LazyLoadBlob, ProcessId, Request, get_typed_state, set_state};
+use kinode_process_lib::{await_message, get_blob, println, Address, LazyLoadBlob, Request, get_typed_state, set_state};
 use kinode_process_lib::timer::set_timer;
 
-pub const DARTFROG_VERSION: &str = "v0.3.1";
+pub const DARTFROG_VERSION: &str = "v0.3.2";
 
 #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct ServiceID {
@@ -1640,8 +1639,6 @@ where
                     for (subscriber, last_active) in &service_wrapper.service.meta.user_presence {
                         if service_wrapper.service.meta.subscribers.contains(subscriber) && now - last_active > 3 * 60 {
                             inactive_subscribers.push(subscriber.clone());
-                        } else {
-
                         }
                     }
 
@@ -1659,9 +1656,10 @@ where
                         let _ = publish_metadata(our, &service_wrapper.service);
                     }
                 }
-
-                // Set the timer again for the next 60 seconds
                 set_timer(60000, None);
+            } else {
+                // if there are no subscribers, turn off the timer.
+                state.timer_active = false;
             }
             state.save(our)?;
             return Ok(());
@@ -1677,9 +1675,10 @@ where
     } else if let Ok(provider_input) = serde_json::from_slice::<ProviderInput>(&body) {
         handle_provider_input(our, state, source, provider_input)?;
         
-        // Check if this is the first subscriber and set the timer if needed
+        // make sure timer is running if has subscibers
         let has_subscribers = state.services.values().any(|s| !s.service.meta.subscribers.is_empty());
         if has_subscribers && !state.timer_active {
+            
             set_timer(60000, None);
             state.timer_active = true;
         }

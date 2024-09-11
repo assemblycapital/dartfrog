@@ -25,7 +25,7 @@ const CreatePost: React.FC = () => {
       return;
     }
     const postData = {
-      text_contents: newPostContent || undefined,
+      text_contents: newPostContent || '',
       link: newPostLink || undefined,
       image_url: newPostImage || undefined,
       is_anon: isAnon,

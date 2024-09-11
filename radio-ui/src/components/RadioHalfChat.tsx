@@ -15,7 +15,7 @@ interface RadioHalfChatProps {
 
 const RadioHalfChat: React.FC<RadioHalfChatProps> = ({ }) => {
 
-  const {chatState, serviceMetadata, serviceId} = useServiceStore();
+  const {chatState, serviceMetadata, serviceId, api} = useServiceStore();
 
   const baseOrigin = window.origin.split(".").slice(1).join(".")
   const navigate = useNavigate();
@@ -62,6 +62,9 @@ const RadioHalfChat: React.FC<RadioHalfChatProps> = ({ }) => {
           }}
           className='underline-on-hover color-white'
           href={`http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/`}
+          onClick={(e)=>{
+            api.unsubscribeService();
+          }}
         >
           df
         </a>
@@ -75,6 +78,7 @@ const RadioHalfChat: React.FC<RadioHalfChatProps> = ({ }) => {
             href={`/${PROCESS_NAME}/`}
             onClick={(event) => {
               event.preventDefault();
+              api.unsubscribeService();
               navigate(`/`);
             }}
           >

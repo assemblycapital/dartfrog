@@ -248,7 +248,7 @@ const InnerHome: React.FC = () => {
             // flex:"1",
             display: "flex",
             flexDirection: "row",
-            height:"10rem",
+            height:"7rem",
             gap:"4px",
 
           }}

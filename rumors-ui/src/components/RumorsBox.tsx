@@ -256,6 +256,9 @@ const RumorsBox: React.FC = () => {
         >
           <a
             href={`http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/`}
+            onClick={(e)=>{
+              api.unsubscribeService();
+            }}
           >
             <HomeIcon color='rgba(255,255,255,0.4)' size='12px'/>
           </a>

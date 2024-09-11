@@ -23,24 +23,32 @@ const AppGridItem: React.FC<AppGridItemProps> = ({
 }) => {
   const navigate = useNavigate();
   const [showHamburger, setShowHamburger] = useState(false);
+  const baseOrigin = window.origin.split(".").slice(1).join(".");
 
-  const baseOrigin = window.origin.split(".").slice(1).join(".")
+  const getLink = (): string => {
+    if (protocolLink) {
+      const packageName = getPackageName(protocolLink)
+      if (packageName !== "dartfrog:herobrine.os") {
+        return `http://${baseOrigin}/${protocolLink}/`;
+      } else {
+        const packageSubdomain = processToSubdomain(protocolLink)
+        return `http://${packageSubdomain}.${baseOrigin}/${protocolLink}/`;
+      }
+    } else if (serviceLink) {
+      return `http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/join/${serviceLink.slice(5)}`;
+    }
+    return '#';
+  };
+
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     if (!isDialogOpen) {
-      if (protocolLink) {
-        window.location.href = `http://${baseOrigin}/${protocolLink}/`;
-        const packageName = getPackageName(protocolLink)
-        if (packageName !== "dartfrog:herobrine.os") {
-          let url = `http://${baseOrigin}/${protocolLink}/`;
-          window.location.replace(url);
-        } else {
-          const packageSubdomain = processToSubdomain(protocolLink)
-          let url = `http://${packageSubdomain}.${baseOrigin}/${protocolLink}/`;
-          window.location.replace(url);
-        }
-      } else if (serviceLink) {
-        navigate(`/join/${serviceLink.slice(5)}`);
-      }
+      const link = getLink();
+        window.location.replace(link);
+      // if (protocolLink) {
+      //   window.location.replace(link);
+      // } else if (serviceLink) {
+      //   navigate(link);
+      // }
     }
   };
 
@@ -54,7 +62,8 @@ const AppGridItem: React.FC<AppGridItemProps> = ({
   };
 
   return (
-    <div
+    <a
+      href={getLink()}
       className={`${styles.gridItem}`}
       style={{ 
         backgroundColor, 
@@ -64,7 +73,10 @@ const AppGridItem: React.FC<AppGridItemProps> = ({
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
-      onClick={handleClick}
+      onClick={(e)=>{
+        e.preventDefault();
+        handleClick(e)
+      }}
       onMouseEnter={() => setShowHamburger(true)}
       onMouseLeave={() => setShowHamburger(false)}
     >
@@ -93,7 +105,7 @@ const AppGridItem: React.FC<AppGridItemProps> = ({
       <div className={`${styles.itemTitle}`}>
         {title}
       </div>
-    </div>
+    </a>
   );
 };
 
@@ -136,10 +148,6 @@ const AppGrid: React.FC = () => {
     { title: "radio", backgroundColor: "white", textColor: "black", protocolLink: "radio:dartfrog:herobrine.os", imageUrl: "https://bwyl.nyc3.digitaloceanspaces.com/radio/radio.png"},
     { title: "rumors", backgroundColor: "rgb(187, 119, 221)", textColor: "black", serviceLink: `df://rumors-hub:${HUB_NODE}@rumors:dartfrog:herobrine.os` },
     { title: "forum", backgroundColor: "#444", textColor: "#ccc", serviceLink: `df://forum-hub:${HUB_NODE}@forum:dartfrog:herobrine.os`, imageUrl: "https://i.postimg.cc/MKmrbvDF/forum-icon.png" },
-    // { title: "forum", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@radio:dartfrog:herobrine.os", imageUrl: "https://example.com/hub-image.jpg" },
-    // { title: "chess", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@radio:dartfrog:herobrine.os", imageUrl: "https://example.com/hub-image.jpg" },
-    // { title: "piano", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@radio:dartfrog:herobrine.os", imageUrl: "https://example.com/hub-image.jpg" },
-    // { title: "page", backgroundColor: "#444", textColor: "#ccc", serviceLink: "df://hub:fake.dev@radio:dartfrog:herobrine.os", imageUrl: "https://example.com/hub-image.jpg" },
   ];
 
   return (
