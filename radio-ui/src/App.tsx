@@ -1,10 +1,12 @@
 import "./App.css";
+import "./puddle.css";
 import { BrowserRouter as Router, Route, Routes, useParams } from "react-router-dom";
-import { NoServiceView, HalfChat } from '@dartfrog/puddle';
+import { NoServiceView, ServiceView } from '@dartfrog/puddle';
 import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
 import useRadioStore from "./store/radio";
 import RadioPluginBox from "./components/RadioPluginBox";
 import Home from "./components/Home";
+import RadioHalfChat from "./components/RadioHalfChat";
 
 function App() {
   return (
@@ -14,7 +16,7 @@ function App() {
         <Route path="/df" element={
           <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
         } />
-        <Route path="/df/service/:id" element={<ServiceRoute />} />
+        <Route path="/df/service/:id/*" element={<ServiceRoute />} />
       </Routes>
     </Router>
   );
@@ -40,9 +42,9 @@ function ServiceRoute() {
   };
 
   return (
-    <HalfChat
+    <ServiceView
       ourNode={window.our.node}
-      Element={RadioPluginBox}
+      Element={RadioHalfChat}
       processName={PROCESS_NAME}
       websocketUrl={WEBSOCKET_URL}
       onServiceMessage={onServiceMessage}

@@ -1,0 +1,246 @@
+#root.df {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: #d1d1d1;
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --text-color-primary: #d1d1d1;
+
+}
+
+.color-white {
+  color: var(--text-color-primary);
+}
+
+.color-gray {
+  color:gray;
+}
+
+.pfp-profile-image {
+  overflow: hidden;
+  display: inline-block;
+  border: 1px solid #333;
+  border-radius: 50%;
+}
+
+.pfp-profile-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background-color: #252525;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  cursor: pointer;
+}
+
+.join-button {
+  height:"100%";
+  padding: 0.5rem 0;
+  color: #646cff;
+  transition: background-color 0.2s;
+  text-align: center;
+}
+.join-button:hover {
+  background-color: #2e304a;
+  transition: background-color 0.2s;
+}
+.delete-button {
+  height:"100%";
+  padding: 0.5rem 0;
+  color: #d65353;
+  text-align: center;
+  transition: background-color 0.2s;
+}
+.delete-button:hover {
+  background-color: #473030;
+  transition: background-color 0.2s;
+}
+.service-list-item {
+  /* display: contents; */
+  border-bottom: 1px solid #ffffff11;
+  gap: 1rem;
+  align-items: center;
+  border-bottom: 1px solid #494949; /* Add this line to include a border around each grid row */
+  transition: background-color 0.2s;
+}
+.service-list-item:hover {
+  background-color: #222222;
+  transition: background-color 0.2s;
+}
+
+.hover-dark-gray {
+transition: background-color 0.3s ease;
+}
+
+.hover-dark-gray:hover {
+background-color: #1b1b1b;
+transition: background-color 0.3s ease;
+}
+
+.gutter.gutter-horizontal {
+  cursor: col-resize;
+  background-color: transparent;
+  width: 10px !important;
+  position: relative;
+}
+.gutter.gutter-horizontal::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  width: 1px;
+  height: 100%;
+}
+.gutter.gutter-horizontal:hover {
+  cursor: col-resize;
+}
+.gutter.gutter-vertical {
+  cursor: row-resize;
+  background-color: transparent;
+  height: 10px !important;
+  position: relative;
+}
+.gutter.gutter-vertical::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #333;
+  height: 1px;
+  width: 100%;
+}
+.gutter.gutter-vertical:hover {
+  cursor: row-resize;
+}
+
+a.df {
+  text-decoration: none;
+}
+
+.link {
+  color: #6d76fb;
+  text-decoration: inherit;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+.link:hover {
+  color: #565ef9;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+h1.df {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+ul.df {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+select.df {
+  width: 5rem;
+  height: 27px;
+  display: inline-block;
+  margin-right: 10px;
+  vertical-align: middle;
+  background-color: #00000022;
+  color: #ffffff66;
+  border: none;
+  cursor: pointer;
+}
+
+input[type="radio"].df {
+  margin: 0 5px 0 0;
+  vertical-align: middle;
+}
+
+label.df {
+  color: #ffffff66;
+  font-size: 0.9rem;
+}
+
+button.df {
+  border: none;
+  width:5rem;
+  background-color: #1f1f1f;
+  color: #999;
+  cursor: pointer;
+  transition: background-color 0.25s;
+  border: 1px solid #333;
+}
+
+button.df:hover {
+  background-color: #181818;
+}
+
+textarea.df,
+input[type="text"].df {
+  background-color: #1f1f1f;
+  border: 1px solid #333;
+  padding: 3px;
+  resize: none;
+  margin-right:10px;
+  transition: background-color 0.25s;
+}
+
+textarea.df:hover {
+  background-color: #1d1d1d;
+}
+
+textarea.df:focus {
+  background-color: #1b1b1b;
+  outline:none;
+}
+
+input[type="text"].df {
+  padding: 4px 8px;
+  /* border-radius: 4px; */
+  border: 2px solid #555;
+}
+
+input[type="text"].df.invalid {
+  padding: 4px 8px;
+  /* border-radius: 4px; */
+  border: 1px solid #ff000066;
+}
+
+.chat-message:hover {
+  background:#00000011;
+}
+.chat-message {
+  word-wrap: "break-word";
+  vertical-align: "text-top";
+  align-items:"flex-start";
+  cursor:"default";
+}
+
+.name-color-default {
+  color: #d1d1d1;
+}
+.name-color-red {
+  color: #de5151;
+}
+
+.name-color-green {
+  color: #339933;
+}
+
+.name-color-blue {
+  color: #4682B4;
+}
+
+.name-color-orange {
+  color: #cc7a00;
+}
+
+.name-color-purple {
+  color: #a36bdb;
+}

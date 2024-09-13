@@ -11,8 +11,5 @@
     "build:copy": "npm run build && npm run copy",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
-  },
-  "dependencies": {
-    "@dartfrog/puddle": "github:bacwyls/puddle"
   }
 }

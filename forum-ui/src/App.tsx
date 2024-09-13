@@ -1,6 +1,7 @@
 import "./App.css";
+import "./puddle.css";
 import { BrowserRouter as Router, Route, Routes, useParams } from "react-router-dom";
-import { NoServiceView, HalfChat } from '@dartfrog/puddle';
+import { NoServiceView, ServiceView } from '@dartfrog/puddle';
 import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
 import useForumStore from "./store/forum";
 import Forum from "./components/Forum";
@@ -12,7 +13,7 @@ function App() {
         <Route path="/" element={
           <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
         } />
-        <Route path="/df/service/:id" element={<ServiceRoute />} />
+        <Route path="/df/service/:id/*" element={<ServiceRoute />} />
       </Routes>
     </Router>
   );
@@ -30,7 +31,7 @@ function ServiceRoute() {
   };
 
   return (
-    <HalfChat
+    <ServiceView
       ourNode={window.our?.node}
       Element={Forum}
       processName={PROCESS_NAME}
@@ -38,6 +39,7 @@ function ServiceRoute() {
       onServiceMessage={onServiceMessage}
       enableChatSounds
       paramServiceId={id}
+      fullscreen
     />
   );
 }

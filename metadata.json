@@ -4,7 +4,7 @@
     "image": "https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/dartfrog256_nobg.png",
     "properties": {
         "package_name": "dartfrog",
-        "current_version": "0.3.1",
+        "current_version": "0.3.2",
         "publisher": "herobrine.os",
         "mirrors": ["waterhouse.os"],
         "code_hashes": {
@@ -18,7 +18,8 @@
             "0.2.2": "29aec00b9a12031f2c59645df7668b99a96811d78587a7049373e37755abfb3c",
             "0.2.3": "61824b9279f5eba047adaaa556e96b91795b71ff2d8b63084f9ec81799bce07c",
             "0.3.0": "deec3e2d3e535be437a059f6b193a0c610469d7b58a9f275dac45c157aa103bd",
-            "0.3.1": "1e9f56a6501632f9dd5aec3bf094bc50d71a34a74c071e625b150627184c547c"
+            "0.3.1": "1e9f56a6501632f9dd5aec3bf094bc50d71a34a74c071e625b150627184c547c",
+            "0.3.2": "797f5b6cf6f0fccc425fa0a8c5c97c17beb1c3e1f67ec981b88f8a787a71a7eb"
         },
         "wit_version": 0
     },

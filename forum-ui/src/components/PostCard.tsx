@@ -387,7 +387,10 @@ const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, 
         )}
         {isAdmin && !post.author && (
           <div
-            onClick={handleRequestAuthor}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRequestAuthor();
+            }}
             className="request-author-button"
             style={{
               padding: "0.1rem 0.5rem",

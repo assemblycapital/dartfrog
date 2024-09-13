@@ -1,4 +1,5 @@
 import "./App.css";
+import "./puddle.css";
 import { BrowserRouter as Router, Route, Routes, useParams } from "react-router-dom";
 import { NoServiceView, HalfChat } from '@dartfrog/puddle';
 import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
@@ -12,7 +13,7 @@ function App() {
         <Route path="/" element={
           <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
         } />
-        <Route path="/df/service/:id" element={<ServiceRoute />} />
+        <Route path="/df/service/:id/*" element={<ServiceRoute />} />
       </Routes>
     </Router>
   );
