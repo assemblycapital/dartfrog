@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PROCESS_NAME } from '../../utils';
 import styles from './AppGrid.module.css';
-import { HamburgerIcon } from '@dartfrog/puddle/components/Icons';
 import { getPackageName, processToSubdomain } from '../JoinPage';
-import { HUB_NODE } from '@dartfrog/puddle/utils';
+import { HamburgerIcon, HUB_NODE } from '@dartfrog/puddle';
 
 interface AppGridItemProps {
   title: string;

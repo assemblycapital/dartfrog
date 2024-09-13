@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import useDartStore from '../../store/dart';
-import { Peer, getClassForNameColor, NameColor, Profile, getRecencyText, DEFAULT_PFP, ActivitySetting } from '@dartfrog/puddle/index';
+import { Peer, getClassForNameColor, NameColor, Profile, getRecencyText, DEFAULT_PFP, ActivitySetting } from '@dartfrog/puddle';
 import { useNavigate } from 'react-router-dom';
 
 import { useParams } from 'react-router-dom';

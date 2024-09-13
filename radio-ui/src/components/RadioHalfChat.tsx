@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import RadioPluginBox from './RadioPluginBox';
 
-import useServiceStore from '@dartfrog/puddle/store/service';
+import {useServiceStore, ChatBox, DisplayUserActivity} from '@dartfrog/puddle';
 import Split from 'react-split';
 import { ServiceID } from '@dartfrog/puddle';
 import { PROCESS_NAME } from '../utils';
 import { useNavigate } from 'react-router-dom';
-import ChatBox from '@dartfrog/puddle/components/ChatBox';
-import DisplayUserActivity from '@dartfrog/puddle/components/DisplayUserActivity';
 
 
 interface RadioHalfChatProps {

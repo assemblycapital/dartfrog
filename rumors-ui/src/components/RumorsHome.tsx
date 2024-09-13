@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ServiceApi } from '@dartfrog/puddle';
-import useServiceStore from '@dartfrog/puddle/store/service';
+import { ServiceApi, useServiceStore } from '@dartfrog/puddle';
 import useRumorsStore from '../store/rumors';
 import { PROCESS_NAME, WEBSOCKET_URL } from '../utils';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';

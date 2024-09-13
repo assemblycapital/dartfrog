@@ -1,9 +1,8 @@
 import React from 'react';
 import useDartStore from '../../store/dart';
-import Spinner from '@dartfrog/puddle/components/Spinner';
 // import { Presence, ServiceAccess } from '@dartfrog/puddle/index';
 import { useNavigate } from 'react-router-dom';
-import { PublicService, Service, ServiceID, ServiceVisibility, dfLinkToRealLink, getServiceRecencyText, sortServices } from '@dartfrog/puddle/index';
+import { PublicService, Service, ServiceID, ServiceVisibility, dfLinkToRealLink, getServiceRecencyText, sortServices } from '@dartfrog/puddle';
 
 const ServiceList = ({services }) => {
   const { localServices, deleteService, requestLocalServiceList, localFwdPeerRequest, peerMap, localFwdAllPeerRequests } = useDartStore();

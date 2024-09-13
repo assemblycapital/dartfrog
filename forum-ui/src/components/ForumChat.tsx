@@ -1,11 +1,9 @@
-import ChatBox from "@dartfrog/puddle/components/ChatBox";
-import DisplayUserActivity from "@dartfrog/puddle/components/DisplayUserActivity";
-import useChatStore from "@dartfrog/puddle/store/service";
 import { useNavigate } from "react-router-dom";
 import ForumHeader from "./ForumHeader";
+import { useServiceStore, ChatBox, DisplayUserActivity} from "@dartfrog/puddle";
 
 const ForumChat: React.FC = () => {
-  const {chatState,serviceId, serviceMetadata} = useChatStore();
+  const {chatState,serviceId, serviceMetadata} = useServiceStore();
   const navigate = useNavigate();
 
   return (

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ServiceCreationOptions, ServiceAccess, ServiceVisibility } from "@dartfrog/puddle";
 import { useNavigate } from 'react-router-dom';
-import useServiceStore from '@dartfrog/puddle/store/service';
+import {useServiceStore} from '@dartfrog/puddle';
 import { PROCESS_NAME } from '../utils';
 
 const CreatePage: React.FC = () => {

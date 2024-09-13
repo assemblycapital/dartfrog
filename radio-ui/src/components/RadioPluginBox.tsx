@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { ServiceID } from '@dartfrog/puddle';
 import useRadioStore from '../store/radio';
-import useChatStore from '@dartfrog/puddle/store/service';
+import {useServiceStore} from '@dartfrog/puddle';
 import ReactPlayer from 'react-player'
 
 interface RadioPluginBoxProps {
@@ -19,7 +19,7 @@ const RadioPluginBox: React.FC = ({ }) => {
 
   const playerRef = useRef<ReactPlayer>(null);
 
-  const {api, serviceId} = useChatStore();
+  const {api, serviceId} = useServiceStore();
 
   useEffect(() => {
     const parsedServiceId = ServiceID.fromString(serviceId);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { ServiceID } from '@dartfrog/puddle';
 import usePageStore from '../store/page';
-import useChatStore from '@dartfrog/puddle/store/service';
+import {useServiceStore} from '@dartfrog/puddle';
 
 
 interface PagePluginBoxProps {
@@ -13,8 +13,7 @@ const PagePluginBox: React.FC = ({ }) => {
   const {page, sendPageEdit} = usePageStore();
   const [editableText, setEditableText] = useState(page);
 
-  const {api} = useChatStore();
-  const {serviceId} = useChatStore();
+  const {api, serviceId} = useServiceStore();
 
   useEffect(() => {
     const parsedServiceId = ServiceID.fromString(serviceId);

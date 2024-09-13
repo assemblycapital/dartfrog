@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, useParams, useNavigate } from 'react-router-dom';
 import useRumorsStore, { Rumor } from '../store/rumors';
-import useServiceStore from '@dartfrog/puddle/store/service';
-import { HomeIcon, } from '@dartfrog/puddle/components/Icons';
-import { dfLinkRegex, dfLinkToRealLink, ServiceID } from '@dartfrog/puddle';
-import { isImageUrl } from '@dartfrog/puddle/components/ChatBox';
+import { dfLinkRegex, dfLinkToRealLink, ServiceID, useServiceStore, HomeIcon, isImageUrl} from '@dartfrog/puddle';
 
 const Field: React.FC<{ label: string; value: string | number }> = ({ label, value }) => (
   <div style={{ display: "flex", flexDirection: "row", gap: "1rem", marginBottom: "0.5rem" }}>

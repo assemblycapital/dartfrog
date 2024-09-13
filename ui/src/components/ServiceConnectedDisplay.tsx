@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import DisplayUserActivity from '@dartfrog/puddle/components/DisplayUserActivity';
 import ServiceConnectedRow from './ServiceConnectedRow';
 import "./ServiceConnectedDisplay.css"
 

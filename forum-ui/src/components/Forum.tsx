@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import useForumStore from '../store/forum';
-import useServiceStore from '@dartfrog/puddle/store/service';
-import ProfilePicture from '@dartfrog/puddle/components/ProfilePicture';
-import { getPeerNameColor, getRecencyText, nodeProfileLink, ServiceID } from '@dartfrog/puddle';
+// import { getPeerNameColor, getRecencyText, nodeProfileLink, ServiceID } from '@dartfrog/puddle';
 import { Routes, Route, useParams } from "react-router-dom";
 import { useNavigate } from 'react-router-dom';
-import ChatBox from '@dartfrog/puddle/components/ChatBox';
-import DisplayUserActivity from '@dartfrog/puddle/components/DisplayUserActivity';
 import PostDetail from './PostDetail';
 import HomePage from './HomePage';
 import CreatePost from './CreatePost';
 import ForumChat from './ForumChat';
 import ForumAdmin from './ForumAdmin';
 import ForumHeader from './ForumHeader';
-import "@dartfrog/puddle/components/App.css";
+import { useServiceStore } from '@dartfrog/puddle';
 
 const Forum: React.FC = () => {
   const { peerMap, serviceMetadata, } = useServiceStore();

@@ -1,10 +1,10 @@
-import useChatStore from "@dartfrog/puddle/store/service";
+import {useServiceStore} from "@dartfrog/puddle";
 import useForumStore from "../store/forum";
 import PostCard from "./PostCard";
 
 const PostList: React.FC = () => {
   const { posts, vote } = useForumStore();
-  const { api, peerMap } = useChatStore();
+  const { api, peerMap } = useServiceStore();
 
   // Sort posts: sticky posts first, then by created_at in descending order
   const sortedPosts = [...posts]

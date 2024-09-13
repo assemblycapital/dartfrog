@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import useForumStore from "../store/forum";
-import useChatStore from "@dartfrog/puddle/store/service";
+import {useServiceStore} from "@dartfrog/puddle";
 import { useState, useEffect } from "react";
 import PostCard from "./PostCard";
 import ForumHeader from "./ForumHeader";
@@ -8,7 +8,7 @@ import ForumHeader from "./ForumHeader";
 const PostDetail: React.FC = () => {
   const { postId } = useParams<{ postId?: string }>();
   const { posts, vote, createComment, getPost } = useForumStore();
-  const { api, serviceId } = useChatStore();
+  const { api, serviceId } = useServiceStore();
   const post = posts.find(p => p.id === Number(postId));
   const [newComment, setNewComment] = useState('');
   const [imageUrl, setImageUrl] = useState('');

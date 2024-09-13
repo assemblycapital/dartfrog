@@ -12,11 +12,11 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Services from './Services/Services';
 import NodeProfile from './Nodes/NodeProfile';
 import Messages from './Messages/Messages';
-import Spinner from '@dartfrog/puddle/components/Spinner';
 import CurrentPageHeader from './CurrentPageHeader';
 import MessagesNode from './Messages/MessagesNode';
 import ServicePage from './Services/ServicePage';
 import { useMediaQuery } from 'react-responsive';
+import { Spinner } from '@dartfrog/puddle';
 
 interface MiddleProps {
 }

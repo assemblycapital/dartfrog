@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import useDartStore from "../store/dart";
-import { HamburgerIcon, IconMail, IconMailUnread } from "@dartfrog/puddle/components/Icons";
 import { useNavigate } from "react-router-dom";
 import "./ControlHeader.css";
+import { HamburgerIcon } from "@dartfrog/puddle";
 
 interface ControlHeaderProps {
 }

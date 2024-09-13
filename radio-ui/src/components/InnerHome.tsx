@@ -1,11 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import useServiceStore from '@dartfrog/puddle/store/service';
 import styles from './Home.module.css';
 import { Link, useNavigate } from 'react-router-dom';
-import { Service, ServiceAccess, ServiceCreationOptions, ServiceVisibility, getServiceRecencyText } from '@dartfrog/puddle/index';
+import { Service, ServiceAccess, ServiceCreationOptions, ServiceVisibility, getServiceRecencyText, useServiceStore, HUB_NODE } from '@dartfrog/puddle';
 import {PROCESS_NAME } from '../utils';
-import ProfilePicture from '@dartfrog/puddle/components/ProfilePicture';
-import { HUB_NODE } from '@dartfrog/puddle/utils';
 import ReactPlayer from 'react-player';
 
 const ServiceList: React.FC = () => {

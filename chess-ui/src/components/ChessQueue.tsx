@@ -1,15 +1,14 @@
 import React from 'react';
 import useChessStore, { ChessState } from '../store/chess';
 import './ChessPluginBox.css';
-import useChatStore from '@dartfrog/puddle/store/service';
-import { getPeerNameColor } from '@dartfrog/puddle';
+import { getPeerNameColor, useServiceStore } from '@dartfrog/puddle';
 
 interface ChessQueueProps {
 }
 
 const ChessQueue: React.FC<ChessQueueProps> = () => {
 
-  const {api, peerMap} = useChatStore();
+  const {api, peerMap} = useServiceStore();
   const { chessState, sendChessRequest } = useChessStore();
   return (
     <div

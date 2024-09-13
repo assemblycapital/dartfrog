@@ -3,9 +3,7 @@ import CurrentPageHeader from '../CurrentPageHeader';
 import useDartStore, { DirectMessage } from '../../store/dart';
 import { useNavigate } from 'react-router-dom';
 import ProfilePicture from '../ProfilePicture';
-import { getPeerNameColor } from '@dartfrog/puddle/index';
-import { formatTimestamp } from '@dartfrog/puddle/components/ChatBox';
-import { HUB_NODE } from '@dartfrog/puddle/utils';
+import { getPeerNameColor, HUB_NODE, formatTimestamp } from '@dartfrog/puddle';
 
 export const hasUnreadHistory = (history: DirectMessage[]) => {
   return history.some(message => message.is_unread);

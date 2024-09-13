@@ -1,7 +1,7 @@
-import "@dartfrog/puddle/components/App.css";
+// import "@dartfrog/puddle/components/App.css";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import ServiceView from "./components/ServiceView";
-import NoServiceView from "@dartfrog/puddle/components/NoServiceView";
+import {NoServiceView} from "@dartfrog/puddle";
 import { WEBSOCKET_URL } from "./utils";
 
 export const PROCESS_NAME = "chat:dartfrog:herobrine.os"

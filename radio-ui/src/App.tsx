@@ -1,20 +1,28 @@
-
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import NoServiceView from "@dartfrog/puddle/components/NoServiceView";
+import "./App.css";
+import { BrowserRouter as Router, Route, Routes, useParams } from "react-router-dom";
+import { NoServiceView, HalfChat } from '@dartfrog/puddle';
 import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
 import useRadioStore from "./store/radio";
-import HalfChat from "@dartfrog/puddle/components/HalfChat";
 import RadioPluginBox from "./components/RadioPluginBox";
-import { useCallback } from "react";
 import Home from "./components/Home";
-import ServiceView from "@dartfrog/puddle/components/ServiceView";
-import RadioHalfChat from "./components/RadioHalfChat";
-import "@dartfrog/puddle/components/App.css";
-import './App.css';
 
 function App() {
+  return (
+    <Router basename={`/${PROCESS_NAME}`}>
+      <Routes>
+        <Route path="/*" element={<Home />} />
+        <Route path="/df" element={
+          <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
+        } />
+        <Route path="/df/service/:id" element={<ServiceRoute />} />
+      </Routes>
+    </Router>
+  );
+}
 
-  const {setPlayingMedia, playingMedia, setPlayingMediaTime} = useRadioStore();
+function ServiceRoute() {
+  const { id } = useParams();
+  const { setPlayingMedia, setPlayingMediaTime } = useRadioStore();
 
   const onServiceMessage = (msg: any) => {
     if (msg.Radio) {
@@ -24,36 +32,24 @@ function App() {
       } else if (msg.Radio.PlayMedia) {
         setPlayingMedia(msg.Radio.PlayMedia);
       } else if (msg.Radio.PlayMediaStartTime) {
-        setPlayingMediaTime(msg.Radio.PlayMediaStartTime)
+        setPlayingMediaTime(msg.Radio.PlayMediaStartTime);
       } else {
-        console.log("unhandled update", msg.Radio)
+        console.log("unhandled update", msg.Radio);
       }
     }
   };
 
   return (
-    <Router basename={`/${PROCESS_NAME}`}>
-      <Routes>
-        <Route path="/*" element={
-          <Home />
-        }
-        />
-        <Route path="/df" element={
-          <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
-        } />
-        <Route path="/df/service/:id" element={
-          <ServiceView
-            ourNode={window.our.node}
-            processName={PROCESS_NAME}
-            websocketUrl={WEBSOCKET_URL}
-            onServiceMessage={onServiceMessage}
-            Element={RadioHalfChat}
-            fullscreen
-            enableChatSounds
-           />
-        } />
-      </Routes>
-    </Router>
+    <HalfChat
+      ourNode={window.our.node}
+      Element={RadioPluginBox}
+      processName={PROCESS_NAME}
+      websocketUrl={WEBSOCKET_URL}
+      onServiceMessage={onServiceMessage}
+      enableChatSounds
+      paramServiceId={id}
+      fullscreen
+    />
   );
 }
 

@@ -1,4 +1,4 @@
-import useChatStore from "@dartfrog/puddle/store/service";
+import {useServiceStore} from "@dartfrog/puddle";
 import useForumStore from "../store/forum";
 import { useNavigate } from "react-router-dom";
 import { PROCESS_NAME } from "../utils";
@@ -8,7 +8,7 @@ interface ForumHeaderProps {
 }
 
 const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false }) => {
-  const { serviceId, serviceMetadata, api} = useChatStore();
+  const { serviceId, serviceMetadata, api} = useServiceStore();
   const navigate = useNavigate();
 
   const renderOnlineCountMessage = () => {

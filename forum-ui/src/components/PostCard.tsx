@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import useForumStore, { ForumPost } from '../store/forum';
-import useChatStore from '@dartfrog/puddle/store/service';
-import ProfilePicture from '@dartfrog/puddle/components/ProfilePicture';
+import {useServiceStore} from '@dartfrog/puddle';
 import { getPeerNameColor, getRecencyText, nodeProfileLink, dfLinkToRealLink } from '@dartfrog/puddle';
 import IconBxsComment from './IconBxsComment';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +17,7 @@ interface PostCardProps {
 
 const PostCard: React.FC<PostCardProps> = ({ post_id, showFullContents = false, isComment = false }) => {
   const { posts, vote, deletePost, toggleSticky, getPost, getPostAuthor } = useForumStore();
-  const { api, peerMap, serviceId } = useChatStore();
+  const { api, peerMap, serviceId } = useServiceStore();
   const baseOrigin = window.origin.split(".").slice(1).join(".")
   const navigate = useNavigate();
   const [requested, setRequested] = useState(false);

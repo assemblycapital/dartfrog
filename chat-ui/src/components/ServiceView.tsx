@@ -1,14 +1,8 @@
 import React, { useEffect } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
-import TopBar from '@dartfrog/puddle/components/TopBar';
-import { ServiceApi, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceMetadata } from '@dartfrog/puddle';
+import { ServiceApi, ServiceConnectionStatus, ServiceConnectionStatusType, ServiceMetadata, useServiceStore, TopBar, Spinner, ChatBox, DisplayUserActivity } from '@dartfrog/puddle';
 import { PROCESS_NAME } from '../App';
 import { WEBSOCKET_URL, } from '../utils';
-import useChatStore, { ChatState, ChatMessage } from '@dartfrog/puddle/store/service';
-import ChatBox from '@dartfrog/puddle/components/ChatBox';
-import Spinner from '@dartfrog/puddle/components/Spinner';
-import { maybePlaySoundEffect, maybePlayTTS } from '@dartfrog/puddle/utils';
-import DisplayUserActivity from '@dartfrog/puddle/components/DisplayUserActivity';
 
 const ServiceView = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,7 +12,7 @@ const ServiceView = () => {
     setApi, api, serviceId, requestPeer, setPeerMap, setServiceId, setChatHistory,
     addChatMessage, chatState, setServiceConnectionStatus, serviceConnectionStatus,
     setServiceMetadata, serviceMetadata
-  } = useChatStore();
+  } = useServiceStore();
 
   useEffect(() => {
     setServiceId(paramServiceId);

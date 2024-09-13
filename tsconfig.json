@@ -2,8 +2,6 @@
   "files": [],
   "references": [
     { "path": "./ui" },
-    { "path": "./chat-ui" },
-    { "path": "./puddle" }
   ]
 }
 

@@ -8,19 +8,19 @@
     "chess-ui",
     "radio-ui",
     "forum-ui",
-    "rumors-ui",
-    "puddle"
+    "rumors-ui"
   ],
   "dependencies": {
+    "@dartfrog/puddle": "github:bacwyls/puddle",
     "@kinode/client-api": "^0.1.0",
+    "chess.js": "^1.0.0-beta.8",
+    "chessboardjsx": "^2.4.7",
     "howler": "^2.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.23.1",
-    "zustand": "^4.4.7",
     "react-player": "^2.16.0",
-    "chess.js": "^1.0.0-beta.8",
-    "chessboardjsx": "^2.4.7"
+    "react-router-dom": "^6.23.1",
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
     "@types/node": "^20.10.4",

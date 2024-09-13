@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import useDartStore from '../store/dart';
-import { DEFAULT_PFP, Peer } from '@dartfrog/puddle/index';
+import { DEFAULT_PFP, Peer } from '@dartfrog/puddle';
 import './ProfilePicture.css'
 
 const ProfilePicture: React.FC<{ size: string; node: string }> = ({ size, node }) => {

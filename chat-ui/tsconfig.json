@@ -23,7 +23,7 @@
   "include": [
     "src",
     "../pkg/manifest.json",
-    "../pkg/metadata.json", "../puddle/store/service.ts", "../puddle/components/ChatBox.tsx", "../puddle/components/ChatHeader.tsx", "../puddle/components/ChatInput.tsx", "../puddle/components/ProfilePicture.tsx", "../puddle/components/TopBar.tsx",
+    "../pkg/metadata.json"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -4,7 +4,7 @@ import { Howl } from 'howler';
 import PianoKey from './PianoKey';
 import './Piano.css';
 import usePianoStore from '../../store/piano';
-import useChatStore from '@dartfrog/puddle/store/service';
+import {useServiceStore} from '@dartfrog/puddle';
 import { PROCESS_NAME } from '../../utils';
 import { getPeerNameColor } from '@dartfrog/puddle';
 
@@ -32,8 +32,7 @@ const notes = [
 ];
 
 const Piano: React.FC = () => {
-  const { api } = useChatStore();
-  const { peerMap } = useChatStore();
+  const { api, peerMap} = useServiceStore();
   const {sendPlayNote, pianoState } = usePianoStore();
   const [sounds, setSounds] = useState<{ [key: string]: Howl }>({});
   const [pressedKeys, setPressedKeys] = useState<{ [key: string]: string | null}>({});

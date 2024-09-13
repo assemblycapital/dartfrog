@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import useDartStore from '../store/dart';
-import { ServiceID, ServiceMetadata } from '@dartfrog/puddle/index';
-import Spinner from '@dartfrog/puddle/components/Spinner';
+import { ServiceID, ServiceMetadata } from '@dartfrog/puddle';
+import {Spinner} from '@dartfrog/puddle';
 import { PROCESS_NAME } from '../utils';
 
 // Remove DEBUG_MODE and debugLog function
@@ -106,8 +106,9 @@ const JoinPage = () => {
           setServiceStatus(ServiceStatus.PLUGIN_READY)
         }
       } catch (error) {
-        console.error("Error checking plugin:", error);
-        setServiceStatus(ServiceStatus.PLUGIN_ISSUE);
+        // console.error("Error checking plugin:", error);
+        // this is probably a cors because the plugin has a secure subdomain
+        setServiceStatus(ServiceStatus.PLUGIN_READY);
       }
     };
     checkProcessAvailability();

@@ -7,9 +7,6 @@
     "skipLibCheck": true,
     "moduleResolution": "Node",
     "baseUrl": ".",
-    "paths": {
-      "@dartfrog/puddle/*": ["../puddle/*"]
-    },
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -23,9 +20,7 @@
     "src",
     "../pkg/manifest.json",
     "../pkg/metadata.json",
-    "../puddle/**/*.ts",
-    "../puddle/index.ts"
-, "../puddle/components/Spinner.tsx", "../puddle/components/Icons.tsx", "../puddle/components/DisplayUserActivity.tsx", "../puddle/components/EditServiceForm.tsx"  ],
+  ],
   "references": [
     { "path": "./tsconfig.node.json" }
   ]

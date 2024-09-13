@@ -4,12 +4,10 @@ import useDartStore, { MessageStore } from '../../store/dart';
 import { useNavigate, useParams } from 'react-router-dom';
 import { renderLoading } from '../Middle';
 import ProfilePicture from '../ProfilePicture';
-import { dfLinkRegex, dfLinkToRealLink, getClassForNameColor, getPeerNameColor, nodeProfileLink } from '@dartfrog/puddle/index';
-import { maybeReplaceWithImage } from '@dartfrog/puddle/utils';
-import { formatTimestamp, isImageUrl, linkRegex } from '@dartfrog/puddle/components/ChatBox';
 import Split from 'react-split';
 import { getActivityMessage } from '../Nodes/NodeProfile';
 import { hasUnreadHistory } from './Messages';
+import { dfLinkRegex, dfLinkToRealLink, formatTimestamp, getPeerNameColor, isImageUrl, linkRegex, maybeReplaceWithImage, nodeProfileLink } from '@dartfrog/puddle';
 
 const MessagesNode: React.FC = () => {
     const {setCurrentPage, messageStoreMap, requestNewMessageStore, clearUnreadMessageStore, peerMap, localFwdPeerRequest, requestSendMessage} = useDartStore();

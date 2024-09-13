@@ -1,15 +1,27 @@
-import "@dartfrog/puddle/components/App.css";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import NoServiceView from "@dartfrog/puddle/components/NoServiceView";
+import "./App.css";
+import { BrowserRouter as Router, Route, Routes, useParams } from "react-router-dom";
+import { NoServiceView, HalfChat } from '@dartfrog/puddle';
 import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
-import ServiceView from "@dartfrog/puddle/components/ServiceView";
-import Forum from "./components/Forum";
 import useForumStore from "./store/forum";
-import './App.css'
+import Forum from "./components/Forum";
 
 function App() {
+  return (
+    <Router basename={`/${PROCESS_NAME}`}>
+      <Routes>
+        <Route path="/" element={
+          <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
+        } />
+        <Route path="/df/service/:id" element={<ServiceRoute />} />
+      </Routes>
+    </Router>
+  );
+}
 
-  const {handleUpdate} = useForumStore();
+function ServiceRoute() {
+  const { id } = useParams();
+
+  const { handleUpdate } = useForumStore();
 
   const onServiceMessage = (msg) => {
     if (msg.Forum) {
@@ -18,23 +30,15 @@ function App() {
   };
 
   return (
-    <Router basename={`/${PROCESS_NAME}`}>
-      <Routes>
-        <Route path="/" element={
-          <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
-        } />
-        <Route path="/df/service/:id/*" element={
-          <ServiceView
-            ourNode={window.our.node}
-            processName={PROCESS_NAME}
-            websocketUrl={WEBSOCKET_URL}
-            onServiceMessage={onServiceMessage}
-            Element={Forum}
-            fullscreen
-           />
-        } />
-      </Routes>
-    </Router>
+    <HalfChat
+      ourNode={window.our?.node}
+      Element={Forum}
+      processName={PROCESS_NAME}
+      websocketUrl={WEBSOCKET_URL}
+      onServiceMessage={onServiceMessage}
+      enableChatSounds
+      paramServiceId={id}
+    />
   );
 }
 

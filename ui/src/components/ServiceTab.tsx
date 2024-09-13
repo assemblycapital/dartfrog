@@ -1,8 +1,6 @@
-import DisplayUserActivity from "@dartfrog/puddle/components/DisplayUserActivity";
 // import { Service, ServiceConnectionStatusType, ServiceId, ServiceMetadata, makeServiceId, stringifyServiceConnectionStatus } from "@dartfrog/puddle";
 import useDartStore from "../store/dart";
 import { useEffect, useState } from "react";
-import Spinner from "@dartfrog/puddle/components/Spinner";
 import ServiceConnectedDisplay from "./ServiceConnectedDisplay";
 
 interface ServiceTabProps {

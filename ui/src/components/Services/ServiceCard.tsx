@@ -1,4 +1,4 @@
-import { Service, getServiceRecencyText } from '@dartfrog/puddle/index';
+import { Service, getServiceRecencyText } from '@dartfrog/puddle';
 import { useNavigate } from 'react-router-dom';
 import React from 'react';
 

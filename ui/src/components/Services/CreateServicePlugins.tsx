@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { XIcon } from '@dartfrog/puddle/components/Icons';
 import { STANDARD_PLUGINS } from '../../store/dart';
 
 const PluginSelector = ({ plugin, setPlugin}) => {

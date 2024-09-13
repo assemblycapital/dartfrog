@@ -1,12 +1,11 @@
-import { ServiceID } from "@dartfrog/puddle";
-import useChatStore from "@dartfrog/puddle/store/service";
+import { ServiceID, useServiceStore } from "@dartfrog/puddle";
 import { useNavigate } from "react-router-dom";
 import PostList from "./PostList";
 import ForumHeader from "./ForumHeader";
 
 
 const HomePage: React.FC = () => {
-  const {serviceId} = useChatStore();
+  const {serviceId} = useServiceStore();
   const parsedServiceId = ServiceID.fromString(serviceId)
   const navigate = useNavigate();
   return (

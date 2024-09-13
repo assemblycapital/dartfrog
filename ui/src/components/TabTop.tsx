@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { PlusIcon, XIcon } from '@dartfrog/puddle/components/Icons';
 
 const TabTop = ({ tab, index, activeTabIndex, setActiveTabIndex, closeTab, tabs, exitService }) => {
 
@@ -56,7 +55,7 @@ const TabTop = ({ tab, index, activeTabIndex, setActiveTabIndex, closeTab, tabs,
           style={{
           }}
         >
-          <XIcon />
+          {/* <XIcon /> */}
 
         </div>
       </div>

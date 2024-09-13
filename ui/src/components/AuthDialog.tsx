@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import useDartStore from '../store/dart';
 import CryptoJS from 'crypto-js';
-import Spinner from '@dartfrog/puddle/components/Spinner';
 import './AuthDialog.css';
+import { Spinner } from '@dartfrog/puddle';
 
 interface AuthDialogProps {
 }

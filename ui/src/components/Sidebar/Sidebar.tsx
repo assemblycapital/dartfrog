@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import './Sidebar.css';
 import useDartStore from '../../store/dart';
-import { AssemblyCapitalLogo, XIcon } from '@dartfrog/puddle/components/Icons';
+import { AssemblyCapitalLogo, XIcon } from '@dartfrog/puddle';
 import { useNavigate } from 'react-router-dom';
-import { DEFAULT_PFP, NameColor, getClassForNameColor } from '@dartfrog/puddle/index';
+import { DEFAULT_PFP, NameColor, getClassForNameColor } from '@dartfrog/puddle';
 import { PROCESS_NAME } from '../../utils';
 
 interface SidebarProps {}

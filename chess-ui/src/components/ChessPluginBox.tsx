@@ -2,15 +2,13 @@ import React, { useEffect, useState } from 'react';
 import useChessStore, { ChessState } from '../store/chess';
 import ChessQueue from './ChessQueue';
 import ChessGame from './ChessGame';
-import { ServiceID } from '@dartfrog/puddle';
-import useChatStore from '@dartfrog/puddle/store/service';
+import { ServiceID, useServiceStore} from '@dartfrog/puddle';
 
 interface ChessPluginBoxProps {
 }
 
 const ChessPluginBox: React.FC = ({ }) => {
-  const {api} = useChatStore();
-  const {serviceId} = useChatStore();
+  const {api, serviceId} = useServiceStore();
   const { chessState, sendChessRequest, } = useChessStore();
 
   const [isAdmin, setIsAdmin] = useState(false);

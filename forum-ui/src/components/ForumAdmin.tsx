@@ -1,4 +1,4 @@
-import useServiceStore from "@dartfrog/puddle/store/service";
+import {useServiceStore} from "@dartfrog/puddle";
 import { useEffect, useState } from "react";
 import useForumStore from "../store/forum";
 import ForumHeader from "./ForumHeader";

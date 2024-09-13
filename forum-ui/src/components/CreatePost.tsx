@@ -1,7 +1,7 @@
 import { useState } from "react";
 import useForumStore from "../store/forum";
 import { useNavigate } from "react-router-dom";
-import useChatStore from "@dartfrog/puddle/store/service";
+import {useServiceStore} from "@dartfrog/puddle";
 import ForumHeader from "./ForumHeader";
 import { ServiceID } from "@dartfrog/puddle";
 
@@ -12,7 +12,7 @@ const CreatePost: React.FC = () => {
   const [isSticky, setIsSticky] = useState(false);
   const [isAnon, setIsAnon] = useState(false);
   const { createPost, createStickyPost } = useForumStore();
-  const { api, serviceId } = useChatStore();
+  const { api, serviceId } = useServiceStore();
   const navigate = useNavigate();
 
   const parsedServiceId = ServiceID.fromString(serviceId);

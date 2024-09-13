@@ -2,7 +2,7 @@ import { nodeProfileLink, ServiceApi } from '@dartfrog/puddle';
 import React, { useEffect } from 'react';
 import { Link, Route, Routes, useNavigate } from 'react-router-dom';
 import { PROCESS_NAME, WEBSOCKET_URL } from '../utils';
-import useServiceStore from '@dartfrog/puddle/store/service';
+import {useServiceStore} from '@dartfrog/puddle';
 import styles from './Home.module.css';
 import ConnectingAnimation from './ConnectingAnimation';
 import InnerHome from './InnerHome';

@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { validateServiceName } from "./Services";
 import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, PAGE_PLUGIN, PIANO_PLUGIN, RADIO_PLUGIN, FORUM_PLUGIN } from "../../store/dart";
-import { ServiceCreationOptions, ServiceVisibility, ServiceAccess } from "@dartfrog/puddle/index";
+import { ServiceCreationOptions, ServiceVisibility, ServiceAccess } from "@dartfrog/puddle";
 
 import './CreateService.css';
 // import { ServiceAccess, ServiceVisibility } from "@dartfrog/puddle";

@@ -1,16 +1,28 @@
-import "@dartfrog/puddle/components/App.css";
 import "./App.css";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import NoServiceView from "@dartfrog/puddle/components/NoServiceView";
-import HalfChat from "@dartfrog/puddle/components/HalfChat";
+import { BrowserRouter as Router, Route, Routes, useParams } from "react-router-dom";
+import { NoServiceView, HalfChat } from '@dartfrog/puddle';
 import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
-import Piano from "./components/Piano/Piano";
 import usePianoStore from "./store/piano";
-
+import Piano from "./components/Piano/Piano";
 
 function App() {
+  return (
+    <Router basename={`/${PROCESS_NAME}`}>
+      <Routes>
+        <Route path="/" element={
+          <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
+        } />
+        <Route path="/df/service/:id" element={<ServiceRoute />} />
+      </Routes>
+    </Router>
+  );
+}
 
-  const {pianoState, setPianoState} = usePianoStore();
+function ServiceRoute() {
+  const { id } = useParams();
+
+  const { setPianoState } = usePianoStore();
+
   const onServiceMessage = (msg: any) => {
     if (msg.Piano) {
       if (msg.Piano.PlayNote) {
@@ -24,26 +36,18 @@ function App() {
         });
       }
     }
-  }
+  };
 
   return (
-    <Router basename={`/${PROCESS_NAME}`}>
-      <Routes>
-        <Route path="/" element={
-          <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
-        } />
-        <Route path="/df/service/:id" element={
-          <HalfChat
-            ourNode={window.our.node}
-            Element={Piano}
-            processName={PROCESS_NAME}
-            websocketUrl={WEBSOCKET_URL}
-            onServiceMessage={onServiceMessage}
-            enableChatSounds
-           />
-        } />
-      </Routes>
-    </Router>
+    <HalfChat
+      ourNode={window.our?.node}
+      Element={Piano}
+      processName={PROCESS_NAME}
+      websocketUrl={WEBSOCKET_URL}
+      onServiceMessage={onServiceMessage}
+      enableChatSounds
+      paramServiceId={id}
+    />
   );
 }
 

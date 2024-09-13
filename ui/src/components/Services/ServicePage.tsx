@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import useDartStore from "../../store/dart";
-import { PublicService, Service, ServiceID, ServiceAccess, ServiceVisibility, ServiceEditOptions } from '@dartfrog/puddle/index';
+import { PublicService, Service, ServiceID, ServiceEditOptions, EditServiceForm } from '@dartfrog/puddle';
 import styles from './ServicePage.module.css';
-import EditServiceForm from '@dartfrog/puddle/components/EditServiceForm';
 
 const ServicePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();

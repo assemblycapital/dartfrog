@@ -1,17 +1,26 @@
-
-import "@dartfrog/puddle/components/App.css";
 import "./App.css";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import NoServiceView from "@dartfrog/puddle/components/NoServiceView";
+import { BrowserRouter as Router, Route, Routes, useParams } from "react-router-dom";
+import { NoServiceView, HalfChat } from "@dartfrog/puddle";
 import { PROCESS_NAME, WEBSOCKET_URL } from "./utils";
 import usePageStore from "./store/page";
-import HalfChat from "@dartfrog/puddle/components/HalfChat";
 import PagePluginBox from "./components/PagePluginBox";
 
-
 function App() {
+  return (
+    <Router basename={`/${PROCESS_NAME}`}>
+      <Routes>
+        <Route path="/" element={
+          <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
+        } />
+        <Route path="/df/service/:id" element={<ServiceRoute />} />
+      </Routes>
+    </Router>
+  );
+}
 
-  const {page, setPage} = usePageStore();
+function ServiceRoute() {
+  const { id } = useParams();
+  const { page, setPage } = usePageStore();
 
   const onServiceMessage = (msg) => {
     if (msg.Page) {
@@ -20,23 +29,15 @@ function App() {
   };
 
   return (
-    <Router basename={`/${PROCESS_NAME}`}>
-      <Routes>
-        <Route path="/" element={
-          <NoServiceView processName={PROCESS_NAME} websocketUrl={WEBSOCKET_URL} ourNode={window.our?.node} />
-        } />
-        <Route path="/df/service/:id" element={
-          <HalfChat
-            ourNode={window.our.node}
-            Element={PagePluginBox}
-            processName={PROCESS_NAME}
-            websocketUrl={WEBSOCKET_URL}
-            onServiceMessage={onServiceMessage}
-            enableChatSounds
-           />
-        } />
-      </Routes>
-    </Router>
+    <HalfChat
+      ourNode={window.our.node}
+      Element={PagePluginBox}
+      processName={PROCESS_NAME}
+      websocketUrl={WEBSOCKET_URL}
+      onServiceMessage={onServiceMessage}
+      enableChatSounds
+      paramServiceId={id}
+    />
   );
 }
 

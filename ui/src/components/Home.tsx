@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import useDartStore from '../store/dart';
-import { getAllServicesFromPeerMap, getUniqueServices, sortServices } from '@dartfrog/puddle/index';
 import ServiceCard from './Services/ServiceCard';
 import { useNavigate } from 'react-router-dom';
 import AppGrid from './AppGrid/AppGrid';
 import { useMediaQuery } from 'react-responsive';
 import { PROCESS_NAME } from '../utils';
 import PeerList from './Nodes/PeerList';
+import { getAllServicesFromPeerMap, getUniqueServices, sortServices } from '@dartfrog/puddle';
 
 const Home: React.FC = () => {
   const {localServices, peerMap, setCurrentPage, isClientConnected} = useDartStore();
