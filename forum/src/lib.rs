@@ -321,6 +321,13 @@ impl ForumServiceState {
             ForumRequest::DeletePost { post_id } => {
                 if from == our.node {
                     if let Some(removed_post) = self.posts.remove(&post_id) {
+                        // Remove the post ID from its parent's comments vector
+                        if let Some(thread_id) = removed_post.thread_id {
+                            if let Some(parent_post) = self.posts.get_mut(&thread_id) {
+                                parent_post.comments.retain(|&id| id != post_id);
+                            }
+                        }
+
                         let delete_update = ForumUpdate::DeletedPost(post_id);
                         update_subscribers(AppUpdate::Forum(delete_update), our, service)?;
                     }
