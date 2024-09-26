@@ -180,7 +180,7 @@ const DisplayRumor: React.FC<{ rumor: Rumor; isAdmin: boolean }> = ({ rumor, isA
         alignItems: 'center',
         width: '100%',
         position: 'relative',
-        padding:"0.4rem 0rem"
+        padding:"0.8em 0rem"
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -317,7 +317,7 @@ const RumorsBox: React.FC = () => {
                 marginTop:"0.4rem",
               }}
             >
-              <form onSubmit={handleSubmit} style={{ display: "flex", width: "100%", maxWidth: "500px"}}>
+              <form onSubmit={handleSubmit} style={{ display: "flex", width: "100%", maxWidth: "500px", marginBottom:"0.8rem"}}>
                 <input
                   type="text"
                   placeholder="rumor has it that..."
@@ -339,7 +339,6 @@ const RumorsBox: React.FC = () => {
                   overflowY: "auto",
                   display: "flex",
                   flexDirection: "column",
-                  // gap: "0.5rem",
                   width: "100%",
                 }}
               >
