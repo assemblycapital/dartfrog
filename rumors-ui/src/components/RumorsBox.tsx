@@ -190,13 +190,16 @@ const DisplayRumor: React.FC<{ rumor: Rumor; isAdmin: boolean }> = ({ rumor, isA
         <Link
           to={`post/${rumor.id}`}
           style={{
-            marginTop:"6px",
+            position: 'absolute',
+            top: '50%',
+            left: '0',
             padding: '2px 5px',
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             color: '#9e9e9e',
             borderRadius: '3px',
             fontSize: '0.8rem',
             textDecoration: 'none',
+            zIndex: 1,
           }}
         >
           details

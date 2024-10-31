@@ -137,11 +137,12 @@ const Messages: React.FC = () => {
                     justifyContent: "center",
                     alignItems: "center",
                     height: "100%",
-                    color: "gray",
-                    gap:"1rem",
+                    gap: "1rem",
+                    width: "100%",
+                    textAlign: "center",
                   }}
                 >
-                  <div>
+                  <div style={{ width: "100%" }}>
                     No messages yet
                   </div>
 

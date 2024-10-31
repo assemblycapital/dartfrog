@@ -11,7 +11,7 @@
     "rumors-ui"
   ],
   "dependencies": {
-    "@dartfrog/puddle": "github:assemblycapital/puddle",
+    "@dartfrog/puddle": "github:assemblycapital/puddle#809c053a4f91bf9342dd78d1b019c78897d73e91",
     "@kinode/client-api": "^0.1.0",
     "chess.js": "^1.0.0-beta.8",
     "chessboardjsx": "^2.4.7",
@@ -35,5 +35,8 @@
     "http-proxy-middleware": "^2.0.6",
     "typescript": "^5.2.2",
     "vite": "^5.0.8"
+  },
+  "overrides": {
+    "@dartfrog/puddle": "github:assemblycapital/puddle#809c053a4f91bf9342dd78d1b019c78897d73e91"
   }
 }

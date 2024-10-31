@@ -161,7 +161,7 @@ const InnerHome: React.FC = () => {
                 navigate(`/df/service/${hubServiceId}`);
               }}
         >
-          <img src="https://i.postimg.cc/J7vfr0d3/38e531b0-c773-4731-9e5d-e405c4436b1c.webp"
+          <img src="https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/radio-party.webp"
             style={{
               height:"20rem",
               width:"20rem",

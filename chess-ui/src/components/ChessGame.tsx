@@ -136,8 +136,8 @@ const ChessGame: React.FC<ChessGameProps> = () => {
           <div>{!isTopPlayerTurn && ' to move'}</div>
         </div>
       </div>
-
-      {/* <div className="game-info">
+{/* 
+      <div className="game-info">
         <div>Current Turn: {chessState.game.isWhiteTurn ? 'White' : 'Black'}</div>
         <div>White Player: {chessState.game.white}</div>
         <div>Black Player: {chessState.game.black}</div>

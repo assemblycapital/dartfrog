@@ -146,7 +146,7 @@ const AppGrid: React.FC = () => {
   const appGridItems = [
     { title: "radio", backgroundColor: "white", textColor: "black", protocolLink: "radio:dartfrog:herobrine.os", imageUrl: "https://bwyl.nyc3.digitaloceanspaces.com/radio/radio.png"},
     { title: "rumors", backgroundColor: "rgb(187, 119, 221)", textColor: "black", serviceLink: `df://rumors-hub:${HUB_NODE}@rumors:dartfrog:herobrine.os` },
-    { title: "forum", backgroundColor: "#444", textColor: "#ccc", serviceLink: `df://forum-hub:${HUB_NODE}@forum:dartfrog:herobrine.os`, imageUrl: "https://i.postimg.cc/MKmrbvDF/forum-icon.png" },
+    { title: "forum", backgroundColor: "#444", textColor: "#ccc", serviceLink: `df://forum-hub:${HUB_NODE}@forum:dartfrog:herobrine.os`, imageUrl: "https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/forum-icon.png" },
   ];
 
   return (

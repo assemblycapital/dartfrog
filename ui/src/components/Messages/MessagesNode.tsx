@@ -284,6 +284,7 @@ const MessagesNode: React.FC = () => {
                                 height: "100%",
                                 color: "gray",
                                 fontSize: "1rem",
+                                width:"100%",
                             }}>
                                 No messages yet
                             </div>
