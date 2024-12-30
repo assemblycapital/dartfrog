@@ -5,20 +5,17 @@ use std::hash::{Hash, Hasher};
 
 use dartfrog_lib::*;
 mod constants;
+use kinode_process_lib::http::server::{self, send_ws_push, HttpServerRequest, WsMessageType};
 use kinode_process_lib::{http, await_message, call_init, println, Address, Request,
     get_blob,
     LazyLoadBlob,
-    http::{
-        send_ws_push, HttpServerRequest,
-        WsMessageType,
-    },
     set_state, get_typed_state,
 };
 use serde::{Deserialize, Serialize};
 
 wit_bindgen::generate!({
     path: "target/wit",
-    world: "process-v0",
+    world: "process-v1",
 });
 
 
@@ -81,7 +78,7 @@ impl DartfrogState {
     }
 
     pub fn load(our: &Address) -> Self {
-        match get_typed_state(|bytes| Ok(bincode::deserialize::<DartfrogState>(bytes)?)) {
+        match get_typed_state(|bytes| bincode::deserialize::<DartfrogState>(bytes)) {
             Some(mut state) => {
                 state.local_services = HashMap::new();
                 state
@@ -541,8 +538,9 @@ fn handle_dartfrog_input(
     match dartfrog_input {
         DartfrogInput::LocalFwdAllPeerRequests => {
             if source.node != our.node { return Ok(()); }
-            for peer in state.peers.values() {
+            for peer in state.peers.values_mut() {
                 let address = get_server_address(&peer.node);
+                peer.outstanding_request = Some(get_now());
                 poke(&address, DartfrogInput::RemoteRequestPeer)?;
             }
         },
@@ -694,11 +692,19 @@ call_init!(init);
 fn init(our: Address) {
     println!("initializing");
     
-    // Serve the index.html and other UI files found in pkg/ui at the root path.
-    http::secure_serve_ui(&our, "ui", vec!["/", "*"]).unwrap();
+    // Create HTTP server instance
+    let mut http_server = server::HttpServer::new(5);
+    let http_config = server::HttpBindingConfig::default();
 
-    // Allow websocket to be opened at / (our process ID will be prepended).
-    http::secure_bind_ws_path("/", true).unwrap();
+    // Serve UI files
+    http_server
+        .serve_ui(&our, "ui", vec!["/", "*"], http_config.clone())
+        .expect("failed to serve ui");
+
+    // Bind websocket path
+    http_server
+        .bind_ws_path("/", server::WsBindingConfig::default())
+        .expect("failed to bind ws");
 
     Request::to(("our", "homepage", "homepage", "sys"))
         .body(

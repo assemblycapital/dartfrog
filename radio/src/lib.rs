@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
 use dartfrog_lib::*;
-use kinode_process_lib::{call_init, http, Address};
+use kinode_process_lib::{call_init, http::server, Address};
 use serde::{Serialize, Deserialize};
 
 mod constants;
 
 wit_bindgen::generate!({
     path: "target/wit",
-    world: "process-v0",
+    world: "process-v1",
 });
 
 type RadioProviderState = ProviderState<AppService, DefaultAppClientState, DefaultAppProcessState>;
@@ -274,15 +274,19 @@ fn init(our: Address) {
     let loaded_provider = RadioProviderState::load(&our);
     state.provider = loaded_provider;
 
-    let try_ui = http::secure_serve_ui(&our, "radio-ui", vec!["/", "*"]);
-    http::secure_bind_ws_path("/", true).unwrap();
+    // Create HTTP server instance
+    let mut http_server = server::HttpServer::new(5);
+    let http_config = server::HttpBindingConfig::default();
 
-    match try_ui {
-        Ok(()) => {}
-        Err(e) => {
-            println!("radio error starting ui: {:?}", e);
-        }
-    };
+    // Serve UI files
+    http_server
+        .serve_ui(&our, "radio-ui", vec!["/", "*"], http_config.clone())
+        .expect("failed to serve ui");
+
+    // Bind websocket path
+    http_server
+        .bind_ws_path("/", server::WsBindingConfig::default())
+        .expect("failed to bind ws");
 
     loop {
         match provider_handle_message(&our, &mut state.provider) {
