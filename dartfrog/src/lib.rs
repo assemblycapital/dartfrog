@@ -661,7 +661,7 @@ fn handle_message(our: &Address, state: &mut DartfrogState) -> anyhow::Result<()
         return Err(anyhow::anyhow!("unexpected Response: {:?}", message));
     }
     if message.source().node == our.node
-        && message.source().process == "http_server:distro:sys" {
+        && message.source().process == "http-server:distro:sys" {
         handle_http_server_request(our, state, source, body)
     } else {
         if let Ok(app_message) = serde_json::from_slice::<ProviderOutput>(&body) {

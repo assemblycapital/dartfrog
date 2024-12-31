@@ -138,8 +138,6 @@ fn init(our: Address) {
     loop {
         match provider_handle_message(&our, &mut state.provider) {
             Ok(()) => {
-                println!("piano handle message sueccess")
-
             }
             Err(e) => {
                 println!("piano error handling message: {:?}", e);
