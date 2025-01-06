@@ -225,7 +225,8 @@ fn init(our: Address) {
 
     // Create HTTP server instance
     let mut http_server = server::HttpServer::new(5);
-    let http_config = server::HttpBindingConfig::default();
+    let http_config = server::HttpBindingConfig::default()
+        .secure_subdomain(true);
 
     // Serve UI files
     http_server
@@ -233,8 +234,10 @@ fn init(our: Address) {
         .expect("failed to serve ui");
 
     // Bind websocket path
+    let ws_config = server::WsBindingConfig::default()
+        .secure_subdomain(true);
     http_server
-        .bind_ws_path("/", server::WsBindingConfig::default())
+        .bind_ws_path("/", ws_config)
         .expect("failed to bind ws");
 
     loop {

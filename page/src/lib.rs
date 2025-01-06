@@ -129,24 +129,15 @@ fn init(our: Address) {
 
     // Create HTTP server instance
     let mut http_server = server::HttpServer::new(5);
-    let http_config = server::HttpBindingConfig::default();
+    let http_config = server::HttpBindingConfig::default()
+        .secure_subdomain(true);
 
     // Serve UI files
     http_server
         .serve_ui(&our, "page-ui", vec!["/", "*"], http_config.clone())
         .expect("failed to serve ui");
 
-    // Bind websocket path
-    http_server
-        .bind_ws_path("/", server::WsBindingConfig::default())
-        .expect("failed to bind ws");
-
-    loop {
-        match provider_handle_message(&our, &mut state.provider) {
-            Ok(()) => {}
-            Err(e) => {
-                println!("page error handling message: {:?}", e);
-            }
-        };
-    }
+    // Bind websocket path with secure subdomain
+    let ws_config = server::WsBindingConfig::default()
+        .secure_subdomain(true);
 }
