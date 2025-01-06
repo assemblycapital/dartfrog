@@ -40,24 +40,20 @@ const AppGridItem: React.FC<AppGridItemProps> = ({
   };
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    if (!isDialogOpen) {
+    if (!isDialogOpen && !event.defaultPrevented) {
       const link = getLink();
-        window.location.replace(link);
-      // if (protocolLink) {
-      //   window.location.replace(link);
-      // } else if (serviceLink) {
-      //   navigate(link);
-      // }
+      window.location.replace(link);
     }
   };
 
   const handleHamburgerClick = (event: React.MouseEvent) => {
+    event.preventDefault();
     event.stopPropagation();
-    if (isDialogOpen) {
-      onCloseDialog();
-    } else {
-      onOpenDialog();
-    }
+    // if (isDialogOpen) {
+    //   onCloseDialog();
+    // } else {
+    //   onOpenDialog();
+    // }
   };
 
   return (
@@ -72,10 +68,7 @@ const AppGridItem: React.FC<AppGridItemProps> = ({
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
-      onClick={(e)=>{
-        e.preventDefault();
-        handleClick(e)
-      }}
+      onClick={handleClick}
       onMouseEnter={() => setShowHamburger(true)}
       onMouseLeave={() => setShowHamburger(false)}
     >
