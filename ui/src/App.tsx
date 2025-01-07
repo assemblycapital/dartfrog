@@ -3,7 +3,7 @@ import "./App.css";
 import Footer from "./components/Footer";
 import ControlHeader from "./components/ControlHeader";
 import { useEffect, useRef, useState } from "react";
-import { PROCESS_NAME, WEBSOCKET_URL, } from './utils';
+import { PROCESS_NAME, WEBSOCKET_URL, DARTFROG_VERSION } from './utils';
 import { Service, ServiceConnectionStatusType, peerFromJson, profileFromJson, serviceFromJson, } from "@dartfrog/puddle";
 import useDartStore, { CHAT_PLUGIN, CHESS_PLUGIN, MessageStore, PAGE_PLUGIN, PIANO_PLUGIN } from "./store/dart";
 import BrowserBox from "./components/BrowserBox";
@@ -92,7 +92,7 @@ function App() {
             putMessageStoreMap(data["MessageStore"])
           } else if (data["RequestVersionResponse"]) {
             let [node, version] = data["RequestVersionResponse"]
-            if (version !== "v0.3.3") {
+            if (version !== DARTFROG_VERSION) {
               setVersionOutdated(true);
             }
           } else {

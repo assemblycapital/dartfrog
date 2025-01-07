@@ -1,5 +1,3 @@
-
-
 export const PACKAGE_SUBDOMAIN = "dartfrog-herobrine-os";
 export const PROCESS_NAME = "dartfrog:dartfrog:herobrine.os";
 
@@ -13,3 +11,5 @@ export const PROXY_TARGET = `${(import.meta.env.VITE_NODE_URL || `http://${PACKA
 export const WEBSOCKET_URL = import.meta.env.DEV
   ? `${PROXY_TARGET.replace('http', 'ws')}`
   : undefined;
+
+export const DARTFROG_VERSION = "v0.4.0";

@@ -4,7 +4,7 @@ import useDartStore from '../../store/dart';
 import { AssemblyCapitalLogo, XIcon } from '@dartfrog/puddle';
 import { useNavigate } from 'react-router-dom';
 import { DEFAULT_PFP, NameColor, getClassForNameColor } from '@dartfrog/puddle';
-import { PROCESS_NAME } from '../../utils';
+import { PROCESS_NAME, DARTFROG_VERSION } from '../../utils';
 
 interface SidebarProps {}
 
@@ -203,7 +203,7 @@ const Sidebar: React.FC<SidebarProps> = ({ }) => {
                 cursor:"default"
               }}
             >
-              dartfrog v0.3.3
+              dartfrog {DARTFROG_VERSION}
             </span>
           </div>
         </div>
