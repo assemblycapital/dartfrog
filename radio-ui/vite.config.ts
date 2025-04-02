@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 /*
 If you are developing a UI outside of a Kinode project,
@@ -22,6 +23,11 @@ console.log('process.env.VITE_NODE_URL', process.env.VITE_NODE_URL, PROXY_URL);
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@hyperware-ai/client-api': path.resolve(__dirname, '../node_modules/@hyperware-ai/client-api/index.ts')
+    }
+  },
   base: BASE_URL,
   build: {
     rollupOptions: {

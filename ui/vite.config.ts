@@ -50,7 +50,8 @@ export default defineConfig({
   ],
   resolve: {  // Add resolve configuration
     alias: {
-      '@puddle': path.resolve(__dirname, '../puddle')  // Alias for "puddle" workspace
+      '@puddle': path.resolve(__dirname, '../puddle'),  // Alias for "puddle" workspace
+      '@hyperware-ai/client-api': path.resolve(__dirname, '../node_modules/@hyperware-ai/client-api/index.ts')
     }
   },
   base: BASE_URL,
