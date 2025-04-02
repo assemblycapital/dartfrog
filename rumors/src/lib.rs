@@ -219,7 +219,7 @@ fn init(our: Address) {
 
     // Serve UI files
     http_server
-        .serve_ui(&our, "rumors-ui", vec!["/", "*"], http_config)
+        .serve_ui("rumors-ui", vec!["/", "*"], http_config)
         .expect("failed to serve ui");
 
     // Bind websocket path with secure subdomain config

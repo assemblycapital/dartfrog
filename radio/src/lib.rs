@@ -281,7 +281,7 @@ fn init(our: Address) {
 
     // Serve UI files
     http_server
-        .serve_ui(&our, "radio-ui", vec!["/", "*"], http_config.clone())
+        .serve_ui("radio-ui", vec!["/", "*"], http_config.clone())
         .expect("failed to serve ui");
 
     // Bind websocket path with secure subdomain

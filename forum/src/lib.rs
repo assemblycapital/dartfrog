@@ -422,7 +422,7 @@ fn init(our: Address) {
 
     // Serve UI files
     http_server
-        .serve_ui(&our, "forum-ui", vec!["/", "*"], http_config.clone())
+        .serve_ui("forum-ui", vec!["/", "*"], http_config.clone())
         .expect("failed to serve ui");
 
     // Bind websocket path
