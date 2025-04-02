@@ -11,8 +11,8 @@ interface ServiceConnectedRowProps {
 }
 
 const ServiceConnectedRow: React.FC<ServiceConnectedRowProps> = ({}) => {
-  const CHAT_PLUGIN = "chat:dartfrog:herobrine.os";
-  const PIANO_PLUGIN = "piano:dartfrog:herobrine.os";
+  const CHAT_PLUGIN = "chat:dartfrog:gliderlabs.os";
+  const PIANO_PLUGIN = "piano:dartfrog:gliderlabs.os";
 
   // Function to render plugins based on count
   // const renderPlugins = () => {

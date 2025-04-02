@@ -83,7 +83,7 @@ const ForumHeader: React.FC<ForumHeaderProps> = ({ includeForumButton = false })
           }}
           // className='underline-on-hover color-white'
           // className='color-white'
-          href={`http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/`}
+          href={`http://${baseOrigin}/dartfrog:dartfrog:gliderlabs.os/`}
           onClick={(e)=>{
             api.unsubscribeService();
           }}

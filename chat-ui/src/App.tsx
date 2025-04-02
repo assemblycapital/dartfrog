@@ -4,7 +4,7 @@ import ServiceView from "./components/ServiceView";
 import {NoServiceView} from "@dartfrog/puddle";
 import { WEBSOCKET_URL } from "./utils";
 
-export const PROCESS_NAME = "chat:dartfrog:herobrine.os"
+export const PROCESS_NAME = "chat:dartfrog:gliderlabs.os"
 
 function App() {
 

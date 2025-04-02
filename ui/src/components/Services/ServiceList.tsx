@@ -17,13 +17,13 @@ const ServiceList = ({services }) => {
   const sortedServices = sortServices(services);
 
   const knownProcesses = {
-    "chat:dartfrog:herobrine.os": "chat",
-    "piano:dartfrog:herobrine.os": "piano",
-    "page:dartfrog:herobrine.os": "page",
-    "chess:dartfrog:herobrine.os": "chess",
-    "radio:dartfrog:herobrine.os": "radio",
-    "forum:dartfrog:herobrine.os": "forum",
-    "rumors:dartfrog:herobrine.os": "rumors",
+    "chat:dartfrog:gliderlabs.os": "chat",
+    "piano:dartfrog:gliderlabs.os": "piano",
+    "page:dartfrog:gliderlabs.os": "page",
+    "chess:dartfrog:gliderlabs.os": "chess",
+    "radio:dartfrog:gliderlabs.os": "radio",
+    "forum:dartfrog:gliderlabs.os": "forum",
+    "rumors:dartfrog:gliderlabs.os": "rumors",
   }
   function getProcessText(address: string) {
     let [node, process] = address.split("@")

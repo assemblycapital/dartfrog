@@ -1,9 +1,9 @@
-import KinodeClientApi from "@kinode/client-api";
+import HyperwareClientApi from '@hyperware-ai/client-api';
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { ActivitySetting, Peer, PeerMap, Profile, Service, ServiceCreationOptions, ServiceEditOptions } from "@dartfrog/puddle";
 
-export const PACKAGE_ID = "dartfrog:herobrine.os";
+export const PACKAGE_ID = "dartfrog:gliderlabs.os";
 export const CHAT_PLUGIN = `chat:${PACKAGE_ID}`;
 export const PIANO_PLUGIN = `piano:${PACKAGE_ID}`;
 export const PAGE_PLUGIN = `page:${PACKAGE_ID}`;
@@ -18,8 +18,8 @@ export type DartfrogWebpageType = 'home' | 'nodes' | 'messages' | 'services';
 
 
 export interface DartStore {
-  api: KinodeClientApi | null,
-  setApi: (api: KinodeClientApi) => void
+  api: HyperwareClientApi | null,
+  setApi: (api: HyperwareClientApi) => void
   closeApi: () => void
   // 
   sendPoke: (data) => void

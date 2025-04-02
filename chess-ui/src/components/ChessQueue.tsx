@@ -52,7 +52,7 @@ const ChessQueue: React.FC<ChessQueueProps> = () => {
               onClick={() => {
                 sendChessRequest(api, { "Queue": "White" });
                 if (chessState.queuedBlack === null) {  
-                  const sound = new Audio('/chess:dartfrog:herobrine.os/assets/chess-queue.mp3');
+                  const sound = new Audio('/chess:dartfrog:gliderlabs.os/assets/chess-queue.mp3');
                   sound.play();
                 }
               }}
@@ -91,7 +91,7 @@ const ChessQueue: React.FC<ChessQueueProps> = () => {
               onClick={() => {
                 sendChessRequest(api, { "Queue": "Black" });
                 if (chessState.queuedWhite === null) {  
-                  const sound = new Audio('/chess:dartfrog:herobrine.os/assets/chess-queue.mp3');
+                  const sound = new Audio('/chess:dartfrog:gliderlabs.os/assets/chess-queue.mp3');
                   sound.play();
                 }
               }}

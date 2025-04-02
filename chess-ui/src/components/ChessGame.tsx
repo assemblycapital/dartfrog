@@ -37,10 +37,10 @@ const ChessGame: React.FC<ChessGameProps> = () => {
         if (playSound) {
           if (move === moves[moves.length - 1]) {
             if (result.captured) {
-              const sound = new Audio('/chess:dartfrog:herobrine.os/assets/chess-capture.mp3');
+              const sound = new Audio('/chess:dartfrog:gliderlabs.os/assets/chess-capture.mp3');
               sound.play();
             } else {
-              const sound = new Audio('/chess:dartfrog:herobrine.os/assets/chess-move.mp3');
+              const sound = new Audio('/chess:dartfrog:gliderlabs.os/assets/chess-move.mp3');
               sound.play();
             }
           }
@@ -85,7 +85,7 @@ const ChessGame: React.FC<ChessGameProps> = () => {
 
   const onDrop = useCallback((drop) => {
     if (!canPlayerMove) {
-      const sound = new Audio('/chess:dartfrog:herobrine.os/assets/chess-invalid-move.mp3');
+      const sound = new Audio('/chess:dartfrog:gliderlabs.os/assets/chess-invalid-move.mp3');
       sound.play();
       return;
     }
@@ -97,7 +97,7 @@ const ChessGame: React.FC<ChessGameProps> = () => {
     try {
       result = tempChess.move(move);
     } catch (error) {
-      const sound = new Audio('/chess:dartfrog:herobrine.os/assets/chess-invalid-move.mp3');
+      const sound = new Audio('/chess:dartfrog:gliderlabs.os/assets/chess-invalid-move.mp3');
       sound.play();
       return;
     }

@@ -129,7 +129,7 @@ const Home: React.FC = () => {
         >
           <a
             className={`${styles.navItem} df`}
-            href={`http://${baseOrigin}/dartfrog:dartfrog:herobrine.os`}
+            href={`http://${baseOrigin}/dartfrog:dartfrog:gliderlabs.os`}
           >
             df
           </a>

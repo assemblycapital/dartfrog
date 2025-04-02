@@ -5,8 +5,8 @@ use std::hash::{Hash, Hasher};
 
 use dartfrog_lib::*;
 mod constants;
-use kinode_process_lib::http::server::{self, send_ws_push, HttpServerRequest, WsMessageType};
-use kinode_process_lib::{http, await_message, call_init, println, Address, Request,
+use hyperware_process_lib::http::server::{self, send_ws_push, HttpServerRequest, WsMessageType};
+use hyperware_process_lib::{http, await_message, call_init, println, Address, Request,
     get_blob,
     LazyLoadBlob,
     set_state, get_typed_state,
@@ -40,7 +40,7 @@ impl Hash for Consumer{
 }
 
 const IS_FAKE: bool = !cfg!(feature = "prod");
-const NETWORK_HUB: &str = if IS_FAKE { "fake.dev" } else { "waterhouse.os" };
+const NETWORK_HUB: &str = if IS_FAKE { "fake.os" } else { "gliderlabs.os" };
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

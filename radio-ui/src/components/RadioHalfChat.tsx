@@ -58,7 +58,7 @@ const RadioHalfChat: React.FC<RadioHalfChatProps> = ({ }) => {
             // color:"black",
           }}
           className='underline-on-hover color-white'
-          href={`http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/`}
+          href={`http://${baseOrigin}/dartfrog:dartfrog:gliderlabs.os/`}
           onClick={(e)=>{
             api.unsubscribeService();
           }}

@@ -27,14 +27,14 @@ const AppGridItem: React.FC<AppGridItemProps> = ({
   const getLink = (): string => {
     if (protocolLink) {
       const packageName = getPackageName(protocolLink)
-      if (packageName !== "dartfrog:herobrine.os") {
+      if (packageName !== "dartfrog:gliderlabs.os") {
         return `http://${baseOrigin}/${protocolLink}/`;
       } else {
         const packageSubdomain = processToSubdomain(protocolLink)
         return `http://${packageSubdomain}.${baseOrigin}/${protocolLink}/`;
       }
     } else if (serviceLink) {
-      return `http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/join/${serviceLink.slice(5)}`;
+      return `http://${baseOrigin}/dartfrog:dartfrog:gliderlabs.os/join/${serviceLink.slice(5)}`;
     }
     return '#';
   };
@@ -137,9 +137,9 @@ const AppGrid: React.FC = () => {
   };
 
   const appGridItems = [
-    { title: "radio", backgroundColor: "white", textColor: "black", protocolLink: "radio:dartfrog:herobrine.os", imageUrl: "https://bwyl.nyc3.digitaloceanspaces.com/radio/radio.png"},
-    { title: "rumors", backgroundColor: "rgb(187, 119, 221)", textColor: "black", serviceLink: `df://rumors-hub:${HUB_NODE}@rumors:dartfrog:herobrine.os` },
-    { title: "forum", backgroundColor: "#444", textColor: "#ccc", serviceLink: `df://forum-hub:${HUB_NODE}@forum:dartfrog:herobrine.os`, imageUrl: "https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/forum-icon.png" },
+    { title: "radio", backgroundColor: "white", textColor: "black", protocolLink: "radio:dartfrog:gliderlabs.os", imageUrl: "https://bwyl.nyc3.digitaloceanspaces.com/radio/radio.png"},
+    { title: "rumors", backgroundColor: "rgb(187, 119, 221)", textColor: "black", serviceLink: `df://rumors-hub:${HUB_NODE}@rumors:dartfrog:gliderlabs.os` },
+    { title: "forum", backgroundColor: "#444", textColor: "#ccc", serviceLink: `df://forum-hub:${HUB_NODE}@forum:dartfrog:gliderlabs.os`, imageUrl: "https://bwyl.nyc3.digitaloceanspaces.com/hyperware/dartfrog/forum-icon.png" },
   ];
 
   return (

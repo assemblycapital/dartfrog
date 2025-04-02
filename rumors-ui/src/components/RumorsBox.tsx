@@ -255,7 +255,7 @@ const RumorsBox: React.FC = () => {
           }}
         >
           <a
-            href={`http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/`}
+            href={`http://${baseOrigin}/dartfrog:dartfrog:gliderlabs.os/`}
             onClick={(e)=>{
               api.unsubscribeService();
             }}

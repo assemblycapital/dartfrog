@@ -1,4 +1,4 @@
-import KinodeClientApi from "@kinode/client-api";
+import HyperwareClientApi from '@hyperware-ai/client-api';
 import "./App.css";
 import Footer from "./components/Footer";
 import ControlHeader from "./components/ControlHeader";
@@ -25,7 +25,7 @@ function App() {
     let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
     const connectToKinode = () => {
-      const newApi = new KinodeClientApi({
+      const newApi = new HyperwareClientApi({
         uri: WEBSOCKET_URL,
         nodeId: window.our?.node,
         processId: PROCESS_NAME,
@@ -185,7 +185,7 @@ function App() {
             flexDirection:"column",
             gap:"0.5rem",
           }}>
-            <div>a new version of dartfrog is available in the kinode app store.</div>
+            <div>a new version of dartfrog is available in the hyperware app store.</div>
             <div
               style={{
 

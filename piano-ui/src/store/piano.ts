@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import {ServiceApi} from '@dartfrog/puddle';
 
-export const PLUGIN_NAME = "piano:dartfrog:herobrine.os";
+export const PLUGIN_NAME = "piano:dartfrog:gliderlabs.os";
 
 export interface PianoStore {
   pianoState: PianoState

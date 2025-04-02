@@ -119,7 +119,7 @@ const JoinPage = () => {
       const process = serviceId.process();
       const packageName = getPackageName(process)
 
-      if (packageName !== "dartfrog:herobrine.os") {
+      if (packageName !== "dartfrog:gliderlabs.os") {
         let url = `http://${baseOrigin}/${process}/df/service/${serviceId}`;
         window.location.replace(url);
       } else {

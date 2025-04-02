@@ -1,7 +1,7 @@
 export const IS_FAKE = false;
-export const HUB_NODE = IS_FAKE ? "fake.dev" : "waterhouse.os";
-export const PACKAGE_SUBDOMAIN = "dartfrog-herobrine-os";
-export const PROCESS_NAME = "radio:dartfrog:herobrine.os";
+export const HUB_NODE = IS_FAKE ? "fake.os" : "gliderlabs.os";
+export const PACKAGE_SUBDOMAIN = "dartfrog-gliderlabs-os";
+export const PROCESS_NAME = "radio:dartfrog:gliderlabs.os";
 
 export const BASE_URL = `/${PROCESS_NAME}/`;
 

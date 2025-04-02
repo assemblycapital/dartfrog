@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import {ServiceApi} from '@dartfrog/puddle';
 import { Howl } from 'howler';
 
-export const PLUGIN_NAME = "chess:dartfrog:herobrine.os";
+export const PLUGIN_NAME = "chess:dartfrog:gliderlabs.os";
 
 // Define the Chess Game State type
 export interface ChessGameState {
@@ -57,7 +57,7 @@ export function handleChessUpdate(chessState: ChessState | null, update: any): C
         }
         return { ...newChessState };
     } else if (update === 'GameStart') {
-        const sound = new Audio('/chess:dartfrog:herobrine.os/assets/chess-game-started.mp3');
+        const sound = new Audio('/chess:dartfrog:gliderlabs.os/assets/chess-game-started.mp3');
         sound.play();
 
         return chessState;

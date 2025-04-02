@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use dartfrog_lib::*;
-use kinode_process_lib::{call_init, http::server, Address, println};
+use hyperware_process_lib::{call_init, http::server, Address, println};
 use serde::{Serialize, Deserialize};
 wit_bindgen::generate!({
     path: "target/wit",

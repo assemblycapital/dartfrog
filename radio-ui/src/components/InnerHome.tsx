@@ -138,7 +138,7 @@ const InnerHome: React.FC = () => {
       };
       createService(serviceOptions);
     }
-    navigate(`/df/service/radio-hub:${window.our?.node}@radio:dartfrog:herobrine.os`);
+    navigate(`/df/service/radio-hub:${window.our?.node}@radio:dartfrog:gliderlabs.os`);
   }, [hasMyService])
 
   return (
@@ -157,11 +157,11 @@ const InnerHome: React.FC = () => {
               className="hover-dark-gray"
               onClick={() => {
                 const hubHost = HUB_NODE
-                const hubServiceId = `radio-hub:${hubHost}@radio:dartfrog:herobrine.os`;
+                const hubServiceId = `radio-hub:${hubHost}@radio:dartfrog:gliderlabs.os`;
                 navigate(`/df/service/${hubServiceId}`);
               }}
         >
-          <img src="https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/radio-party.webp"
+          <img src="https://bwyl.nyc3.digitaloceanspaces.com/hyperware/dartfrog/radio-party.webp"
             style={{
               height:"20rem",
               width:"20rem",
@@ -253,7 +253,7 @@ const InnerHome: React.FC = () => {
           <div className="hover-dark-gray big-category-button"
             onClick={() => {
               const hubHost = HUB_NODE
-              const serviceId = `music:${hubHost}@radio:dartfrog:herobrine.os`;
+              const serviceId = `music:${hubHost}@radio:dartfrog:gliderlabs.os`;
               navigate(`/df/service/${serviceId}`);
             }}
           >
@@ -268,7 +268,7 @@ const InnerHome: React.FC = () => {
           <div className="hover-dark-gray big-category-button"
             onClick={() => {
               const hubHost = HUB_NODE
-              const serviceId = `learn:${hubHost}@radio:dartfrog:herobrine.os`;
+              const serviceId = `learn:${hubHost}@radio:dartfrog:gliderlabs.os`;
               navigate(`/df/service/${serviceId}`);
             }}
           >
@@ -283,7 +283,7 @@ const InnerHome: React.FC = () => {
           <div className="hover-dark-gray big-category-button"
             onClick={() => {
               const hubHost = HUB_NODE
-              const serviceId = `random:${hubHost}@radio:dartfrog:herobrine.os`;
+              const serviceId = `random:${hubHost}@radio:dartfrog:gliderlabs.os`;
               navigate(`/df/service/${serviceId}`);
             }}
           >

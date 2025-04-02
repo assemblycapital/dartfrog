@@ -62,7 +62,7 @@ const RumorsHome: React.FC = () => {
     >
       <nav style={{ marginBottom: '20px' }}>
         <a
-          href={`http://${baseOrigin}/dartfrog:dartfrog:herobrine.os/`}
+          href={`http://${baseOrigin}/dartfrog:dartfrog:gliderlabs.os/`}
           style={{
             marginRight:"1rem"
           }}

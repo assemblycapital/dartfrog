@@ -1,27 +1,14 @@
 {
     "name": "dartfrog",
-    "description": "kinternet browser",
-    "image": "https://bwyl.nyc3.digitaloceanspaces.com/kinode/dartfrog/dartfrog256_nobg.png",
+    "description": "app hub",
+    "image": "https://bwyl.nyc3.digitaloceanspaces.com/hyperware/dartfrog/dartfrog256_nobg.png",
     "properties": {
         "package_name": "dartfrog",
-        "current_version": "0.4.0",
-        "publisher": "herobrine.os",
-        "mirrors": ["waterhouse.os"],
+        "current_version": "0.5.0",
+        "publisher": "gliderlabs.os",
+        "mirrors": ["gliderlabs.os"],
         "code_hashes": {
-            "0.1.0": "f8c52f2fde40ca80c907bced194cc1749f67d872f67521f6cbed84962b7eb6c2",
-            "0.1.1": "118ca1c59993a86f01f96953bb38a1afe24ce8c43157867d321d7ad09639d3a3",
-            "0.1.2": "8a5e74b2e394d608d2b9e86844eef29ee475625be7414e45ecfe0806f92f1ea3",
-            "0.1.3": "8aac947d3277b740946c81bcf0088defd605560d18cbbd252910af7af1428313",
-            "0.1.4": "1da7d48c4ce9b0fbfc4e927de514e3d625ff1aeb29c2d521f77f621a81af1224",
-            "0.2.0": "e9d3fb762d7f63a2068da93b806ea97975765b4db06473ba78a00fe9127b5a4a",
-            "0.2.1": "cbe710dbc2411f8a40af7cd433536a50d1631b5f0dbeaa38e06536835cb443cf",
-            "0.2.2": "29aec00b9a12031f2c59645df7668b99a96811d78587a7049373e37755abfb3c",
-            "0.2.3": "61824b9279f5eba047adaaa556e96b91795b71ff2d8b63084f9ec81799bce07c",
-            "0.3.0": "deec3e2d3e535be437a059f6b193a0c610469d7b58a9f275dac45c157aa103bd",
-            "0.3.1": "1e9f56a6501632f9dd5aec3bf094bc50d71a34a74c071e625b150627184c547c",
-            "0.3.2": "797f5b6cf6f0fccc425fa0a8c5c97c17beb1c3e1f67ec981b88f8a787a71a7eb",
-            "0.3.3": "fedaf8078e0292d3011b92fb29a9a0f09c01804caa76bba992074b4445ecc16f",
-            "0.4.0": "f1f81ce2a4ec7421aa26c19150f253255784ae0a859a63ece249869c30c9de3f"
+            "0.5.0": "f1f81ce2a4ec7421aa26c19150f253255784ae0a859a63ece249869c30c9de3f"
         },
         "wit_version": 1
     },

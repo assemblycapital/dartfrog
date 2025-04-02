@@ -1,5 +1,5 @@
-export const PACKAGE_SUBDOMAIN = "dartfrog-herobrine-os";
-export const PROCESS_NAME = "dartfrog:dartfrog:herobrine.os";
+export const PACKAGE_SUBDOMAIN = "dartfrog-gliderlabs-os";
+export const PROCESS_NAME = "dartfrog:dartfrog:gliderlabs.os";
 
 export const BASE_URL = `/${PROCESS_NAME}/`;
 
