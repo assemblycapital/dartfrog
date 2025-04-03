@@ -12,4 +12,4 @@ export const WEBSOCKET_URL = import.meta.env.DEV
   ? `${PROXY_TARGET.replace('http', 'ws')}`
   : undefined;
 
-export const DARTFROG_VERSION = "v0.4.0";
+export const DARTFROG_VERSION = "v0.5.0";

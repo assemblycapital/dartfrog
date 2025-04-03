@@ -140,4 +140,16 @@ fn init(our: Address) {
     // Bind websocket path with secure subdomain
     let ws_config = server::WsBindingConfig::default()
         .secure_subdomain(true);
+    http_server
+        .bind_ws_path("/", ws_config)
+        .expect("failed to bind ws");
+
+    loop {
+        match provider_handle_message(&our, &mut state.provider) {
+            Ok(()) => {}
+            Err(e) => {
+                println!("page error handling message: {:?}", e);
+            }
+        };
+    }
 }
