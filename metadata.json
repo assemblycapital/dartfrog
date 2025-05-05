@@ -1,14 +1,15 @@
 {
     "name": "dartfrog",
-    "description": "mutliplayer apps",
+    "description": "multiplayer apps",
     "image": "https://bwyl.nyc3.digitaloceanspaces.com/hyperware/dartfrog/dartfrog256_nobg.png",
     "properties": {
         "package_name": "dartfrog",
-        "current_version": "0.5.0",
+        "current_version": "0.5.1",
         "publisher": "gliderlabs.os",
         "mirrors": ["gliderlabs.os"],
         "code_hashes": {
-            "0.5.0": "95436f3ef83f5375951d9287abb2f501c707af340b5fc409a7d54e65dfd1aeb4"
+            "0.5.0": "dccb64e7a6b1b070d76187ec05fae3799e8b1f757aa1df30e0addee4ee853d8e",
+            "0.5.1": "dccb64e7a6b1b070d76187ec05fae3799e8b1f757aa1df30e0addee4ee853d8e"
         },
         "wit_version": 1
     },
