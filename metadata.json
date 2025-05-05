@@ -9,7 +9,7 @@
         "mirrors": ["gliderlabs.os"],
         "code_hashes": {
             "0.5.0": "dccb64e7a6b1b070d76187ec05fae3799e8b1f757aa1df30e0addee4ee853d8e",
-            "0.5.1": "dccb64e7a6b1b070d76187ec05fae3799e8b1f757aa1df30e0addee4ee853d8e"
+            "0.5.1": "01b295264707b209e459b6cfa43df49b8454a031909bced3f9162f4850994a71"
         },
         "wit_version": 1
     },
